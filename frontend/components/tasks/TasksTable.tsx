@@ -1,120 +1,196 @@
-import { tasksData } from "@/data/tasks-data";
+"use client";
+
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+  Badge 
+} from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Calendar, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { 
+  MoreHorizontal, 
+  Calendar, 
+  Clock, 
+  Play, 
+  Flag, 
+  Copy, 
+  Paperclip, 
+  Trash2, 
+  UserPlus,
+  Eye
+} from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TaskType } from "@/types/task";
+import { TaskIntelligenceBadge } from "./TaskIntelligenceBadge";
+import { 
+  CRMDataTable, 
+  CRMTableHeader, 
+  CRMTableBody, 
+  CRMTableRow, 
+  CRMTableCell, 
+  CRMTableHeaderCell 
+} from "@/components/shared/crm";
+import { cn } from "@/lib/utils";
 
-const TasksTable = () => {
+interface TasksTableProps {
+  tasks: TaskType[];
+  onTaskClick: (task: TaskType) => void;
+}
+
+const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent border-slate-100">
-            <TableHead className="w-[50px] px-8 py-5">
-              <Checkbox className="rounded-md border-slate-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600" />
-            </TableHead>
-            <TableHead className="px-4 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Task Description</TableHead>
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Due Date</TableHead>
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Priority</TableHead>
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Assignee</TableHead>
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</TableHead>
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
+    <CRMDataTable>
+      <CRMTableHeader>
+        <CRMTableRow className="hover:bg-transparent">
+          <CRMTableHeaderCell className="w-[60px] px-8">
+            <Checkbox />
+          </CRMTableHeaderCell>
+          <CRMTableHeaderCell>Task Details</CRMTableHeaderCell>
+          <CRMTableHeaderCell>Analytics</CRMTableHeaderCell>
+          <CRMTableHeaderCell className="text-center">Priority</CRMTableHeaderCell>
+          <CRMTableHeaderCell className="text-center">Timeline</CRMTableHeaderCell>
+          <CRMTableHeaderCell>Owner</CRMTableHeaderCell>
+          <CRMTableHeaderCell className="text-right px-8">Action</CRMTableHeaderCell>
+        </CRMTableRow>
+      </CRMTableHeader>
 
-        <TableBody>
-          {tasksData.map((task) => (
-            <TableRow key={task.id} className="group hover:bg-slate-50/50 transition-colors border-slate-50">
-              <TableCell className="px-8 py-5">
-                <Checkbox className="rounded-md border-slate-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600" checked={task.status === "Completed"} />
-              </TableCell>
+      <CRMTableBody>
+        {tasks.map((task) => (
+          <CRMTableRow 
+            key={task.id} 
+            className="group"
+          >
+            <CRMTableCell className="px-8">
+              <Checkbox 
+                checked={task.status === "Completed"} 
+              />
+            </CRMTableCell>
 
-              <TableCell className="px-4 py-5">
-                <div>
-                  <p className={`font-bold text-slate-900 group-hover:text-emerald-700 transition-colors ${task.status === "Completed" ? "line-through text-slate-400" : ""}`}>
+            <CRMTableCell className="min-w-[300px]">
+              <div className="flex flex-col gap-1.5 cursor-pointer" onClick={() => onTaskClick(task)}>
+                <div className="flex items-center gap-2">
+                  <p className={cn(
+                    "font-semibold text-foreground group-hover:text-primary transition-colors leading-tight text-sm",
+                    task.status === "Completed" && "line-through text-muted-foreground"
+                  )}>
                     {task.title}
                   </p>
-                  <p className="text-slate-400 text-xs mt-0.5 italic">Internal Project</p>
+                  {task.isUrgent && (
+                    <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                  )}
                 </div>
-              </TableCell>
+                <div className="flex items-center gap-3">
+                  <TaskIntelligenceBadge type="category" value={task.category || "General"} />
+                  {task.subtaskCount && (
+                    <TaskIntelligenceBadge type="subtasks" value={task.subtaskCount} />
+                  )}
+                </div>
+              </div>
+            </CRMTableCell>
 
-              <TableCell className="px-8 py-5">
-                <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
-                  <Calendar className="w-3.5 h-3.5 text-slate-300" />
+            <CRMTableCell>
+              <div className="flex flex-col gap-1 w-32">
+                <TaskIntelligenceBadge type="progress" value={task.progress} />
+                <div className="flex items-center gap-1.5 mt-1">
+                  {task.isOverdue && <TaskIntelligenceBadge type="overdue" value={true} />}
+                  {task.aiPriorityScore && <TaskIntelligenceBadge type="ai-score" value={task.aiPriorityScore} />}
+                </div>
+              </div>
+            </CRMTableCell>
+
+            <CRMTableCell className="text-center">
+              <Badge variant="outline" className={cn(
+                "border-none px-3 py-0.5 rounded-lg font-bold text-[10px] uppercase tracking-wider shadow-sm",
+                task.priority === 'High' ? 'bg-destructive/10 text-destructive' : 
+                task.priority === 'Medium' ? 'bg-primary/10 text-primary' : 
+                'bg-muted text-muted-foreground'
+              )}>
+                {task.priority}
+              </Badge>
+            </CRMTableCell>
+
+            <CRMTableCell>
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex items-center gap-1.5 text-foreground text-[11px] font-bold bg-muted/50 px-2 py-1 rounded-lg border border-border/50">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                   {task.dueDate}
                 </div>
-              </TableCell>
+                {task.estimatedTime && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground text-[9px] font-bold uppercase tracking-wider">
+                    <Clock className="w-3 h-3" />
+                    Est: {task.estimatedTime}
+                  </div>
+                )}
+              </div>
+            </CRMTableCell>
 
-              <TableCell className="px-8 py-5">
-                <Badge variant="outline" className={`border-none px-3 py-1 rounded-full font-bold text-[10px] uppercase tracking-wider
-                  ${task.priority === 'High' ? 'bg-rose-50 text-rose-600' : 
-                    task.priority === 'Medium' ? 'bg-blue-50 text-blue-600' : 
-                    'bg-slate-50 text-slate-500'}`}>
-                  {task.priority}
-                </Badge>
-              </TableCell>
-
-              <TableCell className="px-8 py-5">
-                <div className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8 rounded-xl border border-white shadow-sm">
-                    <AvatarFallback className="bg-slate-100 font-bold text-slate-600 text-[10px]">
+            <CRMTableCell>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Avatar className="w-9 h-9 rounded-lg border border-border bg-muted flex items-center justify-center font-bold text-xs">
+                    <AvatarFallback>
                       {task.assignedTo.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-xs font-semibold text-slate-600">{task.assignedTo}</span>
+                  <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-emerald-500 border-2 border-background rounded-full shadow-sm" />
                 </div>
-              </TableCell>
-
-              <TableCell className="px-8 py-5">
-                <div className="flex items-center gap-2">
-                  {task.status === "Completed" ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  ) : (
-                    <Clock className="w-4 h-4 text-blue-400" />
-                  )}
-                  <span className={`text-sm font-bold ${task.status === "Completed" ? "text-emerald-600" : "text-blue-600"}`}>
-                    {task.status}
-                  </span>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-bold text-foreground leading-none">{task.assignedTo}</span>
+                  <span className="text-[9px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">Task Owner</span>
                 </div>
-              </TableCell>
+              </div>
+            </CRMTableCell>
 
-              <TableCell className="px-8 py-5 text-right">
+            <CRMTableCell className="text-right px-8">
+              <div className="flex items-center justify-end gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon-xs" 
+                  onClick={() => onTaskClick(task)}
+                  className="text-muted-foreground hover:text-primary transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition-all">
+                    <Button variant="ghost" size="icon-xs" className="text-muted-foreground hover:text-foreground">
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-xl border-slate-200 shadow-xl">
-                    <DropdownMenuItem className="flex items-center gap-2 text-slate-600 cursor-pointer">
-                      Edit Task
+                  <DropdownMenuContent align="end" className="w-56 rounded-xl border-slate-200 shadow-xl p-1.5">
+                    <DropdownMenuItem className="rounded-lg">
+                      <Play className="w-4 h-4 mr-2 text-emerald-500" /> Start Timer
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-2 text-slate-600 cursor-pointer text-rose-600">
-                      Delete Task
+                    <DropdownMenuItem className="rounded-lg">
+                      <UserPlus className="w-4 h-4 mr-2" /> Reassign
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="rounded-lg">
+                      <Flag className="w-4 h-4 mr-2 text-amber-500" /> Mark Urgent
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="rounded-lg">
+                      <Copy className="w-4 h-4 mr-2" /> Duplicate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="rounded-lg">
+                      <Paperclip className="w-4 h-4 mr-2" /> Attachments
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive focus:text-destructive rounded-lg">
+                      <Trash2 className="w-4 h-4 mr-2" /> Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+              </div>
+            </CRMTableCell>
+          </CRMTableRow>
+        ))}
+      </CRMTableBody>
+    </CRMDataTable>
   );
 };
 

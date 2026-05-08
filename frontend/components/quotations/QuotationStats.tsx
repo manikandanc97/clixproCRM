@@ -1,61 +1,101 @@
-import { FileText, Clock, CheckCircle2, TrendingUp } from "lucide-react";
+import { FileText, Clock, CheckCircle2, LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { MetricCardType } from "@/types/common";
+import { motion } from "framer-motion";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
 
-const QuotationStats = () => {
-  const stats = [
-    {
-      title: "Total Quotes",
-      value: "248",
-      icon: FileText,
-      color: "blue",
-      change: "+12%",
-      positive: true,
-    },
-    {
-      title: "Pending Approval",
-      value: "42",
-      icon: Clock,
-      color: "amber",
-      change: "-3%",
-      positive: false,
-    },
-    {
-      title: "Approved Quotes",
-      value: "156",
-      icon: CheckCircle2,
-      color: "emerald",
-      change: "+24%",
-      positive: true,
-    },
-  ];
+const iconMap: Record<string, LucideIcon> = {
+  "Total Quotes": FileText,
+  "Pending Approval": Clock,
+  "Approved Quotes": CheckCircle2,
+};
 
+// Mock data for sparklines
+const generateSparklineData = () => 
+  Array.from({ length: 10 }, (_, i) => ({ value: Math.floor(Math.random() * 50) + 10 }));
+
+interface QuotationStatsProps {
+  stats: MetricCardType[];
+}
+
+const QuotationStats = ({ stats }: QuotationStatsProps) => {
   return (
     <div className="gap-6 grid grid-cols-1 md:grid-cols-3">
       {stats.map((item, index) => {
-        const Icon = item.icon;
+        const Icon = iconMap[item.title] || FileText;
+        const sparklineData = generateSparklineData();
+        const isPositive = item.positive;
+
         return (
-          <Card key={index} className="bg-white rounded-[2rem] border-slate-200/60 shadow-sm overflow-hidden hover:shadow-md transition-all group">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110
-                  ${item.color === 'blue' ? 'bg-blue-50 text-blue-600' : 
-                    item.color === 'amber' ? 'bg-amber-50 text-amber-600' : 
-                    'bg-emerald-50 text-emerald-600'}`}>
-                  <Icon className="w-6 h-6" />
+          <motion.div
+            key={item.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card className="relative overflow-hidden group border-none shadow-2xl bg-white/60 backdrop-blur-xl rounded-xl">
+              {/* Decorative background gradient */}
+              <div className={`absolute -right-10 -top-10 w-40 h-40 rounded-full blur-3xl opacity-10 transition-all group-hover:opacity-20
+                ${item.title === 'Total Quotes' ? 'bg-blue-500' : 
+                  item.title === 'Pending Approval' ? 'bg-amber-500' : 
+                  'bg-emerald-500'}`} 
+              />
+
+              <CardContent className="p-7 relative z-10">
+                <div className="flex justify-between items-start mb-6">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-3
+                    ${item.title === 'Total Quotes' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 
+                      item.title === 'Pending Approval' ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white' : 
+                      'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'}`}>
+                    <Icon className="w-7 h-7" />
+                  </div>
+                  
+                  <div className="text-right">
+                    <Badge className={`px-2.5 py-1 rounded-lg border-none font-bold text-xs flex items-center gap-1
+                      ${isPositive ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                      {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      {item.change}
+                    </Badge>
+                  </div>
                 </div>
-                <Badge variant="outline" className={`border-none font-bold text-xs ${item.positive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                  {item.change}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.title}</p>
-                <h2 className="mt-1 text-2xl font-bold text-slate-900 leading-none">
-                  {item.value}
-                </h2>
-              </div>
-            </CardContent>
-          </Card>
+
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{item.title}</p>
+                    <div className="flex items-baseline gap-2">
+                      <h2 className="text-4xl font-black text-slate-900 tracking-tighter">
+                        {item.value}
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="h-16 w-24 opacity-50 group-hover:opacity-100 transition-opacity duration-500">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={sparklineData}>
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke={item.title === 'Total Quotes' ? '#3b82f6' : 
+                                  item.title === 'Pending Approval' ? '#f59e0b' : 
+                                  '#10b981'}
+                          strokeWidth={3}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                
+                {/* Visual richness: bottom glow bar */}
+                <div className={`absolute bottom-0 left-0 h-1 transition-all duration-500 group-hover:w-full w-1/4
+                  ${item.title === 'Total Quotes' ? 'bg-blue-500' : 
+                    item.title === 'Pending Approval' ? 'bg-amber-500' : 
+                    'bg-emerald-500'}`} 
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
         );
       })}
     </div>

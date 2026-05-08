@@ -9,19 +9,21 @@ type PublicRouteProps = {
 
 export default function PublicRoute({ children }: PublicRouteProps) {
   const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
+  const [hasToken] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return Boolean(localStorage.getItem("token"));
+  });
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (token) {
-      router.push("/dashboard");
-    } else {
-      setIsChecking(false);
+    if (hasToken) {
+      router.replace("/dashboard");
     }
-  }, [router]);
+  }, [hasToken, router]);
 
-  if (isChecking) {
+  if (hasToken) {
     return null;
   }
 

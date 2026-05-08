@@ -17,6 +17,9 @@ client.interceptors.request.use(
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+      const currency = localStorage.getItem("clientrise_currency") || "USD";
+      config.headers["X-Currency"] = currency;
     }
     return config;
   },

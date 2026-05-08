@@ -1,76 +1,105 @@
-import { performanceData } from "@/data/reports-data";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, TrendingUp, Trophy } from "lucide-react";
+import { TrendingDown, TrendingUp, Trophy, ArrowUpRight } from "lucide-react";
+import { PerformanceType } from "@/types/report";
+import { motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
+import { 
+  CRMDataTable, 
+  CRMTableHeader, 
+  CRMTableBody, 
+  CRMTableRow, 
+  CRMTableCell, 
+  CRMTableHeaderCell,
+  CRMCard 
+} from "@/components/shared/crm";
+import { cn } from "@/lib/utils";
 
-const PerformanceTable = () => {
+interface PerformanceTableProps {
+  performance: PerformanceType[];
+}
+
+const PerformanceTable = ({ performance }: PerformanceTableProps) => {
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden">
-      <div className="p-8 pb-4 flex items-center justify-between">
-        <div>
-          <h2 className="font-bold text-slate-900 text-xl tracking-tight">Team Performance</h2>
-          <p className="text-slate-400 text-sm mt-1">Top performing sales representatives</p>
-        </div>
-        <Trophy className="w-6 h-6 text-amber-400" />
-      </div>
+    <CRMDataTable>
+      <CRMTableHeader>
+        <CRMTableRow className="hover:bg-transparent">
+          <CRMTableHeaderCell>Team Member</CRMTableHeaderCell>
+          <CRMTableHeaderCell>Deals Closed</CRMTableHeaderCell>
+          <CRMTableHeaderCell>Revenue Target</CRMTableHeaderCell>
+          <CRMTableHeaderCell>Conversion</CRMTableHeaderCell>
+          <CRMTableHeaderCell className="text-right">Trend</CRMTableHeaderCell>
+        </CRMTableRow>
+      </CRMTableHeader>
 
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent border-slate-100">
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Team Member</TableHead>
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Deals Closed</TableHead>
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Revenue Generated</TableHead>
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Conversion</TableHead>
-            <TableHead className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Trend</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {performanceData.map((item) => (
-            <TableRow key={item.id} className="group hover:bg-slate-50/50 transition-colors border-slate-50">
-              <TableCell className="px-8 py-5">
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-10 h-10 rounded-2xl border-2 border-white shadow-sm">
-                    <AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 font-bold text-slate-600 text-xs">
+      <CRMTableBody>
+        {performance.map((item, idx) => (
+          <CRMTableRow key={item.id}>
+            <CRMTableCell>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Avatar className="w-10 h-10 rounded-lg border border-border bg-muted flex items-center justify-center font-bold text-xs">
+                    <AvatarFallback>
                       {item.name.split(' ').map((n: string) => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
-                  <p className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">{item.name}</p>
+                  {idx === 0 && (
+                    <div className="absolute -top-1 -right-1 bg-amber-500 text-white p-0.5 rounded-full shadow-sm">
+                      <Trophy className="w-3 h-3" />
+                    </div>
+                  )}
                 </div>
-              </TableCell>
-
-              <TableCell className="px-8 py-5 font-semibold text-slate-600">{item.dealsClosed} Deals</TableCell>
-
-              <TableCell className="px-8 py-5">
-                <span className="font-bold text-slate-900">{item.revenue}</span>
-              </TableCell>
-
-              <TableCell className="px-8 py-5">
-                <Badge variant="outline" className="border-none bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-bold text-[10px] uppercase tracking-wider">
-                  {item.conversionRate}
-                </Badge>
-              </TableCell>
-
-              <TableCell className="px-8 py-5 text-right">
-                <div className="flex items-center justify-end gap-1 text-emerald-500 font-bold text-sm">
-                  <TrendingUp className="w-4 h-4" />
-                  Stable
+                <div>
+                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">{item.name}</p>
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Senior Executive</p>
                 </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+              </div>
+            </CRMTableCell>
+
+            <CRMTableCell>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-bold text-foreground">{item.dealsClosed}</span>
+                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Deals</span>
+              </div>
+            </CRMTableCell>
+
+            <CRMTableCell>
+              <div className="w-48 space-y-2">
+                <div className="flex justify-between text-[11px] font-bold">
+                  <span className="text-foreground">{item.revenue}</span>
+                  <span className="text-muted-foreground">85% of Goal</span>
+                </div>
+                <Progress value={85} className="h-1.5" />
+              </div>
+            </CRMTableCell>
+
+            <CRMTableCell>
+              <Badge variant="outline" className="border-none bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-wider">
+                {item.conversionRate}
+              </Badge>
+            </CRMTableCell>
+
+            <CRMTableCell className="text-right">
+              <div className={cn(
+                "flex items-center justify-end gap-1.5 font-bold text-xs",
+                item.trendPositive ? "text-success" : "text-destructive"
+              )}>
+                {item.trendPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                {item.trend}
+                <div className={cn(
+                  "p-1 rounded-md ml-1",
+                  item.trendPositive ? "bg-success/10" : "bg-destructive/10"
+                )}>
+                  <ArrowUpRight className={cn("w-3 h-3", !item.trendPositive && "rotate-90")} />
+                </div>
+              </div>
+            </CRMTableCell>
+          </CRMTableRow>
+        ))}
+      </CRMTableBody>
+    </CRMDataTable>
   );
 };
 

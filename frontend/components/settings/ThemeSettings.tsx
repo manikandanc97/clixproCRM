@@ -10,7 +10,7 @@ import {
 
 const ThemeSettings = () => {
   return (
-    <Card className="bg-white rounded-[2.5rem] border-slate-200/60 shadow-sm overflow-hidden">
+    <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden">
       <CardHeader className="p-8 pb-4">
         <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Appearance</CardTitle>
         <CardDescription className="text-slate-400 text-sm mt-1">Customize how the CRM looks on your device.</CardDescription>

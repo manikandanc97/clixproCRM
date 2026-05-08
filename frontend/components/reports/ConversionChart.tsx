@@ -10,76 +10,119 @@ import {
   ResponsiveContainer,
   Cell
 } from "recharts";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, BarChart3, ArrowUpRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ConversionChartPointType } from "@/types/report";
+import { motion } from "framer-motion";
 
-const data = [
-  { name: "Mon", value: 45 },
-  { name: "Tue", value: 52 },
-  { name: "Wed", value: 38 },
-  { name: "Thu", value: 65 },
-  { name: "Fri", value: 48 },
-  { name: "Sat", value: 25 },
-  { name: "Sun", value: 32 },
-];
+const COLORS = ['#3b82f6', '#2dd4bf', '#fbbf24', '#f87171', '#a78bfa', '#f472b6', '#22d3ee'];
 
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+interface ConversionChartProps {
+  data: ConversionChartPointType[];
+}
 
-const ConversionChart = () => {
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 p-4 rounded-2xl shadow-xl shadow-slate-200/50">
+        <p className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1">{label}</p>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: payload[0].fill }} />
+          <p className="text-lg font-bold text-slate-900">{payload[0].value}%</p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const ConversionChart = ({ data }: ConversionChartProps) => {
   return (
-    <Card className="bg-white rounded-[2.5rem] border-slate-200/60 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
-        <div className="space-y-1">
-          <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Lead Conversion</CardTitle>
-          <CardDescription className="text-slate-400 text-sm mt-1">Weekly conversion percentage</CardDescription>
-        </div>
-        
-        <Button variant="ghost" size="icon" className="rounded-xl transition-colors">
-          <MoreHorizontal className="w-5 h-5 text-slate-400" />
-        </Button>
-      </CardHeader>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
+      <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden group">
+        <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Lead Conversion</CardTitle>
+              <BarChart3 className="w-4 h-4 text-emerald-500" />
+            </div>
+            <CardDescription className="text-slate-400 text-sm mt-1">Weekly conversion percentage</CardDescription>
+          </div>
+          
+          <Button variant="ghost" size="icon" className="rounded-xl transition-colors h-9 w-9">
+            <MoreHorizontal className="w-5 h-5 text-slate-400" />
+          </Button>
+        </CardHeader>
 
-      <CardContent className="p-8 pt-0">
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#94a3b8', fontSize: 12 }} 
-                dy={10}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#94a3b8', fontSize: 12 }} 
-              />
-              <Tooltip 
-                cursor={{ fill: '#f8fafc' }}
-                contentStyle={{ 
-                  borderRadius: '16px', 
-                  border: 'none', 
-                  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                  padding: '12px'
-                }} 
-              />
-              <Bar 
-                dataKey="value" 
-                radius={[6, 6, 0, 0]}
-                barSize={32}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+        <CardContent className="p-8 pt-0">
+          <div className="h-[350px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
+                  dy={15}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
+                  tickFormatter={(value) => `${value}%`}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 12 }} 
+                  contentStyle={{
+                    borderRadius: "20px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                    padding: "16px 20px",
+                    backgroundColor: "rgba(15, 23, 42, 0.9)",
+                    backdropFilter: "blur(12px)",
+                    color: "white",
+                  }}
+                  itemStyle={{
+                    fontWeight: 900,
+                    fontSize: "16px",
+                  }}
+                  labelStyle={{
+                    color: "rgba(255, 255, 255, 0.5)",
+                    fontWeight: 800,
+                    fontSize: "10px",
+                    marginBottom: "6px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.2em",
+                  }}
+                  formatter={(value: number) => [`${value}%`, "Conversion Rate"]}
+                />
+                <Bar 
+                  dataKey="value" 
+                  radius={[12, 12, 4, 4]}
+                  barSize={40}
+                  animationDuration={2000}
+                  animationBegin={800}
+                >
+                  {data.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={COLORS[index % COLORS.length]} 
+                      className="transition-all duration-300 hover:opacity-80 cursor-pointer"
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 

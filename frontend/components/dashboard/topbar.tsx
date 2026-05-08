@@ -1,59 +1,69 @@
 "use client";
 
-import { Bell, Search, HelpCircle, Grid3X3, Plus } from "lucide-react";
+import { HelpCircle, Grid3X3, Command, Search } from "lucide-react";
+import { fetchCurrentUser } from "@/lib/api/auth";
+import { useApiResource } from "@/hooks/use-api-resource";
+import ProfileMenu from "./ProfileMenu";
+import NotificationPanel from "./NotificationPanel";
+import CreateNewMenu from "./CreateNewMenu";
 
-import { Input } from "@/components/ui/input";
+function getInitials(name?: string) {
+  if (!name) return "CR";
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
 
 export default function Topbar() {
-  return (
-    <header className="top-0 z-40 sticky flex justify-between items-center bg-white/70 backdrop-blur-md px-8 border-slate-200/60 border-b h-20 transition-all">
-      {/* Search */}
-      <div className="flex-1 max-w-lg">
-        <div className="relative group">
-          <Search className="top-1/2 left-4 absolute w-4 h-4 text-slate-400 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />
+  const { data: user } = useApiResource(fetchCurrentUser);
+  const initials = getInitials(user?.name);
 
-          <Input
-            placeholder="Search leads, tasks, reports..."
-            className="bg-slate-100/50 hover:bg-slate-100 focus:bg-white pl-11 border-transparent focus:border-emerald-500/30 rounded-2xl h-11 transition-all duration-300"
-          />
-        </div>
+  return (
+    <header className="top-0 z-40 sticky flex justify-between items-center topbar-blur px-6 lg:px-10 border-border border-b h-22 transition-all shadow-sm">
+      {/* Search / Command Palette Trigger */}
+      <div className="flex-1 max-w-md lg:max-w-lg mr-3 sm:mr-6">
+        <button 
+          onClick={() => {
+            const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true });
+            document.dispatchEvent(event);
+          }}
+          className="w-full flex items-center justify-between bg-muted/50 hover:bg-muted border border-transparent hover:border-border px-3 sm:px-5 h-12 rounded-[var(--crm-card-radius)] transition-all duration-300 group shadow-sm outline-none"
+        >
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Search className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-muted-foreground text-sm font-semibold tracking-tight hidden sm:inline">Search leads, customers, tasks...</span>
+            <span className="text-muted-foreground text-sm font-semibold tracking-tight sm:hidden">Search...</span>
+          </div>
+          <kbd className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-black text-muted-foreground bg-background rounded-lg shadow-sm border border-border">
+            <Command className="w-3 h-3" /> K
+          </kbd>
+        </button>
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-4">
-        <button className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-5 rounded-2xl h-11 font-semibold text-white text-sm transition-all shadow-md shadow-emerald-200 active:scale-95">
-          <Plus className="w-4 h-4" />
-          Create New
-        </button>
+      <div className="flex items-center gap-4 md:gap-5">
+        <CreateNewMenu />
 
-        <div className="bg-slate-200 mx-2 w-px h-8" />
+        <div className="hidden sm:block bg-border mx-2 w-px h-8" />
 
-        <div className="flex items-center gap-2">
-          <button className="relative hover:bg-slate-100 p-2.5 rounded-xl transition-colors group">
-            <Bell className="w-5 h-5 text-slate-500 transition-colors group-hover:text-slate-900" />
-            <span className="top-2.5 right-2.5 absolute bg-red-500 border-2 border-white rounded-full w-2.5 h-2.5" />
+        <div className="flex items-center gap-2 md:gap-3">
+          <NotificationPanel />
+
+          <button className="hidden sm:block hover:bg-muted p-3 rounded-2xl transition-all group outline-none">
+            <HelpCircle className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" />
           </button>
 
-          <button className="hover:bg-slate-100 p-2.5 rounded-xl transition-colors group">
-            <HelpCircle className="w-5 h-5 text-slate-500 transition-colors group-hover:text-slate-900" />
-          </button>
-
-          <button className="hover:bg-slate-100 p-2.5 rounded-xl transition-colors group">
-            <Grid3X3 className="w-5 h-5 text-slate-500 transition-colors group-hover:text-slate-900" />
+          <button className="hidden sm:block hover:bg-muted p-3 rounded-2xl transition-all group outline-none">
+            <Grid3X3 className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" />
           </button>
         </div>
 
-        <div className="bg-slate-200 mx-2 w-px h-8" />
+        <div className="hidden sm:block bg-border mx-2 w-px h-8" />
 
-        <button className="flex items-center gap-3 hover:bg-slate-50 p-1 pr-3 rounded-2xl transition-all group">
-          <div className="flex justify-center items-center bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl w-10 h-10 font-bold text-sm text-white shadow-sm">
-            CR
-          </div>
-          <div className="md:block hidden text-left">
-            <p className="font-semibold text-slate-900 text-sm leading-none">Admin User</p>
-            <p className="mt-1 text-slate-400 text-xs">Super Admin</p>
-          </div>
-        </button>
+        <ProfileMenu user={user} initials={initials} />
       </div>
     </header>
   );

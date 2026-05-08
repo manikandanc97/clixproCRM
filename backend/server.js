@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 
 const authRoutes = require("./src/routes/auth.routes");
+const crmRoutes = require("./src/routes/crm.routes");
 const dashboardRoutes = require("./src/routes/dashboard.routes");
 
 // Load env variables
@@ -36,6 +37,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/crm", crmRoutes);
 
 /*
  Health Check Route

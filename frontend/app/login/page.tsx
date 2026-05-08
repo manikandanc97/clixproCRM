@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import AuthLayout from "@/components/auth/auth-layout";
 import { loginUser } from "@/lib/api/auth";
+import { getApiErrorMessage } from "@/lib/api/error";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,10 +42,10 @@ export default function LoginPage() {
 
       toast.success("Login successful");
       router.push("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(error);
 
-      toast.error(error?.response?.data?.message || "Login failed");
+      toast.error(getApiErrorMessage(error, "Login failed"));
     } finally {
       setLoading(false);
     }

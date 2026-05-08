@@ -1,60 +1,84 @@
 // recent activity section
 
-import { recentActivities } from "@/data/dashboard-data";
 import { User, CheckCircle2, FileText, ArrowRight } from "lucide-react";
-
-const activityIcons: Record<string, any> = {
-  "New lead added from website form": User,
-  "Quotation sent to premium client": FileText,
-  "Payment received successfully": CheckCircle2,
-};
-
-const activityColors: Record<string, string> = {
-  "New lead added from website form": "bg-blue-50 text-blue-600",
-  "Quotation sent to premium client": "bg-amber-50 text-amber-600",
-  "Payment received successfully": "bg-emerald-50 text-emerald-600",
-};
+import { ActivityType } from "@/types/dashboard";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
-const RecentActivities = () => {
+interface RecentActivitiesProps {
+  activities: ActivityType[];
+}
+
+const RecentActivities = ({ activities }: RecentActivitiesProps) => {
   return (
-    <Card className="bg-white rounded-[2.5rem] border-slate-200/60 shadow-sm h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
-        <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Recent Activities</CardTitle>
-        <Button variant="link" className="text-emerald-600 p-0 h-auto font-semibold hover:underline">View All</Button>
-      </CardHeader>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+      className="w-full"
+    >
+      <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Recent Activities</CardTitle>
+          <Button variant="ghost" className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4">View All</Button>
+        </CardHeader>
 
-      <CardContent className="p-8 pt-4 flex-1">
-        <div className="space-y-6">
-          {recentActivities.map((activity) => {
-            const Icon = activityIcons[activity.title] || User;
-            const colorClass = activityColors[activity.title] || "bg-slate-50 text-slate-600";
+        <CardContent className="flex-1">
+          <div className="space-y-8 relative">
+            {/* Timeline Line */}
+            <div className="absolute left-[21px] top-2 bottom-2 w-px bg-gradient-to-b from-border via-border to-transparent" />
 
-            return (
-              <div key={activity.id} className="flex items-start gap-4 group cursor-pointer">
-                <Avatar className={`h-11 w-11 rounded-2xl ${colorClass} transition-transform group-hover:scale-110 flex items-center justify-center`}>
-                  <Icon className="w-5 h-5" />
-                  <AvatarFallback>{activity.title[0]}</AvatarFallback>
-                </Avatar>
+            {activities.map((activity, index) => {
+              const isLeadActivity = activity.title.toLowerCase().includes("lead");
+              const isQuotationActivity = activity.title.toLowerCase().includes("quotation");
+              const isTaskActivity = activity.title.toLowerCase().includes("task");
+              
+              const Icon = isQuotationActivity ? FileText : isTaskActivity ? CheckCircle2 : User;
+              const colorClass = isQuotationActivity
+                ? "bg-gradient-to-br from-warning to-orange-500 shadow-orange-500/20"
+                : isTaskActivity
+                  ? "bg-gradient-to-br from-success to-teal-500 shadow-teal-500/20"
+                  : isLeadActivity
+                    ? "bg-gradient-to-br from-info to-indigo-500 shadow-blue-500/20"
+                    : "bg-gradient-to-br from-muted-foreground to-slate-500 shadow-slate-500/20";
 
-                <div className="flex-1 pb-4 border-b border-slate-100 group-last:border-none">
-                  <div className="flex justify-between items-start gap-2">
-                    <p className="font-semibold text-slate-800 leading-tight group-hover:text-emerald-700 transition-colors">
-                      {activity.title}
-                    </p>
-                    <ArrowRight className="w-4 h-4 text-slate-300 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
+              return (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  key={activity.id} 
+                  className="flex items-start gap-5 group cursor-pointer relative z-10"
+                >
+                  <div className={`h-11 w-11 rounded-2xl ${colorClass} text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shrink-0 border border-white/20`}>
+                    <Icon className="w-5 h-5" />
                   </div>
-                  <span className="text-slate-400 text-xs mt-1 block">{activity.time}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+                  
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="flex justify-between items-start gap-2">
+                      <p className="font-bold text-foreground text-sm leading-snug group-hover:text-primary transition-colors">
+                        {activity.title}
+                      </p>
+                      <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap pt-0.5">{activity.time}</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-muted rounded-md text-[9px] font-bold text-muted-foreground uppercase tracking-widest border border-border">
+                        Activity
+                      </span>
+                      <ArrowRight className="w-3 h-3 text-muted-foreground/30 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 

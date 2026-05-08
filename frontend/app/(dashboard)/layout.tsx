@@ -1,5 +1,9 @@
 import Sidebar from "@/components/dashboard/sidebar";
 import Topbar from "@/components/dashboard/topbar";
+import ProtectedRoute from "@/components/auth/protected-route";
+import { SidebarProvider } from "@/components/dashboard/SidebarContext";
+import DashboardShell from "@/components/dashboard/DashboardShell";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function DashboardLayout({
   children,
@@ -7,20 +11,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex bg-slate-50 min-h-screen">
-      {/* Desktop Sidebar */}
-      <Sidebar />
-
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1 md:pl-64">
-        <Topbar />
-        
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-7xl">
+    <ProtectedRoute>
+      <TooltipProvider>
+        <SidebarProvider>
+          <DashboardShell>
             {children}
-          </div>
-        </main>
-      </div>
-    </div>
+          </DashboardShell>
+        </SidebarProvider>
+      </TooltipProvider>
+    </ProtectedRoute>
   );
 }

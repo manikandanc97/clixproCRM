@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import AuthLayout from "@/components/auth/auth-layout";
 import { registerUser } from "@/lib/api/auth";
+import { getApiErrorMessage } from "@/lib/api/error";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,10 +46,10 @@ export default function RegisterPage() {
 
       toast.success("Account created successfully 🚀");
       router.push("/login");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(error);
 
-      toast.error(error?.response?.data?.message || "Registration failed");
+      toast.error(getApiErrorMessage(error, "Registration failed"));
     } finally {
       setLoading(false);
     }

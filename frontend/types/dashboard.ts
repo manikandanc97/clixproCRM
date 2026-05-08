@@ -1,14 +1,22 @@
 // dashboard types
 
-export interface StatCardType {
-  title: string;
-  value: string;
-  change: string;
-  positive: boolean;
-}
+import { MetricCardType } from "./common";
+
+export type StatCardType = MetricCardType;
 
 export interface ActivityType {
-  id: number;
+  id: string;
   title: string;
   time: string;
+}
+
+export interface SalesChartPointType {
+  name: string;
+  value: number;
+}
+
+export interface DashboardDataType {
+  stats: StatCardType[];
+  recentActivities: ActivityType[];
+  salesChartData: SalesChartPointType[];
 }

@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -13,16 +14,110 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum CustomerStatus {
+  PREMIUM
+  ACTIVE
+  INACTIVE
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  PROPOSAL_SENT
+  WON
+  LOST
+}
+
+enum TaskPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum QuotationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
 model User {
-  id                 String    @id @default(uuid())
-  name               String
-  email              String    @unique
-  password           String
-  role               String    @default("staff")
+  id               String    @id @default(uuid())
+  name             String
+  email            String    @unique
+  password         String
+  role             String    @default("staff")
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
 
-  resetToken         String?
-  resetTokenExpiry   DateTime?
+model Customer {
+  id            String         @id @default(uuid())
+  name          String
+  company       String
+  email         String?
+  status        CustomerStatus @default(ACTIVE)
+  revenue       Decimal        @default(0) @db.Decimal(12, 2)
+  lastContactAt DateTime?
+  manager       String         @default("Unassigned")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Lead {
+  id         String     @id @default(uuid())
+  name       String
+  company    String
+  email      String
+  status     LeadStatus @default(NEW)
+  value      Decimal    @default(0) @db.Decimal(12, 2)
+  followUpAt DateTime?
+  assignedTo String     @default("Unassigned")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  priority    TaskPriority @default(MEDIUM)
+  assignedTo  String       @default("Unassigned")
+  status      TaskStatus   @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([createdAt])
+}
+
+model Quotation {
+  id          String          @id @default(uuid())
+  quoteNumber String          @unique
+  client      String
+  amount      Decimal         @default(0) @db.Decimal(12, 2)
+  status      QuotationStatus @default(PENDING)
+  validTill   DateTime?
+  createdBy   String          @default("System")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
 }

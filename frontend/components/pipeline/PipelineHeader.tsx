@@ -1,64 +1,54 @@
-import { Plus, Download, Filter, MoreHorizontal, DollarSign, Users, Briefcase } from "lucide-react";
+import { Plus, Download, DollarSign, Users, Briefcase, LucideIcon, Filter, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { PipelineMetricType } from "@/types/pipeline";
+import PipelineAnalytics from "./PipelineAnalytics";
 
-const PipelineHeader = () => {
+interface PipelineHeaderProps {
+  stats: PipelineMetricType[];
+}
+
+const PipelineHeader = ({ stats }: PipelineHeaderProps) => {
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8">
+      {/* Top Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Sales Pipeline</h1>
-          <p className="text-slate-500 mt-1">Manage and track your deals across different stages.</p>
+          <div className="flex items-center gap-3 mb-1">
+             <div className="w-10 h-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+               <Layers className="w-5 h-5" />
+             </div>
+             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Sales Pipeline</h1>
+          </div>
+          <p className="text-slate-500 font-medium">Visualizing {stats.find(s => s.title === "Active Deals")?.value || "your"} active deals across the sales funnel.</p>
         </div>
+        
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="rounded-2xl border-slate-200 h-11 px-5 font-semibold text-slate-600 hover:bg-slate-50">
+          <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
+             <Button variant="ghost" className="h-9 px-4 rounded-xl text-xs font-bold text-slate-600 bg-white shadow-sm">Kanban</Button>
+             <Button variant="ghost" className="h-9 px-4 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-600">List View</Button>
+          </div>
+          
+          <div className="w-px h-8 bg-slate-200 mx-1" />
+          
+          <Button variant="outline" className="rounded-2xl border-slate-200 h-11 px-5 font-semibold text-slate-600 hover:bg-slate-50 shadow-sm transition-all active:scale-95">
+            <Filter className="w-4 h-4 mr-2" />
+            Filter
+          </Button>
+          
+          <Button variant="outline" className="rounded-2xl border-slate-200 h-11 px-5 font-semibold text-slate-600 hover:bg-slate-50 shadow-sm transition-all active:scale-95">
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button className="rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-100 h-11 px-5 font-bold transition-all active:scale-95">
-            <Plus className="w-4 h-4 mr-2" />
+          
+          <Button className="rounded-2xl bg-slate-900 hover:bg-slate-800 text-white shadow-xl shadow-slate-200 h-11 px-6 font-bold transition-all active:scale-95 flex items-center gap-2">
+            <Plus className="w-4 h-4" />
             Add New Deal
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-white rounded-[2rem] border-slate-200/60 shadow-sm overflow-hidden hover:shadow-md transition-all">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <DollarSign className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Value</p>
-              <h3 className="text-xl font-bold text-slate-900">$40,200</h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white rounded-[2rem] border-slate-200/60 shadow-sm overflow-hidden hover:shadow-md transition-all">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Deals</p>
-              <h3 className="text-xl font-bold text-slate-900">12 Deals</h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white rounded-[2rem] border-slate-200/60 shadow-sm overflow-hidden hover:shadow-md transition-all">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
-              <Briefcase className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Win Rate</p>
-              <h3 className="text-xl font-bold text-slate-900">68%</h3>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Pipeline Intelligence Analytics */}
+      <PipelineAnalytics stats={stats} />
     </div>
   );
 };

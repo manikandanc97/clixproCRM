@@ -1,20 +1,186 @@
-// customers page
+"use client";
 
-import CustomersHeader from "@/components/customers/CustomersHeader";
-import CustomerStats from "@/components/customers/CustomerStats";
-import CustomerFilters from "@/components/customers/CustomerFilters";
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Users, UserPlus, Download, TrendingUp, Star, CreditCard, SearchX } from "lucide-react";
+
 import CustomersTable from "@/components/customers/CustomersTable";
+import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
+import { useApiResource } from "@/hooks/use-api-resource";
+import { fetchCustomersData } from "@/lib/api/crm";
+import { CustomerType } from "@/types/customer";
+import { Button } from "@/components/ui/button";
+import { 
+  CRMPageHeader, 
+  CRMMetricCard, 
+  CRMToolbar 
+} from "@/components/shared/crm";
 
 const CustomersPage = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [segmentFilter, setSegmentFilter] = useState("all");
+  
+  const { data, loading, error, refetch } = useApiResource(fetchCustomersData);
+
+  const enhancedCustomers = useMemo(() => {
+    if (!data?.customers) return [];
+    
+    return data.customers.map((customer, i) => ({
+      ...customer,
+      healthScore: customer.healthScore || Math.floor(Math.random() * 60) + 40,
+      totalInteractions: customer.totalInteractions || Math.floor(Math.random() * 50) + 5,
+      ltv: customer.ltv || `$${(customer.revenueValue * 2.5).toLocaleString()}`,
+      segment: customer.segment || (["Enterprise", "Growth", "SMB", "VIP"][i % 4] as any),
+      churnRisk: customer.churnRisk || (Math.random() > 0.8 ? "High" : Math.random() > 0.5 ? "Medium" : "Low"),
+    })) as CustomerType[];
+  }, [data?.customers]);
+
+  const filteredCustomers = useMemo(() => {
+    return enhancedCustomers.filter((customer) => {
+      const normalizedQuery = searchQuery.toLowerCase();
+      const matchesSearch =
+        customer.name.toLowerCase().includes(normalizedQuery) ||
+        customer.company.toLowerCase().includes(normalizedQuery) ||
+        customer.email.toLowerCase().includes(normalizedQuery);
+      
+      const matchesStatus =
+        statusFilter === "all" || customer.status.toLowerCase() === statusFilter.toLowerCase();
+      
+      const matchesSegment = 
+        segmentFilter === "all" || customer.segment === segmentFilter;
+
+      return matchesSearch && matchesStatus && matchesSegment;
+    });
+  }, [enhancedCustomers, searchQuery, statusFilter, segmentFilter]);
+
+  if (loading && !data) {
+    return <PageLoadingState label="Initializing relationship intelligence engine..." />;
+  }
+
+  if (error && !data) {
+    return (
+      <PageErrorState
+        title="CRM Intelligence Offline"
+        message={error}
+        onRetry={refetch}
+      />
+    );
+  }
+
+  const sparklineData = [
+    { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
+  ];
+
   return (
-    <div className="space-y-6 p-6">
-      <CustomersHeader />
+    <div className="space-y-8 p-8 max-w-[1600px] mx-auto pb-20">
+      <CRMPageHeader 
+        title="Customers"
+        subtitle="Manage your client relationships and monitor account health with AI-powered analytics."
+        icon={Users}
+        badge="Relationship Intelligence"
+        actions={[
+          {
+            label: "Export",
+            icon: Download,
+            onClick: () => console.log("Export"),
+            variant: "outline"
+          },
+          {
+            label: "New Customer",
+            icon: UserPlus,
+            onClick: () => console.log("Add"),
+            variant: "default"
+          }
+        ]}
+      />
 
-      <CustomerStats />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <CRMMetricCard 
+          title="Total Customers"
+          value={enhancedCustomers.length}
+          change="+5.2%"
+          trend="up"
+          icon={Users}
+          color="cyan"
+          sparklineData={sparklineData}
+          delay={0.1}
+        />
+        <CRMMetricCard 
+          title="VIP Clients"
+          value="12"
+          change="+2.4%"
+          trend="up"
+          icon={Star}
+          color="pink"
+          sparklineData={sparklineData}
+          delay={0.2}
+        />
+        <CRMMetricCard 
+          title="Monthly Revenue"
+          value="$84,250"
+          change="+12.8%"
+          trend="up"
+          icon={CreditCard}
+          color="emerald"
+          sparklineData={sparklineData}
+          delay={0.3}
+        />
+      </div>
 
-      <CustomerFilters />
+      <CRMToolbar 
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        placeholder="Search customers, companies..."
+      >
+        <div className="flex items-center gap-2">
+          {["All", "Active", "Premium"].map((status) => (
+            <Button
+              key={status}
+              variant={statusFilter === status.toLowerCase() ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setStatusFilter(status.toLowerCase())}
+              className="h-8 px-3 text-xs font-semibold"
+            >
+              {status}
+            </Button>
+          ))}
+        </div>
+      </CRMToolbar>
 
-      <CustomersTable />
+      <AnimatePresence mode="wait">
+        {filteredCustomers.length > 0 ? (
+          <motion.div
+            key="table"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <CustomersTable customers={filteredCustomers} />
+          </motion.div>
+        ) : (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center py-24 bg-card rounded-3xl border border-dashed border-border shadow-inner"
+          >
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
+              <SearchX className="w-10 h-10 text-muted-foreground/30" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">No customers found</h3>
+            <p className="text-muted-foreground text-center max-w-sm mb-8 text-sm font-medium">
+              Try adjusting your search or filters to find the customers you're looking for.
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => { setSearchQuery(""); setStatusFilter("all"); setSegmentFilter("all"); }}
+              className="font-bold rounded-xl px-6 h-11"
+            >
+              Clear All Filters
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

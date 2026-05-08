@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const prisma = require("../config/prisma");
+const { sendDatabaseAwareError } = require("../utils/db-error-response");
 
 const crypto = require("crypto");
 
@@ -55,10 +56,7 @@ const registerUser = async (req, res) => {
   } catch (error) {
     console.log(error);
 
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    sendDatabaseAwareError(res, error, "Server Error");
   }
 };
 
@@ -125,10 +123,7 @@ const loginUser = async (req, res) => {
   } catch (error) {
     console.log(error);
 
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    sendDatabaseAwareError(res, error, "Server Error");
   }
 };
 
@@ -176,10 +171,7 @@ const forgotPassword = async (req, res) => {
   } catch (error) {
     console.log(error);
 
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    sendDatabaseAwareError(res, error, "Server Error");
   }
 };
 
@@ -230,10 +222,40 @@ const resetPassword = async (req, res) => {
   } catch (error) {
     console.log(error);
 
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
+    sendDatabaseAwareError(res, error, "Server Error");
+  }
+};
+
+const getCurrentUser = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
     });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Current user loaded",
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return sendDatabaseAwareError(res, error, "Server Error");
   }
 };
 
@@ -242,4 +264,5 @@ module.exports = {
   loginUser,
   forgotPassword,
   resetPassword,
+  getCurrentUser,
 };

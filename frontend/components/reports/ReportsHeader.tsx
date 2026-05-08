@@ -1,4 +1,4 @@
-import { Download, BarChart3, Calendar } from "lucide-react";
+import { Download, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const ReportsHeader = () => {
