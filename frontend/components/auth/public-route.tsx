@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "./auth-provider";
 
 type PublicRouteProps = {
   children: React.ReactNode;
@@ -9,21 +10,15 @@ type PublicRouteProps = {
 
 export default function PublicRoute({ children }: PublicRouteProps) {
   const router = useRouter();
-  const [hasToken] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    return Boolean(localStorage.getItem("token"));
-  });
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    if (hasToken) {
+    if (!loading && isAuthenticated) {
       router.replace("/dashboard");
     }
-  }, [hasToken, router]);
+  }, [isAuthenticated, loading, router]);
 
-  if (hasToken) {
+  if (loading || isAuthenticated) {
     return null;
   }
 

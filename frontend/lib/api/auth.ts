@@ -15,8 +15,13 @@ interface AuthUser {
   id: string;
   name: string;
   email: string;
-  role?: string;
-  plan?: "free" | "pro" | "enterprise";
+  role: string;
+  roleName?: string;
+  description?: string;
+  permissions?: string[];
+  routes?: string[];
+  dashboardWidgets?: string[];
+  analyticsVisibility?: "full" | "team" | "self" | "limited" | "hr";
 }
 
 interface AuthResponse {

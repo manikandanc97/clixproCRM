@@ -3,7 +3,6 @@
 import { 
   User, 
   Settings, 
-  CreditCard, 
   LogOut, 
   Moon, 
   Sun, 
@@ -28,10 +27,10 @@ import {
 import { useTheme } from "next-themes";
 import { useSettings, AccentColor, FontFamily } from "./SettingsContext";
 import { useRouter } from "next/navigation";
-import { logoutUser } from "@/lib/api/auth";
+import { useAuth } from "@/components/auth/auth-provider";
 
 type ProfileMenuProps = {
-  user: { name?: string; email?: string; role?: string } | null;
+  user: { name?: string; email?: string; role?: string; roleName?: string } | null;
   initials: string;
 };
 
@@ -53,9 +52,10 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   const { theme, setTheme } = useTheme();
   const { accentColor, setAccentColor, fontFamily, setFontFamily } = useSettings();
   const router = useRouter();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    logoutUser();
+    logout();
     router.push("/login");
   };
 
@@ -68,7 +68,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
           </div>
           <div className="lg:block hidden text-left min-w-[80px]">
             <p className="font-bold text-foreground text-sm leading-none tracking-tight">{user?.name || "Account"}</p>
-            <p className="mt-1.5 text-muted-foreground text-[10px] font-black tracking-[0.1em] uppercase">{user?.role || "Team Member"}</p>
+            <p className="mt-1.5 text-muted-foreground text-[10px] font-black tracking-[0.1em] uppercase">{user?.roleName || user?.role || "Team Member"}</p>
           </div>
         </button>
       </DropdownMenuTrigger>
@@ -91,10 +91,6 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
           <DropdownMenuItem onClick={() => router.push("/settings/workspace")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
             <Layout className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className="font-semibold text-sm">Workspace</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/settings/billing")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
-            <CreditCard className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="font-semibold text-sm">Billing</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         

@@ -1,81 +1,33 @@
 "use client";
 
 import {
-  LayoutDashboard,
-  Users,
-  UserRound,
-  CheckSquare,
-  KanbanSquare,
-  FileText,
-  BarChart3,
-  Settings,
-  LogOut,
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
   Building2,
-  Bell,
-  Sparkles
 } from "lucide-react";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { logoutUser, fetchCurrentUser } from "@/lib/api/auth";
+import { usePathname } from "next/navigation";
 import { useSidebar } from "@/components/dashboard/SidebarContext";
-import { useApiResource } from "@/hooks/use-api-resource";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/components/auth/auth-provider";
+import { getRoleMenu, normalizeRole } from "@/lib/auth/rbac";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const menuGroups = [
-  {
-    label: "Overview",
-    items: [
-      { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-      { title: "Reports", icon: BarChart3, href: "/reports" },
-    ]
-  },
-  {
-    label: "Workspace",
-    items: [
-      { title: "Leads", icon: Users, href: "/leads" },
-      { title: "Customers", icon: UserRound, href: "/customers" },
-      { title: "Pipeline", icon: KanbanSquare, href: "/pipeline" },
-      { title: "Quotations", icon: FileText, href: "/quotations" },
-    ]
-  },
-  {
-    label: "Management",
-    items: [
-      { title: "Tasks", icon: CheckSquare, href: "/tasks" },
-    ]
-  },
-  {
-    label: "System",
-    items: [
-      { title: "Settings", icon: Settings, href: "/settings" },
-    ]
-  }
-];
-
-function getInitials(name?: string) {
-  if (!name) return "CR";
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
-}
-
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { isCollapsed, toggleSidebar } = useSidebar();
-  const { data: user } = useApiResource(fetchCurrentUser);
+  const { user } = useAuth();
 
-  const initials = getInitials(user?.name);
-  const isPro = user?.plan === "pro" || user?.plan === "enterprise";
+  const menuGroups = getRoleMenu(user?.role);
+  const roleName =
+    user?.roleName ||
+    normalizeRole(user?.role)
+      .split("_")
+      .map((value) => value.charAt(0).toUpperCase() + value.slice(1))
+      .join(" ");
 
   return (
     <motion.aside 
@@ -116,7 +68,7 @@ export default function Sidebar() {
                       Acme Corp
                     </h1>
                     <p className="text-sidebar-foreground/50 text-[11px] font-medium mt-0.5">
-                      Pro Plan
+                      {roleName}
                     </p>
                   </motion.div>
                 )}
@@ -200,40 +152,6 @@ export default function Sidebar() {
           </div>
         </TooltipProvider>
 
-        {/* Compact Upgrade / Billing CTA */}
-        <AnimatePresence>
-          {!isCollapsed && !isPro && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="px-3 pb-5 mt-auto shrink-0"
-            >
-              <div 
-                className="p-3 bg-gradient-to-br from-[#0f6b40] to-[#0a5c36] text-white border border-[#128a52]/40 shadow-md relative overflow-hidden group"
-                style={{ borderRadius: "var(--crm-card-radius)" }}
-              >
-                {/* Abstract light burst for small card */}
-                <div className="absolute -right-6 -top-6 w-24 h-24 bg-[#128a52]/50 rounded-full blur-2xl pointer-events-none transition-transform duration-700 group-hover:scale-125" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-
-                <div className="relative z-10">
-                  <h5 className="text-[13px] font-extrabold text-white mb-1 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#e0f2e9]" />
-                    Upgrade to Pro
-                  </h5>
-                  <p className="text-[11px] text-[#e0f2e9]/90 leading-tight mb-3">
-                    Unlock advanced AI lead scoring and automation rules.
-                  </p>
-                  <button className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-[#0a5c36] bg-white hover:bg-gray-50 rounded-lg transition-all shadow-sm">
-                    <span>View Plans</span>
-                    <ChevronRight className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </motion.aside>
   );

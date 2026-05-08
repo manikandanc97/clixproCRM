@@ -18,17 +18,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/auth-provider";
 
 export default function CreateNewMenu() {
   const router = useRouter();
+  const { hasPermission } = useAuth();
 
   const actions = [
-    { label: "New Lead", icon: <UserPlus className="w-4 h-4 text-emerald-500" />, path: "/leads?new=true", color: "hover:bg-emerald-500/5 hover:text-emerald-600" },
-    { label: "New Customer", icon: <Briefcase className="w-4 h-4 text-blue-500" />, path: "/customers?new=true", color: "hover:bg-blue-500/5 hover:text-blue-600" },
-    { label: "New Quote", icon: <FileText className="w-4 h-4 text-violet-500" />, path: "/quotations?new=true", color: "hover:bg-violet-500/5 hover:text-violet-600" },
-    { label: "New Task", icon: <CheckSquare className="w-4 h-4 text-amber-500" />, path: "/tasks?new=true", color: "hover:bg-amber-500/5 hover:text-amber-600" },
-    { label: "New Deal", icon: <DollarSign className="w-4 h-4 text-rose-500" />, path: "/pipeline?new=true", color: "hover:bg-rose-500/5 hover:text-rose-600" },
-  ];
+    { label: "New Lead", icon: <UserPlus className="w-4 h-4 text-emerald-500" />, path: "/leads?new=true", color: "hover:bg-emerald-500/5 hover:text-emerald-600", permission: "leads.create" },
+    { label: "New Customer", icon: <Briefcase className="w-4 h-4 text-blue-500" />, path: "/customers?new=true", color: "hover:bg-blue-500/5 hover:text-blue-600", permission: "customers.create" },
+    { label: "New Quote", icon: <FileText className="w-4 h-4 text-violet-500" />, path: "/quotations?new=true", color: "hover:bg-violet-500/5 hover:text-violet-600", permission: "quotations.create" },
+    { label: "New Task", icon: <CheckSquare className="w-4 h-4 text-amber-500" />, path: "/tasks?new=true", color: "hover:bg-amber-500/5 hover:text-amber-600", permission: "tasks.create" },
+    { label: "New Deal", icon: <DollarSign className="w-4 h-4 text-rose-500" />, path: "/pipeline?new=true", color: "hover:bg-rose-500/5 hover:text-rose-600", permission: "pipeline.create" },
+  ].filter((action) => hasPermission(action.permission));
+
+  if (actions.length === 0) {
+    return null;
+  }
 
   return (
     <DropdownMenu>

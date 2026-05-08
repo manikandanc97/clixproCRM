@@ -1,19 +1,22 @@
 "use client";
 
-import { LayoutDashboard, Users, CheckSquare, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-
-const navItems = [
-  { icon: LayoutDashboard, href: "/dashboard", label: "Home" },
-  { icon: Users, href: "/leads", label: "Leads" },
-  { icon: CheckSquare, href: "/tasks", label: "Tasks" },
-  { icon: Settings, href: "/settings", label: "Settings" },
-];
+import { useAuth } from "@/components/auth/auth-provider";
+import { getRoleMenu } from "@/lib/auth/rbac";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const navItems = getRoleMenu(user?.role)
+    .flatMap((group) => group.items)
+    .slice(0, 4)
+    .map((item) => ({
+      icon: item.icon,
+      href: item.href,
+      label: item.title,
+    }));
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/90 dark:bg-card/80 backdrop-blur-xl border-t border-border dark:border-border/60 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
@@ -26,7 +29,7 @@ export function MobileBottomNav() {
             <Link 
               key={item.label} 
               href={item.href}
-              className="relative flex flex-col items-center justify-center p-2 min-w-[4rem]"
+              className="relative flex flex-col items-center justify-center p-2 min-w-16"
             >
               <div className="relative">
                 <Icon className={`w-6 h-6 transition-colors duration-300 ${isActive ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground dark:text-muted-foreground"}`} />

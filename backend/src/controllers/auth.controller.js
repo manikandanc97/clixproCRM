@@ -2,8 +2,42 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const prisma = require("../config/prisma");
 const { sendDatabaseAwareError } = require("../utils/db-error-response");
+const { demoAccounts, getRoleAccess } = require("../config/rbac.config");
 
 const crypto = require("crypto");
+
+async function ensureDemoAccount(email, password) {
+  const normalizedEmail = email.toLowerCase().trim();
+  const matchedDemo = demoAccounts.find(
+    (account) =>
+      account.email.toLowerCase() === normalizedEmail &&
+      account.password === password,
+  );
+
+  if (!matchedDemo) {
+    return null;
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      email: matchedDemo.email,
+    },
+  });
+
+  if (existingUser) {
+    return existingUser;
+  }
+
+  const hashedPassword = await bcrypt.hash(matchedDemo.password, 10);
+  return prisma.user.create({
+    data: {
+      name: matchedDemo.name,
+      email: matchedDemo.email,
+      password: hashedPassword,
+      role: matchedDemo.role,
+    },
+  });
+}
 
 /*
  Register User
@@ -11,6 +45,7 @@ const crypto = require("crypto");
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    const normalizedEmail = email?.toLowerCase().trim();
 
     // Validation
     if (!name || !email || !password) {
@@ -22,7 +57,7 @@ const registerUser = async (req, res) => {
 
     // Existing user check
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -39,7 +74,7 @@ const registerUser = async (req, res) => {
     const newUser = await prisma.user.create({
       data: {
         name,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
       },
     });
@@ -75,9 +110,13 @@ const loginUser = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
+    await ensureDemoAccount(normalizedEmail, password);
+
     // Find user
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {
@@ -109,6 +148,8 @@ const loginUser = async (req, res) => {
       },
     );
 
+    const access = getRoleAccess(user.role);
+
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -118,6 +159,12 @@ const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        roleName: access.roleName,
+        description: access.description,
+        permissions: access.permissions,
+        routes: access.routes,
+        dashboardWidgets: access.dashboardWidgets,
+        analyticsVisibility: access.analyticsVisibility,
       },
     });
   } catch (error) {
@@ -250,7 +297,10 @@ const getCurrentUser = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Current user loaded",
-      user,
+      user: {
+        ...user,
+        ...getRoleAccess(user.role),
+      },
     });
   } catch (error) {
     console.log(error);

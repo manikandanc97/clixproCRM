@@ -25,6 +25,7 @@ import {
 } from "@/components/shared/crm";
 import { useCRMStore } from "@/store/useCRMStore";
 import { toast } from "sonner";
+import { useAuth } from "@/components/auth/auth-provider";
 
 const DashboardPage = () => {
   const { data, loading, error, refetch } = useApiResource(fetchDashboardData);
@@ -35,6 +36,7 @@ const DashboardPage = () => {
     customers, setCustomers,
     activeTimeframe, setActiveTimeframe 
   } = useCRMStore();
+  const { access } = useAuth();
 
   const safeLeads = Array.isArray(leads) ? leads : [];
   const safeTasks = Array.isArray(tasks) ? tasks : [];
@@ -76,6 +78,7 @@ const DashboardPage = () => {
   const sparklineData = [
     { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
   ];
+  const widgets = new Set(access.dashboardWidgets);
 
   const handleExport = () => {
     toast.success("Preparing PDF export...", {
@@ -132,7 +135,7 @@ const DashboardPage = () => {
       </div>
 
       <CRMMetricsGrid>
-        <CRMMetricCard 
+        {widgets.has("revenue") && <CRMMetricCard 
           title="Total Revenue"
           value={activeTimeframe === 'today' ? "$4,200" : activeTimeframe === 'week' ? "$28,400" : "$124,500"}
           change="+15.2%"
@@ -141,8 +144,8 @@ const DashboardPage = () => {
           color="emerald"
           sparklineData={sparklineData}
           delay={0.1}
-        />
-        <CRMMetricCard 
+        />}
+        {widgets.has("activeDeals") && <CRMMetricCard 
           title="Active Deals"
           value={safePipelineItems.length.toString()}
           change="+8.4%"
@@ -151,8 +154,8 @@ const DashboardPage = () => {
           color="purple"
           sparklineData={sparklineData}
           delay={0.2}
-        />
-        <CRMMetricCard 
+        />}
+        {widgets.has("newLeads") && <CRMMetricCard 
           title="New Leads"
           value={safeLeads.length.toString()}
           change="+12.5%"
@@ -161,8 +164,8 @@ const DashboardPage = () => {
           color="blue"
           sparklineData={sparklineData}
           delay={0.3}
-        />
-        <CRMMetricCard 
+        />}
+        {widgets.has("winRate") && <CRMMetricCard 
           title="Win Rate"
           value="24%"
           change="+2.1%"
@@ -171,30 +174,30 @@ const DashboardPage = () => {
           color="indigo"
           sparklineData={sparklineData}
           delay={0.4}
-        />
+        />}
       </CRMMetricsGrid>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <div className="lg:col-span-2 xl:col-span-3 flex flex-col gap-6">
-          <SalesChart data={data?.salesChartData || []} />
-          <UpcomingMeetings />
+          {widgets.has("salesChart") && <SalesChart data={data?.salesChartData || []} />}
+          {widgets.has("upcomingMeetings") && <UpcomingMeetings />}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <HotLeads />
-            <TeamPerformance />
+            {widgets.has("hotLeads") && <HotLeads />}
+            {widgets.has("teamPerformance") && <TeamPerformance />}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <LeadFunnel />
-            <RevenueTracker />
+            {widgets.has("leadFunnel") && <LeadFunnel />}
+            {widgets.has("revenueTracker") && <RevenueTracker />}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <RecentActivities activities={data?.recentActivities || []} />
-            <PendingFollowups />
+            {widgets.has("recentActivities") && <RecentActivities activities={data?.recentActivities || []} />}
+            {widgets.has("pendingFollowups") && <PendingFollowups />}
           </div>
         </div>
 
         <div className="flex flex-col gap-6 self-start w-full lg:sticky lg:top-24">
-          <AIInsights />
-          <CalendarWidget />
+          {widgets.has("aiInsights") && <AIInsights />}
+          {widgets.has("calendarWidget") && <CalendarWidget />}
         </div>
       </div>
     </CRMPageContainer>

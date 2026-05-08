@@ -34,7 +34,7 @@ const sectionInfo: Record<string, { title: string; description: string }> = {
   },
   billing: {
     title: "Settings",
-    description: "Manage your subscription, invoices, and payment methods.",
+    description: "View your software license details, activated modules, and activation status.",
   },
   integrations: {
     title: "Settings",

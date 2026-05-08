@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Bell,
   Palette,
-  CreditCard,
+  Package,
   Blocks,
   Sparkles,
   ChevronRight,
@@ -38,7 +38,7 @@ const categories = [
     items: [
       { id: "workspace", label: "General", icon: Building2 },
       { id: "team", label: "Team", icon: Users },
-      { id: "billing", label: "Billing & Plans", icon: CreditCard },
+      { id: "billing", label: "Software License", icon: Package },
       { id: "integrations", label: "Integrations", icon: Blocks },
       { id: "ai", label: "AI Settings", icon: Sparkles },
     ],

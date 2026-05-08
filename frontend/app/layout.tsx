@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 import { SettingsProvider } from "@/components/dashboard/SettingsContext";
+import { AuthProvider } from "@/components/auth/auth-provider";
 
 export default function RootLayout({
   children,
@@ -30,8 +31,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange={false}
           >
-            {children}
-            <Toaster richColors position="top-right" />
+            <AuthProvider>
+              {children}
+              <Toaster richColors position="top-right" />
+            </AuthProvider>
           </ThemeProvider>
         </SettingsProvider>
       </body>

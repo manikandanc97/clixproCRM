@@ -28,4 +28,16 @@ client.interceptors.request.use(
   }
 );
 
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      window.dispatchEvent(new CustomEvent("auth:expired"));
+    }
+
+    return Promise.reject(error);
+  },
+);
+
 export default client;

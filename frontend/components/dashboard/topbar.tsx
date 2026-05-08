@@ -1,8 +1,7 @@
 "use client";
 
 import { HelpCircle, Grid3X3, Command, Search } from "lucide-react";
-import { fetchCurrentUser } from "@/lib/api/auth";
-import { useApiResource } from "@/hooks/use-api-resource";
+import { useAuth } from "@/components/auth/auth-provider";
 import ProfileMenu from "./ProfileMenu";
 import NotificationPanel from "./NotificationPanel";
 import CreateNewMenu from "./CreateNewMenu";
@@ -18,7 +17,7 @@ function getInitials(name?: string) {
 }
 
 export default function Topbar() {
-  const { data: user } = useApiResource(fetchCurrentUser);
+  const { user } = useAuth();
   const initials = getInitials(user?.name);
 
   return (

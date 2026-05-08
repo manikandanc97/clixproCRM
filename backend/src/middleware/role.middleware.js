@@ -1,3 +1,5 @@
+const { getRoleAccess } = require("../config/rbac.config");
+
 const roleMiddleware = (...allowedRoles) => {
   return (req, res, next) => {
     try {
@@ -11,6 +13,7 @@ const roleMiddleware = (...allowedRoles) => {
         });
       }
 
+      req.userAccess = getRoleAccess(userRole);
       next();
     } catch (error) {
       return res.status(500).json({
@@ -21,4 +24,34 @@ const roleMiddleware = (...allowedRoles) => {
   };
 };
 
-module.exports = roleMiddleware;
+const permissionMiddleware = (...requiredPermissions) => {
+  return (req, res, next) => {
+    try {
+      const userRole = req.user.role;
+      const access = getRoleAccess(userRole);
+      const hasAllPermissions = requiredPermissions.every((permission) =>
+        access.permissions.includes(permission),
+      );
+
+      if (!hasAllPermissions) {
+        return res.status(403).json({
+          success: false,
+          message: "Access forbidden: permission denied",
+        });
+      }
+
+      req.userAccess = access;
+      next();
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Permission validation failed",
+      });
+    }
+  };
+};
+
+module.exports = {
+  roleMiddleware,
+  permissionMiddleware,
+};

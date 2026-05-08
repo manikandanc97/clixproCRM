@@ -63,7 +63,7 @@ const integrations = [
   {
     id: "stripe",
     name: "Stripe",
-    description: "Manage payments and subscriptions directly from the CRM.",
+    description: "Accept payments and manage invoices directly from the CRM.",
     icon: CreditCard,
     category: "Finance",
     connected: true,
