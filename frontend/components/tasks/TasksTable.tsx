@@ -165,7 +165,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
                       <MoreHorizontal className="w-3.5 h-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52 rounded-[var(--crm-card-radius)] border-border shadow-premium p-1.5">
+                  <DropdownMenuContent align="end" className="w-52 rounded-xl border-border shadow-premium p-1.5">
                     <DropdownMenuItem className="rounded-lg text-xs font-bold gap-2">
                       <Play className="w-3.5 h-3.5 text-emerald-500" /> Start Timer
                     </DropdownMenuItem>

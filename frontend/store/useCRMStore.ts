@@ -35,7 +35,7 @@ interface CRMState {
 
   setPipelineItems: (items: DealType[]) => void;
   updatePipelineItem: (id: string, updates: Partial<DealType>) => void;
-  movePipelineItem: (dealId: string, newStatus: string) => void;
+  movePipelineItem: (dealId: string, newStatus: DealType['stage']) => void;
   deletePipelineItem: (id: string) => void;
 
   setCustomers: (customers: CustomerType[]) => void;
@@ -124,7 +124,7 @@ export const useCRMStore = create<CRMState>()(
         pipelineItems: state.pipelineItems.map((d) => (d.id === id ? { ...d, ...updates } : d))
       })),
       movePipelineItem: (dealId, newStatus) => set((state) => ({
-        pipelineItems: state.pipelineItems.map((d) => (d.id === dealId ? { ...d, stage: newStatus as any } : d))
+        pipelineItems: state.pipelineItems.map((d) => (d.id === dealId ? { ...d, stage: newStatus } : d))
       })),
       deletePipelineItem: (id) => set((state) => ({
         pipelineItems: state.pipelineItems.filter((d) => d.id !== id)
@@ -158,14 +158,15 @@ export const useCRMStore = create<CRMState>()(
     {
       name: 'crm-storage',
       version: 2,
-      migrate: (persistedState: any, version: number) => {
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as Partial<CRMState> | undefined;
         // Wipe any pre-v2 state that may have stored entities as objects instead of arrays
         if (version < 2) {
           return {
-            sidebarCollapsed: persistedState?.sidebarCollapsed ?? false,
-            activeTimeframe: persistedState?.activeTimeframe ?? 'month',
-            accentColor: persistedState?.accentColor ?? 'emerald',
-            fontFamily: persistedState?.fontFamily ?? 'sans',
+            sidebarCollapsed: state?.sidebarCollapsed ?? false,
+            activeTimeframe: state?.activeTimeframe ?? 'month',
+            accentColor: state?.accentColor ?? 'emerald',
+            fontFamily: state?.fontFamily ?? 'sans',
             leads: [],
             tasks: [],
             pipelineItems: [],
@@ -175,12 +176,12 @@ export const useCRMStore = create<CRMState>()(
         }
         // Ensure all entity fields are arrays even if somehow corrupted
         return {
-          ...persistedState,
-          leads: Array.isArray(persistedState?.leads) ? persistedState.leads : [],
-          tasks: Array.isArray(persistedState?.tasks) ? persistedState.tasks : [],
-          pipelineItems: Array.isArray(persistedState?.pipelineItems) ? persistedState.pipelineItems : [],
-          customers: Array.isArray(persistedState?.customers) ? persistedState.customers : [],
-          quotations: Array.isArray(persistedState?.quotations) ? persistedState.quotations : [],
+          ...state,
+          leads: Array.isArray(state?.leads) ? state.leads : [],
+          tasks: Array.isArray(state?.tasks) ? state.tasks : [],
+          pipelineItems: Array.isArray(state?.pipelineItems) ? state.pipelineItems : [],
+          customers: Array.isArray(state?.customers) ? state.customers : [],
+          quotations: Array.isArray(state?.quotations) ? state.quotations : [],
         };
       },
       partialize: (state) => ({

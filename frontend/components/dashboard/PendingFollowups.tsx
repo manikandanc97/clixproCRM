@@ -37,7 +37,7 @@ export default function PendingFollowups() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.8 + (index * 0.1) }}
-                className="group flex items-start gap-4 p-3 -mx-3 rounded-2xl hover:bg-muted/50 transition-colors cursor-pointer"
+                className="group flex items-start gap-4 p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
               >
                 <div className="mt-0.5">
                   <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${

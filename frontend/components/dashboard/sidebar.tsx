@@ -157,7 +157,7 @@ export default function Sidebar() {
                         className={`w-full flex items-center ${isCollapsed ? "justify-center px-0 h-9" : "gap-2.5 px-3 py-1.5"} rounded-xl transition-all duration-200 text-[13px] group relative outline-none
                           ${
                             isActive
-                              ? "text-sidebar-foreground bg-sidebar-accent/50 font-medium"
+                              ? "text-sidebar-primary bg-sidebar-primary/10 font-semibold shadow-sm"
                               : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30 font-medium"
                           }`}
                       >
@@ -186,7 +186,7 @@ export default function Sidebar() {
                         <TooltipTrigger asChild>
                           {content}
                         </TooltipTrigger>
-                        <TooltipContent side="right" sideOffset={10} className="bg-slate-900 text-white border-slate-800 rounded-xl px-3 py-1.5 font-bold text-xs shadow-2xl">
+                        <TooltipContent side="right" sideOffset={10} className="bg-slate-900 text-white border-border rounded-xl px-3 py-1.5 font-bold text-xs shadow-elevated">
                           {item.title}
                         </TooltipContent>
                       </Tooltip>

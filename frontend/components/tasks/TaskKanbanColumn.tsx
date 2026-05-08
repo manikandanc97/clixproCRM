@@ -52,7 +52,7 @@ export const TaskKanbanColumn = ({ id, title, tasks, onTaskClick }: TaskKanbanCo
 
       <div 
         ref={setNodeRef}
-        className="flex-1 space-y-4 bg-muted/20 p-2.5 rounded-[var(--crm-card-radius)] border border-border/40 min-h-[500px]"
+        className="flex-1 space-y-4 bg-muted/20 p-2.5 rounded-xl border border-border/40 min-h-[500px]"
       >
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (

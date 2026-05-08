@@ -39,13 +39,13 @@ const WorkspaceSettings = () => {
 
         <div className="flex flex-col sm:flex-row items-start gap-5">
           <div className="relative group shrink-0">
-            <div className="w-20 h-20 rounded-[var(--crm-card-radius)] bg-muted border border-dashed border-border flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/50">
+            <div className="w-20 h-20 rounded-xl bg-muted border border-dashed border-border flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/50">
               {logo ? (
                 <img src={logo} alt="Workspace Logo" className="w-full h-full object-cover" />
               ) : (
                 <Building2 className="w-7 h-7 text-muted-foreground/50" />
               )}
-              <div className="absolute inset-0 bg-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[var(--crm-card-radius)]">
+              <div className="absolute inset-0 bg-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
                 <Upload className="w-4 h-4 text-white" />
               </div>
               <input
@@ -115,7 +115,7 @@ const WorkspaceSettings = () => {
                 <SelectTrigger className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:ring-primary/20 font-medium text-sm">
                   <SelectValue placeholder="Select Currency" />
                 </SelectTrigger>
-                <SelectContent className="rounded-[var(--crm-card-radius)] border-border">
+                <SelectContent className="rounded-xl border-border">
                   <SelectItem value="USD" className="text-xs font-medium">USD – US Dollar</SelectItem>
                   <SelectItem value="EUR" className="text-xs font-medium">EUR – Euro</SelectItem>
                   <SelectItem value="INR" className="text-xs font-medium">INR – Indian Rupee</SelectItem>
@@ -132,7 +132,7 @@ const WorkspaceSettings = () => {
                 <SelectTrigger className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:ring-primary/20 font-medium text-sm">
                   <SelectValue placeholder="Select Timezone" />
                 </SelectTrigger>
-                <SelectContent className="rounded-[var(--crm-card-radius)] border-border">
+                <SelectContent className="rounded-xl border-border">
                   <SelectItem value="utc" className="text-xs font-medium">UTC (Coordinated Universal Time)</SelectItem>
                   <SelectItem value="ist" className="text-xs font-medium">Asia/Kolkata (IST)</SelectItem>
                   <SelectItem value="est" className="text-xs font-medium">America/New_York (EST)</SelectItem>

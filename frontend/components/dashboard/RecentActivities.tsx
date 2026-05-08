@@ -80,7 +80,7 @@ const RecentActivities = ({ activities }: RecentActivitiesProps) => {
           </Button>
         </CardHeader>
 
-        <CardContent className="flex-1 overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
+        <CardContent className="flex-1 overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
           <div className="space-y-5 relative py-2">
             {/* Timeline Line */}
             <div className="absolute left-[21px] top-4 bottom-4 w-px bg-gradient-to-b from-border via-border to-transparent" />
@@ -114,7 +114,7 @@ const RecentActivities = ({ activities }: RecentActivitiesProps) => {
                       onClick={() => handleActivityClick(activity.title)}
                       className="flex items-start gap-5 group cursor-pointer relative z-10"
                     >
-                      <div className={`h-11 w-11 rounded-2xl ${colorClass} text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shrink-0 border border-white/20`}>
+                      <div className={`h-11 w-11 rounded-xl ${colorClass} text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shrink-0 border border-white/20`}>
                         <Icon className="w-5 h-5" />
                       </div>
                       

@@ -2,10 +2,16 @@
 
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { CRMCard } from "./CRMCard";
-import { Area, AreaChart, ResponsiveContainer, Dot } from "recharts";
+import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 
 export type MetricColor = 'emerald' | 'blue' | 'cyan' | 'orange' | 'purple' | 'pink' | 'indigo' | 'slate';
+
+type SparklineDotProps = {
+  cx?: number;
+  cy?: number;
+  index?: number;
+};
 
 interface CRMMetricCardProps {
   title: string;
@@ -79,8 +85,8 @@ export const CRMMetricCard = ({
     slate: { 
       stroke: "#64748b", 
       fill: "url(#gradient-slate)", 
-      icon: "text-slate-500 bg-slate-500/10 border-slate-500/20",
-      badge: "bg-slate-500/10 text-slate-500 border-slate-500/20"
+      icon: "text-muted-foreground bg-muted0/10 border-slate-500/20",
+      badge: "bg-muted0/10 text-muted-foreground border-slate-500/20"
     },
   };
 
@@ -89,36 +95,36 @@ export const CRMMetricCard = ({
   return (
     <CRMCard 
       delay={delay} 
-      className="group relative overflow-hidden transition-all duration-500 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/5"
+      className="group relative overflow-hidden"
     >
-      {/* Background Glow Effect */}
+      {/* Subtle metric accent */}
       <div className={cn(
-        "absolute -right-8 -top-8 w-24 h-24 blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 rounded-full",
+        "absolute -right-10 -top-10 h-24 w-24 rounded-full opacity-10 blur-3xl transition-opacity duration-300 group-hover:opacity-15",
         color === 'emerald' ? "bg-emerald-500" : 
         color === 'blue' ? "bg-blue-500" :
         color === 'cyan' ? "bg-cyan-500" :
         color === 'orange' ? "bg-orange-500" :
         color === 'purple' ? "bg-purple-500" :
         color === 'pink' ? "bg-pink-500" :
-        color === 'indigo' ? "bg-indigo-500" : "bg-slate-500"
+        color === 'indigo' ? "bg-indigo-500" : "bg-muted0"
       )} />
 
       <div className="flex justify-between items-start mb-3">
         <div className="space-y-1.5">
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+          <p className="crm-label">
             {title}
           </p>
-          <h3 className="text-3xl font-black tracking-tighter tabular-nums">
+          <h3 className="text-4xl font-bold tracking-normal tabular-nums">
             {value}
           </h3>
         </div>
         {Icon && (
           <div className={cn(
-            "p-3 rounded-2xl border transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm", 
+            "crm-icon-box", 
             theme.icon,
             iconColor // Allow override if needed
           )}>
-            <Icon className="w-5 h-5 stroke-[2.5]" />
+            <Icon className="h-5 w-5 stroke-[2.2]" />
           </div>
         )}
       </div>
@@ -130,7 +136,7 @@ export const CRMMetricCard = ({
               "flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-full border uppercase tracking-wider",
               isUp ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : 
               isDown ? "bg-rose-500/10 text-rose-600 border-rose-500/20" : 
-              "bg-slate-500/10 text-slate-600 border-slate-500/20"
+              "bg-muted0/10 text-muted-foreground border-slate-500/20"
             )}>
               {isUp && <TrendingUp className="w-3 h-3" />}
               {isDown && <TrendingDown className="w-3 h-3" />}
@@ -157,8 +163,7 @@ export const CRMMetricCard = ({
                   fill={theme.fill}
                   isAnimationActive={true}
                   animationDuration={1500}
-                  dot={(props: any) => {
-                    const { cx, cy, index, payload } = props;
+                  dot={({ cx, cy, index }: SparklineDotProps) => {
                     // Only show dot on the last point for that "premium" look
                     if (index === sparklineData.length - 1) {
                       return (

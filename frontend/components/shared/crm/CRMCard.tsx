@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { crmSurface } from "@/lib/design-system";
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
 
@@ -35,10 +36,12 @@ export const CRMCard = ({
       {...animationProps}
       onClick={onClick}
       className={cn(
-        "bg-card text-card-foreground rounded-[var(--crm-card-radius)] border border-[var(--crm-border-subtle)] shadow-[var(--crm-card-shadow)] overflow-hidden transition-all duration-300",
-        hoverable && "hover:shadow-[var(--crm-card-hover-shadow)] hover:border-border",
-        !noPadding && "p-5",
-        className
+        "overflow-hidden",
+        crmSurface.card,
+        hoverable && crmSurface.interactive,
+        !noPadding && "p-6",
+        className,
+        "rounded-xl"
       )}
     >
       {children}

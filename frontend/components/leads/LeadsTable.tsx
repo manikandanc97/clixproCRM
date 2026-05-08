@@ -13,8 +13,6 @@ import {
   Share2,
   Clock,
   Tag,
-  ChevronUp,
-  ChevronDown
 } from "lucide-react";
 import { useState, Fragment, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +35,8 @@ import {
   CRMTableBody, 
   CRMTableRow, 
   CRMTableCell, 
-  CRMTableHeaderCell 
+  CRMTableHeaderCell,
+  CRMSortIndicator,
 } from "@/components/shared/crm";
 import { cn } from "@/lib/utils";
 import { useCRMStore } from "@/store/useCRMStore";
@@ -116,7 +115,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
+  const handleDelete = (e: React.MouseEvent | Event, id: string, name: string) => {
     e.stopPropagation();
     deleteLead(id);
     toast.error("Lead Deleted", {
@@ -150,11 +149,6 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
     });
   };
 
-  const SortIcon = ({ column }: { column: keyof LeadType | "score" }) => {
-    if (sortConfig?.key !== column) return <ChevronDown className="w-3 h-3 opacity-20 group-hover:opacity-50" />;
-    return sortConfig.direction === "asc" ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />;
-  };
-
   return (
     <TooltipProvider>
       <div className="relative">
@@ -172,7 +166,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                 onClick={() => handleSort("name")}
               >
                 <div className="flex items-center gap-2">
-                  Lead & Intelligence <SortIcon column="name" />
+                  Lead & Intelligence <CRMSortIndicator active={sortConfig?.key === "name"} direction={sortConfig?.direction} />
                 </div>
               </CRMTableHeaderCell>
               <CRMTableHeaderCell 
@@ -180,7 +174,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                 onClick={() => handleSort("status")}
               >
                 <div className="flex items-center gap-2">
-                  Status & Activity <SortIcon column="status" />
+                  Status & Activity <CRMSortIndicator active={sortConfig?.key === "status"} direction={sortConfig?.direction} />
                 </div>
               </CRMTableHeaderCell>
               <CRMTableHeaderCell 
@@ -188,7 +182,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                 onClick={() => handleSort("value")}
               >
                 <div className="flex items-center gap-2">
-                  Deal Value <SortIcon column="value" />
+                  Deal Value <CRMSortIndicator active={sortConfig?.key === "value"} direction={sortConfig?.direction} />
                 </div>
               </CRMTableHeaderCell>
               <CRMTableHeaderCell>Rep</CRMTableHeaderCell>
@@ -321,7 +315,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
-                                onClick={(e) => handleDelete(e as any, lead.id, lead.name)}
+                                onClick={(e) => handleDelete(e, lead.id, lead.name)}
                                 className="text-destructive focus:text-destructive"
                               >
                                 <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
@@ -397,7 +391,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
               exit={{ y: 50, opacity: 0, x: "-50%" }}
               className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
             >
-              <div className="bg-foreground text-background rounded-2xl px-5 py-3 shadow-2xl flex items-center gap-5 border border-border backdrop-blur-xl ring-4 ring-foreground/5">
+              <div className="bg-foreground text-background rounded-xl px-5 py-3 shadow-elevated flex items-center gap-5 border border-border backdrop-blur-xl ring-4 ring-foreground/5">
                 <div className="flex items-center gap-3 pr-5 border-r border-background/20">
                   <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-xs">
                     {selectedIds.length}

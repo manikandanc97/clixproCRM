@@ -5,23 +5,25 @@ import { cn } from "@/lib/utils";
 
 interface TaskIntelligenceBadgeProps {
   type: "progress" | "time" | "subtasks" | "category" | "ai-score" | "overdue";
-  value: any;
+  value: number | string | boolean | { total: number; completed: number };
   className?: string;
 }
 
 export const TaskIntelligenceBadge = ({ type, value, className }: TaskIntelligenceBadgeProps) => {
   switch (type) {
     case "progress":
+      if (typeof value !== "number") return null;
       return (
         <div className={cn("flex flex-col gap-1 min-w-[100px]", className)}>
-          <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
             <span>Progress</span>
             <span>{value}%</span>
           </div>
-          <Progress value={value} className="h-1.5 bg-slate-100" indicatorClassName="bg-gradient-to-r from-emerald-500 to-teal-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+          <Progress value={value} className="h-1.5 bg-muted" indicatorClassName="bg-gradient-to-r from-emerald-500 to-teal-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
         </div>
       );
     case "time":
+      if (typeof value !== "string") return null;
       return (
         <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/50 text-blue-600 border border-blue-100/50 text-[11px] font-bold", className)}>
           <Clock className="w-3.5 h-3.5" />
@@ -29,15 +31,16 @@ export const TaskIntelligenceBadge = ({ type, value, className }: TaskIntelligen
         </div>
       );
     case "subtasks":
-      const { total, completed } = value || { total: 0, completed: 0 };
+      if (typeof value !== "object") return null;
+      const { total, completed } = value;
       const percentage = total > 0 ? (completed / total) * 100 : 0;
       return (
         <div className={cn("flex items-center gap-2", className)}>
-          <div className="flex items-center gap-1 text-slate-500 text-[11px] font-bold">
+          <div className="flex items-center gap-1 text-muted-foreground text-[11px] font-bold">
             <CheckSquare className="w-3.5 h-3.5" />
             {completed}/{total}
           </div>
-          <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div className="w-12 h-1 bg-muted rounded-full overflow-hidden">
             <div 
               className="h-full bg-emerald-500 transition-all duration-500" 
               style={{ width: `${percentage}%` }}
@@ -46,13 +49,15 @@ export const TaskIntelligenceBadge = ({ type, value, className }: TaskIntelligen
         </div>
       );
     case "category":
+      if (typeof value !== "string") return null;
       return (
-        <Badge variant="outline" className={cn("bg-white border-slate-200 text-slate-600 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm", className)}>
-          <Tag className="w-3 h-3 text-slate-400" />
+        <Badge variant="outline" className={cn("bg-white border-border text-muted-foreground font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm", className)}>
+          <Tag className="w-3 h-3 text-muted-foreground" />
           {value}
         </Badge>
       );
     case "ai-score":
+      if (typeof value !== "number") return null;
       return (
         <div className={cn("flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 border border-violet-100 text-[10px] font-bold animate-pulse", className)}>
           <Zap className="w-3 h-3 fill-violet-600" />

@@ -97,7 +97,7 @@ const TeamSettings = () => {
                 Invite Member
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[420px] rounded-[var(--crm-card-radius)] border-border shadow-[var(--crm-card-hover-shadow)]">
+            <DialogContent className="sm:max-w-[420px] rounded-xl border-border shadow-[var(--crm-card-hover-shadow)]">
               <DialogHeader>
                 <DialogTitle className="text-lg font-bold tracking-tight">Invite a Teammate</DialogTitle>
                 <DialogDescription className="text-sm font-medium">
@@ -121,7 +121,7 @@ const TeamSettings = () => {
                     <SelectTrigger className="h-10 rounded-lg border-border/60 bg-muted/30 text-sm font-medium">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[var(--crm-card-radius)] border-border">
+                    <SelectContent className="rounded-xl border-border">
                       <SelectItem value="admin" className="text-xs font-medium">Admin (Full Control)</SelectItem>
                       <SelectItem value="editor" className="text-xs font-medium">Editor (Can edit records)</SelectItem>
                       <SelectItem value="viewer" className="text-xs font-medium">Viewer (Read-only)</SelectItem>
@@ -205,7 +205,7 @@ const TeamSettings = () => {
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-[var(--crm-card-radius)] w-44 p-1.5 shadow-xl border-border">
+                  <DropdownMenuContent align="end" className="rounded-xl w-44 p-1.5 shadow-elevated border-border">
                     <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2 py-1.5">
                       Member Actions
                     </DropdownMenuLabel>

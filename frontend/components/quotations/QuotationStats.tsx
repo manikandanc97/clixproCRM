@@ -13,7 +13,7 @@ const iconMap: Record<string, LucideIcon> = {
 
 // Mock data for sparklines
 const generateSparklineData = () => 
-  Array.from({ length: 10 }, (_, i) => ({ value: Math.floor(Math.random() * 50) + 10 }));
+  Array.from({ length: 10 }, (_, i) => ({ value: ((i * 17) % 50) + 10 }));
 
 interface QuotationStatsProps {
   stats: MetricCardType[];
@@ -34,7 +34,7 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className="relative overflow-hidden group border-none shadow-2xl bg-white/60 backdrop-blur-xl rounded-xl">
+            <Card className="relative overflow-hidden group border-none shadow-elevated bg-card/80 backdrop-blur-xl rounded-xl">
               {/* Decorative background gradient */}
               <div className={`absolute -right-10 -top-10 w-40 h-40 rounded-full blur-3xl opacity-10 transition-all group-hover:opacity-20
                 ${item.title === 'Total Quotes' ? 'bg-blue-500' : 
@@ -44,7 +44,7 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
 
               <CardContent className="p-7 relative z-10">
                 <div className="flex justify-between items-start mb-6">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-3
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-3
                     ${item.title === 'Total Quotes' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 
                       item.title === 'Pending Approval' ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white' : 
                       'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'}`}>
@@ -62,9 +62,9 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
 
                 <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{item.title}</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">{item.title}</p>
                     <div className="flex items-baseline gap-2">
-                      <h2 className="text-4xl font-black text-slate-900 tracking-tighter">
+                      <h2 className="text-4xl font-black text-foreground tracking-tighter">
                         {item.value}
                       </h2>
                     </div>

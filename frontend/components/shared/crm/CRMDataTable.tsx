@@ -26,7 +26,7 @@ export const CRMDataTable = ({
 };
 
 export const CRMTableHeader = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <thead className={cn("bg-muted/30 border-b border-border", className)}>
+  <thead className={cn("border-b border-border bg-muted/30", className)}>
     {children}
   </thead>
 );
@@ -45,7 +45,7 @@ export const CRMTableRow = ({
 }: React.HTMLAttributes<HTMLTableRowElement>) => (
   <tr 
     className={cn(
-      "group hover:bg-muted/30 transition-colors", 
+      "group h-16 transition-colors hover:bg-muted/30", 
       onClick && "cursor-pointer",
       className
     )}
@@ -61,7 +61,7 @@ export const CRMTableCell = ({
   className,
   ...props
 }: React.TdHTMLAttributes<HTMLTableCellElement>) => (
-  <td className={cn("py-4 px-6 text-sm align-middle", className)} {...props}>
+  <td className={cn("h-16 px-6 py-4 text-sm align-middle", className)} {...props}>
     {children}
   </td>
 );
@@ -72,7 +72,7 @@ export const CRMTableHeaderCell = ({
   ...props
 }: React.ThHTMLAttributes<HTMLTableCellElement>) => (
   <th
-    className={cn("py-4 px-6 text-[11px] font-bold text-muted-foreground uppercase tracking-widest text-left", className)}
+    className={cn("h-12 px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground", className)}
     {...props}
   >
     {children}

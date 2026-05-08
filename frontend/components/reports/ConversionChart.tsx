@@ -22,21 +22,6 @@ interface ConversionChartProps {
   data: ConversionChartPointType[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 p-4 rounded-2xl shadow-xl shadow-slate-200/50">
-        <p className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1">{label}</p>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: payload[0].fill }} />
-          <p className="text-lg font-bold text-slate-900">{payload[0].value}%</p>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
 const ConversionChart = ({ data }: ConversionChartProps) => {
   return (
     <motion.div
@@ -44,18 +29,18 @@ const ConversionChart = ({ data }: ConversionChartProps) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
     >
-      <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden group">
+      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden group">
         <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Lead Conversion</CardTitle>
+              <CardTitle className="font-bold text-foreground text-xl tracking-tight">Lead Conversion</CardTitle>
               <BarChart3 className="w-4 h-4 text-emerald-500" />
             </div>
-            <CardDescription className="text-slate-400 text-sm mt-1">Weekly conversion percentage</CardDescription>
+            <CardDescription className="text-muted-foreground text-sm mt-1">Weekly conversion percentage</CardDescription>
           </div>
           
           <Button variant="ghost" size="icon" className="rounded-xl transition-colors h-9 w-9">
-            <MoreHorizontal className="w-5 h-5 text-slate-400" />
+            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
           </Button>
         </CardHeader>
 

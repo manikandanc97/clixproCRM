@@ -34,7 +34,7 @@ export const ProductivityWidgets = () => {
             Focus on Project Alpha
           </h3>
           <p className="text-white/75 text-[11px] leading-relaxed mb-4">
-            Completing "Design Review" today reduces bottleneck risk by 45%.
+            Completing &quot;Design Review&quot; today reduces bottleneck risk by 45%.
           </p>
           <Button
             variant="ghost"
@@ -53,7 +53,7 @@ export const ProductivityWidgets = () => {
             <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
               <Target className="w-3.5 h-3.5 text-accent-foreground" />
             </div>
-            <h3 className="text-sm font-bold text-foreground tracking-tight">Today's Focus</h3>
+            <h3 className="text-sm font-bold text-foreground tracking-tight">Today&apos;s Focus</h3>
           </div>
           <Badge
             variant="outline"

@@ -260,7 +260,7 @@ const LeadsPage = () => {
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-24 bg-card rounded-3xl border border-dashed border-border shadow-inner"
+            className="flex flex-col items-center justify-center py-24 bg-card rounded-xl border border-dashed border-border shadow-inner"
           >
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
               <SearchX className="w-10 h-10 text-muted-foreground/30" />

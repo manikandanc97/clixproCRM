@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation";
 import { logoutUser } from "@/lib/api/auth";
 
 type ProfileMenuProps = {
-  user: any;
+  user: { name?: string; email?: string; role?: string } | null;
   initials: string;
 };
 
@@ -62,7 +62,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-3.5 hover:bg-accent p-1.5 pr-4 rounded-[var(--crm-card-radius)] transition-all group border border-transparent hover:border-border shadow-sm hover:shadow-md outline-none">
+        <button className="flex items-center gap-3.5 hover:bg-accent p-1.5 pr-4 rounded-xl transition-all group border border-transparent hover:border-border shadow-sm hover:shadow-md outline-none">
           <div className="flex justify-center items-center bg-gradient-to-br from-primary to-emerald-600 rounded-xl w-10 h-10 font-black text-sm text-primary-foreground shadow-lg shadow-primary/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 border border-white/20">
             {initials}
           </div>
@@ -72,7 +72,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
           </div>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-64 rounded-[var(--crm-card-radius)] p-2 shadow-2xl border-border bg-popover/95 backdrop-blur-xl" align="end" sideOffset={8}>
+      <DropdownMenuContent className="w-64 rounded-xl p-2 shadow-elevated border-border bg-popover/95 backdrop-blur-xl" align="end" sideOffset={8}>
         <DropdownMenuLabel className="px-3 py-3">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-bold leading-none">{user?.name}</p>
@@ -109,7 +109,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
               <span className="font-semibold text-sm">Appearance</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent className="w-40 rounded-[var(--crm-card-radius)] p-1.5 shadow-xl border-border bg-popover/95 backdrop-blur-xl">
+              <DropdownMenuSubContent className="w-40 rounded-xl p-1.5 shadow-elevated border-border bg-popover/95 backdrop-blur-xl">
                 <DropdownMenuItem onClick={() => setTheme("light")} className="rounded-lg flex items-center justify-between">
                   <div className="flex items-center">
                     <Sun className="mr-2 h-4 w-4" />
@@ -142,7 +142,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
               <span className="font-semibold text-sm">Accent Color</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent className="w-48 rounded-[var(--crm-card-radius)] p-1.5 shadow-xl border-border bg-popover/95 backdrop-blur-xl">
+              <DropdownMenuSubContent className="w-48 rounded-xl p-1.5 shadow-elevated border-border bg-popover/95 backdrop-blur-xl">
                 {ACCENTS.map((item) => (
                   <DropdownMenuItem 
                     key={item.value} 
@@ -167,7 +167,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
               <span className="font-semibold text-sm">Typography</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent className="w-48 rounded-[var(--crm-card-radius)] p-1.5 shadow-xl border-border bg-popover/95 backdrop-blur-xl">
+              <DropdownMenuSubContent className="w-48 rounded-xl p-1.5 shadow-elevated border-border bg-popover/95 backdrop-blur-xl">
                 {FONTS.map((item) => (
                   <DropdownMenuItem 
                     key={item.value} 

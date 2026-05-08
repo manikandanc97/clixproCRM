@@ -33,12 +33,12 @@ export default function CreateNewMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2.5 bg-primary text-primary-foreground px-4 sm:px-6 rounded-[var(--crm-card-radius)] h-12 font-bold text-xs uppercase tracking-widest transition-all shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 outline-none">
+        <button className="flex items-center gap-2.5 bg-primary text-primary-foreground px-4 sm:px-6 rounded-xl h-12 font-bold text-xs uppercase tracking-widest transition-all shadow-elevated shadow-primary/20 hover:scale-[1.02] active:scale-95 outline-none">
           <Plus className="w-4 h-4" />
           <span className="hidden lg:block">Create New</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 rounded-[var(--crm-card-radius)] p-2 shadow-2xl border-border bg-popover/95 backdrop-blur-xl" align="end" sideOffset={8}>
+      <DropdownMenuContent className="w-56 rounded-xl p-2 shadow-elevated border-border bg-popover/95 backdrop-blur-xl" align="end" sideOffset={8}>
         <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
           Quick Actions
         </DropdownMenuLabel>
@@ -50,7 +50,7 @@ export default function CreateNewMenu() {
             className={`cursor-pointer py-3 px-3 rounded-xl focus:bg-accent group flex items-center justify-between ${action.color} transition-all duration-300`}
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-focus:bg-white/50 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-muted dark:bg-slate-800 flex items-center justify-center group-focus:bg-card/70 transition-colors">
                 {action.icon}
               </div>
               <span className="font-bold text-sm">{action.label}</span>

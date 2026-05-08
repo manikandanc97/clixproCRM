@@ -32,34 +32,34 @@ export const CRMToolbar = ({
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "flex flex-col sm:flex-row items-center justify-between gap-3 p-2 bg-card/50 backdrop-blur-sm border border-[var(--crm-border-subtle)] rounded-[var(--crm-card-radius)] shadow-sm mb-4",
+        "crm-toolbar",
         className
       )}
     >
-      <div className="flex flex-1 items-center gap-3 w-full sm:w-auto">
+      <div className="flex w-full flex-1 items-center gap-3 sm:w-auto">
         <div className="relative flex-1 sm:max-w-md group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={placeholder}
-            className="pl-9 h-10 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+            className="h-10 border-transparent bg-muted/40 pl-9 shadow-none focus-visible:border-primary focus-visible:bg-background"
           />
         </div>
         
         {onFilterClick && (
-          <Button variant="ghost" size="sm" onClick={onFilterClick} className="gap-2">
+          <Button variant="outline" size="sm" onClick={onFilterClick} className="gap-2">
             <Filter className="w-4 h-4" />
             Filters
           </Button>
         )}
       </div>
 
-      <div className="flex items-center gap-3 w-full sm:w-auto">
+      <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
         {children}
         
         {viewMode && setViewMode && (
-          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50">
+          <div className="crm-segment">
             <Button
               variant={viewMode === "list" ? "secondary" : "ghost"}
               size="icon-xs"

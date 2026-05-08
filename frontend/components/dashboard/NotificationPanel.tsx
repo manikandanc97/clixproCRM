@@ -74,14 +74,14 @@ export default function NotificationPanel() {
       case "lead": return <UserPlus className="w-4 h-4 text-emerald-500" />;
       case "quote": return <FileCheck className="w-4 h-4 text-blue-500" />;
       case "task": return <AlertCircle className="w-4 h-4 text-amber-500" />;
-      default: return <Settings className="w-4 h-4 text-slate-500" />;
+      default: return <Settings className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative hover:bg-muted p-3 rounded-[var(--crm-card-radius)] transition-all group outline-none">
+        <button className="relative hover:bg-muted p-3 rounded-xl transition-all group outline-none">
           <Bell className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" />
           {unreadCount > 0 && (
             <span className="top-2.5 right-2.5 absolute flex h-2.5 w-2.5">
@@ -91,7 +91,7 @@ export default function NotificationPanel() {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80 sm:w-96 rounded-[var(--crm-card-radius)] p-0 shadow-2xl border-border bg-popover/95 backdrop-blur-xl overflow-hidden" align="end" sideOffset={8}>
+      <DropdownMenuContent className="w-80 sm:w-96 rounded-xl p-0 shadow-elevated border-border bg-popover/95 backdrop-blur-xl overflow-hidden" align="end" sideOffset={8}>
         <div className="flex items-center justify-between px-4 py-4 border-b border-border/50 bg-muted/30">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-sm tracking-tight">Notifications</h3>
@@ -150,7 +150,7 @@ export default function NotificationPanel() {
                   <Bell className="w-8 h-8 text-muted-foreground/30" />
                 </div>
                 <h4 className="font-bold text-sm text-foreground mb-1">All caught up!</h4>
-                <p className="text-xs text-muted-foreground">You don't have any new notifications.</p>
+                <p className="text-xs text-muted-foreground">You don&apos;t have any new notifications.</p>
               </div>
             )}
           </AnimatePresence>

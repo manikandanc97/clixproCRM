@@ -10,8 +10,7 @@ import {
   Phone, 
   Calendar, 
   ExternalLink, 
-  ChevronDown, 
-  ChevronUp,
+  ChevronDown,
   TrendingUp, 
   Activity,
   Zap,
@@ -36,7 +35,8 @@ import {
   CRMTableBody, 
   CRMTableRow, 
   CRMTableCell, 
-  CRMTableHeaderCell 
+  CRMTableHeaderCell,
+  CRMSortIndicator,
 } from "@/components/shared/crm";
 import { cn } from "@/lib/utils";
 import { useCRMStore } from "@/store/useCRMStore";
@@ -96,7 +96,7 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
     setIsPanelOpen(true);
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
+  const handleDelete = (e: React.MouseEvent | Event, id: string, name: string) => {
     e.stopPropagation();
     deleteCustomer(id);
     toast.error("Customer Removed", {
@@ -110,11 +110,6 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
     });
   };
 
-  const SortIcon = ({ column }: { column: keyof CustomerType }) => {
-    if (sortConfig?.key !== column) return <ChevronDown className="w-3 h-3 opacity-20 group-hover:opacity-50" />;
-    return sortConfig.direction === "asc" ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />;
-  };
-
   return (
     <>
       <CRMDataTable>
@@ -126,7 +121,7 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
               onClick={() => handleSort("name")}
             >
               <div className="flex items-center gap-2">
-                Customer Intelligence <SortIcon column="name" />
+                Customer Intelligence <CRMSortIndicator active={sortConfig?.key === "name"} direction={sortConfig?.direction} />
               </div>
             </CRMTableHeaderCell>
             <CRMTableHeaderCell 
@@ -134,7 +129,7 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
               onClick={() => handleSort("healthScore")}
             >
               <div className="flex items-center gap-2">
-                Health Score <SortIcon column="healthScore" />
+                Health Score <CRMSortIndicator active={sortConfig?.key === "healthScore"} direction={sortConfig?.direction} />
               </div>
             </CRMTableHeaderCell>
             <CRMTableHeaderCell>LTV Projection</CRMTableHeaderCell>
@@ -143,7 +138,7 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
               onClick={() => handleSort("status")}
             >
               <div className="flex items-center gap-2">
-                Status & Segment <SortIcon column="status" />
+                Status & Segment <CRMSortIndicator active={sortConfig?.key === "status"} direction={sortConfig?.direction} />
               </div>
             </CRMTableHeaderCell>
             <CRMTableHeaderCell className="text-right">Actions</CRMTableHeaderCell>
@@ -267,7 +262,7 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
                         <DropdownMenuItem onClick={() => handleAction("AI Summary", customer)} className="text-primary focus:text-primary">
                           <Zap className="w-3.5 h-3.5 mr-2" /> AI Summary
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => handleDelete(e as any, customer.id, customer.name)} className="text-destructive focus:text-destructive">
+                        <DropdownMenuItem onClick={(e) => handleDelete(e, customer.id, customer.name)} className="text-destructive focus:text-destructive">
                           <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

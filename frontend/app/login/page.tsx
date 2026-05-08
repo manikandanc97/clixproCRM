@@ -104,7 +104,7 @@ export default function LoginPage() {
 
             <Label
               htmlFor="remember"
-              className="font-normal text-slate-600 text-sm"
+              className="font-normal text-muted-foreground text-sm"
             >
               Stay signed in
             </Label>

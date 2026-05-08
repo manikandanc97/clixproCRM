@@ -18,8 +18,6 @@ import {
   Copy,
   Clock,
   ArrowUpRight,
-  ChevronDown,
-  ChevronUp
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -38,7 +36,8 @@ import {
   CRMTableBody, 
   CRMTableRow, 
   CRMTableCell, 
-  CRMTableHeaderCell 
+  CRMTableHeaderCell,
+  CRMSortIndicator,
 } from "@/components/shared/crm";
 import { cn } from "@/lib/utils";
 import { useCRMStore } from "@/store/useCRMStore";
@@ -117,7 +116,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
     });
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string, quoteId: string) => {
+  const handleDelete = (e: React.MouseEvent | Event, id: string, quoteId: string) => {
     e.stopPropagation();
     deleteQuotation(id);
     toast.error("Quotation Removed", {
@@ -131,11 +130,6 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
     });
   };
 
-  const SortIcon = ({ column }: { column: keyof QuotationType }) => {
-    if (sortConfig?.key !== column) return <ChevronDown className="w-3 h-3 opacity-20 group-hover:opacity-50" />;
-    return sortConfig.direction === "asc" ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />;
-  };
-
   return (
     <>
       <CRMDataTable>
@@ -146,7 +140,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
               onClick={() => handleSort("quoteId")}
             >
               <div className="flex items-center gap-2">
-                Identifier <SortIcon column="quoteId" />
+                Identifier <CRMSortIndicator active={sortConfig?.key === "quoteId"} direction={sortConfig?.direction} />
               </div>
             </CRMTableHeaderCell>
             <CRMTableHeaderCell 
@@ -154,7 +148,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
               onClick={() => handleSort("client")}
             >
               <div className="flex items-center gap-2">
-                Client Relationship <SortIcon column="client" />
+                Client Relationship <CRMSortIndicator active={sortConfig?.key === "client"} direction={sortConfig?.direction} />
               </div>
             </CRMTableHeaderCell>
             <CRMTableHeaderCell 
@@ -162,7 +156,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
               onClick={() => handleSort("amount")}
             >
               <div className="flex items-center gap-2">
-                Deal Size <SortIcon column="amount" />
+                Deal Size <CRMSortIndicator active={sortConfig?.key === "amount"} direction={sortConfig?.direction} />
               </div>
             </CRMTableHeaderCell>
             <CRMTableHeaderCell className="hidden lg:table-cell">Intelligence</CRMTableHeaderCell>
@@ -171,7 +165,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
               onClick={() => handleSort("status")}
             >
               <div className="flex items-center gap-2">
-                Status <SortIcon column="status" />
+                Status <CRMSortIndicator active={sortConfig?.key === "status"} direction={sortConfig?.direction} />
               </div>
             </CRMTableHeaderCell>
             <CRMTableHeaderCell className="text-right">Actions</CRMTableHeaderCell>
@@ -271,7 +265,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
                       <DropdownMenuItem onClick={() => handleAction("Duplicate", quote)}>
                         <Copy className="w-3.5 h-3.5 mr-2" /> Duplicate
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => handleDelete(e as any, quote.id, quote.quoteId)} className="text-destructive focus:text-destructive">
+                      <DropdownMenuItem onClick={(e) => handleDelete(e, quote.id, quote.quoteId)} className="text-destructive focus:text-destructive">
                         <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>

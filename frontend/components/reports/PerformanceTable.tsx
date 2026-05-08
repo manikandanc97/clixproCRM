@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TrendingDown, TrendingUp, Trophy, ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
+import { TrendingDown, TrendingUp, Trophy, ArrowUpRight } from "lucide-react";
 import { PerformanceType } from "@/types/report";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
@@ -14,7 +14,8 @@ import {
   CRMTableRow, 
   CRMTableCell, 
   CRMTableHeaderCell,
-  CRMCard 
+  CRMCard,
+  CRMSortIndicator,
 } from "@/components/shared/crm";
 import { cn } from "@/lib/utils";
 
@@ -51,11 +52,6 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
     });
   };
 
-  const SortIcon = ({ column }: { column: keyof PerformanceType }) => {
-    if (sortConfig?.key !== column) return <ChevronDown className="w-3 h-3 opacity-20 group-hover:opacity-50" />;
-    return sortConfig.direction === "asc" ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />;
-  };
-
   return (
     <CRMDataTable>
       <CRMTableHeader>
@@ -65,7 +61,7 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
             onClick={() => handleSort("name")}
           >
             <div className="flex items-center gap-2">
-              Team Member <SortIcon column="name" />
+              Team Member <CRMSortIndicator active={sortConfig?.key === "name"} direction={sortConfig?.direction} />
             </div>
           </CRMTableHeaderCell>
           <CRMTableHeaderCell 
@@ -73,7 +69,7 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
             onClick={() => handleSort("dealsClosed")}
           >
             <div className="flex items-center gap-2">
-              Deals Closed <SortIcon column="dealsClosed" />
+              Deals Closed <CRMSortIndicator active={sortConfig?.key === "dealsClosed"} direction={sortConfig?.direction} />
             </div>
           </CRMTableHeaderCell>
           <CRMTableHeaderCell>Revenue Target</CRMTableHeaderCell>
@@ -82,7 +78,7 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
             onClick={() => handleSort("conversionRate")}
           >
             <div className="flex items-center gap-2">
-              Conversion <SortIcon column="conversionRate" />
+              Conversion <CRMSortIndicator active={sortConfig?.key === "conversionRate"} direction={sortConfig?.direction} />
             </div>
           </CRMTableHeaderCell>
           <CRMTableHeaderCell className="text-right">Trend</CRMTableHeaderCell>

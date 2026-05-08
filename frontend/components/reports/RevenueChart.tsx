@@ -20,21 +20,6 @@ interface RevenueChartProps {
   data: RevenueChartPointType[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 p-4 rounded-2xl shadow-xl shadow-slate-200/50">
-        <p className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1">{label}</p>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-blue-500" />
-          <p className="text-lg font-bold text-slate-900">{payload[0].value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
 const RevenueChart = ({ data }: RevenueChartProps) => {
   return (
     <motion.div
@@ -42,29 +27,29 @@ const RevenueChart = ({ data }: RevenueChartProps) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
     >
-      <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden group">
+      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden group">
         <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Revenue Analysis</CardTitle>
+              <CardTitle className="font-bold text-foreground text-xl tracking-tight">Revenue Analysis</CardTitle>
               <div className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 +12.5%
               </div>
             </div>
-            <CardDescription className="text-slate-400 text-sm mt-1">Monthly revenue trends from live CRM data</CardDescription>
+            <CardDescription className="text-muted-foreground text-sm mt-1">Monthly revenue trends from live CRM data</CardDescription>
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="hidden sm:flex rounded-xl border-slate-200 text-slate-600 gap-2 h-9">
+            <Button variant="outline" size="sm" className="hidden sm:flex rounded-xl border-border text-muted-foreground gap-2 h-9">
               <Filter className="w-4 h-4" />
               Filter
             </Button>
-            <Button variant="outline" size="icon" className="rounded-xl border-slate-200 text-slate-600 h-9 w-9">
+            <Button variant="outline" size="icon" className="rounded-xl border-border text-muted-foreground h-9 w-9">
               <Download className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="icon" className="rounded-xl transition-colors h-9 w-9">
-              <MoreHorizontal className="w-5 h-5 text-slate-400" />
+              <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
             </Button>
           </div>
         </CardHeader>
@@ -137,7 +122,7 @@ const RevenueChart = ({ data }: RevenueChartProps) => {
                     fill: "#3b82f6", 
                     stroke: "white", 
                     strokeWidth: 2.5,
-                    className: "shadow-xl pulse-dot"
+                    className: "shadow-elevated pulse-dot"
                   }}
                 />
               </AreaChart>

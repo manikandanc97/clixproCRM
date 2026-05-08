@@ -43,7 +43,9 @@ const VIEW_MODES = [
   { id: "kanban", icon: Kanban, label: "Board" },
   { id: "calendar", icon: CalendarIcon, label: "Calendar" },
   { id: "timeline", icon: GanttChart, label: "Timeline" },
-];
+] as const;
+
+type TaskViewMode = (typeof VIEW_MODES)[number]["id"];
 
 const STATUS_FILTERS = [
   { id: "all", label: "All" },
@@ -55,7 +57,7 @@ const STATUS_FILTERS = [
 const TasksPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"list" | "kanban" | "calendar" | "timeline">("list");
+  const [viewMode, setViewMode] = useState<TaskViewMode>("list");
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
 
   const { tasks, setTasks } = useCRMStore();
@@ -65,7 +67,7 @@ const TasksPage = () => {
   useEffect(() => {
     if (data?.tasks && safeTasks.length === 0) {
       setTasks(
-        data.tasks.map((task: any, idx: number) => ({
+        data.tasks.map((task: TaskType, idx: number) => ({
           ...task,
           progress:
             task.status === "Completed"
@@ -98,7 +100,7 @@ const TasksPage = () => {
 
   const completedCount = safeTasks.filter((t) => t.status === "Completed").length;
   const inProgressCount = safeTasks.filter((t) => t.status === "In Progress").length;
-  const overdueCount = safeTasks.filter((t) => (t as any).isOverdue).length;
+  const overdueCount = safeTasks.filter((t) => t.isOverdue).length;
 
   const handleNewTask = () => {
     toast.info("New Task", { description: "Opening task composer workspace..." });
@@ -200,7 +202,7 @@ const TasksPage = () => {
                 variant={isActive ? "secondary" : "ghost"}
                 size="sm"
                 onClick={() => setStatusFilter(key)}
-                className="h-8 px-3 text-xs font-semibold"
+                className="h-9 px-3 text-xs font-semibold"
               >
                 {s.label}
               </Button>
@@ -211,15 +213,15 @@ const TasksPage = () => {
         <div className="w-px h-6 bg-border/60" />
 
         {/* View mode toggles */}
-        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border/50">
+        <div className="crm-segment">
           {VIEW_MODES.map(({ id, icon: Icon, label }) => (
             <Button
               key={id}
               variant={viewMode === id ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => setViewMode(id as any)}
+              onClick={() => setViewMode(id)}
               className={cn(
-                "h-7 px-2.5 gap-1.5 text-[11px] font-semibold",
+                "h-8 gap-1.5 px-2.5 text-[11px] font-semibold",
                 viewMode === id ? "text-foreground shadow-sm" : "text-muted-foreground"
               )}
             >
@@ -257,19 +259,19 @@ const TasksPage = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-24 bg-card rounded-[var(--crm-card-radius)] border border-dashed border-border shadow-[var(--crm-card-shadow)]"
+            className="crm-empty-state"
           >
-            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-5">
+            <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center mb-5">
               <SearchX className="w-8 h-8 text-muted-foreground/40" />
             </div>
             <h3 className="text-lg font-bold text-foreground mb-2">No tasks found</h3>
             <p className="text-muted-foreground text-center max-w-sm mb-6 text-sm font-medium">
-              Try adjusting your search or filters to find the tasks you're looking for.
+              Try adjusting your search or filters to find the tasks you&apos;re looking for.
             </p>
             <Button
               variant="outline"
               onClick={() => { setSearchQuery(""); setStatusFilter("all"); }}
-              className="font-semibold rounded-lg px-5 h-10"
+              className="px-5"
             >
               Clear Filters
             </Button>

@@ -41,7 +41,7 @@ const ProfileSettings = () => {
         <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
           <div className="relative group shrink-0">
             <motion.div whileHover={{ scale: 1.02 }} className="relative">
-              <Avatar className="w-20 h-20 rounded-[var(--crm-card-radius)] border-2 border-border shadow-sm overflow-hidden">
+              <Avatar className="w-20 h-20 rounded-xl border-2 border-border shadow-sm overflow-hidden">
                 <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" />
                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-xl font-bold">
                   {initials}
@@ -93,7 +93,7 @@ const ProfileSettings = () => {
         <div className="mb-5">
           <h3 className="text-base font-bold tracking-tight text-foreground">Personal Details</h3>
           <p className="text-xs text-muted-foreground font-medium mt-0.5">
-            Update your personal information and how it's displayed.
+            Update your personal information and how it&apos;s displayed.
           </p>
         </div>
 

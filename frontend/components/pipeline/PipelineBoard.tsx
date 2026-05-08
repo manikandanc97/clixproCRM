@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useCRMStore } from "@/store/useCRMStore";
 
-const stages = ["New Lead", "Contacted", "Proposal Sent", "Won", "Lost"];
+const stages: PipelineLeadType["stage"][] = ["New Lead", "Contacted", "Proposal Sent", "Won", "Lost"];
 
 interface PipelineBoardProps {
   items: PipelineLeadType[];
@@ -81,8 +81,8 @@ const PipelineBoard = ({ items }: PipelineBoardProps) => {
       }
     }
 
-    if (isOverAColumn) {
-      movePipelineItem(activeId as string, overId as any);
+    if (isOverAColumn && stages.includes(overId as PipelineLeadType["stage"])) {
+      movePipelineItem(activeId as string, overId as PipelineLeadType["stage"]);
     }
   };
 

@@ -82,7 +82,7 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
       {...listeners}
       className={cn(
         "group relative bg-card p-5 rounded-xl border border-border shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-grab active:cursor-grabbing",
-        isOverlay && "shadow-2xl ring-2 ring-primary/20 scale-105 opacity-90"
+        isOverlay && "shadow-elevated ring-2 ring-primary/20 scale-105 opacity-90"
       )}
     >
       {/* Stuck Alert */}
@@ -228,7 +228,7 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
 
       {/* Hover Quick Actions Bar */}
       <div className="absolute inset-x-0 bottom-0 translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-full transition-all duration-300 pointer-events-none group-hover:pointer-events-auto z-30 px-3">
-         <div className="bg-foreground text-background rounded-xl shadow-2xl p-1 flex items-center justify-around ring-4 ring-foreground/5 mt-1">
+         <div className="bg-foreground text-background rounded-xl shadow-elevated p-1 flex items-center justify-around ring-4 ring-foreground/5 mt-1">
             <button className="flex-1 py-1.5 rounded-lg hover:bg-background/10 transition-colors flex items-center justify-center gap-2">
                <Zap className="w-3.5 h-3.5 text-primary" />
                <span className="text-[9px] font-bold uppercase tracking-widest">AI Insight</span>

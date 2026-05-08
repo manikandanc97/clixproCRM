@@ -43,7 +43,7 @@ export default function AuthLayout({
             {/* Glow effect behind logo */}
             <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150" />
 
-            <div className="relative flex justify-center items-center bg-gradient-to-br from-primary to-emerald-600 shadow-2xl shadow-primary/30 border border-white/20 rounded-2xl w-16 h-16 font-black text-white text-2xl">
+            <div className="relative flex justify-center items-center bg-gradient-to-br from-primary to-emerald-600 shadow-elevated shadow-primary/30 border border-white/20 rounded-xl w-16 h-16 font-black text-white text-2xl">
               CR
             </div>
           </div>

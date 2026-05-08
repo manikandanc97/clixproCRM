@@ -30,7 +30,7 @@ interface KanbanViewProps {
 }
 
 export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
-  const statuses = ["Pending", "In Progress", "Completed"];
+  const statuses: TaskType["status"][] = ["Pending", "In Progress", "Completed"];
   const [activeTask, setActiveTask] = useState<TaskType | null>(null);
   const { updateTask, setTasks } = useCRMStore();
 
@@ -71,12 +71,14 @@ export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
       const overIndex = tasks.findIndex((t) => t.id === overId);
 
       if (tasks[activeIndex].status !== tasks[overIndex].status) {
-        updateTask(activeId as string, { status: tasks[overIndex].status as any });
+        updateTask(activeId as string, { status: tasks[overIndex].status });
       }
     }
 
     if (isOverAColumn) {
-      updateTask(activeId as string, { status: overId as any });
+      if (statuses.includes(overId as TaskType["status"])) {
+        updateTask(activeId as string, { status: overId as TaskType["status"] });
+      }
     }
   };
 
@@ -140,5 +142,4 @@ export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
     </div>
   );
 };
-
 

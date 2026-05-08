@@ -10,22 +10,22 @@ import {
 
 const ThemeSettings = () => {
   return (
-    <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden">
+    <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden">
       <CardHeader className="p-5 pb-3">
-        <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Appearance</CardTitle>
-        <CardDescription className="text-slate-400 text-sm mt-1">Customize how the CRM looks on your device.</CardDescription>
+        <CardTitle className="font-bold text-foreground text-xl tracking-tight">Appearance</CardTitle>
+        <CardDescription className="text-muted-foreground text-sm mt-1">Customize how the CRM looks on your device.</CardDescription>
       </CardHeader>
 
       <CardContent className="p-5 pt-3">
         <div className="relative">
           <Select defaultValue="light">
-            <SelectTrigger className="bg-slate-50 border-transparent focus:ring-emerald-500/30 focus:bg-white pl-11 py-6 rounded-2xl transition-all h-auto text-left">
+            <SelectTrigger className="bg-muted border-transparent focus:ring-emerald-500/30 focus:bg-white pl-11 py-6 rounded-xl transition-all h-auto text-left">
               <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                <SunMoon className="w-4 h-4 text-slate-400" />
+                <SunMoon className="w-4 h-4 text-muted-foreground" />
               </div>
               <SelectValue placeholder="Select Theme" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-slate-200 shadow-xl">
+            <SelectContent className="rounded-xl border-border shadow-elevated">
               <SelectItem value="light">
                 <div className="flex items-center gap-2">
                   <Sun className="w-4 h-4 text-amber-500" />
@@ -40,7 +40,7 @@ const ThemeSettings = () => {
               </SelectItem>
               <SelectItem value="system">
                 <div className="flex items-center gap-2">
-                  <Monitor className="w-4 h-4 text-slate-500" />
+                  <Monitor className="w-4 h-4 text-muted-foreground" />
                   <span>System Default</span>
                 </div>
               </SelectItem>

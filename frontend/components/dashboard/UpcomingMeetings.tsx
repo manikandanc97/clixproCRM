@@ -116,7 +116,7 @@ export default function UpcomingMeetings() {
       <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-info/10 text-info rounded-2xl shadow-sm border border-info/20">
+            <div className="p-3 bg-info/10 text-info rounded-xl shadow-sm border border-info/20">
               <Calendar className="w-6 h-6" />
             </div>
             <div>
@@ -145,7 +145,7 @@ export default function UpcomingMeetings() {
                   <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-[var(--crm-card-radius)] p-2">
+              <DropdownMenuContent align="end" className="w-56 rounded-xl p-2">
                 <DropdownMenuItem onClick={handleSchedule} className="rounded-xl gap-2 font-semibold">
                   <Plus className="w-4 h-4" /> Schedule New
                 </DropdownMenuItem>
@@ -177,7 +177,7 @@ export default function UpcomingMeetings() {
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col gap-3 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex flex-col gap-3 max-h-[480px] overflow-y-auto custom-scrollbar">
               {meetings.map((meeting, index) => (
                 <motion.div
                   key={meeting.id}

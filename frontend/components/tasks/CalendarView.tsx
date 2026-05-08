@@ -4,6 +4,7 @@ import { TaskType } from "@/types/task";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CRMCard } from "@/components/shared/crm";
+import { cn } from "@/lib/utils";
 
 interface CalendarViewProps {
   tasks: TaskType[];
@@ -81,8 +82,3 @@ export const CalendarView = ({ tasks, onTaskClick }: CalendarViewProps) => {
     </CRMCard>
   );
 };
-
-// Local utility for conditional classes if not already available
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
-}

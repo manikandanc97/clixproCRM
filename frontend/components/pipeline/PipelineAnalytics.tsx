@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 
 interface PipelineAnalyticsProps {
-  stats: any[];
+  stats: PipelineMetricType[];
 }
 
 const PipelineAnalytics = ({ stats }: PipelineAnalyticsProps) => {
@@ -30,10 +30,10 @@ const PipelineAnalytics = ({ stats }: PipelineAnalyticsProps) => {
       </Card>
 
       {/* Conversion Card */}
-      <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden hover:shadow-md transition-all group">
+      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden hover:shadow-md transition-all group">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 text-slate-400">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Target className="w-4 h-4" />
               <span className="text-xs font-bold uppercase tracking-wider">Conversion rate</span>
             </div>
@@ -42,8 +42,8 @@ const PipelineAnalytics = ({ stats }: PipelineAnalyticsProps) => {
             </div>
           </div>
           <div className="flex items-end gap-2">
-            <h3 className="text-2xl font-bold text-slate-900 tabular-nums">24.8%</h3>
-            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+            <h3 className="text-2xl font-bold text-foreground tabular-nums">24.8%</h3>
+            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden mb-2">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: "24.8%" }}
@@ -52,34 +52,34 @@ const PipelineAnalytics = ({ stats }: PipelineAnalyticsProps) => {
               />
             </div>
           </div>
-          <p className="text-[10px] text-slate-400 mt-2">Avg. lead to won conversion</p>
+          <p className="text-[10px] text-muted-foreground mt-2">Avg. lead to won conversion</p>
         </CardContent>
       </Card>
 
       {/* Average Deal Age */}
-      <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden hover:shadow-md transition-all">
+      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden hover:shadow-md transition-all">
         <CardContent className="p-5">
-          <div className="flex items-center gap-2 text-slate-400 mb-3">
+          <div className="flex items-center gap-2 text-muted-foreground mb-3">
             <BarChart3 className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Avg. Deal Cycle</span>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">18 Days</h3>
+          <h3 className="text-2xl font-bold text-foreground tabular-nums">18 Days</h3>
           <div className="flex items-center gap-1 mt-2">
             {[...Array(5)].map((_, i) => (
               <div 
                 key={i} 
-                className={`h-1.5 flex-1 rounded-full ${i < 3 ? 'bg-amber-400' : 'bg-slate-100'}`} 
+                className={`h-1.5 flex-1 rounded-full ${i < 3 ? 'bg-amber-400' : 'bg-muted'}`} 
               />
             ))}
           </div>
-          <p className="text-[10px] text-slate-400 mt-2">3 days faster than last month</p>
+          <p className="text-[10px] text-muted-foreground mt-2">3 days faster than last month</p>
         </CardContent>
       </Card>
 
       {/* Next Step Prediction */}
       <Card className="bg-slate-900 border-none shadow-lg overflow-hidden group">
         <CardContent className="p-5">
-          <div className="flex items-center gap-2 text-slate-400 mb-2">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-wider">AI Recommendation</span>
           </div>
@@ -97,3 +97,4 @@ const PipelineAnalytics = ({ stats }: PipelineAnalyticsProps) => {
 };
 
 export default PipelineAnalytics;
+import { PipelineMetricType } from "@/types/pipeline";

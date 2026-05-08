@@ -19,8 +19,8 @@ export const CRMPageSection = ({
     <div className={cn("space-y-4", className)}>
       {(title || subtitle) && (
         <div className="space-y-1">
-          {title && <h2 className="text-xl font-bold tracking-tight">{title}</h2>}
-          {subtitle && <p className="text-muted-foreground text-sm font-medium">{subtitle}</p>}
+          {title && <h2 className="crm-section-title">{title}</h2>}
+          {subtitle && <p className="crm-description">{subtitle}</p>}
         </div>
       )}
       {children}

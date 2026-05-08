@@ -87,8 +87,8 @@ const integrations = [
     icon: Webhook,
     category: "Developer",
     connected: false,
-    color: "text-slate-500",
-    bg: "bg-slate-500/10",
+    color: "text-muted-foreground",
+    bg: "bg-muted0/10",
   },
 ];
 

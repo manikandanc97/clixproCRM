@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import { useCRMStore } from "@/store/useCRMStore";
 
 export type AccentColor = "emerald" | "blue" | "violet" | "amber" | "rose";
@@ -17,16 +17,9 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const { accentColor, setAccentColor, fontFamily, setFontFamily } = useCRMStore();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Update body classes and data attributes
   useEffect(() => {
-    if (!mounted) return;
-
     // Update data attributes on document element
     const root = document.documentElement;
     root.setAttribute("data-accent", accentColor);
@@ -35,7 +28,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     // Also handle font-family class on body
     document.body.classList.remove("font-sans", "font-geist", "font-jakarta");
     document.body.classList.add(`font-${fontFamily}`);
-  }, [accentColor, fontFamily, mounted]);
+  }, [accentColor, fontFamily]);
 
   return (
     <SettingsContext.Provider value={{ 
@@ -56,4 +49,3 @@ export function useSettings() {
   }
   return context;
 }
-

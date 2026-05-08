@@ -69,7 +69,7 @@ const BillingSettings = () => (
             key={plan.name}
             whileHover={{ y: -4 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className={`relative flex flex-col p-5 rounded-[var(--crm-card-radius)] border transition-all ${
+            className={`relative flex flex-col p-5 rounded-xl border transition-all ${
               plan.current
                 ? "border-primary/40 bg-primary/5 shadow-[var(--crm-card-hover-shadow)]"
                 : "border-[var(--crm-border-subtle)] bg-card shadow-[var(--crm-card-shadow)] hover:border-border"

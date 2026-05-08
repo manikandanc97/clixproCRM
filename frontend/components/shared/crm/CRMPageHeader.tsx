@@ -32,7 +32,7 @@ export const CRMPageHeader = ({
   className,
 }: CRMPageHeaderProps) => {
   return (
-    <div className={cn("flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5", className)}>
+    <div className={cn("flex flex-col justify-between gap-4 md:flex-row md:items-end", className)}>
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -40,21 +40,21 @@ export const CRMPageHeader = ({
       >
         <div className="flex items-center gap-2.5">
           {Icon && (
-            <div className={cn("p-2 rounded-xl bg-background border shadow-sm", iconColor)}>
+            <div className={cn("crm-icon-box", iconColor)}>
               <Icon className="w-4 h-4" />
             </div>
           )}
           {badge && (
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-600 bg-primary/5 px-3 py-1 rounded-lg border border-primary/20 shadow-sm">
+            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
               {badge}
             </span>
           )}
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="crm-page-title">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-muted-foreground text-sm font-medium max-w-2xl">
+          <p className="crm-description max-w-2xl">
             {subtitle}
           </p>
         )}
@@ -64,7 +64,7 @@ export const CRMPageHeader = ({
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-3"
+          className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center"
         >
           {actions.map((action, index) => {
             const isPrimary = index === actions.length - 1;
@@ -73,7 +73,8 @@ export const CRMPageHeader = ({
                 key={index}
                 onClick={action.onClick}
                 variant={action.variant || (isPrimary ? "default" : "outline")}
-                size={isPrimary ? "lg" : "default"}
+                size="default"
+                className="w-full sm:w-auto"
               >
                 {action.icon && <action.icon className="w-4 h-4" />}
                 {action.label}

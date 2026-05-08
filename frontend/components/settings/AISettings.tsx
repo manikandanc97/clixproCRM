@@ -51,7 +51,7 @@ const AISettings = () => {
             <motion.div
               animate={{ scale: [1, 1.04, 1], rotate: [0, 2, -2, 0] }}
               transition={{ repeat: Infinity, duration: 5 }}
-              className="w-20 h-20 rounded-[var(--crm-card-radius)] bg-card border border-border shadow-[var(--crm-card-shadow)] flex items-center justify-center"
+              className="w-20 h-20 rounded-xl bg-card border border-border shadow-[var(--crm-card-shadow)] flex items-center justify-center"
             >
               <Bot className="w-10 h-10 text-primary" />
             </motion.div>

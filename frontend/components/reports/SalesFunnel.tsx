@@ -14,10 +14,10 @@ const SalesFunnel = () => {
   ];
 
   return (
-    <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+    <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
       <CardHeader className="p-6 pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="font-bold text-slate-900 text-lg tracking-tight">Sales Funnel</CardTitle>
+          <CardTitle className="font-bold text-foreground text-lg tracking-tight">Sales Funnel</CardTitle>
           <div className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
             7.7% Conv.
           </div>
@@ -28,10 +28,10 @@ const SalesFunnel = () => {
           {funnelData.map((item, idx) => (
             <div key={idx} className="relative">
               <div className="flex justify-between items-center mb-1 px-1">
-                <span className="text-[10px] font-bold text-slate-600">{item.stage}</span>
-                <span className="text-[10px] font-bold text-slate-900">{item.count}</span>
+                <span className="text-[10px] font-bold text-muted-foreground">{item.stage}</span>
+                <span className="text-[10px] font-bold text-foreground">{item.count}</span>
               </div>
-              <div className="h-8 w-full bg-slate-50 rounded-lg overflow-hidden flex">
+              <div className="h-8 w-full bg-muted rounded-lg overflow-hidden flex">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${item.percentage}%` }}
@@ -48,13 +48,13 @@ const SalesFunnel = () => {
           ))}
         </div>
 
-        <div className="mt-6 p-3 bg-slate-50 rounded-2xl flex items-center gap-3">
+        <div className="mt-6 p-3 bg-muted rounded-xl flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
           <div>
-            <p className="text-[11px] font-bold text-slate-900">Funnel Efficiency</p>
-            <p className="text-[9px] text-slate-500">Up 2.4% vs last Q</p>
+            <p className="text-[11px] font-bold text-foreground">Funnel Efficiency</p>
+            <p className="text-[9px] text-muted-foreground">Up 2.4% vs last Q</p>
           </div>
         </div>
       </CardContent>

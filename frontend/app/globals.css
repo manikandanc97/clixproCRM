@@ -108,12 +108,24 @@
   --ring: oklch(0.42 0.18 270);
 
   /* Radius */
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 
   /* CRM Specific Tokens */
-  --crm-card-radius: 1rem;
-  --crm-card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --crm-card-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --crm-radius-card: 0.75rem;
+  --crm-radius-control: 0.5rem;
+  --crm-radius-modal: 0.75rem;
+  --crm-radius-pill: 9999px;
+  --crm-control-height: 2.5rem;
+  --crm-control-height-sm: 2.25rem;
+  --crm-control-height-lg: 2.75rem;
+  --crm-icon-size: 1rem;
+  --crm-icon-box: 2.5rem;
+  --crm-card-padding: 1.25rem;
+  --crm-section-gap: 1.25rem;
+  --crm-page-gap: 1.5rem;
+  --crm-card-radius: var(--crm-radius-card);
+  --crm-card-shadow: 0 0 0 1px oklch(0.91 0.008 255 / 0.72), 0 1px 2px oklch(0 0 0 / 0.035);
+  --crm-card-hover-shadow: 0 0 0 1px oklch(0.84 0.012 255 / 0.8), 0 8px 22px -18px oklch(0 0 0 / 0.28);
   --crm-border-subtle: oklch(0.91 0.008 255 / 0.5);
 
   /* Sidebar — Clean Light */
@@ -142,7 +154,7 @@
 
   /* Shadow tokens — Refined for Premium SaaS */
   --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.1), 0 1px 2px oklch(0 0 0 / 0.06);
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.06);
   --shadow-md:
     0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.06);
   --shadow-lg:
@@ -151,13 +163,12 @@
     0 20px 25px -5px oklch(0 0 0 / 0.1), 0 8px 10px -6px oklch(0 0 0 / 0.05);
   --shadow-premium:
     0 0 0 1px oklch(0.91 0.008 255), 0 10px 30px -10px oklch(0 0 0 / 0.08);
-  --shadow-card: 0 0 0 1px oklch(0.91 0.008 255), 0 1px 3px oklch(0 0 0 / 0.05);
+  --shadow-card: var(--crm-card-shadow);
   --shadow-sidebar: 1px 0 0 oklch(0.93 0.005 255);
   --shadow-glow: 0 0 20px oklch(0.45 0.15 160 / 0.1);
   --shadow-soft:
     0 2px 12px -3px oklch(0 0 0 / 0.06);
-  --shadow-elevated:
-    0 12px 24px -10px oklch(0 0 0 / 0.12), 0 0 0 1px oklch(0.91 0.008 255);
+  --shadow-elevated: var(--crm-card-hover-shadow);
 }
 
 /* ============================================================
@@ -191,9 +202,13 @@
   --ring: oklch(0.7 0.15 160);
 
   /* CRM Specific Tokens Dark */
-  --crm-card-radius: 1rem;
-  --crm-card-shadow: 0 0 0 1px oklch(0.24 0.018 265), 0 2px 8px oklch(0 0 0 / 0.25);
-  --crm-card-hover-shadow: 0 0 0 1px oklch(0.3 0.02 265), 0 12px 24px -10px oklch(0 0 0 / 0.5);
+  --crm-radius-card: 0.75rem;
+  --crm-radius-control: 0.5rem;
+  --crm-radius-modal: 0.75rem;
+  --crm-radius-pill: 9999px;
+  --crm-card-radius: var(--crm-radius-card);
+  --crm-card-shadow: 0 0 0 1px oklch(0.24 0.018 265 / 0.82), 0 1px 2px oklch(0 0 0 / 0.28);
+  --crm-card-hover-shadow: 0 0 0 1px oklch(0.32 0.02 265 / 0.9), 0 10px 24px -18px oklch(0 0 0 / 0.65);
   --crm-border-subtle: oklch(0.24 0.018 265 / 0.5);
 
   --sidebar: oklch(0.1 0.018 265);
@@ -336,7 +351,7 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
-    letter-spacing: -0.011em;
+    letter-spacing: 0;
   }
 
   h1,
@@ -347,7 +362,7 @@
   h6 {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: -0.035em;
+    letter-spacing: 0;
   }
 
   ::-webkit-scrollbar {
@@ -377,6 +392,62 @@
    UTILITY CLASSES
    ============================================================ */
 @layer utilities {
+  .crm-card {
+    @apply rounded-xl border border-border bg-card text-card-foreground shadow-card;
+  }
+
+  .crm-control {
+    @apply h-10 rounded-lg border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors;
+  }
+
+  .crm-label {
+    @apply text-xs font-bold uppercase tracking-wider text-muted-foreground;
+  }
+
+  .crm-page-title {
+    @apply text-3xl font-bold tracking-normal text-foreground sm:text-4xl;
+  }
+
+  .crm-section-title {
+    @apply text-xl font-semibold tracking-normal text-foreground;
+  }
+
+  .crm-description {
+    @apply text-sm font-medium leading-relaxed text-muted-foreground;
+  }
+
+  .crm-icon-box {
+    @apply flex size-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm;
+  }
+
+  .crm-toolbar {
+    @apply flex flex-col items-stretch justify-between gap-3 rounded-xl border border-border bg-card p-3 shadow-card sm:flex-row sm:items-center;
+  }
+
+  .crm-segment {
+    @apply inline-flex h-10 items-center gap-1 rounded-lg border border-border bg-muted/50 p-1;
+  }
+
+  .crm-empty-state {
+    @apply flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center shadow-card;
+  }
+
+  .crm-table-wrap {
+    @apply overflow-hidden rounded-xl border border-border bg-card shadow-card;
+  }
+
+  .crm-table-th {
+    @apply h-12 px-6 text-left align-middle text-xs font-bold uppercase tracking-wider text-muted-foreground;
+  }
+
+  .crm-table-td {
+    @apply h-16 px-6 align-middle text-sm;
+  }
+
+  .crm-muted-panel {
+    @apply rounded-lg border border-border bg-muted/40 p-4;
+  }
+
   /* Font families */
   .font-display {
     font-family: var(--font-display);

@@ -30,7 +30,7 @@ export default function Topbar() {
             const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true });
             document.dispatchEvent(event);
           }}
-          className="w-full flex items-center justify-between bg-muted/50 hover:bg-muted border border-transparent hover:border-border px-3 sm:px-5 h-12 rounded-[var(--crm-card-radius)] transition-all duration-300 group shadow-sm outline-none"
+          className="w-full flex items-center justify-between bg-muted/50 hover:bg-muted border border-transparent hover:border-border px-3 sm:px-5 h-12 rounded-xl transition-all duration-300 group shadow-sm outline-none"
         >
           <div className="flex items-center gap-2 sm:gap-3">
             <Search className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -52,11 +52,11 @@ export default function Topbar() {
         <div className="flex items-center gap-2 md:gap-3">
           <NotificationPanel />
 
-          <button className="hidden sm:block hover:bg-muted p-3 rounded-2xl transition-all group outline-none">
+          <button className="hidden sm:block hover:bg-muted p-3 rounded-xl transition-all group outline-none">
             <HelpCircle className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" />
           </button>
 
-          <button className="hidden sm:block hover:bg-muted p-3 rounded-2xl transition-all group outline-none">
+          <button className="hidden sm:block hover:bg-muted p-3 rounded-xl transition-all group outline-none">
             <Grid3X3 className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" />
           </button>
         </div>

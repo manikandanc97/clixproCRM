@@ -90,7 +90,7 @@ export default function AIInsights() {
       viewport={{ once: true }}
       className="w-full"
     >
-      <div className="relative glass-dark shadow-xl rounded-xl overflow-hidden text-white group flex flex-col border border-white/5">
+      <div className="relative glass-dark shadow-elevated rounded-xl overflow-hidden text-white group flex flex-col border border-white/5">
         <div className="relative z-10 p-4 flex-1 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">

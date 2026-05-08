@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { MoreHorizontal, RefreshCw, Download, Filter } from "lucide-react";
+import { MoreHorizontal, RefreshCw, Download, Filter, TrendingUp, BarChart3 } from "lucide-react";
 import { SalesChartPointType } from "@/types/dashboard";
 
 import {
@@ -55,10 +55,14 @@ const SalesChart = ({ data }: SalesChartProps) => {
   };
 
   // Simulate deal count data based on revenue
-  const chartData = data.map(point => ({
-    ...point,
-    deals: Math.round(point.value / 5000) + Math.floor(Math.random() * 5),
-  }));
+  const chartData = useMemo(
+    () =>
+      data.map((point, index) => ({
+        ...point,
+        deals: Math.round(point.value / 5000) + ((index * 3) % 5),
+      })),
+    [data]
+  );
 
   const currentColor = chartType === "revenue" ? "#10b981" : "#6366f1";
 
@@ -71,16 +75,27 @@ const SalesChart = ({ data }: SalesChartProps) => {
     >
       <Card className="overflow-visible border border-border bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div className="space-y-1.5">
-            <CardTitle className="text-xl font-bold tracking-tight">
-              {chartType === "revenue" ? "Revenue Growth" : "Deal Volume"}
-            </CardTitle>
-            <CardDescription className="text-xs font-medium text-muted-foreground">
-              {chartType === "revenue" 
-                ? "Monthly revenue performance tracking across all channels"
-                : "Volume of active and closed deals over the past 12 months"
-              }
-            </CardDescription>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl transition-colors duration-500 ${
+                chartType === 'revenue' 
+                  ? 'bg-emerald-500/10 text-emerald-500' 
+                  : 'bg-indigo-500/10 text-indigo-500'
+              }`}>
+                {chartType === 'revenue' ? <TrendingUp className="w-5 h-5" /> : <BarChart3 className="w-5 h-5" />}
+              </div>
+              <div>
+                <CardTitle className="text-xl font-bold tracking-tight">
+                  {chartType === "revenue" ? "Revenue Growth" : "Deal Volume"}
+                </CardTitle>
+                <CardDescription className="text-xs font-medium text-muted-foreground mt-0.5">
+                  {chartType === "revenue" 
+                    ? "Monthly revenue performance tracking across all channels"
+                    : "Volume of active and closed deals over the past 12 months"
+                  }
+                </CardDescription>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -130,7 +145,7 @@ const SalesChart = ({ data }: SalesChartProps) => {
                   <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 rounded-[var(--crm-card-radius)] p-2">
+              <DropdownMenuContent align="end" className="w-48 rounded-xl p-2">
                 <DropdownMenuItem onClick={handleExport} className="rounded-xl gap-2 font-semibold">
                   <Download className="w-4 h-4" /> Export Data
                 </DropdownMenuItem>
@@ -228,7 +243,7 @@ const SalesChart = ({ data }: SalesChartProps) => {
                     fill: currentColor, 
                     stroke: "white", 
                     strokeWidth: 2.5,
-                    className: "shadow-xl"
+                    className: "shadow-elevated"
                   }}
                 />
               </AreaChart>

@@ -12,10 +12,10 @@ export function DashboardSkeleton() {
       {/* Stats Cards Skeleton */}
       <div className="gap-4 lg:gap-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 mb-8">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="bg-white/40 dark:bg-slate-900/40 border-transparent rounded-xl h-40">
+          <Card key={i} className="bg-card/60 dark:bg-card/40 border-transparent rounded-xl h-40">
             <CardContent className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-800 rounded-xl" />
                 <div className="w-16 h-6 bg-slate-200 dark:bg-slate-800 rounded-full" />
               </div>
               <div className="w-24 h-4 bg-slate-200 dark:bg-slate-800 rounded mb-2 mt-4" />
@@ -28,7 +28,7 @@ export function DashboardSkeleton() {
       <div className="gap-6 xl:gap-8 grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4">
         {/* Main Chart Column Skeleton */}
         <div className="lg:col-span-2 xl:col-span-3 space-y-6 xl:space-y-8">
-          <Card className="bg-white/40 dark:bg-slate-900/40 border-transparent rounded-xl h-[400px]">
+          <Card className="bg-card/60 dark:bg-card/40 border-transparent rounded-xl h-[400px]">
             <CardHeader className="pb-3">
               <div className="w-48 h-6 bg-slate-200 dark:bg-slate-800 rounded" />
               <div className="w-64 h-4 bg-slate-200 dark:bg-slate-800 rounded mt-2" />
@@ -39,15 +39,15 @@ export function DashboardSkeleton() {
           </Card>
           
           <div className="gap-6 xl:gap-8 grid grid-cols-1 md:grid-cols-2">
-            <Card className="bg-white/40 dark:bg-slate-900/40 border-transparent rounded-xl h-80" />
-            <Card className="bg-white/40 dark:bg-slate-900/40 border-transparent rounded-xl h-80" />
+            <Card className="bg-card/60 dark:bg-card/40 border-transparent rounded-xl h-80" />
+            <Card className="bg-card/60 dark:bg-card/40 border-transparent rounded-xl h-80" />
           </div>
         </div>
 
         {/* Right Sidebar Column Skeleton */}
         <div className="space-y-6 xl:space-y-8">
-          <Card className="bg-white/40 dark:bg-slate-900/40 border-transparent rounded-xl h-[300px]" />
-          <Card className="bg-white/40 dark:bg-slate-900/40 border-transparent rounded-xl h-[400px]" />
+          <Card className="bg-card/60 dark:bg-card/40 border-transparent rounded-xl h-[300px]" />
+          <Card className="bg-card/60 dark:bg-card/40 border-transparent rounded-xl h-[400px]" />
         </div>
       </div>
     </div>

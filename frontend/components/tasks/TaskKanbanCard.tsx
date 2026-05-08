@@ -65,7 +65,7 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay }: TaskKanbanCardProps
       <div
         ref={setNodeRef}
         style={style}
-        className="opacity-30 bg-muted/40 p-4 rounded-[var(--crm-card-radius)] border border-dashed border-primary/20 h-[180px]"
+        className="opacity-30 bg-muted/40 p-4 rounded-xl border border-dashed border-primary/20 h-[180px]"
       />
     );
   }
@@ -78,8 +78,8 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay }: TaskKanbanCardProps
       {...listeners}
       onClick={() => onClick(task)}
       className={cn(
-        "bg-card p-4 rounded-[var(--crm-card-radius)] border border-border/50 shadow-[var(--crm-card-shadow)] hover:shadow-[var(--crm-card-hover-shadow)] hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing group relative",
-        isOverlay && "shadow-2xl border-primary/50 rotate-1 scale-[1.02]"
+        "bg-card p-4 rounded-xl border border-border/50 shadow-[var(--crm-card-shadow)] hover:shadow-[var(--crm-card-hover-shadow)] hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing group relative",
+        isOverlay && "shadow-elevated border-primary/50 rotate-1 scale-[1.02]"
       )}
     >
       <div className="flex justify-between items-start mb-3">
@@ -103,7 +103,7 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay }: TaskKanbanCardProps
               <MoreHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 rounded-[var(--crm-card-radius)] p-2 shadow-premium">
+          <DropdownMenuContent align="end" className="w-48 rounded-xl p-2 shadow-premium">
             <DropdownMenuItem 
               onClick={handleDelete}
               className="text-destructive focus:bg-destructive/10 focus:text-destructive rounded-lg gap-2 font-semibold text-xs"

@@ -39,7 +39,7 @@ const SettingsPage = () => {
       <SettingsHeader activeSection={activeSection} />
 
       {/* Body */}
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
         {/* Sidebar */}
         <div className="lg:w-60 shrink-0">
           <SettingsSidebar

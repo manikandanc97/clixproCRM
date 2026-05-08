@@ -62,7 +62,7 @@ export default function HotLeads() {
                     <span className="block font-bold text-foreground text-sm">{lead.value}</span>
                     <span className="text-[10px] font-bold text-warning flex items-center gap-0.5"><Flame className="w-3 h-3"/> {lead.score} Score</span>
                   </div>
-                  <button className="opacity-0 group-hover:opacity-100 p-2 bg-muted hover:bg-warning/10 text-muted-foreground hover:text-warning rounded-full transition-all -translate-x-2 group-hover:translate-x-0">
+                  <button className="opacity-0 group-hover:opacity-100 p-2 bg-muted hover:bg-warning/10 text-muted-foreground hover:text-warning rounded-xl transition-all -translate-x-2 group-hover:translate-x-0">
                     <ArrowUpRight className="w-4 h-4" />
                   </button>
                 </div>

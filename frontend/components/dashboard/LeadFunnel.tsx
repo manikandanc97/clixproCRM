@@ -22,12 +22,12 @@ export default function LeadFunnel() {
       <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50 h-full flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-6">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-blue-50 text-blue-500 rounded-full dark:bg-blue-500/10">
+            <div className="p-2.5 bg-blue-50 text-blue-500 rounded-xl dark:bg-blue-500/10">
               <Filter className="w-5 h-5" />
             </div>
             <CardTitle className="text-base font-bold">Conversion Funnel</CardTitle>
           </div>
-          <button className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-50 rounded-full">
+          <button className="text-muted-foreground hover:text-muted-foreground transition-colors p-2 hover:bg-muted rounded-xl">
             <ChevronRight className="w-5 h-5" />
           </button>
         </CardHeader>
@@ -43,21 +43,21 @@ export default function LeadFunnel() {
               >
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200">{item.stage}</span>
+                    <span className="text-[13px] font-bold text-foreground dark:text-slate-200">{item.stage}</span>
                     {item.conversion && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-300">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-muted dark:bg-slate-800 text-muted-foreground dark:text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-300">
                         {item.conversion}
                       </span>
                     )}
                   </div>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{item.count.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-foreground dark:text-white tracking-tight">{item.count.toLocaleString()}</span>
                 </div>
-                <div className="h-3 w-full bg-slate-100 dark:bg-slate-800/50 rounded-full overflow-hidden flex justify-start">
+                <div className="h-3 w-full bg-muted dark:bg-slate-800/50 rounded-lg overflow-hidden flex justify-start">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: item.width }}
                     transition={{ duration: 1, delay: 0.8 + (index * 0.1), type: "spring", stiffness: 40, damping: 15 }}
-                    className={`h-full rounded-full ${item.color} relative overflow-hidden`}
+                    className={`h-full rounded-lg ${item.color} relative overflow-hidden`}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out" />
                   </motion.div>

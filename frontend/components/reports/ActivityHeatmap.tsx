@@ -9,10 +9,10 @@ const ActivityHeatmap = () => {
   const hours = ["9am", "11am", "1pm", "3pm", "5pm", "7pm"];
   
   // Mock data: 7 days x 12 intervals (9am to 9pm)
-  const data = Array.from({ length: 7 * 12 }, () => Math.floor(Math.random() * 10));
+  const data = Array.from({ length: 7 * 12 }, (_, index) => (index * 7 + Math.floor(index / 3)) % 10);
 
   const getColor = (value: number) => {
-    if (value === 0) return "bg-slate-50";
+    if (value === 0) return "bg-muted";
     if (value < 3) return "bg-blue-100";
     if (value < 6) return "bg-blue-300";
     if (value < 8) return "bg-blue-500";
@@ -20,16 +20,16 @@ const ActivityHeatmap = () => {
   };
 
   return (
-    <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+    <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
       <CardHeader className="p-8 pb-4 flex flex-row items-center justify-between">
-        <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Sales Activity</CardTitle>
+        <CardTitle className="font-bold text-foreground text-xl tracking-tight">Sales Activity</CardTitle>
         <Info className="w-4 h-4 text-slate-300" />
       </CardHeader>
       <CardContent className="p-8 pt-4">
         <div className="flex flex-col gap-2">
           {days.map((day, dayIdx) => (
             <div key={day} className="flex items-center gap-3">
-              <span className="text-[10px] font-black text-slate-400 uppercase w-8 tracking-wider">{day}</span>
+              <span className="text-[10px] font-black text-muted-foreground uppercase w-8 tracking-wider">{day}</span>
               <div className="flex-1 flex gap-1.5">
                 {Array.from({ length: 12 }).map((_, hourIdx) => {
                   const val = data[dayIdx * 12 + hourIdx];
@@ -52,15 +52,15 @@ const ActivityHeatmap = () => {
         <div className="mt-8 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Less</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase">Less</span>
               <div className="flex gap-1">
-                <div className="w-3 h-3 rounded-sm bg-slate-100" />
+                <div className="w-3 h-3 rounded-sm bg-muted" />
                 <div className="w-3 h-3 rounded-sm bg-blue-100" />
                 <div className="w-3 h-3 rounded-sm bg-blue-300" />
                 <div className="w-3 h-3 rounded-sm bg-blue-500" />
                 <div className="w-3 h-3 rounded-sm bg-blue-700" />
               </div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">More</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase">More</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -70,7 +70,7 @@ const ActivityHeatmap = () => {
           </div>
         </div>
 
-        <div className="mt-8 p-6 bg-blue-50/50 rounded-3xl border border-blue-100/50">
+        <div className="mt-8 p-6 bg-blue-50/50 rounded-xl border border-blue-100/50">
           <p className="text-xs text-blue-700 leading-relaxed font-medium">
             <span className="font-bold">Pro Tip:</span> Your team is most active on <span className="font-bold">Wednesdays between 1pm - 3pm</span>. This is a great time for team syncs!
           </p>

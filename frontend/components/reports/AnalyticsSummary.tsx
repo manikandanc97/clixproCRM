@@ -39,8 +39,8 @@ const AnalyticsSummary = () => {
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-slate-900 text-xl tracking-tight">AI Insights</h2>
-            <p className="text-slate-400 text-sm">Automated analysis of your CRM data</p>
+            <h2 className="font-bold text-foreground text-xl tracking-tight">AI Insights</h2>
+            <p className="text-muted-foreground text-sm">Automated analysis of your CRM data</p>
           </div>
         </div>
         <button className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors">
@@ -51,10 +51,10 @@ const AnalyticsSummary = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {insights.map((insight, idx) => (
-          <Card key={idx} className="group relative overflow-hidden bg-white rounded-xl border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-500 border-l-4" style={{ borderLeftColor: insight.color === 'blue' ? '#3b82f6' : insight.color === 'emerald' ? '#10b981' : '#f59e0b' }}>
+          <Card key={idx} className="group relative overflow-hidden bg-card rounded-xl border-border shadow-sm hover:shadow-elevated transition-all duration-500 border-l-4" style={{ borderLeftColor: insight.color === 'blue' ? '#3b82f6' : insight.color === 'emerald' ? '#10b981' : '#f59e0b' }}>
             <CardContent className="p-4">
               <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-2xl ${
+                <div className={`p-3 rounded-xl ${
                   insight.color === 'blue' ? 'bg-blue-50 text-blue-600' : 
                   insight.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' : 
                   'bg-amber-50 text-amber-600'
@@ -62,8 +62,8 @@ const AnalyticsSummary = () => {
                   <insight.icon className="w-5 h-5" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-bold text-slate-900">{insight.title}</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">
+                  <h3 className="font-bold text-foreground">{insight.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {insight.description}
                   </p>
                 </div>
@@ -74,7 +74,7 @@ const AnalyticsSummary = () => {
                   <Lightbulb className="w-3.5 h-3.5 text-indigo-500" />
                   <span className="text-[10px] font-black text-indigo-500 uppercase tracking-wider">Recommendation</span>
                 </div>
-                <button className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-wider">Dismiss</button>
+                <button className="text-[10px] font-bold text-muted-foreground hover:text-muted-foreground uppercase tracking-wider">Dismiss</button>
               </div>
             </CardContent>
           </Card>

@@ -12,11 +12,11 @@ const RevenueTarget = () => {
   const remaining = targetRevenue - currentRevenue;
 
   return (
-    <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
+    <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
       <CardHeader className="p-6 pb-2 flex flex-row items-center justify-between">
         <div className="space-y-0.5">
-          <CardTitle className="font-bold text-slate-900 text-lg tracking-tight">Q2 Goal Progress</CardTitle>
-          <div className="flex items-center gap-2 text-slate-400 text-[10px] font-medium">
+          <CardTitle className="font-bold text-foreground text-lg tracking-tight">Q2 Goal Progress</CardTitle>
+          <div className="flex items-center gap-2 text-muted-foreground text-[10px] font-medium">
             <Calendar className="w-3 h-3" />
             Ends in 24 days
           </div>
@@ -30,24 +30,24 @@ const RevenueTarget = () => {
         <div className="space-y-6">
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Current Revenue</p>
-              <h3 className="text-3xl font-bold text-slate-900 tracking-tight">${(currentRevenue/1000).toFixed(0)}k</h3>
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1">Current Revenue</p>
+              <h3 className="text-3xl font-bold text-foreground tracking-tight">${(currentRevenue/1000).toFixed(0)}k</h3>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Target</p>
-              <h4 className="text-lg font-bold text-slate-400 tracking-tight">${(targetRevenue/1000).toFixed(0)}k</h4>
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1">Target</p>
+              <h4 className="text-lg font-bold text-muted-foreground tracking-tight">${(targetRevenue/1000).toFixed(0)}k</h4>
             </div>
           </div>
 
           <div className="space-y-3">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-bold text-slate-900">{percentage}% Achieved</span>
+              <span className="text-xs font-bold text-foreground">{percentage}% Achieved</span>
               <div className="flex items-center gap-1 text-emerald-500 font-bold text-[10px] uppercase">
                 <ArrowUpRight className="w-3 h-3" />
                 On Track
               </div>
             </div>
-            <div className="relative h-3 w-full bg-slate-50 rounded-full overflow-hidden p-0.5 shadow-inner">
+            <div className="relative h-3 w-full bg-muted rounded-full overflow-hidden p-0.5 shadow-inner">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${percentage}%` }}
@@ -61,11 +61,11 @@ const RevenueTarget = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 bg-slate-50 rounded-2xl space-y-0.5">
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Remaining</p>
-            <p className="text-base font-bold text-slate-900">${(remaining/1000).toFixed(0)}k</p>
+          <div className="p-4 bg-muted rounded-xl space-y-0.5">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Remaining</p>
+            <p className="text-base font-bold text-foreground">${(remaining/1000).toFixed(0)}k</p>
           </div>
-          <div className="p-4 bg-indigo-50 rounded-2xl space-y-0.5">
+          <div className="p-4 bg-indigo-50 rounded-xl space-y-0.5">
             <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">Avg. Needed</p>
             <p className="text-base font-bold text-indigo-600">${(remaining/24/1000).toFixed(1)}k/d</p>
           </div>

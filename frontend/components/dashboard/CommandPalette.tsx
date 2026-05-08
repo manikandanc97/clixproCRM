@@ -37,7 +37,16 @@ const SUGGESTIONS = [
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [recent, setRecent] = useState<typeof SUGGESTIONS>([]);
+  const [recent, setRecent] = useState<typeof SUGGESTIONS>(() => {
+    if (typeof window === "undefined") return [];
+    const savedRecent = localStorage.getItem("crm-recent-searches");
+    if (!savedRecent) return [];
+    try {
+      return JSON.parse(savedRecent);
+    } catch {
+      return [];
+    }
+  });
   const router = useRouter();
   const { setTheme, theme } = useTheme();
   const { setAccentColor } = useSettings();
@@ -49,15 +58,6 @@ export function CommandPalette() {
         setOpen((open) => !open);
       }
     };
-
-    const savedRecent = localStorage.getItem("crm-recent-searches");
-    if (savedRecent) {
-      try {
-        setRecent(JSON.parse(savedRecent));
-      } catch (e) {
-        console.error("Failed to parse recent searches", e);
-      }
-    }
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
@@ -102,23 +102,23 @@ export function CommandPalette() {
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative z-10 w-full max-w-2xl overflow-hidden rounded-[var(--crm-card-radius)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-[0_0_40px_rgba(0,0,0,0.15)] dark:shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-slate-200/60 dark:border-slate-800/60"
+            className="relative z-10 w-full max-w-2xl overflow-hidden rounded-xl bg-white/90 dark:bg-card/90 backdrop-blur-2xl shadow-[0_0_40px_rgba(0,0,0,0.15)] dark:shadow-[0_0_40px_rgba(0,0,0,0.6)] border border-border dark:border-border/60"
           >
             <DialogTitle className="sr-only">Command Palette</DialogTitle>
             <DialogDescription className="sr-only">
               Quickly access commands, leads, and settings.
             </DialogDescription>
             <Command className="w-full flex flex-col overflow-hidden bg-transparent">
-              <div className="flex items-center px-5 border-b border-slate-200/50 dark:border-slate-800/50" cmdk-input-wrapper="">
+              <div className="flex items-center px-5 border-b border-border/50 dark:border-border/50" cmdk-input-wrapper="">
                 <Search className="w-5 h-5 text-primary shrink-0 mr-4" />
                 <Command.Input 
                   autoFocus
                   value={search}
                   onValueChange={setSearch}
                   placeholder="Type a command or search..." 
-                  className="flex-1 h-16 bg-transparent outline-none border-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 font-semibold text-lg"
+                  className="flex-1 h-16 bg-transparent outline-none border-none text-foreground dark:text-slate-100 placeholder:text-muted-foreground font-semibold text-lg"
                 />
-                <kbd className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-black text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg shadow-sm border border-border">
+                <kbd className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-black text-muted-foreground bg-muted dark:bg-slate-800 rounded-lg shadow-sm border border-border">
                   ESC
                 </kbd>
               </div>
@@ -126,8 +126,8 @@ export function CommandPalette() {
               <Command.List className="max-h-[450px] overflow-y-auto p-3 scrollbar-none">
                 <Command.Empty className="py-12 text-center">
                   <div className="flex flex-col items-center gap-3">
-                    <Search className="w-10 h-10 text-slate-300 dark:text-slate-700" />
-                    <p className="text-slate-500 font-medium">No results found for "{search}"</p>
+                    <Search className="w-10 h-10 text-slate-300 dark:text-foreground" />
+                    <p className="text-muted-foreground font-medium">No results found for &quot;{search}&quot;</p>
                   </div>
                 </Command.Empty>
                 
@@ -137,9 +137,9 @@ export function CommandPalette() {
                       <Command.Item 
                         key={item.id}
                         onSelect={() => runCommand(() => router.push(item.path), item)}
-                        className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 aria-selected:bg-primary/10 dark:aria-selected:bg-primary/20 aria-selected:text-primary cursor-pointer transition-all duration-200 group"
+                        className="flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-bold text-foreground dark:text-slate-200 aria-selected:bg-primary/10 dark:aria-selected:bg-primary/20 aria-selected:text-primary cursor-pointer transition-all duration-200 group"
                       >
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-aria-selected:bg-primary group-aria-selected:text-white transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-muted dark:bg-slate-800 flex items-center justify-center group-aria-selected:bg-primary group-aria-selected:text-white transition-colors">
                           {item.type === "Lead" && <User className="w-4 h-4" />}
                           {item.type === "Customer" && <Briefcase className="w-4 h-4" />}
                           {item.type === "Quotation" && <FileText className="w-4 h-4" />}
@@ -147,7 +147,7 @@ export function CommandPalette() {
                         </div>
                         <div className="flex flex-col">
                           <span className="text-sm">{item.title}</span>
-                          <span className="text-[10px] text-slate-400 uppercase tracking-wider">{item.type}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{item.type}</span>
                         </div>
                         <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-aria-selected:opacity-100 -translate-x-2 group-aria-selected:translate-x-0 transition-all" />
                       </Command.Item>
@@ -156,22 +156,22 @@ export function CommandPalette() {
                 )}
 
                 {!search && recent.length > 0 && (
-                  <Command.Group heading="Recent Searches" className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                  <Command.Group heading="Recent Searches" className="px-3 py-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
                     {recent.map(item => (
                       <Command.Item 
                         key={item.id}
                         onSelect={() => runCommand(() => router.push(item.path))}
-                        className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 aria-selected:bg-slate-100 dark:aria-selected:bg-slate-800 cursor-pointer transition-colors group"
+                        className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground dark:text-slate-300 aria-selected:bg-muted dark:aria-selected:bg-slate-800 cursor-pointer transition-colors group"
                       >
-                        <Clock className="w-4 h-4 text-slate-400" />
+                        <Clock className="w-4 h-4 text-muted-foreground" />
                         {item.title}
-                        <span className="text-[10px] text-slate-400 ml-auto">{item.type}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto">{item.type}</span>
                       </Command.Item>
                     ))}
                   </Command.Group>
                 )}
 
-                <Command.Group heading="Navigation" className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">
+                <Command.Group heading="Navigation" className="px-3 py-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-2">
                   <Command.Item onSelect={() => runCommand(() => router.push("/dashboard"))} className="cmd-item">
                     <LayoutDashboard className="w-4 h-4" />
                     <span>Dashboard Overview</span>
@@ -186,7 +186,7 @@ export function CommandPalette() {
                   </Command.Item>
                 </Command.Group>
 
-                <Command.Group heading="Quick Actions" className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">
+                <Command.Group heading="Quick Actions" className="px-3 py-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-2">
                   <Command.Item onSelect={() => runCommand(() => router.push("/leads?new=true"))} className="cmd-item text-emerald-600 dark:text-emerald-400">
                     <Plus className="w-4 h-4" />
                     <span>Create New Lead</span>
@@ -197,7 +197,7 @@ export function CommandPalette() {
                   </Command.Item>
                 </Command.Group>
 
-                <Command.Group heading="Settings & Theme" className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">
+                <Command.Group heading="Settings & Theme" className="px-3 py-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-2">
                   <Command.Item onSelect={() => setTheme(theme === "dark" ? "light" : "dark")} className="cmd-item">
                     {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                     <span>Switch to {theme === "dark" ? "Light" : "Dark"} Mode</span>
@@ -209,18 +209,18 @@ export function CommandPalette() {
                 </Command.Group>
               </Command.List>
 
-              <div className="flex items-center gap-4 px-6 py-4 bg-slate-50/50 dark:bg-slate-950/50 border-t border-slate-200/50 dark:border-slate-800/50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <div className="flex items-center gap-4 px-6 py-4 bg-muted/50 dark:bg-background/50 border-t border-border/50 dark:border-border/50 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">↵</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded border border-border dark:border-border bg-white dark:bg-card shadow-sm">↵</kbd>
                   <span>Select</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">↑↓</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded border border-border dark:border-border bg-white dark:bg-card shadow-sm">↑↓</kbd>
                   <span>Navigate</span>
                 </div>
                 <div className="flex items-center gap-1.5 ml-auto">
-                  <kbd className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">⌘</kbd>
-                  <kbd className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">K</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded border border-border dark:border-border bg-white dark:bg-card shadow-sm">⌘</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded border border-border dark:border-border bg-white dark:bg-card shadow-sm">K</kbd>
                   <span>to close</span>
                 </div>
               </div>
@@ -228,10 +228,10 @@ export function CommandPalette() {
           </motion.div>
           <style jsx global>{`
             .cmd-item {
-              @apply flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 aria-selected:bg-slate-100 dark:aria-selected:bg-slate-800 cursor-pointer transition-colors;
+              @apply flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-foreground dark:text-slate-200 aria-selected:bg-muted dark:aria-selected:bg-slate-800 cursor-pointer transition-colors;
             }
             .cmd-item svg {
-              @apply w-4 h-4 text-slate-400;
+              @apply w-4 h-4 text-muted-foreground;
             }
           `}</style>
         </Command.Dialog>

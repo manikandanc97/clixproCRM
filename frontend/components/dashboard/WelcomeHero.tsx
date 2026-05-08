@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 const WelcomeHero = () => {
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-xl p-6 md:p-8 lg:p-10 rounded-xl overflow-hidden text-white border border-white/10">
+    <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-elevated p-6 md:p-8 lg:p-10 rounded-xl overflow-hidden text-white border border-white/10">
       {/* Decorative elements */}
       <div className="top-0 right-0 absolute bg-primary/20 blur-[100px] rounded-full w-96 h-96 -translate-y-1/2 translate-x-1/3" />
       <div className="bottom-0 left-0 absolute bg-primary/20 blur-[100px] rounded-full w-96 h-96 -translate-x-1/3 translate-y-1/3" />
@@ -41,7 +41,7 @@ const WelcomeHero = () => {
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-8">
-            <Button variant="secondary" size="lg" className="group h-auto bg-white hover:bg-slate-50 shadow-md px-8 py-4 rounded-xl font-bold text-slate-900 text-sm active:scale-95 transition-all flex items-center gap-2">
+            <Button variant="secondary" size="lg" className="group h-auto bg-white hover:bg-muted shadow-md px-8 py-4 rounded-xl font-bold text-foreground text-sm active:scale-95 transition-all flex items-center gap-2">
               View Analytics
               <ArrowUpRight className="w-4 h-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Button>
@@ -57,13 +57,13 @@ const WelcomeHero = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-            className="bg-white/10 backdrop-blur-xl border border-white/10 p-4 rounded-xl flex items-center gap-4 shadow-xl lg:translate-x-4 hover:translate-x-0 transition-transform cursor-pointer"
+            className="bg-white/10 backdrop-blur-xl border border-white/10 p-4 rounded-xl flex items-center gap-4 shadow-elevated lg:translate-x-4 hover:translate-x-0 transition-transform cursor-pointer"
           >
             <div className="p-3 bg-primary/20 rounded-lg text-primary">
               <Activity className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Live Traffic</p>
+              <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Live Traffic</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold tabular-nums">2,405</span>
                 <span className="text-primary text-xs font-medium flex items-center"><TrendingUp className="w-3 h-3 mr-0.5"/> 14%</span>
@@ -75,13 +75,13 @@ const WelcomeHero = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
-            className="bg-white/10 backdrop-blur-xl border border-white/10 p-4 rounded-xl flex items-center gap-4 shadow-xl lg:-translate-x-4 hover:translate-x-0 transition-transform cursor-pointer"
+            className="bg-white/10 backdrop-blur-xl border border-white/10 p-4 rounded-xl flex items-center gap-4 shadow-elevated lg:-translate-x-4 hover:translate-x-0 transition-transform cursor-pointer"
           >
             <div className="p-3 bg-teal-500/20 rounded-lg text-teal-400">
               <Users className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Active Users</p>
+              <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Active Users</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold tabular-nums">842</span>
                 <span className="text-emerald-400 text-xs font-medium flex items-center"><TrendingUp className="w-3 h-3 mr-0.5"/> 5%</span>

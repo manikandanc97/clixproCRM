@@ -30,7 +30,7 @@ export default function RevenueTracker() {
       <Card className="h-full border-none shadow-premium bg-gradient-to-br from-card to-background/50 relative overflow-hidden group flex flex-col">
         <CardHeader className="flex flex-row items-start justify-between z-10 relative pb-2 px-6 pt-6">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-50 text-emerald-500 rounded-full dark:bg-emerald-500/10">
+            <div className="p-2.5 bg-emerald-50 text-emerald-500 rounded-xl dark:bg-emerald-500/10">
               <Target className="w-5 h-5" />
             </div>
             <div>
@@ -40,13 +40,13 @@ export default function RevenueTracker() {
                 <span className="text-xs font-bold text-emerald-500">
                   +12.5%
                 </span>
-                <span className="text-xs font-medium text-slate-400">
+                <span className="text-xs font-medium text-muted-foreground">
                   vs last month
                 </span>
               </div>
             </div>
           </div>
-          <button className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-50 rounded-full">
+          <button className="text-muted-foreground hover:text-muted-foreground transition-colors p-2 hover:bg-muted rounded-xl">
             <ChevronRight className="w-5 h-5" />
           </button>
         </CardHeader>
@@ -55,10 +55,10 @@ export default function RevenueTracker() {
           <div className="flex-1 flex items-center justify-between w-full py-2">
             {/* Left Stat - Current */}
             <div className="flex flex-col items-start space-y-0.5 z-10 relative">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 Current
               </p>
-              <p className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+              <p className="text-lg md:text-xl font-black text-foreground dark:text-white tracking-tight">
                 $85.2k
               </p>
             </div>
@@ -105,10 +105,10 @@ export default function RevenueTracker() {
 
               {/* Center Content */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl leading-none font-black text-slate-900 dark:text-white tracking-tight">
+                <span className="text-3xl leading-none font-black text-foreground dark:text-white tracking-tight">
                   85%
                 </span>
-                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1">
                   Achieved
                 </span>
               </div>
@@ -116,16 +116,16 @@ export default function RevenueTracker() {
 
             {/* Right Stat - Target */}
             <div className="flex flex-col items-end space-y-0.5 text-right z-10 relative">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 Target
               </p>
-              <p className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+              <p className="text-lg md:text-xl font-black text-foreground dark:text-white tracking-tight">
                 $100k
               </p>
             </div>
           </div>
 
-          <button className="mt-3 w-full py-3 bg-slate-950 dark:bg-slate-50 text-white dark:text-slate-950 rounded-full font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 transition-all active:scale-95 group/btn">
+          <button className="mt-3 w-full py-3 bg-slate-950 dark:bg-muted text-white dark:text-slate-950 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 transition-all active:scale-95 group/btn">
             View Analytics
             <ArrowUpRight className="w-4 h-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
           </button>

@@ -11,7 +11,7 @@ interface LeadsHeaderProps {
   leads: LeadType[];
 }
 
-const Sparkline = ({ data, color }: { data: any[], color: string }) => (
+const Sparkline = ({ data, color }: { data: { value: number }[], color: string }) => (
   <div className="h-10 w-20">
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data}>
@@ -77,19 +77,19 @@ const LeadsHeader = ({ leads }: LeadsHeaderProps) => {
              </div>
              <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Lead Intelligence</span>
           </div>
-          <h1 className="font-black text-slate-900 text-4xl tracking-tight">Leads Management</h1>
-          <p className="mt-1 text-slate-500 font-medium">
+          <h1 className="font-black text-foreground text-4xl tracking-tight">Leads Management</h1>
+          <p className="mt-1 text-muted-foreground font-medium">
             Track, qualify, and convert potential opportunities into customers.
           </p>
         </div>
 
         <div className="flex items-center gap-3 mb-1">
-          <Button variant="outline" className="flex items-center gap-2 bg-white hover:bg-slate-50 px-5 py-6 rounded-2xl border-slate-200 font-bold text-slate-700 transition-all shadow-sm group">
+          <Button variant="outline" className="flex items-center gap-2 bg-white hover:bg-muted px-5 py-6 rounded-xl border-border font-bold text-foreground transition-all shadow-sm group">
             <Download className="w-4 h-4 group-hover:scale-110 transition-transform" />
             Export Data
           </Button>
           
-          <Button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 px-6 py-6 rounded-2xl font-bold text-white transition-all shadow-xl shadow-slate-200 active:scale-95 group">
+          <Button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 px-6 py-6 rounded-xl font-bold text-white transition-all shadow-elevated shadow-slate-200 active:scale-95 group">
             <UserPlus className="w-4 h-4 group-hover:rotate-12 transition-transform" />
             Add New Lead
           </Button>
@@ -135,10 +135,10 @@ const LeadsHeader = ({ leads }: LeadsHeaderProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm transition-all hover:shadow-2xl hover:shadow-slate-200 group overflow-hidden relative border-b-4 border-b-transparent hover:border-b-current" style={{ borderBottomColor: stat.color }}>
+            <Card className="bg-card rounded-xl border-border shadow-sm transition-all hover:shadow-elevated hover:shadow-slate-200 group overflow-hidden relative border-b-4 border-b-transparent hover:border-b-current" style={{ borderBottomColor: stat.color }}>
               <CardContent className="p-7 relative z-10">
                 <div className="flex justify-between items-start mb-4">
-                  <div className={`p-4 rounded-2xl ${stat.bg}`} style={{ color: stat.color }}>
+                  <div className={`p-4 rounded-xl ${stat.bg}`} style={{ color: stat.color }}>
                     <stat.icon className="w-7 h-7" />
                   </div>
                   <Sparkline data={stat.data} color={stat.color} />
@@ -146,9 +146,9 @@ const LeadsHeader = ({ leads }: LeadsHeaderProps) => {
                 
                 <div className="flex items-end justify-between">
                   <div>
-                    <p className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-1">{stat.label}</p>
+                    <p className="text-muted-foreground text-sm font-bold uppercase tracking-wider mb-1">{stat.label}</p>
                     <div className="flex items-baseline gap-2">
-                      <h3 className="text-4xl font-black text-slate-900">
+                      <h3 className="text-4xl font-black text-foreground">
                         <AnimatedCounter value={stat.value} />
                       </h3>
                       <div className={`flex items-center text-xs font-bold px-2 py-0.5 rounded-full ${stat.isUp ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>

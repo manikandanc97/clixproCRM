@@ -20,6 +20,8 @@ import {
 import { useCRMStore } from "@/store/useCRMStore";
 import { toast } from "sonner";
 
+const CUSTOMER_SEGMENTS: CustomerType["segment"][] = ["Enterprise", "Growth", "SMB", "VIP"];
+
 const CustomersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -36,7 +38,7 @@ const CustomersPage = () => {
         healthScore: customer.healthScore || Math.floor(Math.random() * 60) + 40,
         totalInteractions: customer.totalInteractions || Math.floor(Math.random() * 50) + 5,
         ltv: customer.ltv || `$${(customer.revenueValue * 2.5).toLocaleString()}`,
-        segment: customer.segment || (["Enterprise", "Growth", "SMB", "VIP"][i % 4] as any),
+        segment: customer.segment || CUSTOMER_SEGMENTS[i % CUSTOMER_SEGMENTS.length],
         churnRisk: customer.churnRisk || (Math.random() > 0.8 ? "High" : Math.random() > 0.5 ? "Medium" : "Low"),
       })));
     }
@@ -180,14 +182,14 @@ const CustomersPage = () => {
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-24 bg-card rounded-3xl border border-dashed border-border shadow-inner"
+            className="flex flex-col items-center justify-center py-24 bg-card rounded-xl border border-dashed border-border shadow-inner"
           >
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
               <SearchX className="w-10 h-10 text-muted-foreground/30" />
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">No customers found</h3>
             <p className="text-muted-foreground text-center max-w-sm mb-8 text-sm font-medium">
-              Try adjusting your search or filters to find the customers you're looking for.
+              Try adjusting your search or filters to find the customers you&apos;re looking for.
             </p>
             <Button 
               variant="outline" 

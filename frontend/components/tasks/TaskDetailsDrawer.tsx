@@ -58,7 +58,7 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-2xl border-l border-border/40 p-0 bg-background shadow-2xl">
+      <SheetContent className="sm:max-w-2xl border-l border-border/40 p-0 bg-background shadow-elevated">
         <div className="flex flex-col h-full">
           <SheetHeader className="p-6 border-b border-border/40 bg-card">
             <div className="flex justify-between items-start mb-4">
@@ -118,7 +118,7 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
 
                 {/* AI Summary */}
                 {task.aiSummary && (
-                  <div className="bg-primary/[0.03] border border-primary/10 rounded-[var(--crm-card-radius)] p-5 relative overflow-hidden group">
+                  <div className="bg-primary/[0.03] border border-primary/10 rounded-xl p-5 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
                       <Zap className="w-16 h-16 text-primary" />
                     </div>
@@ -147,7 +147,7 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
                 {/* Description */}
                 <div className="space-y-3">
                   <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Detailed Description</h3>
-                  <div className="bg-card rounded-[var(--crm-card-radius)] border border-border/40 p-5 shadow-sm">
+                  <div className="bg-card rounded-xl border border-border/40 p-5 shadow-sm">
                     <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                       {task.description || "No detailed description provided for this task. Use the workspace editor to define clear objectives and success criteria."}
                     </p>
@@ -197,7 +197,7 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
                         <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-black">ME</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <div className="bg-card border border-border/50 rounded-[var(--crm-card-radius)] p-4 shadow-sm focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+                        <div className="bg-card border border-border/50 rounded-xl p-4 shadow-sm focus-within:ring-2 focus-within:ring-primary/10 transition-all">
                           <textarea 
                             placeholder="Add a comment or mention @someone..." 
                             className="w-full bg-transparent border-none focus:ring-0 text-sm text-foreground placeholder:text-muted-foreground/40 font-medium resize-none min-h-[90px]"
