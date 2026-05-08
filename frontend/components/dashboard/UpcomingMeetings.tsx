@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CRMCard } from "@/components/shared/crm/CRMCard";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Calendar,
   Clock,
@@ -110,10 +111,14 @@ export default function UpcomingMeetings() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.4 }}
+      transition={{ duration: 0.6, delay: 0.6 }}
       className="w-full"
     >
-      <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
+      <CRMCard 
+        accentSeed="Upcoming Meetings"
+        noPadding
+        className="bg-gradient-to-br from-card to-background/50"
+      >
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-info/10 text-info rounded-xl shadow-sm border border-info/20">
@@ -300,7 +305,7 @@ export default function UpcomingMeetings() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </CRMCard>
     </motion.div>
   );
 }

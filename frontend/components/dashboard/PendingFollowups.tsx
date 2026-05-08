@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CRMCard } from "@/components/shared/crm/CRMCard";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckSquare, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const tasks = [
   { id: 1, title: "Send proposal to TechFlow", due: "Today, 2:00 PM", priority: "high" },
-  { id: 2, draw: "Follow up with Sarah Jenkins", due: "Tomorrow, 10:00 AM", priority: "medium" },
+  { id: 2, title: "Follow up with Sarah Jenkins", due: "Tomorrow, 10:00 AM", priority: "medium" },
   { id: 3, title: "Prepare Q3 Sales Report", due: "Oct 15", priority: "low" },
 ];
 
@@ -19,7 +20,7 @@ export default function PendingFollowups() {
       transition={{ duration: 0.6, delay: 0.7 }}
       className="w-full"
     >
-      <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
+      <CRMCard accentSeed="Pending Tasks" className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-info/10 text-info rounded-xl">
@@ -48,14 +49,14 @@ export default function PendingFollowups() {
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors leading-snug">{task.title || task.draw}</h4>
+                  <h4 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors leading-snug">{task.title}</h4>
                   <div className="flex items-center gap-1.5 mt-1.5 text-xs font-medium text-muted-foreground">
                     <Clock className="w-3.5 h-3.5" />
                     <span className={task.priority === 'high' ? 'text-destructive' : ''}>{task.due}</span>
                   </div>
                 </div>
                 <div className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                  <ArrowRight className="w-4 h-4 text-blue-500" />
+                  <ArrowRight className="w-4 h-4 text-primary" />
                 </div>
               </motion.div>
             ))}
@@ -65,7 +66,7 @@ export default function PendingFollowups() {
             + Add New Task
           </Button>
         </CardContent>
-      </Card>
+      </CRMCard>
     </motion.div>
   );
 }

@@ -29,6 +29,8 @@ export const CRMAIInsight = ({
   return (
     <CRMCard 
       delay={delay} 
+      withAccent={true}
+      accentColor="border-l-primary"
       className={cn(
         "relative bg-gradient-to-br from-primary/5 via-transparent to-primary/5 border-primary/20",
         className

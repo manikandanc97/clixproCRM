@@ -15,7 +15,7 @@ export const CRMDataTable = ({
   containerClassName,
 }: CRMDataTableProps) => {
   return (
-    <CRMCard noPadding className={cn("overflow-hidden", containerClassName)}>
+    <CRMCard noPadding withAccent={false} className={cn("overflow-hidden", containerClassName)}>
       <div className="overflow-x-auto">
         <table className={cn("w-full text-left border-collapse", className)}>
           {children}

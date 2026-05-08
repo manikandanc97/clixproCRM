@@ -92,10 +92,23 @@ export const CRMMetricCard = ({
 
   const theme = colorMap[color];
 
+  const borderColors: Record<MetricColor, string> = {
+    emerald: "border-l-emerald-500",
+    blue: "border-l-blue-500",
+    cyan: "border-l-cyan-500",
+    orange: "border-l-orange-500",
+    purple: "border-l-purple-500",
+    pink: "border-l-pink-500",
+    indigo: "border-l-indigo-500",
+    slate: "border-l-slate-400",
+  };
+
   return (
     <CRMCard 
       delay={delay} 
       className="group relative overflow-hidden"
+      withAccent={true}
+      accentColor={borderColors[color]}
     >
       {/* Subtle metric accent */}
       <div className={cn(

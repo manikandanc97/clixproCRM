@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CRMCard } from "@/components/shared/crm/CRMCard";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Filter, ChevronRight } from "lucide-react";
 
 const funnelData = [
@@ -19,7 +20,11 @@ export default function LeadFunnel() {
       transition={{ duration: 0.6, delay: 0.5 }}
       className="w-full h-full"
     >
-      <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50 h-full flex flex-col">
+      <CRMCard 
+        accentSeed="Lead Funnel"
+        noPadding
+        className="h-full flex flex-col bg-gradient-to-br from-card to-background/50"
+      >
         <CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-6">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-blue-50 text-blue-500 rounded-xl dark:bg-blue-500/10">
@@ -66,7 +71,7 @@ export default function LeadFunnel() {
             ))}
           </div>
         </CardContent>
-      </Card>
+      </CRMCard>
     </motion.div>
   );
 }

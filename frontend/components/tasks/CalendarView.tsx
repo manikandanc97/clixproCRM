@@ -17,7 +17,7 @@ export const CalendarView = ({ tasks, onTaskClick }: CalendarViewProps) => {
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
-    <CRMCard noPadding className="flex flex-col h-full min-h-[750px] overflow-hidden">
+    <CRMCard noPadding accentSeed="Task Calendar" className="flex flex-col h-full min-h-[750px] overflow-hidden">
       <div className="p-5 border-b border-border/50 flex items-center justify-between bg-muted/20">
         <div className="flex items-center gap-4">
           <h3 className="text-lg font-black text-foreground tracking-tight">May 2026</h3>

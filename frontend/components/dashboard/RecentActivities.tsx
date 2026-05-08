@@ -4,10 +4,11 @@ import React, { useState } from "react";
 import { User, CheckCircle2, FileText, ArrowRight, Filter, Activity } from "lucide-react";
 import { ActivityType } from "@/types/dashboard";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { CRMCard } from "@/components/shared/crm/CRMCard";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface RecentActivitiesProps {
   activities: ActivityType[];
@@ -44,9 +45,13 @@ const RecentActivities = ({ activities }: RecentActivitiesProps) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-      className="w-full"
+      className="w-full h-full"
     >
-      <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50 flex flex-col h-full">
+      <CRMCard 
+        accentSeed="Recent Activities"
+        noPadding 
+        className="flex flex-col h-full bg-gradient-to-br from-card to-background/50"
+      >
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -153,7 +158,7 @@ const RecentActivities = ({ activities }: RecentActivitiesProps) => {
             </AnimatePresence>
           </div>
         </CardContent>
-      </Card>
+      </CRMCard>
     </motion.div>
   );
 };

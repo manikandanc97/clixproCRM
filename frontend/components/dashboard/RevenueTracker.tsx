@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CRMCard } from "@/components/shared/crm/CRMCard";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   RadialBarChart,
   RadialBar,
@@ -27,7 +28,11 @@ export default function RevenueTracker() {
       transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       className="w-full h-full"
     >
-      <Card className="h-full border-none shadow-premium bg-gradient-to-br from-card to-background/50 relative overflow-hidden group flex flex-col">
+      <CRMCard 
+        accentSeed="Revenue Tracker"
+        noPadding
+        className="h-full bg-gradient-to-br from-card to-background/50 relative overflow-hidden group flex flex-col"
+      >
         <CardHeader className="flex flex-row items-start justify-between z-10 relative pb-2 px-6 pt-6">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-emerald-50 text-emerald-500 rounded-xl dark:bg-emerald-500/10">
@@ -135,7 +140,7 @@ export default function RevenueTracker() {
         <div className="absolute -bottom-6 -left-6 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.05] group-hover:scale-110 group-hover:-rotate-12 transition-all duration-700 pointer-events-none z-0">
           <DollarSign className="w-64 h-64 text-emerald-500 stroke-[3]" />
         </div>
-      </Card>
+      </CRMCard>
     </motion.div>
   );
 }

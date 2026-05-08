@@ -13,8 +13,8 @@ import {
 import { MoreHorizontal, RefreshCw, Download, Filter, TrendingUp, BarChart3 } from "lucide-react";
 import { SalesChartPointType } from "@/types/dashboard";
 
+import { CRMCard } from "@/components/shared/crm/CRMCard";
 import {
-  Card,
   CardContent,
   CardHeader,
   CardTitle,
@@ -73,8 +73,8 @@ const SalesChart = ({ data }: SalesChartProps) => {
       viewport={{ once: true }}
       transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
     >
-      <Card className="overflow-visible border border-border bg-card">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CRMCard accentSeed="Sales Chart" noPadding className="overflow-visible bg-card">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-xl transition-colors duration-500 ${
@@ -250,7 +250,7 @@ const SalesChart = ({ data }: SalesChartProps) => {
             </ResponsiveContainer>
           </div>
         </CardContent>
-      </Card>
+      </CRMCard>
     </motion.div>
   );
 };

@@ -19,7 +19,7 @@ export const ProductivityWidgets = () => {
   return (
     <div className="space-y-5">
       {/* AI Recommendations */}
-      <CRMCard noPadding className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 border-primary/20 group">
+      <CRMCard accentSeed="AI Recommendation" noPadding className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80 border-primary/20 group">
         <div className="p-5 relative">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
             <Sparkles className="w-16 h-16 text-white" />
@@ -47,7 +47,7 @@ export const ProductivityWidgets = () => {
       </CRMCard>
 
       {/* Today's Focus */}
-      <CRMCard>
+      <CRMCard accentSeed="Today's Focus">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
@@ -89,7 +89,7 @@ export const ProductivityWidgets = () => {
       </CRMCard>
 
       {/* Weekly Pulse */}
-      <CRMCard>
+      <CRMCard accentSeed="Weekly Pulse">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
@@ -125,7 +125,7 @@ export const ProductivityWidgets = () => {
       </CRMCard>
 
       {/* Team Workload */}
-      <CRMCard>
+      <CRMCard accentSeed="Team Workload">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
             <Users className="w-3.5 h-3.5 text-primary" />

@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CRMCard } from "@/components/shared/crm/CRMCard";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Flame, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,7 +21,11 @@ export default function HotLeads() {
       transition={{ duration: 0.6, delay: 0.5 }}
       className="w-full h-full"
     >
-      <Card className="h-full flex flex-col border-none shadow-premium bg-gradient-to-br from-card to-background/50">
+      <CRMCard 
+        accentSeed="Hot Leads"
+        noPadding
+        className="h-full flex flex-col bg-gradient-to-br from-card to-background/50"
+      >
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-warning/10 text-warning rounded-xl">
@@ -70,7 +75,7 @@ export default function HotLeads() {
             ))}
           </div>
         </CardContent>
-      </Card>
+      </CRMCard>
     </motion.div>
   );
 }

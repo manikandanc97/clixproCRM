@@ -192,7 +192,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 self-start w-full lg:sticky lg:top-24">
           <AIInsights />
           <CalendarWidget />
         </div>

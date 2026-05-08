@@ -15,7 +15,7 @@ export const TimelineView = ({ tasks, onTaskClick }: TimelineViewProps) => {
   const dates = ["May 01", "May 02", "May 03", "May 04", "May 05", "May 06", "May 07", "May 08", "May 09", "May 10"];
 
   return (
-    <CRMCard noPadding className="flex flex-col min-h-[650px] overflow-hidden">
+    <CRMCard noPadding accentSeed="Task Timeline" className="flex flex-col min-h-[650px] overflow-hidden">
       <div className="overflow-x-auto timeline-scroll">
         <div className="min-w-[1100px]">
           {/* Header */}

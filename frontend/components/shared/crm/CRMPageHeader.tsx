@@ -45,12 +45,12 @@ export const CRMPageHeader = ({
             </div>
           )}
           {badge && (
-            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+            <span className="rounded-lg border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm">
               {badge}
             </span>
           )}
         </div>
-        <h1 className="crm-page-title">
+        <h1 className="crm-page-title tracking-tight">
           {title}
         </h1>
         {subtitle && (
