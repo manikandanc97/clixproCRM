@@ -64,22 +64,22 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={cn(
-                  "px-2 py-0.5 rounded-md font-black text-[8px] uppercase tracking-widest border-none",
+                  "px-2.5 py-1 rounded-md font-black text-[9px] uppercase tracking-[0.15em] border-none",
                   task.priority === 'High' ? 'bg-rose-500/10 text-rose-500' : 
                   task.priority === 'Medium' ? 'bg-blue-500/10 text-blue-500' : 
                   'bg-muted/50 text-muted-foreground'
                 )}>
-                  {task.priority} Priority
+                  {task.priority.toUpperCase()} PRIORITY
                 </Badge>
                 {task.isUrgent && (
-                  <Badge className="bg-amber-500/10 text-amber-600 border-none px-2 py-0.5 rounded-md font-black text-[8px] uppercase tracking-widest animate-pulse">
-                    Urgent
+                  <Badge className="bg-amber-500/10 text-amber-600 border-none px-2.5 py-1 rounded-md font-black text-[9px] uppercase tracking-[0.15em] animate-pulse">
+                    URGENT
                   </Badge>
                 )}
               </div>
               <div className="flex items-center gap-1.5">
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg">
-                  <Share2 className="w-3.5 h-3.5" /> Share
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg border-border/60">
+                  <Share2 className="w-3.5 h-3.5" /> SHARE
                 </Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground">
                   <MoreVertical className="w-4 h-4" />
@@ -90,9 +90,9 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
               {task.title}
             </SheetTitle>
             <SheetDescription className="text-muted-foreground/80 mt-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-              <span className="text-primary/60">#{task.id.slice(0, 8)}</span>
+              <span className="text-primary/70 font-black">#{task.id.slice(0, 8).toUpperCase()}</span>
               <span className="opacity-20">•</span>
-              Created by Workspace Admin
+              CREATED BY WORKSPACE ADMIN
             </SheetDescription>
           </SheetHeader>
 
@@ -167,7 +167,7 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
                         <span className="text-xs font-bold text-foreground">{c.name}</span>
                       </div>
                     ))}
-                    <button className="h-8 w-8 rounded-lg border border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-all bg-card/50">
+                    <button className="h-8 w-8 rounded-full border border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-all bg-card/50">
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
@@ -207,8 +207,8 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
                               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md text-muted-foreground/60"><Paperclip className="w-4 h-4" /></Button>
                               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md text-muted-foreground/60 font-black text-xs">@</Button>
                             </div>
-                            <Button size="sm" className="px-5 font-bold rounded-lg h-8">
-                              Post Comment
+                            <Button size="sm" className="px-5 font-black rounded-lg h-8 uppercase tracking-widest bg-[#006937] hover:bg-[#005a2f] text-white transition-colors">
+                              POST COMMENT
                             </Button>
                           </div>
                         </div>
@@ -264,18 +264,18 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
           <div className="p-5 bg-card border-t border-border/40 flex items-center justify-between">
             <div className="flex items-center gap-5 text-muted-foreground">
               <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-all group">
-                <div className="h-7 w-7 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-all">
+                <div className="h-7 w-7 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-all border border-primary/10">
                   <Play className="w-3.5 h-3.5 fill-primary text-primary" />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest">Start Timer</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">START TIMER</span>
               </div>
               <div className="w-[1px] h-4 bg-border/40" />
-              <div className="text-[10px] font-bold uppercase tracking-widest">Tracked: <span className="font-black text-foreground ml-1">0h 00m</span></div>
+              <div className="text-[10px] font-bold uppercase tracking-widest">TRACKED: <span className="font-black text-foreground ml-1">0H 00M</span></div>
             </div>
             <Button 
-              className="px-6 font-black rounded-lg h-10 text-xs uppercase tracking-widest shadow-lg shadow-primary/10"
+              className="px-6 font-black rounded-lg h-10 text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/20 bg-[#006937] hover:bg-[#005a2f] text-white transition-all"
             >
-              Complete Task
+              COMPLETE TASK
             </Button>
           </div>
         </div>

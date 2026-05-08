@@ -41,6 +41,10 @@ const QuotationPreview = ({ quotation, isOpen, onClose }: QuotationPreviewProps)
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="sm:max-w-xl p-0 bg-muted border-l-slate-200 shadow-elevated overflow-y-auto">
+        <SheetHeader className="sr-only">
+          <SheetTitle>Quotation Preview: {quotation.quoteId}</SheetTitle>
+          <SheetDescription>Detailed preview of quotation {quotation.quoteId} for {quotation.client}, including itemized breakdown and AI analysis.</SheetDescription>
+        </SheetHeader>
         {/* Premium Header */}
         <div className="bg-card p-8 border-b border-border sticky top-0 z-20">
           <div className="flex justify-between items-start mb-6">

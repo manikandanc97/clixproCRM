@@ -16,26 +16,30 @@ export default function DashboardShell({
   const { isCollapsed } = useSidebar();
 
   return (
-    <div className="relative flex bg-background min-h-screen overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Subtle Background Surface */}
       <div className="absolute inset-0 bg-[#fafafa] dark:bg-[#050505] -z-10" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent opacity-50" />
-      
-      {/* Desktop Sidebar */}
+
+      {/* Desktop Sidebar — fixed, sits outside flow */}
       <Sidebar />
 
-      {/* Main Content Area */}
+      {/* Main Content Column — offset by sidebar width, fills remaining height */}
       <motion.div
         initial={false}
         animate={{
           paddingLeft: isCollapsed ? "80px" : "260px",
         }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="flex flex-col flex-1 min-w-0"
+        className="flex flex-col flex-1 min-w-0 h-full"
       >
-        <Topbar />
+        {/* Topbar is sticky because only <main> below scrolls */}
+        <div className="shrink-0">
+          <Topbar />
+        </div>
 
-        <main className="flex-1 overflow-y-auto scrollbar-hide">
+        {/* Scrollable page content — only this region scrolls */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide min-h-0">
           <motion.div
             className="w-full h-full"
             initial={{ opacity: 0 }}
@@ -47,7 +51,7 @@ export default function DashboardShell({
         </main>
       </motion.div>
 
-      {/* Global SaaS Components */}
+      {/* Global Components */}
       <CommandPalette />
       <MobileBottomNav />
     </div>

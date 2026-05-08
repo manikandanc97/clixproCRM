@@ -21,7 +21,7 @@ export default function Topbar() {
   const initials = getInitials(user?.name);
 
   return (
-    <header className="top-0 z-40 sticky flex justify-between items-center topbar-blur px-6 lg:px-10 border-border border-b h-22 transition-all shadow-sm">
+    <header className="z-40 flex justify-between items-center topbar-blur px-6 lg:px-10 border-border border-b h-22 transition-all shadow-sm">
       {/* Search / Command Palette Trigger */}
       <div className="flex-1 max-w-md lg:max-w-lg mr-3 sm:mr-6">
         <button 

@@ -45,6 +45,10 @@ const CustomerProfilePanel = ({ customer, isOpen, onClose }: CustomerProfilePane
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="sm:max-w-xl p-0 border-l border-border shadow-elevated bg-white flex flex-col h-full">
+        <SheetHeader className="sr-only">
+          <SheetTitle>{customer.name} Profile</SheetTitle>
+          <SheetDescription>Detailed customer profile, interaction timeline, and relationship insights for {customer.name}.</SheetDescription>
+        </SheetHeader>
         <ScrollArea className="flex-1">
           {/* Header Section */}
           <div className="relative h-48 bg-gradient-to-br from-indigo-600 via-indigo-700 to-emerald-600 overflow-hidden">
