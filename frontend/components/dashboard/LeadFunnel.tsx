@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Filter, ChevronRight } from "lucide-react";
 
 const funnelData = [
-  { stage: "Total Leads", count: 1240, color: "bg-info", width: "100%" },
-  { stage: "Qualified", count: 856, color: "bg-primary", width: "70%" },
-  { stage: "Proposals", count: 420, color: "bg-warning", width: "35%" },
-  { stage: "Won Deals", count: 185, color: "bg-success", width: "15%" },
+  { stage: "Total Leads", count: 1240, color: "bg-blue-500", width: "100%", conversion: null },
+  { stage: "Qualified", count: 856, color: "bg-[#8B5CF6]", width: "69%", conversion: "69%" },
+  { stage: "Proposals", count: 420, color: "bg-[#A855F7]", width: "34%", conversion: "49%" },
+  { stage: "Won Deals", count: 185, color: "bg-[#10B981]", width: "15%", conversion: "44%" },
 ];
 
 export default function LeadFunnel() {
@@ -17,48 +17,51 @@ export default function LeadFunnel() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.5 }}
-      className="w-full"
+      className="w-full h-full"
     >
-      <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50 h-full flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-6">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-info/10 text-info rounded-xl">
+            <div className="p-2.5 bg-blue-50 text-blue-500 rounded-full dark:bg-blue-500/10">
               <Filter className="w-5 h-5" />
             </div>
-            <CardTitle>Conversion Funnel</CardTitle>
+            <CardTitle className="text-base font-bold">Conversion Funnel</CardTitle>
           </div>
-          <button className="text-muted-foreground hover:text-foreground transition-colors p-2 hover:bg-muted rounded-xl">
+          <button className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-50 rounded-full">
             <ChevronRight className="w-5 h-5" />
           </button>
         </CardHeader>
-        <CardContent className="p-6 lg:p-8 pt-2 flex-1">
-          <div className="space-y-6 flex flex-col justify-center h-full">
+        <CardContent className="pt-2 pb-6 px-6 flex-1">
+          <div className="space-y-5 flex flex-col">
             {funnelData.map((item, index) => (
               <motion.div 
                 key={item.stage}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 + (index * 0.1) }}
-                className="relative"
+                className="group relative"
               >
-                <div className="flex justify-between items-end mb-2">
-                  <span className="text-sm font-semibold text-muted-foreground">{item.stage}</span>
-                  <span className="text-lg font-bold text-foreground tracking-tight">{item.count}</span>
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200">{item.stage}</span>
+                    {item.conversion && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-300">
+                        {item.conversion}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{item.count.toLocaleString()}</span>
                 </div>
-                <div className="h-4 w-full bg-muted rounded-full overflow-hidden flex justify-center shadow-inner">
+                <div className="h-3 w-full bg-slate-100 dark:bg-slate-800/50 rounded-full overflow-hidden flex justify-start">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: item.width }}
-                    transition={{ duration: 1, delay: 0.8 + (index * 0.1), type: "spring", stiffness: 50 }}
-                    className={`h-full rounded-full ${item.color} shadow-sm`}
-                  />
+                    transition={{ duration: 1, delay: 0.8 + (index * 0.1), type: "spring", stiffness: 40, damping: 15 }}
+                    className={`h-full rounded-full ${item.color} relative overflow-hidden`}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out" />
+                  </motion.div>
                 </div>
-                {/* Connecting lines between stages (except last) */}
-                {index < funnelData.length - 1 && (
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-8 h-6 flex justify-center opacity-20">
-                    <div className="border-l border-r border-slate-400 w-full h-full transform perspective-100 rotate-x-12" style={{ clipPath: 'polygon(0 0, 100% 0, 80% 100%, 20% 100%)' }}></div>
-                  </div>
-                )}
               </motion.div>
             ))}
           </div>

@@ -7,6 +7,7 @@ import { ReactNode } from "react";
 interface CRMCardProps {
   children: ReactNode;
   className?: string;
+  onClick?: () => void;
   hoverable?: boolean;
   noPadding?: boolean;
   animate?: boolean;
@@ -16,6 +17,7 @@ interface CRMCardProps {
 export const CRMCard = ({
   children,
   className,
+  onClick,
   hoverable = true,
   noPadding = false,
   animate = true,
@@ -31,10 +33,11 @@ export const CRMCard = ({
   return (
     <Component
       {...animationProps}
+      onClick={onClick}
       className={cn(
         "bg-card text-card-foreground rounded-[var(--crm-card-radius)] border border-[var(--crm-border-subtle)] shadow-[var(--crm-card-shadow)] overflow-hidden transition-all duration-300",
         hoverable && "hover:shadow-[var(--crm-card-hover-shadow)] hover:border-border",
-        !noPadding && "p-6",
+        !noPadding && "p-5",
         className
       )}
     >

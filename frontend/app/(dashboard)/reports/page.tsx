@@ -16,11 +16,31 @@ import { Button } from "@/components/ui/button";
 import { 
   CRMPageHeader, 
   CRMMetricCard, 
-  CRMCard 
+  CRMCard,
+  CRMPageContainer,
+  CRMMetricsGrid,
+  CRMPageSection
 } from "@/components/shared/crm";
+import { useCRMStore } from "@/store/useCRMStore";
+import { toast } from "sonner";
 
 const ReportsPage = () => {
+  const { leads, quotations, customers } = useCRMStore();
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const safeCustomers = Array.isArray(customers) ? customers : [];
   const { data, loading, error, refetch } = useApiResource(fetchReportsData);
+
+  const handleTimePeriod = () => {
+    toast.info("Time Period Selection", {
+      description: "Opening custom date range selector...",
+    });
+  };
+
+  const handleDownload = () => {
+    toast.success("Intelligence Report Ready", {
+      description: "Compiling business data into PDF format...",
+    });
+  };
 
   if (loading && !data) {
     return <PageLoadingState label="Loading report metrics and chart data..." />;
@@ -41,7 +61,7 @@ const ReportsPage = () => {
   ];
 
   return (
-    <div className="space-y-8 p-8 max-w-[1600px] mx-auto pb-20">
+    <CRMPageContainer>
       <CRMPageHeader 
         title="Reports & Analytics"
         subtitle="Comprehensive breakdown of your sales performance, revenue targets, and team efficiency."
@@ -51,19 +71,19 @@ const ReportsPage = () => {
           {
             label: "Time Period",
             icon: Calendar,
-            onClick: () => console.log("Time"),
+            onClick: handleTimePeriod,
             variant: "outline"
           },
           {
             label: "Download Report",
             icon: Download,
-            onClick: () => console.log("Download"),
+            onClick: handleDownload,
             variant: "default"
           }
         ]}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <CRMMetricsGrid cols={4} className="gap-4">
         <CRMMetricCard 
           title="Total Revenue"
           value="$124,500"
@@ -86,7 +106,7 @@ const ReportsPage = () => {
         />
         <CRMMetricCard 
           title="Active Leads"
-          value="142"
+          value={safeLeads.length || "142"}
           change="+12"
           trend="up"
           icon={Users}
@@ -95,8 +115,8 @@ const ReportsPage = () => {
           delay={0.3}
         />
         <CRMMetricCard 
-          title="Projected Growth"
-          value="18.5%"
+          title="Total Customers"
+          value={safeCustomers.length || "48"}
           change="+2.1%"
           trend="up"
           icon={TrendingUp}
@@ -104,26 +124,26 @@ const ReportsPage = () => {
           sparklineData={sparklineData}
           delay={0.4}
         />
-      </div>
+      </CRMMetricsGrid>
 
       <AnalyticsSummary />
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-        <div className="xl:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start">
+        <div className="xl:col-span-2 space-y-5">
           <RevenueChart data={data?.revenueChart || []} />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <ConversionChart data={data?.conversionChart || []} />
             <ActivityHeatmap />
           </div>
         </div>
         
-        <div className="space-y-8">
+        <div className="space-y-5">
           <RevenueTarget />
           <SalesFunnel />
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold tracking-tight">Team Performance</h2>
           <p className="text-muted-foreground text-sm font-medium">Detailed breakdown of sales representative metrics and activity.</p>
@@ -131,7 +151,7 @@ const ReportsPage = () => {
         
         <PerformanceTable performance={data?.performance || []} />
       </div>
-    </div>
+    </CRMPageContainer>
   );
 };
 

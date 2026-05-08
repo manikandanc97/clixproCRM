@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, Fragment, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,13 @@ import {
   Calendar, 
   ExternalLink, 
   ChevronDown, 
+  ChevronUp,
   TrendingUp, 
   Activity,
   Zap,
   Sparkles,
-  User
+  User,
+  Trash2
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -37,15 +39,46 @@ import {
   CRMTableHeaderCell 
 } from "@/components/shared/crm";
 import { cn } from "@/lib/utils";
+import { useCRMStore } from "@/store/useCRMStore";
+import { toast } from "sonner";
 
 interface CustomersTableProps {
   customers: CustomerType[];
 }
 
+type SortConfig = {
+  key: keyof CustomerType;
+  direction: "asc" | "desc";
+} | null;
+
 const CustomersTable = ({ customers }: CustomersTableProps) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerType | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+
+  const { deleteCustomer } = useCRMStore();
+
+  const sortedCustomers = useMemo(() => {
+    if (!sortConfig) return customers;
+    return [...customers].sort((a, b) => {
+      const aVal = a[sortConfig.key] ?? "";
+      const bVal = b[sortConfig.key] ?? "";
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [customers, sortConfig]);
+
+  const handleSort = (key: keyof CustomerType) => {
+    setSortConfig((prev) => {
+      if (prev?.key === key) {
+        if (prev.direction === "asc") return { key, direction: "desc" };
+        return null;
+      }
+      return { key, direction: "asc" };
+    });
+  };
 
   const toggleRow = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -63,22 +96,62 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
     setIsPanelOpen(true);
   };
 
+  const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation();
+    deleteCustomer(id);
+    toast.error("Customer Removed", {
+      description: `${name} has been deleted from your CRM records.`,
+    });
+  };
+
+  const handleAction = (action: string, customer: CustomerType) => {
+    toast.info(`${action}: ${customer.name}`, {
+      description: `Initiating ${action.toLowerCase()} sequence for ${customer.company}.`,
+    });
+  };
+
+  const SortIcon = ({ column }: { column: keyof CustomerType }) => {
+    if (sortConfig?.key !== column) return <ChevronDown className="w-3 h-3 opacity-20 group-hover:opacity-50" />;
+    return sortConfig.direction === "asc" ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />;
+  };
+
   return (
     <>
       <CRMDataTable>
         <CRMTableHeader>
           <CRMTableRow className="hover:bg-transparent">
             <CRMTableHeaderCell className="w-10 px-4"></CRMTableHeaderCell>
-            <CRMTableHeaderCell>Customer Intelligence</CRMTableHeaderCell>
-            <CRMTableHeaderCell>Health Score</CRMTableHeaderCell>
+            <CRMTableHeaderCell 
+              className="cursor-pointer group select-none"
+              onClick={() => handleSort("name")}
+            >
+              <div className="flex items-center gap-2">
+                Customer Intelligence <SortIcon column="name" />
+              </div>
+            </CRMTableHeaderCell>
+            <CRMTableHeaderCell 
+              className="cursor-pointer group select-none"
+              onClick={() => handleSort("healthScore")}
+            >
+              <div className="flex items-center gap-2">
+                Health Score <SortIcon column="healthScore" />
+              </div>
+            </CRMTableHeaderCell>
             <CRMTableHeaderCell>LTV Projection</CRMTableHeaderCell>
-            <CRMTableHeaderCell>Status & Segment</CRMTableHeaderCell>
+            <CRMTableHeaderCell 
+              className="cursor-pointer group select-none"
+              onClick={() => handleSort("status")}
+            >
+              <div className="flex items-center gap-2">
+                Status & Segment <SortIcon column="status" />
+              </div>
+            </CRMTableHeaderCell>
             <CRMTableHeaderCell className="text-right">Actions</CRMTableHeaderCell>
           </CRMTableRow>
         </CRMTableHeader>
 
         <CRMTableBody>
-          {customers.map((customer) => {
+          {sortedCustomers.map((customer) => {
             const isExpanded = expandedRows.has(customer.id);
             return (
               <Fragment key={customer.id}>
@@ -126,7 +199,9 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
                     <div className="space-y-1.5 max-w-[120px]">
                       <div className="flex justify-between items-end">
                         <span className="text-[11px] font-bold text-foreground">{customer.healthScore}%</span>
-                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Excellent</span>
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
+                          {customer.healthScore > 70 ? 'Excellent' : customer.healthScore > 40 ? 'Stable' : 'Critical'}
+                        </span>
                       </div>
                       <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                         <motion.div 
@@ -182,15 +257,18 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
                         <DropdownMenuItem onClick={() => openProfile(customer)}>
                           <ExternalLink className="w-3.5 h-3.5 mr-2" /> View Profile
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction("Email", customer)}>
                           <Mail className="w-3.5 h-3.5 mr-2" /> Send Email
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction("Schedule Call", customer)}>
                           <Calendar className="w-3.5 h-3.5 mr-2" /> Schedule Call
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-primary focus:text-primary">
+                        <DropdownMenuItem onClick={() => handleAction("AI Summary", customer)} className="text-primary focus:text-primary">
                           <Zap className="w-3.5 h-3.5 mr-2" /> AI Summary
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => handleDelete(e as any, customer.id, customer.name)} className="text-destructive focus:text-destructive">
+                          <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -227,3 +305,4 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
 };
 
 export default CustomersTable;
+

@@ -121,7 +121,7 @@ const RevenueChart = ({ data }: RevenueChartProps) => {
                     textTransform: "uppercase",
                     letterSpacing: "0.2em",
                   }}
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, "Revenue"]}
+                  formatter={(value) => [`$${Number(value ?? 0).toLocaleString()}`, "Revenue"]}
                 />
                 <Area 
                   type="monotone" 

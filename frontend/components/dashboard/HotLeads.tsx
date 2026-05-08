@@ -18,9 +18,9 @@ export default function HotLeads() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.5 }}
-      className="w-full"
+      className="w-full h-full"
     >
-      <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
+      <Card className="h-full flex flex-col border-none shadow-premium bg-gradient-to-br from-card to-background/50">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-warning/10 text-warning rounded-xl">
@@ -30,7 +30,7 @@ export default function HotLeads() {
           </div>
           <Button variant="ghost" className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">View All</Button>
         </CardHeader>
-        <CardContent className="p-6 lg:p-8 pt-0 flex-1">
+        <CardContent className="pt-0 flex-1">
           <div className="space-y-5">
             {leads.map((lead, index) => (
               <motion.div 

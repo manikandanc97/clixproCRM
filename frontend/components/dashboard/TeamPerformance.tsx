@@ -17,9 +17,9 @@ export default function TeamPerformance() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.8 }}
-      className="w-full"
+      className="w-full h-full"
     >
-      <Card className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
+      <Card className="h-full flex flex-col border-none shadow-premium bg-gradient-to-br from-card to-background/50">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
@@ -29,8 +29,8 @@ export default function TeamPerformance() {
           </div>
           <Button variant="ghost" className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">Full Report</Button>
         </CardHeader>
-        <CardContent className="p-6 lg:p-8 pt-0 flex-1">
-          <div className="space-y-6">
+        <CardContent className="pt-0 flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col justify-between pb-2">
             {team.map((member, index) => {
               const progress = Math.min(100, Math.round((member.sales / member.target) * 100));
               return (

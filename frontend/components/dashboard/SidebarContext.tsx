@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext } from "react";
+import { useCRMStore } from "@/store/useCRMStore";
 
 type SidebarContextType = {
   isCollapsed: boolean;
@@ -10,12 +11,12 @@ type SidebarContextType = {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { sidebarCollapsed, setSidebarCollapsed } = useCRMStore();
   
-  const toggleSidebar = () => setIsCollapsed((prev) => !prev);
+  const toggleSidebar = () => setSidebarCollapsed(!sidebarCollapsed);
   
   return (
-    <SidebarContext.Provider value={{ isCollapsed, toggleSidebar }}>
+    <SidebarContext.Provider value={{ isCollapsed: sidebarCollapsed, toggleSidebar }}>
       {children}
     </SidebarContext.Provider>
   );
@@ -28,3 +29,4 @@ export function useSidebar() {
   }
   return context;
 }
+

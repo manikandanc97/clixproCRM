@@ -100,7 +100,7 @@ const ConversionChart = ({ data }: ConversionChartProps) => {
                     textTransform: "uppercase",
                     letterSpacing: "0.2em",
                   }}
-                  formatter={(value: number) => [`${value}%`, "Conversion Rate"]}
+                  formatter={(value) => [`${Number(value ?? 0)}%`, "Conversion Rate"]}
                 />
                 <Bar 
                   dataKey="value" 

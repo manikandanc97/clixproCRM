@@ -17,7 +17,9 @@ import {
   Zap,
   Copy,
   Clock,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -28,7 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { QuotationType } from "@/types/quotation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import QuotationPreview from "./QuotationPreview";
 import { 
   CRMDataTable, 
@@ -39,10 +41,17 @@ import {
   CRMTableHeaderCell 
 } from "@/components/shared/crm";
 import { cn } from "@/lib/utils";
+import { useCRMStore } from "@/store/useCRMStore";
+import { toast } from "sonner";
 
 interface QuotationsTableProps {
   quotations: QuotationType[];
 }
+
+type SortConfig = {
+  key: keyof QuotationType;
+  direction: "asc" | "desc";
+} | null;
 
 const ProbabilityIndicator = ({ value }: { value: number }) => {
   const color = value > 80 ? "text-success" : value > 60 ? "text-warning" : "text-muted-foreground";
@@ -83,24 +92,95 @@ const ProbabilityIndicator = ({ value }: { value: number }) => {
 
 const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
   const [selectedQuote, setSelectedQuote] = useState<QuotationType | null>(null);
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+
+  const { deleteQuotation } = useCRMStore();
+
+  const sortedQuotations = useMemo(() => {
+    if (!sortConfig) return quotations;
+    return [...quotations].sort((a, b) => {
+      const aVal = a[sortConfig.key] ?? "";
+      const bVal = b[sortConfig.key] ?? "";
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [quotations, sortConfig]);
+
+  const handleSort = (key: keyof QuotationType) => {
+    setSortConfig((prev) => {
+      if (prev?.key === key) {
+        if (prev.direction === "asc") return { key, direction: "desc" };
+        return null;
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string, quoteId: string) => {
+    e.stopPropagation();
+    deleteQuotation(id);
+    toast.error("Quotation Removed", {
+      description: `Quote ${quoteId} has been deleted successfully.`,
+    });
+  };
+
+  const handleAction = (action: string, quote: QuotationType) => {
+    toast.info(`${action}: ${quote.quoteId}`, {
+      description: `Initiating ${action.toLowerCase()} for ${quote.client}.`,
+    });
+  };
+
+  const SortIcon = ({ column }: { column: keyof QuotationType }) => {
+    if (sortConfig?.key !== column) return <ChevronDown className="w-3 h-3 opacity-20 group-hover:opacity-50" />;
+    return sortConfig.direction === "asc" ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />;
+  };
 
   return (
     <>
       <CRMDataTable>
         <CRMTableHeader>
           <CRMTableRow className="hover:bg-transparent">
-            <CRMTableHeaderCell className="hidden sm:table-cell">Identifier</CRMTableHeaderCell>
-            <CRMTableHeaderCell>Client Relationship</CRMTableHeaderCell>
-            <CRMTableHeaderCell className="hidden md:table-cell">Deal Size</CRMTableHeaderCell>
+            <CRMTableHeaderCell 
+              className="hidden sm:table-cell cursor-pointer group select-none"
+              onClick={() => handleSort("quoteId")}
+            >
+              <div className="flex items-center gap-2">
+                Identifier <SortIcon column="quoteId" />
+              </div>
+            </CRMTableHeaderCell>
+            <CRMTableHeaderCell 
+              className="cursor-pointer group select-none"
+              onClick={() => handleSort("client")}
+            >
+              <div className="flex items-center gap-2">
+                Client Relationship <SortIcon column="client" />
+              </div>
+            </CRMTableHeaderCell>
+            <CRMTableHeaderCell 
+              className="hidden md:table-cell cursor-pointer group select-none"
+              onClick={() => handleSort("amount")}
+            >
+              <div className="flex items-center gap-2">
+                Deal Size <SortIcon column="amount" />
+              </div>
+            </CRMTableHeaderCell>
             <CRMTableHeaderCell className="hidden lg:table-cell">Intelligence</CRMTableHeaderCell>
-            <CRMTableHeaderCell>Status</CRMTableHeaderCell>
+            <CRMTableHeaderCell 
+              className="cursor-pointer group select-none"
+              onClick={() => handleSort("status")}
+            >
+              <div className="flex items-center gap-2">
+                Status <SortIcon column="status" />
+              </div>
+            </CRMTableHeaderCell>
             <CRMTableHeaderCell className="text-right">Actions</CRMTableHeaderCell>
           </CRMTableRow>
         </CRMTableHeader>
 
         <CRMTableBody>
           <AnimatePresence mode="popLayout">
-            {quotations.map((quote, index) => (
+            {sortedQuotations.map((quote, index) => (
               <CRMTableRow
                 key={quote.id}
                 onClick={() => setSelectedQuote(quote)}
@@ -181,17 +261,17 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
                       <DropdownMenuItem onClick={() => setSelectedQuote(quote)}>
                         <ExternalLink className="w-3.5 h-3.5 mr-2" /> View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction("Email", quote)}>
                         <Send className="w-3.5 h-3.5 mr-2" /> Send to Client
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction("Download", quote)}>
                         <Download className="w-3.5 h-3.5 mr-2" /> Download PDF
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction("Duplicate", quote)}>
                         <Copy className="w-3.5 h-3.5 mr-2" /> Duplicate
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive focus:text-destructive">
+                      <DropdownMenuItem onClick={(e) => handleDelete(e as any, quote.id, quote.quoteId)} className="text-destructive focus:text-destructive">
                         <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -213,3 +293,4 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
 };
 
 export default QuotationsTable;
+

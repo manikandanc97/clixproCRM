@@ -14,7 +14,8 @@ import {
   ChevronRight,
   ChevronsUpDown,
   Building2,
-  Bell
+  Bell,
+  Sparkles
 } from "lucide-react";
 
 import Link from "next/link";
@@ -48,6 +49,12 @@ const menuGroups = [
     items: [
       { title: "Tasks", icon: CheckSquare, href: "/tasks" },
     ]
+  },
+  {
+    label: "System",
+    items: [
+      { title: "Settings", icon: Settings, href: "/settings" },
+    ]
   }
 ];
 
@@ -68,19 +75,20 @@ export default function Sidebar() {
   const { data: user } = useApiResource(fetchCurrentUser);
 
   const initials = getInitials(user?.name);
+  const isPro = user?.plan === "pro" || user?.plan === "enterprise";
 
   return (
     <motion.aside 
       initial={false}
-      animate={{ width: isCollapsed ? 80 : 260 }}
-      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="hidden md:flex flex-col fixed top-0 left-0 h-screen z-50 sidebar-bg shadow-sidebar"
+      animate={{ width: isCollapsed ? 72 : 270 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="hidden md:flex flex-col fixed top-0 left-0 h-screen z-50 bg-sidebar border-r border-sidebar-border"
     >
       <div className="flex flex-col h-full relative">
-        {/* Toggle Button - More visible and refined */}
+        {/* Toggle Button */}
         <button 
           onClick={toggleSidebar}
-          className="absolute -right-3.5 top-10 bg-sidebar border border-sidebar-border rounded-full p-1.5 shadow-md text-sidebar-foreground/40 hover:text-primary transition-all z-20 hover:scale-110 active:scale-95 group"
+          className="absolute -right-3.5 top-8 bg-sidebar border border-sidebar-border rounded-full p-1 shadow-sm text-sidebar-foreground/40 hover:text-sidebar-foreground transition-all z-20 hover:scale-105 active:scale-95 group"
         >
           {isCollapsed ? 
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /> : 
@@ -88,12 +96,12 @@ export default function Sidebar() {
           }
         </button>
 
-        {/* Workspace Selector - Better visual hierarchy */}
-        <div className={`py-8 transition-all duration-300 ${isCollapsed ? "px-4" : "px-6"}`}>
-          <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between p-2.5 rounded-2xl hover:bg-sidebar-accent cursor-pointer border border-transparent hover:border-sidebar-border transition-all group/ws"}`}>
-            <div className="flex items-center gap-3">
-              <div className="flex shrink-0 justify-center items-center bg-gradient-to-br from-sidebar-primary to-primary rounded-xl w-9 h-9 text-sidebar-primary-foreground shadow-lg shadow-primary/20 border border-white/10">
-                <Building2 className="w-5 h-5" />
+        {/* Workspace Selector */}
+        <div className={`pt-6 pb-4 transition-all duration-300 ${isCollapsed ? "px-3" : "px-5"}`}>
+          <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between p-2 rounded-xl hover:bg-sidebar-accent/50 cursor-pointer border border-transparent transition-all group/ws"}`}>
+            <div className="flex items-center gap-2.5">
+              <div className="flex shrink-0 justify-center items-center bg-sidebar-primary/10 text-sidebar-primary rounded-lg w-8 h-8 border border-sidebar-primary/20">
+                <Building2 className="w-4 h-4" />
               </div>
               
               <AnimatePresence mode="wait">
@@ -104,44 +112,41 @@ export default function Sidebar() {
                     exit={{ opacity: 0, x: -10 }}
                     className="overflow-hidden whitespace-nowrap"
                   >
-                    <h1 className="text-sidebar-foreground font-bold text-sm tracking-tight leading-none">
+                    <h1 className="text-sidebar-foreground font-semibold text-[13px] tracking-tight leading-tight">
                       Acme Corp
                     </h1>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_var(--success)]" />
-                      <p className="text-sidebar-foreground/40 text-[10px] font-bold uppercase tracking-widest">
-                        Pro Plan
-                      </p>
-                    </div>
+                    <p className="text-sidebar-foreground/50 text-[11px] font-medium mt-0.5">
+                      Pro Plan
+                    </p>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-            {!isCollapsed && <ChevronsUpDown className="w-4 h-4 text-sidebar-foreground/40 group-hover/ws:text-sidebar-foreground transition-colors" />}
+            {!isCollapsed && <ChevronsUpDown className="w-3.5 h-3.5 text-sidebar-foreground/40 group-hover/ws:text-sidebar-foreground transition-colors" />}
           </div>
         </div>
 
-        {/* Scrollable Menu - Improved Spacing */}
+        {/* Scrollable Menu - Compact Spacing */}
         <TooltipProvider delayDuration={0}>
-          <div className="flex-1 overflow-y-auto scrollbar-none px-3 pb-6">
+          <div className="flex-1 overflow-y-auto kanban-board-scroll px-3 pb-6">
             {menuGroups.map((group) => (
-              <div key={group.label} className="mb-8 last:mb-0">
+              <div key={group.label} className="mb-6 last:mb-0">
                 <AnimatePresence mode="wait">
                   {!isCollapsed && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="px-4 mb-3"
+                      className="px-3 mb-2"
                     >
-                      <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-sidebar-foreground/40">
+                      <h4 className="text-[11px] font-semibold text-sidebar-foreground/40 tracking-wider">
                         {group.label}
                       </h4>
                     </motion.div>
                   )}
                 </AnimatePresence>
                 
-                <nav className="space-y-1.5">
+                <nav className="space-y-0.5">
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href;
@@ -149,43 +154,29 @@ export default function Sidebar() {
                     const content = (
                       <Link
                         href={item.href || "#"}
-                        className={`w-full flex items-center ${isCollapsed ? "justify-center px-0 h-11" : "gap-3 px-4 py-2.5"} rounded-2xl transition-all duration-300 text-sm font-semibold group relative
+                        className={`w-full flex items-center ${isCollapsed ? "justify-center px-0 h-9" : "gap-2.5 px-3 py-1.5"} rounded-xl transition-all duration-200 text-[13px] group relative outline-none
                           ${
                             isActive
-                              ? "text-sidebar-accent-foreground"
-                              : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                              ? "text-sidebar-foreground bg-sidebar-accent/50 font-medium"
+                              : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30 font-medium"
                           }`}
                       >
                         {isActive && (
-                          <motion.div
-                            layoutId="sidebar-active-pill"
-                            className="absolute inset-0 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-100/50 dark:border-emerald-500/20 -z-10"
-                            initial={false}
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          <div 
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-sidebar-primary rounded-r-full"
                           />
                         )}
                         
-                        <Icon className={`w-5 h-5 shrink-0 transition-all duration-300 ${
+                        <Icon className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                           isActive 
-                            ? "text-sidebar-primary scale-110" 
-                            : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground group-hover:scale-110"
+                            ? "text-sidebar-primary" 
+                            : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70"
                         }`} />
                         
                         {!isCollapsed && (
-                          <motion.span
-                            initial={false}
-                            animate={{ opacity: 1 }}
-                            className="overflow-hidden whitespace-nowrap"
-                          >
+                          <span className="truncate">
                             {item.title}
-                          </motion.span>
-                        )}
-
-                        {isActive && !isCollapsed && (
-                          <motion.div 
-                            layoutId="active-indicator"
-                            className="absolute right-2 w-1.5 h-1.5 rounded-full bg-sidebar-primary shadow-[0_0_8px_var(--sidebar-primary)]" 
-                          />
+                          </span>
                         )}
                       </Link>
                     );
@@ -209,28 +200,40 @@ export default function Sidebar() {
           </div>
         </TooltipProvider>
 
-        {/* User Identity Card - Premium & Minimal */}
-        <div className={`p-4 border-t border-sidebar-border bg-sidebar/30 backdrop-blur-md`}>
-          <div className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3 px-2 py-1.5"} rounded-2xl transition-all duration-300`}>
-            <div className="relative shrink-0">
-               <div className="flex justify-center items-center bg-gradient-to-br from-sidebar-primary to-primary rounded-xl w-9 h-9 font-black text-[11px] text-sidebar-primary-foreground shadow-lg shadow-primary/10 border border-white/10 group-hover:scale-105 transition-transform">
-                {initials}
+        {/* Compact Upgrade / Billing CTA */}
+        <AnimatePresence>
+          {!isCollapsed && !isPro && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="px-3 pb-5 mt-auto shrink-0"
+            >
+              <div 
+                className="p-3 bg-gradient-to-br from-[#0f6b40] to-[#0a5c36] text-white border border-[#128a52]/40 shadow-md relative overflow-hidden group"
+                style={{ borderRadius: "var(--crm-card-radius)" }}
+              >
+                {/* Abstract light burst for small card */}
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-[#128a52]/50 rounded-full blur-2xl pointer-events-none transition-transform duration-700 group-hover:scale-125" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+
+                <div className="relative z-10">
+                  <h5 className="text-[13px] font-extrabold text-white mb-1 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#e0f2e9]" />
+                    Upgrade to Pro
+                  </h5>
+                  <p className="text-[11px] text-[#e0f2e9]/90 leading-tight mb-3">
+                    Unlock advanced AI lead scoring and automation rules.
+                  </p>
+                  <button className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-[#0a5c36] bg-white hover:bg-gray-50 rounded-lg transition-all shadow-sm">
+                    <span>View Plans</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success border-2 border-sidebar rounded-full shadow-[0_0_8px_var(--success)]" />
-            </div>
-            
-            {!isCollapsed && (
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <p className="text-sidebar-foreground font-bold text-sm truncate leading-none tracking-tight">
-                  {user?.name || "Account"}
-                </p>
-                <p className="text-sidebar-foreground/40 text-[10px] font-bold uppercase tracking-[0.05em] mt-1.5 truncate">
-                  {user?.role || "Member"}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.aside>
   );

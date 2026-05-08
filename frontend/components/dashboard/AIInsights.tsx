@@ -9,9 +9,11 @@ import {
   ArrowRight,
   Zap,
   BarChart,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 
-const insights = {
+const INITIAL_INSIGHTS = {
   recommendations: [
     {
       id: 1,
@@ -56,6 +58,30 @@ type TabType = "recommendations" | "alerts" | "trends";
 
 export default function AIInsights() {
   const [activeTab, setActiveTab] = useState<TabType>("recommendations");
+  const [insights, setInsights] = useState(INITIAL_INSIGHTS);
+
+  const handleDismiss = (e: React.MouseEvent, tab: TabType, id: number) => {
+    e.stopPropagation();
+    setInsights((prev) => ({
+      ...prev,
+      [tab]: prev[tab].filter((item) => item.id !== id),
+    }));
+    toast.success("Insight dismissed", {
+      description: "We'll adjust future recommendations based on your feedback.",
+    });
+  };
+
+  const handleCardClick = (title: string) => {
+    toast.info(`Insight Detail: ${title}`, {
+      description: "Opening intelligent deep-dive analysis...",
+    });
+  };
+
+  const handleHubClick = () => {
+    toast.success("Intelligence Hub", {
+      description: "Navigating to centralized AI analytics workspace.",
+    });
+  };
 
   return (
     <motion.div
@@ -65,8 +91,8 @@ export default function AIInsights() {
       className="w-full"
     >
       <div className="relative glass-dark shadow-xl rounded-xl overflow-hidden text-white group flex flex-col border border-white/5">
-        <div className="relative z-10 p-6 flex-1 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
+        <div className="relative z-10 p-4 flex-1 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-white/10 rounded-lg backdrop-blur-md border border-white/10">
                 <Sparkles className="w-4 h-4 text-indigo-400" />
@@ -84,7 +110,7 @@ export default function AIInsights() {
             </div>
           </div>
 
-          <div className="flex gap-1 p-1 bg-white/5 rounded-lg mb-6 border border-white/5">
+          <div className="flex gap-1 p-1 bg-white/5 rounded-lg mb-4 border border-white/5">
             {(["recommendations", "alerts", "trends"] as const).map((tab) => (
               <button
                 key={tab}
@@ -101,14 +127,19 @@ export default function AIInsights() {
                     className="absolute inset-0 bg-white/10 shadow-sm backdrop-blur-md rounded-md border border-white/10"
                   />
                 )}
-                <span className="relative z-10">
+                <span className="relative z-10 flex items-center justify-center gap-1.5">
                   {tab === "recommendations" ? "Recs" : tab}
+                  {insights[tab].length > 0 && (
+                    <span className="bg-white/20 text-white px-1 rounded-sm text-[7px]">
+                      {insights[tab].length}
+                    </span>
+                  )}
                 </span>
               </button>
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent max-h-[300px]">
+          <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent max-h-[300px] min-h-[160px]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
@@ -118,38 +149,65 @@ export default function AIInsights() {
                 transition={{ duration: 0.2 }}
                 className="space-y-3 pb-2"
               >
-                {insights[activeTab].map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <motion.div
-                      key={item.id}
-                      whileHover={{
-                        x: 2,
-                        backgroundColor: "rgba(255,255,255,0.06)",
-                      }}
-                      className="bg-white/5 backdrop-blur-sm border border-white/5 p-4 rounded-lg flex items-start gap-4 hover:border-white/10 transition-all cursor-pointer group/card"
-                    >
-                      <div
-                        className={`p-2.5 ${item.bgColor} rounded-lg ${item.color} shrink-0 shadow-lg shadow-black/10 transition-transform`}
+                {insights[activeTab].length > 0 ? (
+                  insights[activeTab].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <motion.div
+                        key={item.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        whileHover={{
+                          x: 2,
+                          backgroundColor: "rgba(255,255,255,0.06)",
+                        }}
+                        onClick={() => handleCardClick(item.title)}
+                        className="bg-white/5 backdrop-blur-sm border border-white/5 p-4 rounded-lg flex items-start gap-4 hover:border-white/10 transition-all cursor-pointer group/card relative"
                       >
-                        <Icon className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-xs mb-1 leading-tight group-hover/card:text-indigo-400 transition-colors truncate">
-                          {item.title}
-                        </p>
-                        <p className="text-white/50 text-[10px] leading-relaxed line-clamp-2 font-medium">
-                          {item.desc}
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                        <div
+                          className={`p-2.5 ${item.bgColor} rounded-lg ${item.color} shrink-0 shadow-lg shadow-black/10 transition-transform`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-xs mb-1 leading-tight group-hover/card:text-indigo-400 transition-colors truncate">
+                            {item.title}
+                          </p>
+                          <p className="text-white/50 text-[10px] leading-relaxed line-clamp-2 font-medium">
+                            {item.desc}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => handleDismiss(e, activeTab, item.id)}
+                          className="opacity-0 group-hover/card:opacity-100 absolute top-2 right-2 p-1 hover:bg-white/10 rounded-md transition-all text-white/40 hover:text-white"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </motion.div>
+                    );
+                  })
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center justify-center py-10 text-white/30"
+                  >
+                    <Sparkles className="w-8 h-8 mb-3 opacity-20" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest">
+                      No new {activeTab}
+                    </p>
+                  </motion.div>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
 
-          <button className="w-full mt-6 bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] uppercase tracking-widest h-10 rounded-lg border border-white/10 transition-all flex items-center justify-center gap-2 group/btn active:scale-95">
+          <button 
+            onClick={handleHubClick}
+            className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] uppercase tracking-widest h-9 rounded-lg border border-white/10 transition-all flex items-center justify-center gap-2 group/btn active:scale-95"
+          >
             Intelligence Hub
             <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
           </button>
@@ -158,3 +216,4 @@ export default function AIInsights() {
     </motion.div>
   );
 }
+

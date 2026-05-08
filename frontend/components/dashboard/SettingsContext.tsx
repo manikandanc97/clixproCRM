@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useCRMStore } from "@/store/useCRMStore";
 
 export type AccentColor = "emerald" | "blue" | "violet" | "amber" | "rose";
 export type FontFamily = "sans" | "geist" | "jakarta";
@@ -15,27 +16,16 @@ type SettingsContextType = {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [accentColor, setAccentColorState] = useState<AccentColor>("emerald");
-  const [fontFamily, setFontFamilyState] = useState<FontFamily>("sans");
+  const { accentColor, setAccentColor, fontFamily, setFontFamily } = useCRMStore();
   const [mounted, setMounted] = useState(false);
 
-  // Load from localStorage on mount
   useEffect(() => {
-    const savedAccent = localStorage.getItem("crm-accent-color") as AccentColor;
-    const savedFont = localStorage.getItem("crm-font-family") as FontFamily;
-    
-    if (savedAccent) setAccentColorState(savedAccent);
-    if (savedFont) setFontFamilyState(savedFont);
-    
     setMounted(true);
   }, []);
 
-  // Update body classes and persist to localStorage
+  // Update body classes and data attributes
   useEffect(() => {
     if (!mounted) return;
-
-    localStorage.setItem("crm-accent-color", accentColor);
-    localStorage.setItem("crm-font-family", fontFamily);
 
     // Update data attributes on document element
     const root = document.documentElement;
@@ -47,11 +37,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     document.body.classList.add(`font-${fontFamily}`);
   }, [accentColor, fontFamily, mounted]);
 
-  const setAccentColor = (color: AccentColor) => setAccentColorState(color);
-  const setFontFamily = (font: FontFamily) => setFontFamilyState(font);
-
   return (
-    <SettingsContext.Provider value={{ accentColor, setAccentColor, fontFamily, setFontFamily }}>
+    <SettingsContext.Provider value={{ 
+      accentColor: accentColor as AccentColor, 
+      setAccentColor: (color: AccentColor) => setAccentColor(color), 
+      fontFamily: fontFamily as FontFamily, 
+      setFontFamily: (font: FontFamily) => setFontFamily(font) 
+    }}>
       {children}
     </SettingsContext.Provider>
   );
@@ -64,3 +56,4 @@ export function useSettings() {
   }
   return context;
 }
+

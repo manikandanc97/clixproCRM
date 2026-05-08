@@ -29,11 +29,11 @@ export function DashboardSkeleton() {
         {/* Main Chart Column Skeleton */}
         <div className="lg:col-span-2 xl:col-span-3 space-y-6 xl:space-y-8">
           <Card className="bg-white/40 dark:bg-slate-900/40 border-transparent rounded-xl h-[400px]">
-            <CardHeader className="p-6 lg:p-8 pb-4">
+            <CardHeader className="pb-3">
               <div className="w-48 h-6 bg-slate-200 dark:bg-slate-800 rounded" />
               <div className="w-64 h-4 bg-slate-200 dark:bg-slate-800 rounded mt-2" />
             </CardHeader>
-            <CardContent className="p-6 lg:p-8 pt-0">
+            <CardContent className="pt-0">
               <div className="w-full h-full bg-slate-200/50 dark:bg-slate-800/50 rounded-xl" />
             </CardContent>
           </Card>

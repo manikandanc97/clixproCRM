@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import LeadsTable from "@/components/leads/LeadsTable";
 import { 
   SearchX, 
@@ -28,51 +28,75 @@ import {
   CRMMetricCard, 
   CRMToolbar, 
   CRMCard,
-  CRMAIInsight
+  CRMAIInsight,
+  CRMPageContainer,
+  CRMMetricsGrid
 } from "@/components/shared/crm";
+import { useCRMStore } from "@/store/useCRMStore";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 const LeadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const { data, loading, error, refetch } = useApiResource(fetchLeadsData);
   
-  const leads = useMemo(() => {
-    return (data?.leads || []).map(lead => ({
-      ...lead,
-      score: Math.floor(Math.random() * 40) + 60, // 60-100
-      priority: ["High", "Medium", "Low"][Math.floor(Math.random() * 3)] as "High" | "Medium" | "Low",
-      source: ["LinkedIn", "Website", "Referral", "Google Ads"][Math.floor(Math.random() * 4)],
-      lastActivity: "2 hours ago",
-      aiInsights: {
-        summary: `${lead.name} is showing high intent based on recent website activity and email engagement.`,
-        conversionProbability: Math.floor(Math.random() * 30) + 70,
-        recommendation: "Schedule a demo call within 24 hours."
-      }
-    }));
-  }, [data?.leads]);
+  const { leads, setLeads } = useCRMStore();
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const { data, loading, error, refetch } = useApiResource(fetchLeadsData);
 
-  const filteredLeads = leads.filter((lead) => {
-    const matchesSearch = 
-      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || lead.status.toLowerCase() === statusFilter.toLowerCase();
+  useEffect(() => {
+    if (data?.leads && safeLeads.length === 0) {
+      setLeads(data.leads.map(lead => ({
+        ...lead,
+        score: Math.floor(Math.random() * 40) + 60,
+        priority: ["High", "Medium", "Low"][Math.floor(Math.random() * 3)] as "High" | "Medium" | "Low",
+        source: ["LinkedIn", "Website", "Referral", "Google Ads"][Math.floor(Math.random() * 4)],
+        lastActivity: "2 hours ago",
+        aiInsights: {
+          summary: `${lead.name} is showing high intent based on recent website activity and email engagement.`,
+          conversionProbability: Math.floor(Math.random() * 30) + 70,
+          recommendation: "Schedule a demo call within 24 hours."
+        }
+      })));
+    }
+  }, [data, safeLeads.length, setLeads]);
+  
+  const filteredLeads = useMemo(() => {
+    return safeLeads.filter((lead) => {
+      const matchesSearch = 
+        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.email.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || lead.status.toLowerCase() === statusFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
+  }, [safeLeads, searchQuery, statusFilter]);
+
+  const handleAddLead = () => {
+    toast.info("Add Lead", {
+      description: "Opening lead creation workspace...",
+    });
+  };
+
+  const handleExport = () => {
+    toast.success("Data Export Initiated", {
+      description: `Exporting ${filteredLeads.length} leads to CSV format.`,
+    });
+  };
 
   const clearFilters = () => {
     setSearchQuery("");
     setStatusFilter("all");
   };
 
-  if (loading && !data) {
+  if (loading && safeLeads.length === 0) {
     return <PageLoadingState label="Loading intelligent lead records..." />;
   }
 
-  if (error && !data) {
+  if (error && safeLeads.length === 0) {
     return (
       <PageErrorState
         title="Leads unavailable"
@@ -82,13 +106,12 @@ const LeadsPage = () => {
     );
   }
 
-  // Mock sparkline data
   const sparklineData = [
     { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
   ];
 
   return (
-    <div className="space-y-8 p-8 max-w-[1600px] mx-auto pb-20">
+    <CRMPageContainer>
       <CRMPageHeader 
         title="Leads Management"
         subtitle="Track, qualify, and convert potential opportunities into customers with AI-driven insights."
@@ -98,22 +121,22 @@ const LeadsPage = () => {
           {
             label: "Export",
             icon: Download,
-            onClick: () => console.log("Export"),
+            onClick: handleExport,
             variant: "outline"
           },
           {
             label: "Add Lead",
             icon: UserPlus,
-            onClick: () => console.log("Add Lead"),
+            onClick: handleAddLead,
             variant: "default"
           }
         ]}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <CRMMetricsGrid cols={3}>
         <CRMMetricCard 
           title="Total Leads"
-          value={leads.length}
+          value={safeLeads.length}
           change="+12.5%"
           trend="up"
           icon={Users}
@@ -141,7 +164,7 @@ const LeadsPage = () => {
           sparklineData={sparklineData}
           delay={0.3}
         />
-      </div>
+      </CRMMetricsGrid>
 
       <CRMToolbar 
         searchQuery={searchQuery}
@@ -174,7 +197,7 @@ const LeadsPage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <LeadsTable leads={filteredLeads} totalCount={data?.summary.total || 0} />
+              <LeadsTable leads={filteredLeads} totalCount={filteredLeads.length} />
             </motion.div>
           ) : (
             <motion.div 
@@ -256,7 +279,7 @@ const LeadsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </CRMPageContainer>
   );
 };
 

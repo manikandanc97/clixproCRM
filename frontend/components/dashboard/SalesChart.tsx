@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState } from "react";
 import {
   AreaChart,
   Area,
@@ -9,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, RefreshCw, Download, Filter } from "lucide-react";
 import { SalesChartPointType } from "@/types/dashboard";
 
 import {
@@ -20,13 +21,47 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface SalesChartProps {
   data: SalesChartPointType[];
 }
 
 const SalesChart = ({ data }: SalesChartProps) => {
+  const [chartType, setChartType] = useState<"revenue" | "deals">("revenue");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    toast.info("Refreshing sales data...");
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast.success("Sales data updated successfully.");
+    }, 1500);
+  };
+
+  const handleExport = () => {
+    toast.success("Sales report exported", {
+      description: `Format: PDF, Metric: ${chartType === 'revenue' ? 'Revenue' : 'Deals'}`,
+    });
+  };
+
+  // Simulate deal count data based on revenue
+  const chartData = data.map(point => ({
+    ...point,
+    deals: Math.round(point.value / 5000) + Math.floor(Math.random() * 5),
+  }));
+
+  const currentColor = chartType === "revenue" ? "#10b981" : "#6366f1";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -37,32 +72,91 @@ const SalesChart = ({ data }: SalesChartProps) => {
       <Card className="overflow-visible border border-border bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div className="space-y-1.5">
-            <CardTitle className="text-xl font-bold tracking-tight">Sales Overview</CardTitle>
+            <CardTitle className="text-xl font-bold tracking-tight">
+              {chartType === "revenue" ? "Revenue Growth" : "Deal Volume"}
+            </CardTitle>
             <CardDescription className="text-xs font-medium text-muted-foreground">
-              Monthly performance tracking across all revenue streams
+              {chartType === "revenue" 
+                ? "Monthly revenue performance tracking across all channels"
+                : "Volume of active and closed deals over the past 12 months"
+              }
             </CardDescription>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-xl transition-all duration-300 hover:bg-muted"
-          >
-            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="bg-muted/50 p-1 rounded-xl flex items-center gap-1 border border-border/50">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setChartType("revenue")}
+                className={`h-8 px-4 rounded-lg text-xs font-bold transition-all duration-300 ${
+                  chartType === "revenue" 
+                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 hover:text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30 shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                }`}
+              >
+                Revenue
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setChartType("deals")}
+                className={`h-8 px-4 rounded-lg text-xs font-bold transition-all duration-300 ${
+                  chartType === "deals" 
+                    ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 hover:text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-400 dark:hover:bg-indigo-500/30 shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                }`}
+              >
+                Deals
+              </Button>
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleRefresh}
+              className={`rounded-xl h-10 w-10 transition-all duration-300 ${isRefreshing ? "animate-spin" : ""}`}
+            >
+              <RefreshCw className="w-4 h-4 text-muted-foreground" />
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-xl h-10 w-10 transition-all duration-300 hover:bg-muted"
+                >
+                  <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 rounded-[var(--crm-card-radius)] p-2">
+                <DropdownMenuItem onClick={handleExport} className="rounded-xl gap-2 font-semibold">
+                  <Download className="w-4 h-4" /> Export Data
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl gap-2 font-semibold">
+                  <Filter className="w-4 h-4" /> Advanced Filter
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="rounded-xl gap-2 font-semibold text-rose-500 focus:bg-rose-50 focus:text-rose-600 dark:focus:bg-rose-500/10 dark:focus:text-rose-400">
+                  Reset View
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardHeader>
 
         <CardContent>
-          <div className="h-[350px] w-full mt-6">
+          <div className="h-[300px] w-full mt-3">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={data}
+                data={chartData}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="0%" stopColor={currentColor} stopOpacity={0.15} />
+                    <stop offset="100%" stopColor={currentColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
@@ -82,17 +176,17 @@ const SalesChart = ({ data }: SalesChartProps) => {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "var(--color-muted-foreground)", fontSize: 10, fontWeight: 800 }}
-                  tickFormatter={(value) => `$${value/1000}k`}
+                  tickFormatter={(value) => chartType === "revenue" ? `$${value/1000}k` : value}
                 />
                 <Tooltip
                   cursor={{
-                    stroke: "#10b981",
+                    stroke: currentColor,
                     strokeWidth: 2,
                     strokeDasharray: "6 6",
                   }}
                   contentStyle={{
                     borderRadius: "20px",
-                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                    border: `1px solid ${currentColor}33`,
                     boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
                     padding: "16px 20px",
                     backgroundColor: "rgba(15, 23, 42, 0.9)",
@@ -100,7 +194,7 @@ const SalesChart = ({ data }: SalesChartProps) => {
                     color: "white",
                   }}
                   itemStyle={{
-                    color: "#10b981",
+                    color: currentColor,
                     fontWeight: 900,
                     fontSize: "16px",
                   }}
@@ -112,23 +206,29 @@ const SalesChart = ({ data }: SalesChartProps) => {
                     textTransform: "uppercase",
                     letterSpacing: "0.2em",
                   }}
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, "Revenue"]}
+                  formatter={(value) => {
+                    const numericValue = Number(value ?? 0);
+                    return [
+                      chartType === "revenue" ? `$${numericValue.toLocaleString()}` : numericValue,
+                      chartType === "revenue" ? "Revenue" : "Deals"
+                    ];
+                  }}
                 />
                 <Area
                   type="monotone"
-                  dataKey="value"
-                  stroke="#10b981"
+                  dataKey={chartType === "revenue" ? "value" : "deals"}
+                  stroke={currentColor}
                   strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorSales)"
-                  animationDuration={2000}
+                  animationDuration={1500}
                   animationEasing="ease-in-out"
                   activeDot={{ 
                     r: 6, 
-                    fill: "#10b981", 
+                    fill: currentColor, 
                     stroke: "white", 
                     strokeWidth: 2.5,
-                    className: "shadow-xl pulse-dot"
+                    className: "shadow-xl"
                   }}
                 />
               </AreaChart>

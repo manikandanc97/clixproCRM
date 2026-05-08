@@ -1,14 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   RadialBarChart,
   RadialBar,
   ResponsiveContainer,
   PolarAngleAxis,
 } from "recharts";
-import { Target, TrendingUp, ArrowUpRight, DollarSign } from "lucide-react";
+import { Target, TrendingUp, ArrowUpRight, DollarSign, ChevronRight } from "lucide-react";
 
 const data = [
   {
@@ -27,38 +27,50 @@ export default function RevenueTracker() {
       transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       className="w-full h-full"
     >
-      <Card className="h-full border-none shadow-premium bg-gradient-to-br from-card to-background/50 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-8 z-10">
-          <div className="p-3 bg-primary/10 text-primary rounded-2xl shadow-sm border border-primary/20 group-hover:scale-110 transition-transform duration-500">
-            <Target className="w-6 h-6" />
-          </div>
-        </div>
-
-        <CardContent className="p-7 flex flex-col h-full relative z-10">
-          <div className="flex flex-col mb-5">
-            <h3 className="font-bold text-foreground text-xl tracking-tight">
-              Revenue Target
-            </h3>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs font-bold text-success flex items-center gap-0.5">
-                <TrendingUp className="w-3 h-3" />
-                +12.5%
-              </span>
-              <span className="text-xs font-medium text-muted-foreground">
-                vs last month
-              </span>
+      <Card className="h-full border-none shadow-premium bg-gradient-to-br from-card to-background/50 relative overflow-hidden group flex flex-col">
+        <CardHeader className="flex flex-row items-start justify-between z-10 relative pb-2 px-6 pt-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-50 text-emerald-500 rounded-full dark:bg-emerald-500/10">
+              <Target className="w-5 h-5" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-bold">Revenue Target</CardTitle>
+              <div className="flex items-center gap-1 mt-0.5">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-xs font-bold text-emerald-500">
+                  +12.5%
+                </span>
+                <span className="text-xs font-medium text-slate-400">
+                  vs last month
+                </span>
+              </div>
             </div>
           </div>
+          <button className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-50 rounded-full">
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </CardHeader>
 
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-full aspect-square max-h-[190px] relative">
+        <CardContent className="px-6 pb-6 pt-2 flex flex-col flex-1 relative z-10">
+          <div className="flex-1 flex items-center justify-between w-full py-2">
+            {/* Left Stat - Current */}
+            <div className="flex flex-col items-start space-y-0.5 z-10 relative">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                Current
+              </p>
+              <p className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                $85.2k
+              </p>
+            </div>
+
+            <div className="w-full max-w-[160px] aspect-square relative shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <RadialBarChart
                   cx="50%"
                   cy="50%"
                   innerRadius="75%"
                   outerRadius="100%"
-                  barSize={20}
+                  barSize={14}
                   data={data}
                   startAngle={90}
                   endAngle={-270}
@@ -71,8 +83,8 @@ export default function RevenueTracker() {
                       x2="1"
                       y2="1"
                     >
-                      <stop offset="0%" stopColor="var(--color-primary)" />
-                      <stop offset="100%" stopColor="oklch(0.6 0.18 160)" />
+                      <stop offset="0%" stopColor="#34d399" />
+                      <stop offset="100%" stopColor="#059669" />
                     </linearGradient>
                   </defs>
                   <PolarAngleAxis
@@ -82,55 +94,46 @@ export default function RevenueTracker() {
                     tick={false}
                   />
                   <RadialBar
-                    background={{ fill: "var(--color-muted)" }}
+                    background={{ fill: "#ecfdf5" }}
                     dataKey="value"
                     cornerRadius={30}
                     animationDuration={1500}
-                    className="drop-shadow-[0_4px_10px_var(--color-primary)] opacity-40"
+                    className="drop-shadow-[0_6px_12px_rgba(34,197,94,0.3)] opacity-100"
                   />
                 </RadialBarChart>
               </ResponsiveContainer>
 
               {/* Center Content */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-black text-foreground tracking-tighter">
+                <span className="text-3xl leading-none font-black text-slate-900 dark:text-white tracking-tight">
                   85%
                 </span>
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1">
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-1">
                   Achieved
                 </span>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-border">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                Current
-              </p>
-              <p className="text-lg font-bold text-foreground tracking-tight">
-                $85,240
-              </p>
-            </div>
-            <div className="space-y-1 text-right">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            {/* Right Stat - Target */}
+            <div className="flex flex-col items-end space-y-0.5 text-right z-10 relative">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                 Target
               </p>
-              <p className="text-lg font-bold text-foreground tracking-tight">
-                $100,000
+              <p className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                $100k
               </p>
             </div>
           </div>
 
-          <button className="mt-4 w-full py-3 bg-foreground text-background rounded-2xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95 group/btn">
+          <button className="mt-3 w-full py-3 bg-slate-950 dark:bg-slate-50 text-white dark:text-slate-950 rounded-full font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 transition-all active:scale-95 group/btn">
             View Analytics
             <ArrowUpRight className="w-4 h-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
           </button>
         </CardContent>
 
         {/* Subtle background pattern */}
-        <div className="absolute -bottom-12 -left-12 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.08] group-hover:scale-110 group-hover:-rotate-12 transition-all duration-700 pointer-events-none z-0">
-          <DollarSign className="w-56 h-56 text-primary" />
+        <div className="absolute -bottom-6 -left-6 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.05] group-hover:scale-110 group-hover:-rotate-12 transition-all duration-700 pointer-events-none z-0">
+          <DollarSign className="w-64 h-64 text-emerald-500 stroke-[3]" />
         </div>
       </Card>
     </motion.div>

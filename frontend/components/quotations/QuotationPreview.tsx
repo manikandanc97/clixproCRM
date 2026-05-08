@@ -22,7 +22,8 @@ import {
   Printer,
   Copy,
   Trash2,
-  MoreVertical
+  MoreVertical,
+  Zap
 } from "lucide-react";
 import { QuotationType } from "@/types/quotation";
 import { Separator } from "@/components/ui/separator";

@@ -31,7 +31,7 @@ const AnalyticsSummary = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 }}
-      className="space-y-6"
+      className="space-y-4"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -49,10 +49,10 @@ const AnalyticsSummary = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {insights.map((insight, idx) => (
           <Card key={idx} className="group relative overflow-hidden bg-white rounded-xl border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-500 border-l-4" style={{ borderLeftColor: insight.color === 'blue' ? '#3b82f6' : insight.color === 'emerald' ? '#10b981' : '#f59e0b' }}>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-start gap-4">
                 <div className={`p-3 rounded-2xl ${
                   insight.color === 'blue' ? 'bg-blue-50 text-blue-600' : 

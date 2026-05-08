@@ -11,6 +11,7 @@ import {
   MapPin,
   ArrowRight,
   ExternalLink,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const meetings = [
   {
@@ -72,6 +80,32 @@ const meetings = [
 export default function UpcomingMeetings() {
   const hasMeetings = meetings.length > 0;
 
+  const handleJoin = (e: React.MouseEvent, title: string) => {
+    e.stopPropagation();
+    toast.success(`Joining: ${title}`, {
+      description: "Initializing secure video connection...",
+    });
+    window.open("https://zoom.us", "_blank");
+  };
+
+  const handleSchedule = () => {
+    toast.info("Schedule Meeting", {
+      description: "Opening smart scheduling assistant...",
+    });
+  };
+
+  const handleViewCalendar = () => {
+    toast.info("Navigating to Calendar", {
+      description: "Loading full-screen schedule view.",
+    });
+  };
+
+  const handleMeetingClick = (title: string) => {
+    toast.info(`Meeting Details: ${title}`, {
+      description: "Opening meeting workspace and shared notes.",
+    });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -96,21 +130,34 @@ export default function UpcomingMeetings() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              className="hidden sm:flex rounded-xl border-border bg-background/50 backdrop-blur-md h-10 font-bold text-xs uppercase tracking-wider"
+              onClick={handleViewCalendar}
+              className="hidden sm:flex rounded-xl border-border bg-background/50 backdrop-blur-md h-10 font-bold text-xs uppercase tracking-wider hover:bg-muted"
             >
               View Calendar
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-xl hover:bg-muted h-10 w-10"
-            >
-              <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-xl hover:bg-muted h-10 w-10"
+                >
+                  <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 rounded-[var(--crm-card-radius)] p-2">
+                <DropdownMenuItem onClick={handleSchedule} className="rounded-xl gap-2 font-semibold">
+                  <Plus className="w-4 h-4" /> Schedule New
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleViewCalendar} className="rounded-xl gap-2 font-semibold">
+                  <Calendar className="w-4 h-4" /> Go to Full Calendar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 lg:p-8 pt-2">
+        <CardContent className="pt-0">
           {!hasMeetings ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4 border border-dashed border-border">
@@ -122,77 +169,95 @@ export default function UpcomingMeetings() {
               <p className="text-muted-foreground text-sm max-w-[240px] mt-1">
                 Your schedule is clear. Use this time to focus on your leads!
               </p>
-              <Button className="mt-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 shadow-lg shadow-primary/20">
+              <Button 
+                onClick={handleSchedule}
+                className="mt-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 shadow-lg shadow-primary/20"
+              >
                 Schedule Meeting
               </Button>
             </div>
           ) : (
-            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex flex-col gap-3 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
               {meetings.map((meeting, index) => (
                 <motion.div
                   key={meeting.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
-                  className={`group relative flex flex-col sm:flex-row items-center sm:items-stretch gap-4 sm:gap-6 p-4 sm:p-5 rounded-[1.5rem] sm:rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
+                  onClick={() => handleMeetingClick(meeting.title)}
+                  className={`group relative flex flex-col sm:flex-row items-center sm:items-center gap-4 p-4 rounded-[1.25rem] border transition-all duration-500 cursor-pointer overflow-hidden
                     ${
                       meeting.isToday
-                        ? "bg-card border-info/20 shadow-md hover:shadow-lg"
-                        : "bg-muted/30 border-transparent hover:border-border"
+                        ? "bg-gradient-to-br from-card to-info/5 border-info/20 shadow-premium-sm hover:shadow-premium hover:border-info/40"
+                        : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
                     }`}
                 >
-                  {/* Today Highlight Ribbon */}
+                  {/* Status Indicator Bar */}
                   {meeting.isToday && (
-                    <div className="absolute top-0 left-0 w-1.5 h-full bg-info" />
+                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-info/80 to-info shadow-[0_0_15px_rgba(14,165,233,0.3)]" />
                   )}
 
-                  {/* Time Block */}
-                  <div className="flex flex-row sm:flex-col items-center justify-center min-w-full sm:min-w-[100px] py-2 px-4 bg-muted rounded-xl sm:rounded-2xl border border-border shadow-inner group-hover:bg-info/10 transition-colors">
-                    <span className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none mr-2 sm:mr-0 sm:mb-1">
-                      Starts
-                    </span>
-                    <span className="font-black text-foreground text-base sm:text-lg tracking-tighter whitespace-nowrap">
-                      {meeting.time.split(" - ")[0]}
-                    </span>
+                  {/* Time Block - Modern Integrated Style */}
+                  <div className="flex flex-col items-start justify-center min-w-[100px] border-r border-border/30 pr-4 group-hover:border-info/20 transition-colors duration-500">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <div className={`w-1.5 h-1.5 rounded-full ${meeting.isToday ? 'bg-info shadow-[0_0_8px_rgba(14,165,233,0.5)] animate-pulse' : 'bg-muted-foreground/30'}`} />
+                      <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
+                        {meeting.isToday ? "Today" : "Scheduled"}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="font-black text-2xl text-foreground tracking-tighter group-hover:text-info transition-colors duration-500">
+                        {meeting.time.split(" - ")[0].split(" ")[0]}
+                      </span>
+                      <span className="text-[10px] font-black text-muted-foreground/60 uppercase">
+                        {meeting.time.split(" - ")[0].split(" ")[1]}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1 text-center sm:text-left">
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1 sm:gap-2 mb-1.5">
-                      <h4 className="font-bold text-foreground text-base sm:text-lg tracking-tight group-hover:text-info transition-colors leading-tight">
+                  {/* Content Section */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <h4 className="font-bold text-foreground text-base sm:text-lg tracking-tight truncate group-hover:text-info transition-colors duration-300">
                         {meeting.title}
                       </h4>
-                      {meeting.isToday && (
-                        <Badge className="bg-info/10 text-info hover:bg-info/20 border-none px-2 py-0 h-5 text-[9px] font-black uppercase tracking-tighter">
-                          Today
-                        </Badge>
+                      {meeting.isOnline && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                          Live
+                        </div>
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 text-[11px] sm:text-xs font-semibold text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        {meeting.time.split(" - ")[1]} duration
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        {meeting.isOnline ? (
-                          <Video className="w-4 h-4 text-info" />
-                        ) : (
-                          <MapPin className="w-4 h-4 text-warning" />
-                        )}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground/80">
+                        <div className="p-1 bg-muted rounded-md group-hover:bg-info/10 transition-colors">
+                          <Clock className="w-3.5 h-3.5 text-muted-foreground group-hover:text-info" />
+                        </div>
+                        {meeting.time.split(" - ")[1]}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground/80">
+                        <div className="p-1 bg-muted rounded-md group-hover:bg-warning/10 transition-colors">
+                          {meeting.isOnline ? (
+                            <Video className="w-3.5 h-3.5 text-info" />
+                          ) : (
+                            <MapPin className="w-3.5 h-3.5 text-warning" />
+                          )}
+                        </div>
                         {meeting.location}
-                      </span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Attendees & Actions */}
-                  <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-none pt-4 sm:pt-0 border-border">
-                    <div className="flex -space-x-3 sm:-space-x-4">
+                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="flex -space-x-3 hover:space-x-1 transition-all duration-300">
                       <TooltipProvider>
                         {meeting.attendees.map((person, i) => (
                           <Tooltip key={i}>
                             <TooltipTrigger asChild>
-                              <div className="w-10 h-10 rounded-full border-4 border-background bg-muted flex items-center justify-center text-[11px] font-bold text-muted-foreground shadow-sm transition-transform hover:scale-110 hover:z-20 relative ring-1 ring-border">
+                              <div className="w-9 h-9 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground shadow-sm transition-all hover:scale-110 hover:z-20 relative ring-1 ring-border/30 overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-info/5 to-transparent" />
                                 {person.avatar}
                               </div>
                             </TooltipTrigger>
@@ -205,18 +270,27 @@ export default function UpcomingMeetings() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {meeting.isOnline && meeting.isToday && (
-                        <Button className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11 px-6 shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center gap-2 border-none">
-                          Join <ExternalLink className="w-4 h-4" />
-                        </Button>
-                      )}
-                      {!meeting.isToday && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="rounded-xl hover:bg-muted w-11 h-11"
+                      {meeting.isOnline && meeting.isToday ? (
+                        <Button 
+                          variant="premium"
+                          size="sm"
+                          onClick={(e) => handleJoin(e, meeting.title)}
+                          className="h-10 px-5 rounded-xl font-bold shadow-[0_8px_16px_-6px_rgba(16,185,129,0.3)] hover:shadow-[0_12px_20px_-8px_rgba(16,185,129,0.4)]"
                         >
-                          <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                          Join Now
+                          <ExternalLink className="w-3.5 h-3.5 ml-1" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMeetingClick(meeting.title);
+                          }}
+                          className="rounded-xl w-10 h-10 hover:bg-muted"
+                        >
+                          <ArrowRight className="w-4 h-4 text-muted-foreground" />
                         </Button>
                       )}
                     </div>
@@ -230,3 +304,4 @@ export default function UpcomingMeetings() {
     </motion.div>
   );
 }
+

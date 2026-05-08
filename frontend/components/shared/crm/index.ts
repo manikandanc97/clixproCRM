@@ -4,3 +4,7 @@ export * from "./CRMMetricCard";
 export * from "./CRMToolbar";
 export * from "./CRMDataTable";
 export * from "./CRMAIInsight";
+export * from "./CRMPageContainer";
+export * from "./CRMMetricsGrid";
+export * from "./CRMPageSection";
+export * from "./CRMContentWrapper";

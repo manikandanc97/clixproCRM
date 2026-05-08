@@ -37,7 +37,12 @@ export const CRMTableBody = ({ children, className }: { children: React.ReactNod
   </tbody>
 );
 
-export const CRMTableRow = ({ children, className, onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) => (
+export const CRMTableRow = ({
+  children,
+  className,
+  onClick,
+  ...props
+}: React.HTMLAttributes<HTMLTableRowElement>) => (
   <tr 
     className={cn(
       "group hover:bg-muted/30 transition-colors", 
@@ -45,19 +50,31 @@ export const CRMTableRow = ({ children, className, onClick }: { children: React.
       className
     )}
     onClick={onClick}
+    {...props}
   >
     {children}
   </tr>
 );
 
-export const CRMTableCell = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <td className={cn("py-4 px-6 text-sm align-middle", className)}>
+export const CRMTableCell = ({
+  children,
+  className,
+  ...props
+}: React.TdHTMLAttributes<HTMLTableCellElement>) => (
+  <td className={cn("py-4 px-6 text-sm align-middle", className)} {...props}>
     {children}
   </td>
 );
 
-export const CRMTableHeaderCell = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <th className={cn("py-4 px-6 text-[11px] font-bold text-muted-foreground uppercase tracking-widest text-left", className)}>
+export const CRMTableHeaderCell = ({
+  children,
+  className,
+  ...props
+}: React.ThHTMLAttributes<HTMLTableCellElement>) => (
+  <th
+    className={cn("py-4 px-6 text-[11px] font-bold text-muted-foreground uppercase tracking-widest text-left", className)}
+    {...props}
+  >
     {children}
   </th>
 );

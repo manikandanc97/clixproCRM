@@ -32,13 +32,13 @@ const CompanySettings = () => {
 
   return (
     <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden">
-      <CardHeader className="p-8 pb-4">
+      <CardHeader className="p-5 pb-3">
         <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Company Profile</CardTitle>
         <CardDescription className="text-slate-400 text-sm mt-1">Manage your organization&apos;s business details and location.</CardDescription>
       </CardHeader>
 
-      <CardContent className="p-8 pt-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <CardContent className="p-5 pt-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-slate-500 font-semibold text-xs uppercase tracking-wider ml-1">Company Name</Label>
             <div className="relative">

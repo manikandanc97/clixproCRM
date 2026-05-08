@@ -29,7 +29,7 @@ export default function PendingFollowups() {
           </div>
           <Button variant="ghost" className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">View All</Button>
         </CardHeader>
-        <CardContent className="p-6 lg:p-8 pt-0 flex-1">
+        <CardContent className="pt-0 flex-1">
           <div className="space-y-4">
             {tasks.map((task, index) => (
               <motion.div 

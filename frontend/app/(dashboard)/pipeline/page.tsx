@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { GitBranch, Plus, Download, TrendingUp, DollarSign, Target } from "lucide-react";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
@@ -7,17 +8,41 @@ import { useApiResource } from "@/hooks/use-api-resource";
 import { fetchPipelineData } from "@/lib/api/crm";
 import { 
   CRMPageHeader, 
-  CRMMetricCard 
+  CRMMetricCard,
+  CRMPageContainer,
+  CRMMetricsGrid
 } from "@/components/shared/crm";
+import { useCRMStore } from "@/store/useCRMStore";
+import { toast } from "sonner";
 
 const PipelinePage = () => {
+  const { pipelineItems, setPipelineItems } = useCRMStore();
+  const safePipelineItems = Array.isArray(pipelineItems) ? pipelineItems : [];
   const { data, loading, error, refetch } = useApiResource(fetchPipelineData);
 
-  if (loading && !data) {
+  useEffect(() => {
+    if (data?.items && safePipelineItems.length === 0) {
+      setPipelineItems(data.items);
+    }
+  }, [data, safePipelineItems.length, setPipelineItems]);
+
+  const handleAddDeal = () => {
+    toast.info("Add Deal", {
+      description: "Opening revenue opportunity workspace...",
+    });
+  };
+
+  const handleExport = () => {
+    toast.success("Pipeline Manifest Exported", {
+      description: `Revenue forecast for ${safePipelineItems.length} deals is ready.`,
+    });
+  };
+
+  if (loading && safePipelineItems.length === 0) {
     return <PageLoadingState label="Loading live pipeline stages and deal totals..." />;
   }
 
-  if (error && !data) {
+  if (error && safePipelineItems.length === 0) {
     return (
       <PageErrorState
         title="Pipeline unavailable"
@@ -31,8 +56,13 @@ const PipelinePage = () => {
     { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
   ];
 
+  const totalValue = safePipelineItems.reduce((acc, item) => {
+    const val = parseInt(item.value.replace(/[^0-9]/g, ""));
+    return acc + (isNaN(val) ? 0 : val);
+  }, 0);
+
   return (
-    <div className="space-y-8 p-8 max-w-[1600px] mx-auto pb-6">
+    <CRMPageContainer className="pb-6">
       <CRMPageHeader 
         title="Sales Pipeline"
         subtitle="Visualize your sales funnel, manage deal stages, and forecast revenue with real-time accuracy."
@@ -42,22 +72,22 @@ const PipelinePage = () => {
           {
             label: "Export",
             icon: Download,
-            onClick: () => console.log("Export"),
+            onClick: handleExport,
             variant: "outline"
           },
           {
             label: "Add Deal",
             icon: Plus,
-            onClick: () => console.log("Add"),
+            onClick: handleAddDeal,
             variant: "default"
           }
         ]}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <CRMMetricsGrid cols={3} className="gap-4">
         <CRMMetricCard 
           title="Pipeline Value"
-          value="$425,800"
+          value={`$${totalValue.toLocaleString()}`}
           change="+14.2%"
           trend="up"
           icon={DollarSign}
@@ -85,10 +115,10 @@ const PipelinePage = () => {
           sparklineData={sparklineData}
           delay={0.3}
         />
-      </div>
+      </CRMMetricsGrid>
 
-      <PipelineBoard items={data?.items || []} />
-    </div>
+      <PipelineBoard items={safePipelineItems} />
+    </CRMPageContainer>
   );
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { FileText, Plus, Download, TrendingUp, Clock, CheckCircle2, SearchX } from "lucide-react";
 
 import QuotationsTable from "@/components/quotations/QuotationsTable";
@@ -11,28 +11,37 @@ import { Button } from "@/components/ui/button";
 import { 
   CRMPageHeader, 
   CRMMetricCard, 
-  CRMToolbar 
+  CRMToolbar,
+  CRMPageContainer,
+  CRMMetricsGrid
 } from "@/components/shared/crm";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCRMStore } from "@/store/useCRMStore";
+import { toast } from "sonner";
 
 const QuotationsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  
+  const { quotations, setQuotations } = useCRMStore();
+  const safeQuotations = Array.isArray(quotations) ? quotations : [];
   const { data, loading, error, refetch } = useApiResource(fetchQuotationsData);
 
-  const quotations = useMemo(() => {
-    return (data?.quotations || []).map(q => ({
-      ...q,
-      probability: Math.floor(Math.random() * 40) + 60,
-      viewCount: Math.floor(Math.random() * 10),
-      downloadCount: Math.floor(Math.random() * 5),
-      lastActivity: "2 hours ago",
-      isSigned: q.status === "Approved",
-    }));
-  }, [data?.quotations]);
+  useEffect(() => {
+    if (data?.quotations && safeQuotations.length === 0) {
+      setQuotations(data.quotations.map(q => ({
+        ...q,
+        probability: Math.floor(Math.random() * 40) + 60,
+        viewCount: Math.floor(Math.random() * 10),
+        downloadCount: Math.floor(Math.random() * 5),
+        lastActivity: "2 hours ago",
+        isSigned: q.status === "Approved",
+      })));
+    }
+  }, [data, safeQuotations.length, setQuotations]);
 
   const filteredQuotations = useMemo(() => {
-    return quotations.filter((quotation) => {
+    return safeQuotations.filter((quotation) => {
       const normalizedQuery = searchQuery.toLowerCase();
       const matchesSearch =
         quotation.quoteId.toLowerCase().includes(normalizedQuery) ||
@@ -43,13 +52,25 @@ const QuotationsPage = () => {
 
       return matchesSearch && matchesStatus;
     });
-  }, [quotations, searchQuery, statusFilter]);
+  }, [safeQuotations, searchQuery, statusFilter]);
 
-  if (loading && !data) {
+  const handleCreateQuote = () => {
+    toast.info("Create Quotation", {
+      description: "Opening smart quotation builder...",
+    });
+  };
+
+  const handleExport = () => {
+    toast.success("Sales Analytics Ready", {
+      description: `Downloading manifest for ${filteredQuotations.length} quotes.`,
+    });
+  };
+
+  if (loading && safeQuotations.length === 0) {
     return <PageLoadingState label="Loading quotations and approval status..." />;
   }
 
-  if (error && !data) {
+  if (error && safeQuotations.length === 0) {
     return (
       <PageErrorState
         title="Quotations unavailable"
@@ -64,7 +85,7 @@ const QuotationsPage = () => {
   ];
 
   return (
-    <div className="space-y-8 p-8 max-w-[1600px] mx-auto pb-20">
+    <CRMPageContainer>
       <CRMPageHeader 
         title="Quotations"
         subtitle="Generate and manage sales quotes with real-time tracking and AI-driven conversion probability."
@@ -74,22 +95,22 @@ const QuotationsPage = () => {
           {
             label: "Export",
             icon: Download,
-            onClick: () => console.log("Export"),
+            onClick: handleExport,
             variant: "outline"
           },
           {
             label: "Create Quote",
             icon: Plus,
-            onClick: () => console.log("Create"),
+            onClick: handleCreateQuote,
             variant: "default"
           }
         ]}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <CRMMetricsGrid cols={3} className="gap-4">
         <CRMMetricCard 
           title="Total Quotes"
-          value={quotations.length}
+          value={safeQuotations.length}
           change="+8.4%"
           trend="up"
           icon={FileText}
@@ -109,7 +130,7 @@ const QuotationsPage = () => {
         />
         <CRMMetricCard 
           title="Pending Approval"
-          value="8"
+          value={safeQuotations.filter(q => q.status === "Pending").length || 8}
           change="+2"
           trend="neutral"
           icon={Clock}
@@ -117,7 +138,7 @@ const QuotationsPage = () => {
           sparklineData={sparklineData}
           delay={0.3}
         />
-      </div>
+      </CRMMetricsGrid>
 
       <CRMToolbar 
         searchQuery={searchQuery}
@@ -172,7 +193,7 @@ const QuotationsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </CRMPageContainer>
   );
 };
 

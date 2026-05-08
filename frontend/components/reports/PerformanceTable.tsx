@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TrendingDown, TrendingUp, Trophy, ArrowUpRight } from "lucide-react";
+import { TrendingDown, TrendingUp, Trophy, ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
 import { PerformanceType } from "@/types/report";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
@@ -21,21 +22,75 @@ interface PerformanceTableProps {
   performance: PerformanceType[];
 }
 
+type SortConfig = {
+  key: keyof PerformanceType;
+  direction: "asc" | "desc";
+} | null;
+
 const PerformanceTable = ({ performance }: PerformanceTableProps) => {
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+
+  const sortedPerformance = useMemo(() => {
+    if (!sortConfig) return performance;
+    return [...performance].sort((a, b) => {
+      const aVal = a[sortConfig.key] ?? "";
+      const bVal = b[sortConfig.key] ?? "";
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [performance, sortConfig]);
+
+  const handleSort = (key: keyof PerformanceType) => {
+    setSortConfig((prev) => {
+      if (prev?.key === key) {
+        if (prev.direction === "asc") return { key, direction: "desc" };
+        return null;
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
+  const SortIcon = ({ column }: { column: keyof PerformanceType }) => {
+    if (sortConfig?.key !== column) return <ChevronDown className="w-3 h-3 opacity-20 group-hover:opacity-50" />;
+    return sortConfig.direction === "asc" ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />;
+  };
+
   return (
     <CRMDataTable>
       <CRMTableHeader>
         <CRMTableRow className="hover:bg-transparent">
-          <CRMTableHeaderCell>Team Member</CRMTableHeaderCell>
-          <CRMTableHeaderCell>Deals Closed</CRMTableHeaderCell>
+          <CRMTableHeaderCell 
+            className="cursor-pointer group select-none"
+            onClick={() => handleSort("name")}
+          >
+            <div className="flex items-center gap-2">
+              Team Member <SortIcon column="name" />
+            </div>
+          </CRMTableHeaderCell>
+          <CRMTableHeaderCell 
+            className="cursor-pointer group select-none"
+            onClick={() => handleSort("dealsClosed")}
+          >
+            <div className="flex items-center gap-2">
+              Deals Closed <SortIcon column="dealsClosed" />
+            </div>
+          </CRMTableHeaderCell>
           <CRMTableHeaderCell>Revenue Target</CRMTableHeaderCell>
-          <CRMTableHeaderCell>Conversion</CRMTableHeaderCell>
+          <CRMTableHeaderCell 
+            className="cursor-pointer group select-none"
+            onClick={() => handleSort("conversionRate")}
+          >
+            <div className="flex items-center gap-2">
+              Conversion <SortIcon column="conversionRate" />
+            </div>
+          </CRMTableHeaderCell>
           <CRMTableHeaderCell className="text-right">Trend</CRMTableHeaderCell>
         </CRMTableRow>
       </CRMTableHeader>
 
       <CRMTableBody>
-        {performance.map((item, idx) => (
+        {sortedPerformance.map((item, idx) => (
           <CRMTableRow key={item.id}>
             <CRMTableCell>
               <div className="flex items-center gap-4">
@@ -104,3 +159,4 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
 };
 
 export default PerformanceTable;
+

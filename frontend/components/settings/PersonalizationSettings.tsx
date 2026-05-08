@@ -10,15 +10,16 @@ import {
   Type, 
   Maximize2, 
   CheckCircle2,
-  Sidebar
+  Sidebar,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CRMCard } from "@/components/shared/crm";
 
 const accentColors = [
   { name: "Default", value: "bg-emerald-600" },
@@ -34,19 +35,20 @@ const PersonalizationSettings = () => {
   const [selectedAccent, setSelectedAccent] = useState("Default");
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Appearance Section */}
-        <Card className="border-none bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/40 rounded-2xl overflow-hidden">
-          <CardHeader className="p-8 pb-4">
-            <CardTitle className="text-xl font-bold tracking-tight flex items-center gap-2">
-              <Palette className="w-5 h-5 text-emerald-500" />
+        <CRMCard>
+          <div className="mb-5">
+            <h3 className="text-base font-bold tracking-tight text-foreground flex items-center gap-2">
+              <Palette className="w-4 h-4 text-primary" />
               Interface Theme
-            </CardTitle>
-            <CardDescription>Choose how ClientRise looks on your screen.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-8 pt-0 space-y-6">
-            <div className="grid grid-cols-3 gap-4">
+            </h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Choose how ClientRise looks on your screen.</p>
+          </div>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-3 gap-3">
               {[
                 { id: "light", icon: Sun, label: "Light" },
                 { id: "dark", icon: Moon, label: "Dark" },
@@ -56,126 +58,124 @@ const PersonalizationSettings = () => {
                   key={t.id}
                   onClick={() => setTheme(t.id)}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all group",
+                    "flex flex-col items-center justify-center gap-2.5 p-3 rounded-xl border-2 transition-all group",
                     theme === t.id 
-                      ? "border-primary bg-primary/5 ring-4 ring-primary/10" 
-                      : "border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700"
+                      ? "border-primary bg-primary/5 shadow-sm" 
+                      : "border-border/50 hover:border-border"
                   )}
                 >
                   <t.icon className={cn(
-                    "w-6 h-6 transition-colors",
+                    "w-5 h-5 transition-colors",
                     theme === t.id ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                   )} />
                   <span className={cn(
-                    "text-xs font-bold",
+                    "text-[10px] font-bold uppercase tracking-widest",
                     theme === t.id ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                   )}>{t.label}</span>
                 </button>
               ))}
             </div>
 
-            <div className="space-y-4">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Accent Color</Label>
-              <div className="flex flex-wrap gap-3">
+            <div className="space-y-3">
+              <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Accent Color</Label>
+              <div className="flex flex-wrap gap-2.5">
                 {accentColors.map((color) => (
                   <button
                     key={color.name}
                     onClick={() => setSelectedAccent(color.name)}
                     className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110",
+                      "w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-110 shadow-sm",
                       color.value,
-                      selectedAccent === color.name && "ring-4 ring-offset-4 ring-offset-white dark:ring-offset-slate-950 ring-primary"
+                      selectedAccent === color.name && "ring-2 ring-offset-2 ring-offset-background ring-primary"
                     )}
                   >
-                    {selectedAccent === color.name && <CheckCircle2 className="w-5 h-5 text-white" />}
+                    {selectedAccent === color.name && <CheckCircle2 className="w-4 h-4 text-white" />}
                   </button>
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CRMCard>
 
         {/* Workspace Layout Section */}
-        <Card className="border-none bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/40 rounded-2xl overflow-hidden">
-          <CardHeader className="p-8 pb-4">
-            <CardTitle className="text-xl font-bold tracking-tight flex items-center gap-2">
-              <Layout className="w-5 h-5 text-blue-500" />
+        <CRMCard>
+          <div className="mb-5">
+            <h3 className="text-base font-bold tracking-tight text-foreground flex items-center gap-2">
+              <Layout className="w-4 h-4 text-primary" />
               Navigation & Layout
-            </CardTitle>
-            <CardDescription>Optimize your workspace for focus and speed.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-8 pt-0 space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-100">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <Sidebar className="w-5 h-5 text-blue-600" />
+            </h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Optimize your workspace for focus and speed.</p>
+          </div>
+          
+          <div className="space-y-2">
+            {[
+              { id: "sidebar", title: "Compact Sidebar", desc: "Maximize your working area.", icon: Sidebar, active: false },
+              { id: "width", title: "Full Width Mode", desc: "Expand content to fill the screen.", icon: Maximize2, active: true },
+            ].map((item) => (
+              <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 group hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-card border border-border/50 flex items-center justify-center">
+                    <item.icon className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-foreground tracking-tight">{item.title}</h4>
+                    <p className="text-[10px] text-muted-foreground font-medium">{item.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm">Compact Sidebar</h4>
-                  <p className="text-xs text-muted-foreground">Maximize your working area.</p>
-                </div>
+                {item.active ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-600 border-none rounded-md px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest">Active</Badge>
+                ) : (
+                  <Button variant="ghost" size="sm" className="h-7 text-[8px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary">Enable</Button>
+                )}
               </div>
-              <Badge variant="outline" className="rounded-lg cursor-pointer hover:bg-primary hover:text-white transition-colors">Enable</Badge>
-            </div>
+            ))}
 
-            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-100">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                  <Maximize2 className="w-5 h-5 text-purple-600" />
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 group hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-card border border-border/50 flex items-center justify-center">
+                  <Type className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm">Full Width Mode</h4>
-                  <p className="text-xs text-muted-foreground">Expand content to fill the screen.</p>
+                  <h4 className="font-bold text-xs text-foreground tracking-tight">Font Scaling</h4>
+                  <p className="text-[10px] text-muted-foreground font-medium">Adjust text size for readability.</p>
                 </div>
               </div>
-              <Badge className="bg-emerald-100 text-emerald-600 hover:bg-emerald-100 rounded-lg">Active</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 group hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-100">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                  <Type className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm">Font Scaling</h4>
-                  <p className="text-xs text-muted-foreground">Adjust text size for readability.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon-xs">-</Button>
-                <span className="text-xs font-bold w-8 text-center">100%</span>
-                <Button variant="ghost" size="icon-xs">+</Button>
+              <div className="flex items-center gap-1.5 bg-card/50 rounded-md p-1 border border-border/50">
+                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md hover:bg-primary/10 hover:text-primary">-</Button>
+                <span className="text-[10px] font-bold w-7 text-center">100%</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md hover:bg-primary/10 hover:text-primary">+</Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CRMCard>
 
         {/* Dashboard Customization Preview */}
-        <Card className="md:col-span-2 border-none bg-slate-900 text-white rounded-2xl overflow-hidden relative group shadow-2xl">
-          <CardContent className="p-10 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-4">
-              <Badge className="bg-blue-500 text-white rounded-lg">Coming Soon</Badge>
-              <h2 className="text-3xl font-extrabold tracking-tight">Widget Marketplace</h2>
-              <p className="text-slate-400 max-w-md">
+        <CRMCard className="md:col-span-2 relative overflow-hidden bg-foreground/[0.02] border-border/40">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+            <div className="space-y-4 text-center md:text-left">
+              <Badge className="bg-primary/10 text-primary border-none rounded-md px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest">Coming Soon</Badge>
+              <h2 className="text-2xl font-black tracking-tight text-foreground">Widget Marketplace</h2>
+              <p className="text-muted-foreground max-w-sm text-sm font-medium">
                 Drag and drop custom analytics widgets, heatmaps, and activity pulses to build your perfect command center.
               </p>
-              <Button size="lg" variant="secondary" className="px-8 font-bold bg-white text-slate-900 hover:bg-slate-100">
+              <Button size="lg" className="px-8 font-bold rounded-lg h-11 text-xs">
                 Join Waitlist
               </Button>
             </div>
-            <div className="relative w-full md:w-1/3 aspect-video bg-slate-800 rounded-xl border border-slate-700 p-4 overflow-hidden">
-               <div className="grid grid-cols-2 gap-2 h-full opacity-50">
-                  <div className="bg-slate-700 rounded-lg animate-pulse" />
-                  <div className="bg-slate-700 rounded-lg animate-pulse delay-75" />
-                  <div className="bg-slate-700 rounded-lg animate-pulse delay-150 col-span-2" />
+            
+            <div className="relative w-full md:w-80 aspect-video bg-card rounded-xl border border-border/60 p-4 overflow-hidden shadow-premium">
+               <div className="grid grid-cols-2 gap-2 h-full opacity-40">
+                  <div className="bg-muted rounded-lg animate-pulse" />
+                  <div className="bg-muted rounded-lg animate-pulse delay-75" />
+                  <div className="bg-muted rounded-lg animate-pulse delay-150 col-span-2" />
                </div>
                <div className="absolute inset-0 flex items-center justify-center">
-                  <Palette className="w-12 h-12 text-blue-500 animate-bounce" />
+                  <Palette className="w-10 h-10 text-primary/40 animate-bounce" />
                </div>
             </div>
-          </CardContent>
-          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-500/20 blur-[60px] rounded-full" />
-        </Card>
+          </div>
+          <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-primary/5 blur-[80px] rounded-full" />
+        </CRMCard>
       </div>
     </div>
   );

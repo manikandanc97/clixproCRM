@@ -1,39 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Lock, 
-  ShieldCheck, 
-  Smartphone, 
-  History, 
-  Globe, 
+import {
+  Lock,
+  ShieldCheck,
+  Smartphone,
+  History,
+  Globe,
   AlertTriangle,
-  ShieldAlert
+  ShieldAlert,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { motion } from "framer-motion";
+import { CRMCard } from "@/components/shared/crm";
 
 const activeSessions = [
-  {
-    id: 1,
-    device: "Chrome on macOS",
-    location: "San Francisco, US",
-    ip: "192.168.1.1",
-    current: true,
-  },
-  {
-    id: 2,
-    device: "Mobile App on iPhone 15",
-    location: "London, UK",
-    ip: "192.168.1.45",
-    current: false,
-  },
+  { id: 1, device: "Chrome on macOS", location: "San Francisco, US", ip: "192.168.1.1", current: true },
+  { id: 2, device: "Mobile App on iPhone 15", location: "London, UK", ip: "192.168.1.45", current: false },
 ];
 
 const loginHistory = [
@@ -46,150 +33,176 @@ const SecuritySettings = () => {
   const [passwordStrength, setPasswordStrength] = useState(65);
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Password Update Card */}
-        <Card className="border-none bg-white dark:bg-slate-900 shadow-sm rounded-2xl overflow-hidden border border-slate-200/60">
-          <CardHeader className="p-6 pb-4">
-            <CardTitle className="text-lg font-bold tracking-tight flex items-center gap-2">
-              <Lock className="w-4 h-4 text-primary" />
-              Update Password
-            </CardTitle>
-            <CardDescription className="text-xs font-medium">Change your password to keep your account safe.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 pt-0 space-y-5">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-muted-foreground ml-1">Current Password</Label>
-                <Input type="password" placeholder="••••••••" className="bg-slate-50 dark:bg-slate-800/50 border-transparent focus:border-primary/30 focus:bg-white pl-4 py-5 rounded-xl transition-all" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-muted-foreground ml-1">New Password</Label>
-                <Input 
-                  type="password" 
-                  placeholder="••••••••" 
-                  className="bg-slate-50 dark:bg-slate-800/50 border-transparent focus:border-primary/30 focus:bg-white pl-4 py-5 rounded-xl transition-all"
-                  onChange={(e) => setPasswordStrength(Math.min(e.target.value.length * 10, 100))}
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        {/* Password Update */}
+        <CRMCard>
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Lock className="w-3.5 h-3.5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold tracking-tight text-foreground">Update Password</h3>
+              <p className="text-[11px] text-muted-foreground font-medium">Keep your account secure.</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 mb-4">
+            {[
+              { label: "Current Password", onChange: undefined },
+              {
+                label: "New Password",
+                onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPasswordStrength(Math.min(e.target.value.length * 10, 100)),
+              },
+            ].map((field) => (
+              <div key={field.label} className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  onChange={field.onChange}
+                  className="h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all"
                 />
               </div>
+            ))}
+          </div>
+
+          <div className="space-y-1.5 mb-5">
+            <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+              <span className="text-muted-foreground">Strength</span>
+              <span className={passwordStrength > 70 ? "text-emerald-500" : "text-warning"}>
+                {passwordStrength > 70 ? "Strong" : "Medium"}
+              </span>
             </div>
+            <Progress value={passwordStrength} className="h-1.5 bg-muted" />
+          </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                <span className="text-muted-foreground">Strength</span>
-                <span className={passwordStrength > 70 ? "text-emerald-500" : "text-amber-500"}>
-                  {passwordStrength > 70 ? "Strong" : "Medium"}
-                </span>
-              </div>
-              <Progress value={passwordStrength} className="h-1.5" />
+          <Button className="w-full">Update Password</Button>
+        </CRMCard>
+
+        {/* 2FA */}
+        <CRMCard>
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Smartphone className="w-3.5 h-3.5 text-primary" />
             </div>
+            <div>
+              <h3 className="text-sm font-bold tracking-tight text-foreground">Two-Factor Auth</h3>
+              <p className="text-[11px] text-muted-foreground font-medium">Add an extra layer of protection.</p>
+            </div>
+          </div>
 
-            <Button className="w-full">
-              Update Password
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* 2FA Card */}
-        <Card className="border-none bg-white dark:bg-slate-900 shadow-sm rounded-2xl overflow-hidden border border-slate-200/60">
-          <CardHeader className="p-6 pb-4">
-            <CardTitle className="text-lg font-bold tracking-tight flex items-center gap-2">
-              <Smartphone className="w-4 h-4 text-primary" />
-              Two-Factor Auth
-            </CardTitle>
-            <CardDescription className="text-xs font-medium">Add an extra layer of security to your account.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 pt-0 space-y-3">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/10">
-              <div className="space-y-0.5">
-                <h4 className="font-bold text-xs tracking-tight">Authenticator App</h4>
-                <p className="text-[10px] text-muted-foreground font-medium">Use an app like Google Authenticator.</p>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center justify-between p-3.5 rounded-lg bg-primary/5 border border-primary/15">
+              <div>
+                <h4 className="font-semibold text-xs text-foreground tracking-tight">Authenticator App</h4>
+                <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Use Google Authenticator or similar.</p>
               </div>
               <Switch />
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50">
-              <div className="space-y-0.5">
-                <h4 className="font-bold text-xs text-slate-400 tracking-tight">SMS Verification</h4>
-                <p className="text-[10px] text-muted-foreground font-medium">Receive codes via text message.</p>
+            <div className="flex items-center justify-between p-3.5 rounded-lg bg-muted/30 border border-border/50">
+              <div>
+                <h4 className="font-semibold text-xs text-muted-foreground tracking-tight">SMS Verification</h4>
+                <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Receive codes via text message.</p>
               </div>
-              <Badge variant="outline" className="text-[8px] font-bold uppercase tracking-widest rounded-lg bg-slate-100/50 border-slate-200">Disabled</Badge>
+              <Badge variant="outline" className="text-[8px] font-bold uppercase tracking-widest rounded-md bg-muted/50 border-border">
+                Disabled
+              </Badge>
             </div>
+          </div>
 
-            <div className="p-3.5 bg-amber-50/50 dark:bg-amber-900/10 rounded-xl border border-amber-100/50 dark:border-amber-900/30 flex items-start gap-3">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-[10px] text-amber-800 dark:text-amber-400 leading-relaxed font-medium">
-                You haven't set up 2FA yet. We strongly recommend enabling it to prevent unauthorized access.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="p-3 bg-warning/8 rounded-lg border border-warning/20 flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+            <p className="text-[10px] text-warning-foreground/80 leading-relaxed font-medium">
+              2FA is not enabled. We strongly recommend enabling it to prevent unauthorized access.
+            </p>
+          </div>
+        </CRMCard>
 
         {/* Active Sessions */}
-        <Card className="border-none bg-white dark:bg-slate-900 shadow-sm rounded-2xl overflow-hidden border border-slate-200/60">
-          <CardHeader className="p-6 pb-4">
-            <CardTitle className="text-lg font-bold tracking-tight flex items-center gap-2">
-              <History className="w-4 h-4 text-primary" />
-              Active Sessions
-            </CardTitle>
-            <CardDescription className="text-xs font-medium">Devices that are currently logged into your account.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 pt-0 space-y-2">
+        <CRMCard>
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+              <History className="w-3.5 h-3.5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold tracking-tight text-foreground">Active Sessions</h3>
+              <p className="text-[11px] text-muted-foreground font-medium">Devices logged into your account.</p>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 mb-4">
             {activeSessions.map((session) => (
-              <div key={session.id} className="flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-100 hover:bg-slate-50/50 transition-all group">
+              <div
+                key={session.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-border/50 hover:bg-muted/30 transition-all group"
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                    <Globe className="w-4 h-4 text-slate-500" />
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Globe className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <h5 className="font-bold text-xs flex items-center gap-2 tracking-tight text-slate-900 dark:text-white">
+                    <h5 className="font-semibold text-xs text-foreground flex items-center gap-2 tracking-tight">
                       {session.device}
-                      {session.current && <Badge className="bg-emerald-500 h-1.5 w-1.5 rounded-full p-0" />}
+                      {session.current && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />}
                     </h5>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{session.location} • {session.ip}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                      {session.location} · {session.ip}
+                    </p>
                   </div>
                 </div>
                 {!session.current && (
-                  <Button variant="ghost" size="xs" className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10">
+                  <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 h-7 text-xs font-semibold">
                     Revoke
                   </Button>
                 )}
               </div>
             ))}
-            <Button variant="outline" size="sm" className="w-full mt-2 text-rose-500 hover:bg-rose-50">
-              Sign out from all devices
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Login History */}
-        <Card className="border-none bg-white dark:bg-slate-900 shadow-sm rounded-2xl overflow-hidden border border-slate-200/60">
-          <CardHeader className="p-6 pb-4">
-            <CardTitle className="text-lg font-bold tracking-tight flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-primary" />
-              Security Audit
-            </CardTitle>
-            <CardDescription className="text-xs font-medium">Recent security events related to your account.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="space-y-1">
-              {loginHistory.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50/50 transition-all border border-transparent hover:border-slate-50">
-                  <div className="space-y-0.5">
-                    <h5 className="font-bold text-xs tracking-tight">{item.event}</h5>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{item.date}</p>
-                  </div>
-                  <Badge variant={item.status.includes("Blocked") ? "destructive" : "secondary"} className="rounded-lg text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 border-none">
-                    {item.status}
-                  </Badge>
-                </div>
-              ))}
+          <Button variant="outline" size="sm" className="w-full text-destructive hover:bg-destructive/5 border-destructive/20">
+            Sign out from all devices
+          </Button>
+        </CRMCard>
+
+        {/* Security Audit */}
+        <CRMCard>
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ShieldAlert className="w-3.5 h-3.5 text-primary" />
             </div>
-            <Button variant="ghost" size="sm" className="w-full mt-4 text-primary hover:bg-primary/5">
-              View Full Audit Log
-            </Button>
-          </CardContent>
-        </Card>
+            <div>
+              <h3 className="text-sm font-bold tracking-tight text-foreground">Security Audit</h3>
+              <p className="text-[11px] text-muted-foreground font-medium">Recent account security events.</p>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            {loginHistory.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/40"
+              >
+                <div>
+                  <h5 className="font-semibold text-xs text-foreground tracking-tight">{item.event}</h5>
+                  <p className="text-[10px] text-muted-foreground font-medium mt-0.5 uppercase tracking-widest">{item.date}</p>
+                </div>
+                <Badge
+                  variant={item.status.includes("Blocked") ? "destructive" : "secondary"}
+                  className="rounded-md text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 border-none"
+                >
+                  {item.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+
+          <Button variant="ghost" size="sm" className="w-full mt-4 text-primary hover:bg-primary/5">
+            View Full Audit Log
+          </Button>
+        </CRMCard>
       </div>
     </div>
   );

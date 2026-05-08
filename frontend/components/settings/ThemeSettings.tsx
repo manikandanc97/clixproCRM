@@ -11,12 +11,12 @@ import {
 const ThemeSettings = () => {
   return (
     <Card className="bg-white rounded-xl border-slate-200/60 shadow-sm overflow-hidden">
-      <CardHeader className="p-8 pb-4">
+      <CardHeader className="p-5 pb-3">
         <CardTitle className="font-bold text-slate-900 text-xl tracking-tight">Appearance</CardTitle>
         <CardDescription className="text-slate-400 text-sm mt-1">Customize how the CRM looks on your device.</CardDescription>
       </CardHeader>
 
-      <CardContent className="p-8 pt-4">
+      <CardContent className="p-5 pt-3">
         <div className="relative">
           <Select defaultValue="light">
             <SelectTrigger className="bg-slate-50 border-transparent focus:ring-emerald-500/30 focus:bg-white pl-11 py-6 rounded-2xl transition-all h-auto text-left">

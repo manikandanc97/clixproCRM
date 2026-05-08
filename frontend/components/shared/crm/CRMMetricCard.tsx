@@ -103,7 +103,7 @@ export const CRMMetricCard = ({
         color === 'indigo' ? "bg-indigo-500" : "bg-slate-500"
       )} />
 
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-3">
         <div className="space-y-1.5">
           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
             {title}
@@ -140,7 +140,7 @@ export const CRMMetricCard = ({
         </div>
 
         {sparklineData && (
-          <div className="h-14 w-28 -mr-2 -mb-1">
+          <div className="h-12 w-24 -mr-2 -mb-1">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={sparklineData}>
                 <defs>

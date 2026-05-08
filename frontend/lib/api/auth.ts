@@ -16,6 +16,7 @@ interface AuthUser {
   name: string;
   email: string;
   role?: string;
+  plan?: "free" | "pro" | "enterprise";
 }
 
 interface AuthResponse {

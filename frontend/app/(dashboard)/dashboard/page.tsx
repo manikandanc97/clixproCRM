@@ -1,6 +1,7 @@
 "use client";
 
-import { LayoutDashboard, Download, Filter, TrendingUp, Users, DollarSign, Target, Calendar, Sparkles } from "lucide-react";
+import React, { useEffect } from "react";
+import { LayoutDashboard, Download, Filter, TrendingUp, Users, DollarSign, Target } from "lucide-react";
 import RecentActivities from "@/components/dashboard/RecentActivities";
 import SalesChart from "@/components/dashboard/SalesChart";
 import UpcomingMeetings from "@/components/dashboard/UpcomingMeetings";
@@ -14,17 +15,49 @@ import RevenueTracker from "@/components/dashboard/RevenueTracker";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { PageErrorState } from "@/components/shared/page-states";
 import { useApiResource } from "@/hooks/use-api-resource";
-import { fetchDashboardData } from "@/lib/api/crm";
+import { fetchDashboardData, fetchLeadsData, fetchTasksData, fetchPipelineData, fetchCustomersData } from "@/lib/api/crm";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
   CRMPageHeader, 
-  CRMMetricCard, 
-  CRMCard 
+  CRMMetricCard,
+  CRMPageContainer,
+  CRMMetricsGrid
 } from "@/components/shared/crm";
+import { useCRMStore } from "@/store/useCRMStore";
+import { toast } from "sonner";
 
 const DashboardPage = () => {
   const { data, loading, error, refetch } = useApiResource(fetchDashboardData);
+  const { 
+    leads, setLeads, 
+    tasks, setTasks, 
+    pipelineItems, setPipelineItems,
+    customers, setCustomers,
+    activeTimeframe, setActiveTimeframe 
+  } = useCRMStore();
+
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const safePipelineItems = Array.isArray(pipelineItems) ? pipelineItems : [];
+  const safeCustomers = Array.isArray(customers) ? customers : [];
+
+  // Initialize store with data if empty
+  useEffect(() => {
+    if (data) {
+      if (safeLeads.length === 0) {
+        fetchLeadsData().then((res) => setLeads(res.leads));
+      }
+      if (safeTasks.length === 0) {
+        fetchTasksData().then((res) => setTasks(res.tasks));
+      }
+      if (safePipelineItems.length === 0) {
+        fetchPipelineData().then((res) => setPipelineItems(res.items));
+      }
+      if (safeCustomers.length === 0) {
+        fetchCustomersData().then((res) => setCustomers(res.customers));
+      }
+    }
+  }, [data, safeLeads.length, safeTasks.length, safePipelineItems.length, safeCustomers.length, setLeads, setTasks, setPipelineItems, setCustomers]);
 
   if (loading && !data) {
     return <DashboardSkeleton />;
@@ -44,8 +77,25 @@ const DashboardPage = () => {
     { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
   ];
 
+  const handleExport = () => {
+    toast.success("Preparing PDF export...", {
+      description: "Your dashboard report will be ready in a moment.",
+    });
+    setTimeout(() => {
+      toast.success("Export complete!", {
+        description: "Dashboard_Report_May_2026.pdf has been downloaded.",
+      });
+    }, 2000);
+  };
+
+  const handleFilterClick = () => {
+    toast.info("Global filters opened", {
+      description: "You can now filter the entire dashboard by region or agent.",
+    });
+  };
+
   return (
-    <div className="space-y-8 p-8 max-w-[1600px] mx-auto pb-20">
+    <CRMPageContainer>
       <CRMPageHeader 
         title="Command Center"
         subtitle="Welcome back, Agent. Here's what's happening across your sales intelligence landscape today."
@@ -55,22 +105,36 @@ const DashboardPage = () => {
           {
             label: "Filters",
             icon: Filter,
-            onClick: () => console.log("Filters"),
+            onClick: handleFilterClick,
             variant: "outline"
           },
           {
             label: "Export PDF",
             icon: Download,
-            onClick: () => console.log("Export"),
+            onClick: handleExport,
             variant: "default"
           }
         ]}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="flex items-center gap-2">
+        {(['today', 'week', 'month', 'year'] as const).map((t) => (
+          <Button
+            key={t}
+            variant={activeTimeframe === t ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveTimeframe(t)}
+            className="capitalize h-8 px-4 rounded-full text-xs font-semibold tracking-wide"
+          >
+            {t}
+          </Button>
+        ))}
+      </div>
+
+      <CRMMetricsGrid>
         <CRMMetricCard 
           title="Total Revenue"
-          value="$124,500"
+          value={activeTimeframe === 'today' ? "$4,200" : activeTimeframe === 'week' ? "$28,400" : "$124,500"}
           change="+15.2%"
           trend="up"
           icon={DollarSign}
@@ -80,7 +144,7 @@ const DashboardPage = () => {
         />
         <CRMMetricCard 
           title="Active Deals"
-          value="42"
+          value={safePipelineItems.length.toString()}
           change="+8.4%"
           trend="up"
           icon={Target}
@@ -90,7 +154,7 @@ const DashboardPage = () => {
         />
         <CRMMetricCard 
           title="New Leads"
-          value="12"
+          value={safeLeads.length.toString()}
           change="+12.5%"
           trend="up"
           icon={Users}
@@ -108,57 +172,32 @@ const DashboardPage = () => {
           sparklineData={sparklineData}
           delay={0.4}
         />
-      </div>
+      </CRMMetricsGrid>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        
-        {/* Main SaaS Grid Structure */}
-        <div className="lg:col-span-2 xl:col-span-3 space-y-8">
-          
+      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="lg:col-span-2 xl:col-span-3 flex flex-col gap-6">
           <SalesChart data={data?.salesChartData || []} />
-          
           <UpcomingMeetings />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <HotLeads />
             <TeamPerformance />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <LeadFunnel />
             <RevenueTracker />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <RecentActivities activities={data?.recentActivities || []} />
             <PendingFollowups />
           </div>
-
         </div>
 
-        {/* Right Sidebar Column */}
-        <div className="space-y-8">
+        <div className="flex flex-col gap-6">
           <AIInsights />
           <CalendarWidget />
-          
-          <CRMCard className="bg-primary text-primary-foreground p-6 overflow-hidden relative group cursor-pointer border-none shadow-xl">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500">
-              <Sparkles className="w-16 h-16" />
-            </div>
-            <div className="relative z-10 space-y-4">
-              <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] font-bold uppercase tracking-widest">
-                Premium
-              </Badge>
-              <h4 className="font-bold text-xl tracking-tight">Upgrade to Enterprise</h4>
-              <p className="text-primary-foreground/70 text-xs font-medium leading-relaxed">Unlock advanced AI lead scoring, priority support and unlimited automation rules.</p>
-              <Button className="w-full bg-white text-primary hover:bg-white/90 font-bold h-11 rounded-xl shadow-lg">
-                View Plans
-              </Button>
-            </div>
-          </CRMCard>
         </div>
       </div>
-    </div>
+    </CRMPageContainer>
   );
 };
 

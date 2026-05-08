@@ -32,7 +32,7 @@ export const CRMPageHeader = ({
   className,
 }: CRMPageHeaderProps) => {
   return (
-    <div className={cn("flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8", className)}>
+    <div className={cn("flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5", className)}>
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -45,7 +45,7 @@ export const CRMPageHeader = ({
             </div>
           )}
           {badge && (
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-lg border border-border/50">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-600 bg-primary/5 px-3 py-1 rounded-lg border border-primary/20 shadow-sm">
               {badge}
             </span>
           )}

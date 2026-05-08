@@ -25,6 +25,7 @@ import PipelineCard from "./PipelineCard";
 import { PipelineLeadType } from "@/types/pipeline";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
+import { useCRMStore } from "@/store/useCRMStore";
 
 const stages = ["New Lead", "Contacted", "Proposal Sent", "Won", "Lost"];
 
@@ -32,13 +33,9 @@ interface PipelineBoardProps {
   items: PipelineLeadType[];
 }
 
-const PipelineBoard = ({ items: initialItems }: PipelineBoardProps) => {
-  const [items, setItems] = useState<PipelineLeadType[]>(initialItems);
+const PipelineBoard = ({ items }: PipelineBoardProps) => {
   const [activeItem, setActiveItem] = useState<PipelineLeadType | null>(null);
-
-  useEffect(() => {
-    setItems(initialItems);
-  }, [initialItems]);
+  const { movePipelineItem, setPipelineItems } = useCRMStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -73,27 +70,19 @@ const PipelineBoard = ({ items: initialItems }: PipelineBoardProps) => {
     if (!isActiveACard) return;
 
     if (isOverACard) {
-      setItems((items) => {
-        const activeIndex = items.findIndex((i) => i.id === activeId);
-        const overIndex = items.findIndex((i) => i.id === overId);
+      const activeIndex = items.findIndex((i) => i.id === activeId);
+      const overIndex = items.findIndex((i) => i.id === overId);
 
-        if (items[activeIndex].stage !== items[overIndex].stage) {
-          const updatedItems = [...items];
-          updatedItems[activeIndex] = { ...updatedItems[activeIndex], stage: items[overIndex].stage };
-          return arrayMove(updatedItems, activeIndex, overIndex);
-        }
-
-        return arrayMove(items, activeIndex, overIndex);
-      });
+      if (items[activeIndex].stage !== items[overIndex].stage) {
+        movePipelineItem(activeId as string, items[overIndex].stage);
+      } else {
+        const newItems = arrayMove(items, activeIndex, overIndex);
+        setPipelineItems(newItems);
+      }
     }
 
     if (isOverAColumn) {
-      setItems((items) => {
-        const activeIndex = items.findIndex((i) => i.id === activeId);
-        const updatedItems = [...items];
-        updatedItems[activeIndex] = { ...updatedItems[activeIndex], stage: overId as any };
-        return arrayMove(updatedItems, activeIndex, activeIndex);
-      });
+      movePipelineItem(activeId as string, overId as any);
     }
   };
 
@@ -107,13 +96,19 @@ const PipelineBoard = ({ items: initialItems }: PipelineBoardProps) => {
     const overId = over.id;
 
     if (activeId !== overId) {
-      const activeItem = items.find(i => i.id === activeId);
-      if (activeItem) {
-        toast.success(`Deal moved to ${activeItem.stage}`, {
-          description: `${activeItem.name} stage updated successfully.`,
+      const movedItem = items.find(i => i.id === activeId);
+      if (movedItem) {
+        toast.success(`Deal moved to ${movedItem.stage}`, {
+          description: `${movedItem.name} stage updated successfully.`,
         });
       }
     }
+  };
+
+  const handleAddStage = () => {
+    toast.info("Add Pipeline Stage", {
+      description: "Opening stage configuration panel...",
+    });
   };
 
   return (
@@ -139,7 +134,10 @@ const PipelineBoard = ({ items: initialItems }: PipelineBoardProps) => {
           })}
           
           {/* Add Stage Placeholder */}
-          <div className="min-w-[340px] h-[180px] rounded-xl border-2 border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-muted/40 transition-all cursor-pointer group shadow-sm">
+          <div 
+            onClick={handleAddStage}
+            className="min-w-[340px] h-[180px] rounded-xl border-2 border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-muted/40 transition-all cursor-pointer group shadow-sm"
+          >
              <div className="w-10 h-10 rounded-xl bg-background shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
                <Plus className="w-5 h-5" />
              </div>
@@ -166,3 +164,4 @@ const PipelineBoard = ({ items: initialItems }: PipelineBoardProps) => {
 };
 
 export default PipelineBoard;
+

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentType } from "react";
 import { 
   Sheet, 
   SheetContent, 
@@ -29,6 +30,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { TaskIntelligenceBadge } from "./TaskIntelligenceBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CRMCard } from "@/components/shared/crm";
+import { cn } from "@/lib/utils";
 
 interface TaskDetailsDrawerProps {
   task: TaskType | null;
@@ -36,190 +39,196 @@ interface TaskDetailsDrawerProps {
   onClose: () => void;
 }
 
+type TaskStat = {
+  label: string;
+  value: string | number;
+  icon?: ComponentType<{ className?: string; color?: string }>;
+  color?: string;
+};
+
 const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) => {
   if (!task) return null;
 
+  const stats: TaskStat[] = [
+    { label: "Status", value: task.status, icon: CircleIndicator, color: task.status === "Completed" ? "bg-emerald-500" : "bg-primary animate-pulse" },
+    { label: "Progress", value: `${task.progress}%` },
+    { label: "Due Date", value: task.dueDate, icon: Calendar },
+    { label: "Estimated", value: task.estimatedTime || "2h 30m", icon: Clock },
+  ];
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-2xl border-l border-slate-200 p-0 bg-slate-50/50 backdrop-blur-xl">
+      <SheetContent className="sm:max-w-2xl border-l border-border/40 p-0 bg-background shadow-2xl">
         <div className="flex flex-col h-full">
-          <SheetHeader className="p-8 pb-4 bg-white border-b border-slate-100">
+          <SheetHeader className="p-6 border-b border-border/40 bg-card">
             <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
-                <Badge className={`px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider
-                  ${task.priority === 'High' ? 'bg-rose-50 text-rose-600' : 
-                    task.priority === 'Medium' ? 'bg-blue-50 text-blue-600' : 
-                    'bg-slate-50 text-slate-500'}`}>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={cn(
+                  "px-2 py-0.5 rounded-md font-black text-[8px] uppercase tracking-widest border-none",
+                  task.priority === 'High' ? 'bg-rose-500/10 text-rose-500' : 
+                  task.priority === 'Medium' ? 'bg-blue-500/10 text-blue-500' : 
+                  'bg-muted/50 text-muted-foreground'
+                )}>
                   {task.priority} Priority
                 </Badge>
                 {task.isUrgent && (
-                  <Badge className="bg-amber-50 text-amber-600 border-none px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider animate-pulse">
+                  <Badge className="bg-amber-500/10 text-amber-600 border-none px-2 py-0.5 rounded-md font-black text-[8px] uppercase tracking-widest animate-pulse">
                     Urgent
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                  <Share2 className="w-4 h-4" /> Share
+              <div className="flex items-center gap-1.5">
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg">
+                  <Share2 className="w-3.5 h-3.5" /> Share
                 </Button>
-                <Button variant="ghost" size="icon-sm">
-                  <MoreVertical className="w-4 h-4 text-slate-400" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground">
+                  <MoreVertical className="w-4 h-4" />
                 </Button>
               </div>
             </div>
-            <SheetTitle className="text-2xl font-bold text-slate-900 leading-tight">
+            <SheetTitle className="text-xl font-black text-foreground leading-tight tracking-tight">
               {task.title}
             </SheetTitle>
-            <SheetDescription className="text-slate-500 mt-2 text-sm">
-              Task ID: {task.id} • Created by Admin
+            <SheetDescription className="text-muted-foreground/80 mt-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+              <span className="text-primary/60">#{task.id.slice(0, 8)}</span>
+              <span className="opacity-20">•</span>
+              Created by Workspace Admin
             </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden bg-muted/5">
             <ScrollArea className="h-full">
-              <div className="p-8 space-y-8">
+              <div className="p-6 flex flex-col gap-6">
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Status</p>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${task.status === "Completed" ? "bg-emerald-500" : "bg-blue-500 animate-pulse"}`} />
-                      <span className="text-sm font-bold text-slate-700">{task.status}</span>
-                    </div>
-                  </div>
-                  <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Progress</p>
-                    <span className="text-sm font-bold text-slate-700">{task.progress}%</span>
-                  </div>
-                  <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Due Date</p>
-                    <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      {task.dueDate}
-                    </div>
-                  </div>
-                  <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Estimated</p>
-                    <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      {task.estimatedTime || "2h 30m"}
-                    </div>
-                  </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {stats.map((stat) => {
+                    const StatIcon = stat.icon;
+
+                    return (
+                      <div key={stat.label} className="bg-card p-3 rounded-lg border border-border/40 shadow-sm">
+                        <p className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-[0.15em] mb-1.5">{stat.label}</p>
+                        <div className="flex items-center gap-2 text-xs font-black text-foreground">
+                          {StatIcon && <StatIcon color={stat.color} className="w-3.5 h-3.5 text-muted-foreground/60" />}
+                          {stat.value}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* AI Summary */}
                 {task.aiSummary && (
-                  <div className="bg-violet-50/50 border border-violet-100 rounded-2xl p-5 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <Zap className="w-12 h-12 text-violet-600" />
+                  <div className="bg-primary/[0.03] border border-primary/10 rounded-[var(--crm-card-radius)] p-5 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                      <Zap className="w-16 h-16 text-primary" />
                     </div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Zap className="w-4 h-4 text-violet-600 fill-violet-600" />
-                      <span className="text-xs font-bold text-violet-700 uppercase tracking-wider">AI Summary & Prediction</span>
+                      <div className="p-1 rounded-md bg-primary/10">
+                        <Zap className="w-3 h-3 text-primary fill-primary/50" />
+                      </div>
+                      <span className="text-[10px] font-black text-primary uppercase tracking-[0.15em]">AI Intelligence Insight</span>
                     </div>
-                    <p className="text-sm text-violet-900 leading-relaxed">
+                    <p className="text-sm text-foreground/80 leading-relaxed font-medium">
                       {task.aiSummary}
                     </p>
-                    <div className="mt-4 flex items-center gap-4">
+                    <div className="mt-5 flex items-center gap-6 pt-4 border-t border-primary/5">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-violet-400 uppercase">Risk Level</span>
-                        <span className="text-xs font-bold text-violet-700">Low</span>
+                        <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-widest">Risk Analysis</span>
+                        <span className="text-xs font-bold text-primary">Low Volatility</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-violet-400 uppercase">Priority Score</span>
-                        <span className="text-xs font-bold text-violet-700">{task.aiPriorityScore}/100</span>
+                        <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-widest">Probability</span>
+                        <span className="text-xs font-bold text-primary">{task.aiPriorityScore}% Completion</span>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Description */}
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Description</h3>
-                  <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      {task.description || "No detailed description provided for this task. Use the edit button to add more information about the objectives and requirements."}
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Detailed Description</h3>
+                  <div className="bg-card rounded-[var(--crm-card-radius)] border border-border/40 p-5 shadow-sm">
+                    <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                      {task.description || "No detailed description provided for this task. Use the workspace editor to define clear objectives and success criteria."}
                     </p>
                   </div>
                 </div>
 
                 {/* Assignees */}
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Collaborators</h3>
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Collaborators</h3>
                   <div className="flex items-center gap-2">
-                    {task.collaborators?.map((c) => (
-                      <div key={c.id} className="flex items-center gap-2 bg-white border border-slate-100 px-3 py-1.5 rounded-xl shadow-sm">
-                        <Avatar className="w-6 h-6">
+                    {(task.collaborators || [{ id: '1', name: task.assignedTo, avatar: '' }]).map((c) => (
+                      <div key={c.id} className="flex items-center gap-2 bg-card border border-border/40 px-3 py-1.5 rounded-lg shadow-sm">
+                        <Avatar className="w-6 h-6 rounded-md">
                           <AvatarImage src={c.avatar} />
-                          <AvatarFallback className="text-[8px] font-bold">{c.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                          <AvatarFallback className="text-[8px] font-black bg-muted text-muted-foreground">{c.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                         </Avatar>
-                        <span className="text-xs font-bold text-slate-600">{c.name}</span>
+                        <span className="text-xs font-bold text-foreground">{c.name}</span>
                       </div>
-                    )) || (
-                      <div className="flex items-center gap-2 bg-white border border-slate-100 px-3 py-1.5 rounded-xl shadow-sm">
-                        <Avatar className="w-6 h-6">
-                          <AvatarFallback className="text-[8px] font-bold">{task.assignedTo.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs font-bold text-slate-600">{task.assignedTo}</span>
-                      </div>
-                    )}
-                    <Button variant="ghost" size="icon-xs" className="border border-dashed border-slate-300 text-slate-400 hover:text-emerald-600 hover:border-emerald-600">
-                      +
-                    </Button>
+                    ))}
+                    <button className="h-8 w-8 rounded-lg border border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-all bg-card/50">
+                      <Plus className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Tabs for Comments, Activity, Files */}
+                {/* Tabs */}
                 <Tabs defaultValue="comments" className="w-full">
-                  <TabsList className="bg-slate-100 p-1 rounded-xl w-full justify-start gap-2 h-auto mb-6">
-                    <TabsTrigger value="comments" className="rounded-lg py-2 px-4 data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm font-bold text-xs gap-2">
-                      <MessageSquare className="w-3.5 h-3.5" /> Comments
-                    </TabsTrigger>
-                    <TabsTrigger value="activity" className="rounded-lg py-2 px-4 data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm font-bold text-xs gap-2">
-                      <History className="w-3.5 h-3.5" /> Activity
-                    </TabsTrigger>
-                    <TabsTrigger value="files" className="rounded-lg py-2 px-4 data-[state=active]:bg-white data-[state=active]:text-emerald-600 data-[state=active]:shadow-sm font-bold text-xs gap-2">
-                      <Paperclip className="w-3.5 h-3.5" /> Files
-                    </TabsTrigger>
+                  <TabsList className="bg-muted/50 p-1 rounded-lg w-full justify-start gap-1 h-auto mb-6 border border-border/30">
+                    {[
+                      { id: 'comments', label: 'Comments', icon: MessageSquare },
+                      { id: 'activity', label: 'Activity', icon: History },
+                      { id: 'files', label: 'Files', icon: Paperclip },
+                    ].map((tab) => (
+                      <TabsTrigger 
+                        key={tab.id} 
+                        value={tab.id} 
+                        className="rounded-md py-1.5 px-4 data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm font-black text-[10px] uppercase tracking-widest gap-2 text-muted-foreground/60 transition-all"
+                      >
+                        <tab.icon className="w-3 h-3" /> {tab.label}
+                      </TabsTrigger>
+                    ))}
                   </TabsList>
                   
-                  <TabsContent value="comments" className="space-y-4">
+                  <TabsContent value="comments" className="space-y-5 mt-0">
                     <div className="flex gap-4">
-                      <Avatar className="w-8 h-8 rounded-lg shadow-sm border border-white">
-                        <AvatarFallback className="bg-emerald-50 text-emerald-600 text-[10px] font-bold">ME</AvatarFallback>
+                      <Avatar className="w-8 h-8 rounded-lg shadow-sm border border-border shrink-0">
+                        <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-black">ME</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
+                        <div className="bg-card border border-border/50 rounded-[var(--crm-card-radius)] p-4 shadow-sm focus-within:ring-2 focus-within:ring-primary/10 transition-all">
                           <textarea 
                             placeholder="Add a comment or mention @someone..." 
-                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-600 resize-none min-h-[80px]"
+                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-foreground placeholder:text-muted-foreground/40 font-medium resize-none min-h-[90px]"
                           />
-                          <div className="flex justify-between items-center mt-2">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="icon-xs" className="text-slate-400"><Paperclip className="w-4 h-4" /></Button>
-                              <Button variant="ghost" size="icon-xs" className="text-slate-400 font-bold">@</Button>
+                          <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/30">
+                            <div className="flex gap-1.5">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md text-muted-foreground/60"><Paperclip className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md text-muted-foreground/60 font-black text-xs">@</Button>
                             </div>
-                            <Button size="xs" className="px-4">
-                              Send
+                            <Button size="sm" className="px-5 font-bold rounded-lg h-8">
+                              Post Comment
                             </Button>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-6 pt-4">
+                    <div className="space-y-6 pt-4 relative">
+                       <div className="absolute left-[15px] top-0 bottom-0 w-[1px] bg-border/20 z-0" />
                       {[1, 2].map((i) => (
-                        <div key={i} className="flex gap-4 group">
-                          <Avatar className="w-8 h-8 rounded-lg shadow-sm border border-white">
-                            <AvatarFallback className="bg-blue-50 text-blue-600 text-[10px] font-bold">JD</AvatarFallback>
+                        <div key={i} className="flex gap-4 group relative z-10">
+                          <Avatar className="w-8 h-8 rounded-lg shadow-sm border border-card shrink-0">
+                            <AvatarFallback className="bg-blue-500/10 text-blue-600 text-[10px] font-black">JD</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-bold text-slate-900">John Doe</span>
-                              <span className="text-[10px] font-medium text-slate-400">2 hours ago</span>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-xs font-black text-foreground tracking-tight">John Doe</span>
+                              <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">2 hours ago</span>
                             </div>
-                            <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm group-hover:shadow-md transition-all">
-                              <p className="text-sm text-slate-600">
+                            <div className="bg-card border border-border/40 rounded-lg p-4 shadow-sm group-hover:shadow-md transition-all">
+                              <p className="text-sm text-muted-foreground font-medium leading-relaxed">
                                 {i === 1 ? "I've started working on the initial research phase. Will update once I have the first draft ready." : "Could you please review the latest attachments and let me know if they align with the project goals?"}
                               </p>
                             </div>
@@ -230,20 +239,18 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
                   </TabsContent>
 
                   <TabsContent value="activity">
-                    <div className="space-y-6">
+                    <div className="space-y-6 relative ml-1">
+                       <div className="absolute left-[15px] top-0 bottom-0 w-[1px] bg-border/20 z-0" />
                       {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex gap-4">
-                          <div className="relative">
-                            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 z-10 relative">
-                              {i === 1 ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Clock className="w-4 h-4 text-blue-500" />}
-                            </div>
-                            {i < 3 && <div className="absolute top-8 left-1/2 -translate-x-1/2 w-[1px] h-full bg-slate-200" />}
+                        <div key={i} className="flex gap-5 relative z-10">
+                          <div className="w-8 h-8 rounded-full bg-card flex items-center justify-center border border-border/40 shadow-sm shrink-0">
+                            {i === 1 ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <Clock className="w-3.5 h-3.5 text-primary" />}
                           </div>
                           <div className="flex-1 pb-6">
-                            <p className="text-sm text-slate-600">
-                              <span className="font-bold text-slate-900">Sarah Miller</span> {i === 1 ? "marked the task as in progress" : i === 2 ? "updated the priority to high" : "created the task"}
+                            <p className="text-sm text-foreground/80 font-medium">
+                              <span className="font-black text-foreground">Sarah Miller</span> {i === 1 ? "marked the task as in progress" : i === 2 ? "updated the priority to high" : "created the task"}
                             </p>
-                            <span className="text-[10px] font-medium text-slate-400">May 08, 2026 • 10:45 AM</span>
+                            <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 inline-block">May 08, 2026 • 10:45 AM</span>
                           </div>
                         </div>
                       ))}
@@ -254,18 +261,19 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
             </ScrollArea>
           </div>
 
-          <div className="p-6 bg-white border-t border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-4 text-slate-500">
-              <div className="flex items-center gap-1.5 cursor-pointer hover:text-emerald-600 transition-colors">
-                <Play className="w-4 h-4 fill-emerald-500 text-emerald-500" />
-                <span className="text-xs font-bold">Start Timer</span>
+          <div className="p-5 bg-card border-t border-border/40 flex items-center justify-between">
+            <div className="flex items-center gap-5 text-muted-foreground">
+              <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-all group">
+                <div className="h-7 w-7 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-all">
+                  <Play className="w-3.5 h-3.5 fill-primary text-primary" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Start Timer</span>
               </div>
-              <div className="w-[1px] h-4 bg-slate-200" />
-              <div className="text-xs font-medium">Time tracked: <span className="font-bold text-slate-900">0h 00m</span></div>
+              <div className="w-[1px] h-4 bg-border/40" />
+              <div className="text-[10px] font-bold uppercase tracking-widest">Tracked: <span className="font-black text-foreground ml-1">0h 00m</span></div>
             </div>
             <Button 
-              onClick={() => {}}
-              className="px-6"
+              className="px-6 font-black rounded-lg h-10 text-xs uppercase tracking-widest shadow-lg shadow-primary/10"
             >
               Complete Task
             </Button>
@@ -275,5 +283,16 @@ const TaskDetailsDrawer = ({ task, isOpen, onClose }: TaskDetailsDrawerProps) =>
     </Sheet>
   );
 };
+
+// Sub-components
+const CircleIndicator = ({ color }: { color?: string }) => (
+  <div className={cn("w-2 h-2 rounded-full", color)} />
+);
+
+const Plus = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+  </svg>
+);
 
 export default TaskDetailsDrawer;

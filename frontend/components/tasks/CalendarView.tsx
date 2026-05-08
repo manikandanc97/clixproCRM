@@ -1,7 +1,9 @@
+"use client";
+
 import { TaskType } from "@/types/task";
-import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CRMCard } from "@/components/shared/crm";
 
 interface CalendarViewProps {
   tasks: TaskType[];
@@ -14,53 +16,59 @@ export const CalendarView = ({ tasks, onTaskClick }: CalendarViewProps) => {
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden flex flex-col h-full min-h-[700px]">
-      <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+    <CRMCard noPadding className="flex flex-col h-full min-h-[750px] overflow-hidden">
+      <div className="p-5 border-b border-border/50 flex items-center justify-between bg-muted/20">
         <div className="flex items-center gap-4">
-          <h3 className="text-lg font-bold text-slate-900">May 2026</h3>
-          <div className="flex items-center bg-white rounded-xl border border-slate-200 p-1">
-            <Button variant="ghost" size="icon-xs">
+          <h3 className="text-lg font-black text-foreground tracking-tight">May 2026</h3>
+          <div className="flex items-center bg-card rounded-lg border border-border/60 p-1 shadow-sm">
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md">
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon-xs">
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md">
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm">Today</Button>
+          <Button variant="outline" size="sm" className="h-9 px-4 font-semibold rounded-lg">Today</Button>
         </div>
-        <Button size="sm" className="gap-2">
+        <Button size="sm" className="gap-2 h-9 px-4 font-bold rounded-lg">
           <Plus className="w-4 h-4" /> Add Task
         </Button>
       </div>
 
-      <div className="flex-1 grid grid-cols-7 border-b border-slate-100">
+      <div className="flex-1 grid grid-cols-7 border-b border-border/40 bg-muted/5">
         {weekDays.map(day => (
-          <div key={day} className="px-4 py-3 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest border-r border-slate-100 last:border-r-0">
+          <div key={day} className="px-4 py-3 text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.15em] border-r border-border/30 last:border-r-0">
             {day}
           </div>
         ))}
       </div>
 
-      <div className="flex-1 grid grid-cols-7 auto-rows-fr">
+      <div className="flex-1 grid grid-cols-7 auto-rows-fr divide-x divide-y divide-border/30">
         {days.map(day => {
-          // Mocking some tasks on specific days for visual demo
           const dayTasks = tasks.slice(0, (day % 3 === 0 ? 2 : 0));
           return (
-            <div key={day} className="min-h-[120px] p-2 border-r border-b border-slate-50 last:border-r-0 group hover:bg-slate-50/50 transition-colors">
-              <div className="flex justify-between items-center mb-2">
-                <span className={`text-xs font-bold ${day === 8 ? 'bg-emerald-600 text-white w-6 h-6 flex items-center justify-center rounded-lg shadow-md shadow-emerald-600/20' : 'text-slate-400'}`}>
+            <div key={day} className="min-h-[130px] p-2.5 group hover:bg-muted/30 transition-all duration-200">
+              <div className="flex justify-between items-center mb-2.5">
+                <span className={cn(
+                  "text-xs font-bold",
+                  day === 8 
+                    ? 'bg-primary text-primary-foreground w-6 h-6 flex items-center justify-center rounded-md shadow-sm' 
+                    : 'text-muted-foreground/60'
+                )}>
                   {day}
                 </span>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {dayTasks.map(task => (
                   <div 
                     key={task.id} 
                     onClick={() => onTaskClick(task)}
-                    className={`px-2 py-1 rounded-lg text-[9px] font-bold truncate cursor-pointer transition-all hover:scale-105
-                      ${task.priority === 'High' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 
-                        task.priority === 'Medium' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 
-                        'bg-slate-100 text-slate-600 border border-slate-200'}`}
+                    className={cn(
+                      "px-2 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider truncate cursor-pointer transition-all hover:scale-[1.03] border shadow-sm",
+                      task.priority === 'High' ? 'bg-rose-500/5 text-rose-600 border-rose-500/20' : 
+                      task.priority === 'Medium' ? 'bg-blue-500/5 text-blue-600 border-blue-500/20' : 
+                      'bg-muted/50 text-muted-foreground border-border/50'
+                    )}
                   >
                     {task.title}
                   </div>
@@ -70,6 +78,11 @@ export const CalendarView = ({ tasks, onTaskClick }: CalendarViewProps) => {
           );
         })}
       </div>
-    </div>
+    </CRMCard>
   );
 };
+
+// Local utility for conditional classes if not already available
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(' ');
+}

@@ -32,7 +32,7 @@ export const CRMToolbar = ({
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "flex flex-col sm:flex-row items-center justify-between gap-4 p-2 bg-card/50 backdrop-blur-sm border border-[var(--crm-border-subtle)] rounded-2xl shadow-sm mb-6",
+        "flex flex-col sm:flex-row items-center justify-between gap-3 p-2 bg-card/50 backdrop-blur-sm border border-[var(--crm-border-subtle)] rounded-[var(--crm-card-radius)] shadow-sm mb-4",
         className
       )}
     >
