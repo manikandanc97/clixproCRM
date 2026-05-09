@@ -316,7 +316,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 onClick={(e) => handleDelete(e, lead.id, lead.name)}
-                                className="text-destructive focus:text-destructive"
+                                variant="destructive"
                               >
                                 <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                               </DropdownMenuItem>
@@ -425,9 +425,9 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                   </Button>
                   <div className="w-px h-6 bg-background/20 mx-1" />
                   <Button 
-                    variant="ghost" 
+                    variant="destructive" 
                     onClick={handleBulkDelete}
-                    className="flex flex-col gap-1 items-center h-auto py-1.5 px-3 rounded-lg hover:bg-destructive/20 text-destructive hover:text-destructive-foreground transition-all group"
+                    className="flex flex-col gap-1 items-center h-auto py-1.5 px-3 rounded-lg transition-all group"
                   >
                     <Trash2 className="w-3.5 h-3.5 group-hover:scale-110" />
                     <span className="text-[8px] font-bold uppercase tracking-widest">Delete</span>

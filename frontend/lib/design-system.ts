@@ -10,7 +10,7 @@ export const crmSurface = {
   card:
     "rounded-xl border border-[var(--crm-border-subtle)] bg-card text-card-foreground shadow-[var(--crm-card-shadow)]",
   interactive:
-    "transition-all duration-200 hover:border-primary/20 hover:shadow-[var(--crm-card-hover-shadow)]",
+    "transition-all duration-300 hover:border-primary/20 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-1 active:scale-[0.99]",
   mutedPanel: "rounded-lg border border-border bg-muted/40",
 } as const;
 

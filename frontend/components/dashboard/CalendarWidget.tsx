@@ -16,13 +16,13 @@ import {
 } from "lucide-react";
 
 const MOCK_EVENTS = [
-  { date: new Date(), title: "Acme Corp Review", time: "10:00 AM", color: "bg-blue-500" },
-  { date: new Date(), title: "TechFlow Demo", time: "1:00 PM", color: "bg-violet-500" },
+  { date: new Date(), title: "Acme Corp Review", time: "10:00 AM", color: "bg-primary" },
+  { date: new Date(), title: "TechFlow Demo", time: "1:00 PM", color: "bg-chart-2" },
   {
     date: new Date(new Date().setDate(new Date().getDate() + 2)),
     title: "Design Sync",
     time: "3:30 PM",
-    color: "bg-emerald-500",
+    color: "bg-chart-3",
   },
 ];
 

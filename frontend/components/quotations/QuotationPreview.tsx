@@ -243,7 +243,7 @@ const QuotationPreview = ({ quotation, isOpen, onClose }: QuotationPreviewProps)
               <Copy className="w-4 h-4 mr-2 text-muted-foreground group-hover:text-muted-foreground" />
               Duplicate
             </Button>
-            <Button variant="outline" className="rounded-xl border-rose-100 h-14 font-bold text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition-all">
+            <Button variant="destructive" className="rounded-xl h-14 font-bold shadow-sm transition-all">
               <Trash2 className="w-4 h-4 mr-2" />
               Delete
             </Button>

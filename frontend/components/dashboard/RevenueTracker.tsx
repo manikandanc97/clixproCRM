@@ -20,6 +20,12 @@ const data = [
 ];
 
 export default function RevenueTracker() {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -68,45 +74,47 @@ export default function RevenueTracker() {
               </p>
             </div>
 
-            <div className="w-full max-w-[160px] aspect-square relative shrink-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadialBarChart
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="75%"
-                  outerRadius="100%"
-                  barSize={14}
-                  data={data}
-                  startAngle={90}
-                  endAngle={-270}
-                >
-                  <defs>
-                    <linearGradient
-                      id="colorRevenue"
-                      x1="0"
-                      y1="0"
-                      x2="1"
-                      y2="1"
-                    >
-                      <stop offset="0%" stopColor="#34d399" />
-                      <stop offset="100%" stopColor="#059669" />
-                    </linearGradient>
-                  </defs>
-                  <PolarAngleAxis
-                    type="number"
-                    domain={[0, 100]}
-                    angleAxisId={0}
-                    tick={false}
-                  />
-                  <RadialBar
-                    background={{ fill: "#ecfdf5" }}
-                    dataKey="value"
-                    cornerRadius={30}
-                    animationDuration={1500}
-                    className="drop-shadow-[0_6px_12px_rgba(34,197,94,0.3)] opacity-100"
-                  />
-                </RadialBarChart>
-              </ResponsiveContainer>
+            <div className="w-full max-w-[160px] aspect-square relative shrink-0 min-h-[160px]">
+              {mounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadialBarChart
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="75%"
+                    outerRadius="100%"
+                    barSize={14}
+                    data={data}
+                    startAngle={90}
+                    endAngle={-270}
+                  >
+                    <defs>
+                      <linearGradient
+                        id="colorRevenue"
+                        x1="0"
+                        y1="0"
+                        x2="1"
+                        y2="1"
+                      >
+                        <stop offset="0%" stopColor="#34d399" />
+                        <stop offset="100%" stopColor="#059669" />
+                      </linearGradient>
+                    </defs>
+                    <PolarAngleAxis
+                      type="number"
+                      domain={[0, 100]}
+                      angleAxisId={0}
+                      tick={false}
+                    />
+                    <RadialBar
+                      background={{ fill: "#ecfdf5" }}
+                      dataKey="value"
+                      cornerRadius={30}
+                      animationDuration={1500}
+                      className="drop-shadow-[0_6px_12px_rgba(34,197,94,0.3)] opacity-100"
+                    />
+                  </RadialBarChart>
+                </ResponsiveContainer>
+              )}
 
               {/* Center Content */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">

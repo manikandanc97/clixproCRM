@@ -71,7 +71,7 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
                   </div>
 
                   <div className="h-16 w-24 opacity-50 group-hover:opacity-100 transition-opacity duration-500">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                       <LineChart data={sparklineData}>
                         <Line
                           type="monotone"

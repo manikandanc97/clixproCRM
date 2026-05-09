@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { 
   Palette, 
   Moon, 
@@ -20,19 +20,19 @@ import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CRMCard } from "@/components/shared/crm";
+import { useSettings, type AccentColor } from "@/components/dashboard/SettingsContext";
 
-const accentColors = [
-  { name: "Default", value: "bg-emerald-600" },
-  { name: "Indigo", value: "bg-indigo-600" },
-  { name: "Blue", value: "bg-blue-600" },
-  { name: "Purple", value: "bg-purple-600" },
-  { name: "Pink", value: "bg-pink-600" },
-  { name: "Orange", value: "bg-orange-600" },
+const accentColors: { name: string; id: AccentColor; value: string }[] = [
+  { name: "Emerald", id: "emerald", value: "bg-emerald-600" },
+  { name: "Blue", id: "blue", value: "bg-blue-600" },
+  { name: "Violet", id: "violet", value: "bg-violet-600" },
+  { name: "Amber", id: "amber", value: "bg-amber-600" },
+  { name: "Rose", id: "rose", value: "bg-rose-600" },
 ];
 
 const PersonalizationSettings = () => {
   const { theme, setTheme } = useTheme();
-  const [selectedAccent, setSelectedAccent] = useState("Default");
+  const { accentColor, setAccentColor } = useSettings();
 
   return (
     <div className="space-y-5">
@@ -81,15 +81,15 @@ const PersonalizationSettings = () => {
               <div className="flex flex-wrap gap-2.5">
                 {accentColors.map((color) => (
                   <button
-                    key={color.name}
-                    onClick={() => setSelectedAccent(color.name)}
+                    key={color.id}
+                    onClick={() => setAccentColor(color.id)}
                     className={cn(
                       "w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-110 shadow-sm",
                       color.value,
-                      selectedAccent === color.name && "ring-2 ring-offset-2 ring-offset-background ring-primary"
+                      accentColor === color.id && "ring-2 ring-offset-2 ring-offset-background ring-primary"
                     )}
                   >
-                    {selectedAccent === color.name && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    {accentColor === color.id && <CheckCircle2 className="w-4 h-4 text-white" />}
                   </button>
                 ))}
               </div>

@@ -106,7 +106,8 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay }: TaskKanbanCardProps
           <DropdownMenuContent align="end" className="w-48 rounded-xl p-2 shadow-premium">
             <DropdownMenuItem 
               onClick={handleDelete}
-              className="text-destructive focus:bg-destructive/10 focus:text-destructive rounded-lg gap-2 font-semibold text-xs"
+              variant="destructive"
+              className="rounded-lg gap-2 font-semibold text-xs"
             >
               <Trash2 className="w-3.5 h-3.5" /> Delete Task
             </DropdownMenuItem>

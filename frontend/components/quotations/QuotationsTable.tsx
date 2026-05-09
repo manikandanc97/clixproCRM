@@ -265,7 +265,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
                       <DropdownMenuItem onClick={() => handleAction("Duplicate", quote)}>
                         <Copy className="w-3.5 h-3.5 mr-2" /> Duplicate
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => handleDelete(e, quote.id, quote.quoteId)} className="text-destructive focus:text-destructive">
+                      <DropdownMenuItem onClick={(e) => handleDelete(e, quote.id, quote.quoteId)} variant="destructive">
                         <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>

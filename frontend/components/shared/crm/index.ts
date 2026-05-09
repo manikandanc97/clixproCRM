@@ -12,6 +12,11 @@ export * from "./CRMSearchBar";
 export * from "./CRMStatusBadge";
 export * from "./CRMActionButton";
 export * from "./CRMSortIndicator";
+export * from "./CRMCardHeader";
+export * from "./ActivityTimeline";
+export * from "./PermissionToggle";
+
+
 
 export { CRMMetricCard as MetricCard } from "./CRMMetricCard";
 export { CRMPageHeader as PageHeader } from "./CRMPageHeader";

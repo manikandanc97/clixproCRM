@@ -48,8 +48,8 @@ const INITIAL_INSIGHTS = {
       title: "Revenue Forecast",
       desc: "Projected to hit 115% of Q2 target based on current pipeline.",
       icon: BarChart,
-      color: "text-indigo-400",
-      bgColor: "bg-indigo-500/20",
+      color: "text-primary",
+      bgColor: "bg-primary/20",
     },
   ],
 };
@@ -96,27 +96,27 @@ export default function AIInsights() {
       <CRMCard 
         accentSeed="AI Insights"
         noPadding
-        className="relative flex flex-col overflow-hidden bg-[#0d111c] border-indigo-500/20 shadow-2xl"
+        className="relative flex flex-col overflow-hidden bg-[#0d111c] border-primary/20 shadow-2xl"
       >
         {/* Subtle Background Glow */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 p-5 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-lg">
+              <div className="p-2 bg-gradient-to-br from-primary to-primary/80 rounded-lg shadow-lg">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div>
                 <h3 className="font-bold text-sm text-white tracking-tight">AI Insights</h3>
-                <p className="text-[9px] font-medium text-indigo-400/80 uppercase tracking-wider">Neural Engine</p>
+                <p className="text-[9px] font-medium text-primary/80 uppercase tracking-wider">Neural Engine</p>
               </div>
             </div>
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full border border-white/10 backdrop-blur-md">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-              <span className="text-[10px] font-bold text-indigo-100 uppercase tracking-tight">Live</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-bold text-primary-foreground uppercase tracking-tight">Live</span>
             </div>
           </div>
 
@@ -135,7 +135,7 @@ export default function AIInsights() {
                 {activeTab === tab && (
                   <motion.div
                     layoutId="ai-tab-pill-restored"
-                    className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-md"
+                    className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 rounded-md"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}

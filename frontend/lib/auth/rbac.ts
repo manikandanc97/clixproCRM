@@ -1,16 +1,16 @@
 import type React from "react";
 import {
-  Activity,
   BarChart3,
   BriefcaseBusiness,
   Building2,
   CalendarDays,
   CheckSquare,
   FileText,
-  Gauge,
   KanbanSquare,
   LayoutDashboard,
   Lightbulb,
+  PieChart,
+  Settings,
   ShieldCheck,
   Ticket,
   UserRound,
@@ -58,7 +58,7 @@ const navLibrary: Record<string, NavItem> = {
   calendar: { title: "Calendar", href: "/calendar", icon: CalendarDays },
   quotations: { title: "Quotations", href: "/quotations", icon: FileText },
   reports: { title: "Reports", href: "/reports", icon: BarChart3 },
-  analytics: { title: "Analytics", href: "/analytics", icon: Activity },
+  analytics: { title: "Analytics", href: "/analytics", icon: PieChart },
   aiInsights: { title: "AI Insights", href: "/ai-insights", icon: Lightbulb },
   employees: { title: "Employees", href: "/employees", icon: UserSquare2 },
   roleManagement: {
@@ -66,7 +66,7 @@ const navLibrary: Record<string, NavItem> = {
     href: "/role-management",
     icon: ShieldCheck,
   },
-  settings: { title: "Settings", href: "/settings", icon: Gauge },
+  settings: { title: "Settings", href: "/settings", icon: Settings },
   supportTickets: { title: "Support Tickets", href: "/support-tickets", icon: Ticket },
   teamPerformance: {
     title: "Team Performance",

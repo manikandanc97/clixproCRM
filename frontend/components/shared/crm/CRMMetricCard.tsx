@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { CRMCard } from "./CRMCard";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
@@ -36,6 +37,12 @@ export const CRMMetricCard = ({
   delay = 0,
   color = "slate",
 }: CRMMetricCardProps) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isUp = trend === "up";
   const isDown = trend === "down";
 
@@ -43,50 +50,50 @@ export const CRMMetricCard = ({
     emerald: { 
       stroke: "#10b981", 
       fill: "url(#gradient-emerald)", 
-      icon: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+      icon: "text-emerald-600 dark:text-emerald-400 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border-emerald-500/20",
       badge: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
     },
     blue: { 
       stroke: "#3b82f6", 
       fill: "url(#gradient-blue)", 
-      icon: "text-blue-500 bg-blue-500/10 border-blue-500/20",
+      icon: "text-blue-600 dark:text-blue-400 bg-gradient-to-br from-blue-500/20 to-blue-500/5 border-blue-500/20",
       badge: "bg-blue-500/10 text-blue-500 border-blue-500/20"
     },
     cyan: { 
       stroke: "#06b6d4", 
       fill: "url(#gradient-cyan)", 
-      icon: "text-cyan-500 bg-cyan-500/10 border-cyan-500/20",
+      icon: "text-cyan-600 dark:text-cyan-400 bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 border-cyan-500/20",
       badge: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
     },
     orange: { 
       stroke: "#f97316", 
       fill: "url(#gradient-orange)", 
-      icon: "text-orange-500 bg-orange-500/10 border-orange-500/20",
+      icon: "text-orange-600 dark:text-orange-400 bg-gradient-to-br from-orange-500/20 to-orange-500/5 border-orange-500/20",
       badge: "bg-orange-500/10 text-orange-500 border-orange-500/20"
     },
     purple: { 
       stroke: "#a855f7", 
       fill: "url(#gradient-purple)", 
-      icon: "text-purple-500 bg-purple-500/10 border-purple-500/20",
+      icon: "text-purple-600 dark:text-purple-400 bg-gradient-to-br from-purple-500/20 to-purple-500/5 border-purple-500/20",
       badge: "bg-purple-500/10 text-purple-500 border-purple-500/20"
     },
     pink: { 
       stroke: "#ec4899", 
       fill: "url(#gradient-pink)", 
-      icon: "text-pink-500 bg-pink-500/10 border-pink-500/20",
+      icon: "text-pink-600 dark:text-pink-400 bg-gradient-to-br from-pink-500/20 to-pink-500/5 border-pink-500/20",
       badge: "bg-pink-500/10 text-pink-500 border-pink-500/20"
     },
     indigo: { 
       stroke: "#6366f1", 
       fill: "url(#gradient-indigo)", 
-      icon: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
+      icon: "text-indigo-600 dark:text-indigo-400 bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 border-indigo-500/20",
       badge: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
     },
     slate: { 
       stroke: "#64748b", 
       fill: "url(#gradient-slate)", 
-      icon: "text-muted-foreground bg-muted0/10 border-slate-500/20",
-      badge: "bg-muted0/10 text-muted-foreground border-slate-500/20"
+      icon: "text-slate-600 dark:text-slate-400 bg-gradient-to-br from-slate-500/20 to-slate-500/5 border-slate-500/20",
+      badge: "bg-muted/10 text-muted-foreground border-slate-500/20"
     },
   };
 
@@ -159,38 +166,40 @@ export const CRMMetricCard = ({
         </div>
 
         {sparklineData && (
-          <div className="h-12 w-24 -mr-2 -mb-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={sparklineData}>
-                <defs>
-                  <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={theme.stroke} stopOpacity={0.15} />
-                    <stop offset="100%" stopColor={theme.stroke} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke={theme.stroke}
-                  strokeWidth={2.5}
-                  fill={theme.fill}
-                  isAnimationActive={true}
-                  animationDuration={1500}
-                  dot={({ cx, cy, index }: SparklineDotProps) => {
-                    // Only show dot on the last point for that "premium" look
-                    if (index === sparklineData.length - 1) {
-                      return (
-                        <g key={`dot-${index}`}>
-                          <circle cx={cx} cy={cy} r={6} fill={theme.stroke} fillOpacity={0.2} />
-                          <circle cx={cx} cy={cy} r={3} fill={theme.stroke} stroke="white" strokeWidth={1.5} className="animate-pulse" />
-                        </g>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-12 w-24 -mr-2 -mb-1 min-h-[48px]">
+            {mounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={sparklineData}>
+                  <defs>
+                    <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={theme.stroke} stopOpacity={0.15} />
+                      <stop offset="100%" stopColor={theme.stroke} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke={theme.stroke}
+                    strokeWidth={2.5}
+                    fill={theme.fill}
+                    isAnimationActive={true}
+                    animationDuration={1500}
+                    dot={({ cx, cy, index }: SparklineDotProps) => {
+                      // Only show dot on the last point for that "premium" look
+                      if (index === sparklineData.length - 1) {
+                        return (
+                          <g key={`dot-${index}`}>
+                            <circle cx={cx} cy={cy} r={6} fill={theme.stroke} fillOpacity={0.2} />
+                            <circle cx={cx} cy={cy} r={3} fill={theme.stroke} stroke="white" strokeWidth={1.5} className="animate-pulse" />
+                          </g>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         )}
       </div>

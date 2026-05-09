@@ -32,6 +32,7 @@ import { CustomerType } from "@/types/customer";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 interface CustomerProfilePanelProps {
   customer: CustomerType | null;
@@ -51,10 +52,10 @@ const CustomerProfilePanel = ({ customer, isOpen, onClose }: CustomerProfilePane
         </SheetHeader>
         <ScrollArea className="flex-1">
           {/* Header Section */}
-          <div className="relative h-48 bg-gradient-to-br from-indigo-600 via-indigo-700 to-emerald-600 overflow-hidden">
+          <div className="relative h-48 bg-gradient-to-br from-primary via-primary/90 to-primary/80 overflow-hidden">
             <div className="absolute inset-0 opacity-20">
               <div className="absolute top-10 left-10 w-32 h-32 bg-card rounded-full blur-3xl" />
-              <div className="absolute bottom-10 right-10 w-32 h-32 bg-emerald-400 rounded-full blur-3xl" />
+              <div className="absolute bottom-10 right-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl" />
             </div>
             
             <div className="relative h-full flex flex-col justify-end p-6 text-white">
@@ -67,7 +68,7 @@ const CustomerProfilePanel = ({ customer, isOpen, onClose }: CustomerProfilePane
                     {customer.segment || "Enterprise"}
                   </Badge>
                   <h2 className="text-2xl font-bold tracking-tight leading-none">{customer.name}</h2>
-                  <p className="text-indigo-100 font-medium flex items-center gap-1.5 opacity-90 text-sm">
+                  <p className="text-primary-foreground/80 font-medium flex items-center gap-1.5 opacity-90 text-sm">
                     <Building2 className="w-3.5 h-3.5" />
                     {customer.company}
                   </p>
@@ -85,31 +86,31 @@ const CustomerProfilePanel = ({ customer, isOpen, onClose }: CustomerProfilePane
               </div>
               <div className="bg-muted p-3 rounded-lg border border-border text-center">
                 <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Health</p>
-                <div className="flex items-center justify-center gap-1 text-emerald-600">
+                <div className="flex items-center justify-center gap-1 text-success">
                   <TrendingUp className="w-3.5 h-3.5" />
                   <p className="text-base font-bold">{customer.healthScore || 92}%</p>
                 </div>
               </div>
               <div className="bg-muted p-3 rounded-lg border border-border text-center flex items-center justify-center flex-col">
                 <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Status</p>
-                <Badge variant="outline" className={`border-none h-5 px-2 ${customer.status === 'Premium' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                <Badge variant="outline" className={`border-none h-5 px-2 ${customer.status === 'Premium' ? 'badge-warning' : 'badge-success'}`}>
                   {customer.status}
                 </Badge>
               </div>
             </div>
 
             {/* AI Insights Card */}
-            <div className="bg-gradient-to-br from-indigo-50 to-emerald-50/30 p-5 rounded-xl border border-indigo-100/50 shadow-sm space-y-3">
+            <div className="bg-primary/5 p-5 rounded-xl border border-primary/10 shadow-sm space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-indigo-600 text-white shadow-md">
+                  <div className="p-1.5 rounded-lg bg-primary text-primary-foreground shadow-md">
                     <Zap className="w-3.5 h-3.5" />
                   </div>
                   <h3 className="font-bold text-foreground uppercase tracking-widest text-[10px]">AI Relationship Insight</h3>
                 </div>
-                <Badge className="bg-indigo-600 text-white border-none text-[9px] font-bold">PREMIUM</Badge>
+                <Badge className="bg-primary text-primary-foreground border-none text-[9px] font-bold">PREMIUM</Badge>
               </div>
-              <p className="text-xs text-indigo-900/80 leading-relaxed font-medium">
+              <p className="text-xs text-primary/80 leading-relaxed font-medium">
                 &quot;{customer.aiSummary || "This customer is a prime candidate for the new Enterprise Expansion pack. Engagement has increased by 40% over the last 30 days."}&quot;
               </p>
             </div>
@@ -134,13 +135,18 @@ const CustomerProfilePanel = ({ customer, isOpen, onClose }: CustomerProfilePane
               <TabsContent value="timeline" className="mt-6">
                 <div className="space-y-5">
                   {[
-                    { type: 'Call', content: 'Quarterly review with John Doe', date: '2 hours ago', icon: PhoneCall, color: 'emerald' },
-                    { type: 'Note', content: 'Expressed interest in multi-region deployment', date: 'Yesterday', icon: StickyNote, color: 'amber' },
-                    { type: 'Email', content: 'Sent proposal for 2026 contract renewal', date: '2 days ago', icon: MailPlus, color: 'blue' },
+                    { type: 'Call', content: 'Quarterly review with John Doe', date: '2 hours ago', icon: PhoneCall },
+                    { type: 'Note', content: 'Expressed interest in multi-region deployment', date: 'Yesterday', icon: StickyNote },
+                    { type: 'Email', content: 'Sent proposal for 2026 contract renewal', date: '2 days ago', icon: MailPlus },
                   ].map((activity, i) => (
                     <div key={i} className="flex gap-4 relative group">
                       {i < 2 && <div className="absolute left-5 top-10 bottom-[-20px] w-0.5 bg-muted" />}
-                      <div className={`w-10 h-10 rounded-lg bg-${activity.color}-50 text-${activity.color}-600 flex items-center justify-center shrink-0 shadow-sm transition-transform`}>
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-sm transition-transform",
+                        activity.type === 'Call' ? "bg-success/10 text-success" : 
+                        activity.type === 'Note' ? "bg-warning/10 text-warning" : 
+                        "bg-primary/10 text-primary"
+                      )}>
                         <activity.icon className="w-4 h-4" />
                       </div>
                       <div className="space-y-1 py-0.5">
@@ -186,7 +192,7 @@ const CustomerProfilePanel = ({ customer, isOpen, onClose }: CustomerProfilePane
 
         {/* Footer Actions */}
         <div className="p-4 bg-muted/50 border-t border-border grid grid-cols-2 gap-3">
-          <Button className="rounded-lg h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md">
+          <Button className="rounded-lg h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md">
             <MailPlus className="w-3.5 h-3.5" />
             Send Email
           </Button>

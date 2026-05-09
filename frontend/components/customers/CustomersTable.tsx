@@ -262,7 +262,7 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
                         <DropdownMenuItem onClick={() => handleAction("AI Summary", customer)} className="text-primary focus:text-primary">
                           <Zap className="w-3.5 h-3.5 mr-2" /> AI Summary
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => handleDelete(e, customer.id, customer.name)} className="text-destructive focus:text-destructive">
+                        <DropdownMenuItem onClick={(e) => handleDelete(e, customer.id, customer.name)} variant="destructive">
                           <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
