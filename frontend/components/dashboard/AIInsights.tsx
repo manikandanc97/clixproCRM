@@ -174,12 +174,11 @@ export default function AIInsights() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        whileHover={{ y: -1 }}
                         onClick={() => handleCardClick(item.title)}
-                        className="group relative bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/10 p-3.5 rounded-lg transition-all cursor-pointer overflow-hidden backdrop-blur-sm"
+                        className="group relative bg-white/[0.03] border border-white/5 p-3.5 rounded-lg transition-all cursor-pointer overflow-hidden backdrop-blur-sm"
                       >
                         <div className="flex items-start gap-3.5">
-                          <div className={`p-2.5 ${item.bgColor} rounded-lg ${item.color} shrink-0 transition-transform group-hover:scale-110`}>
+                          <div className={`p-2.5 ${item.bgColor} rounded-lg ${item.color} shrink-0 transition-transform`}>
                             <Icon className="w-3.5 h-3.5" />
                           </div>
                           <div className="flex-1 min-w-0">

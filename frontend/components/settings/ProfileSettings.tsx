@@ -40,7 +40,7 @@ const ProfileSettings = () => {
       <CRMCard>
         <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
           <div className="relative group shrink-0">
-            <motion.div whileHover={{ scale: 1.02 }} className="relative">
+            <motion.div className="relative">
               <Avatar className="w-20 h-20 rounded-xl border-2 border-border shadow-sm overflow-hidden">
                 <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" />
                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-xl font-bold">

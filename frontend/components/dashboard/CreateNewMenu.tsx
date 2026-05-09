@@ -39,7 +39,7 @@ export default function CreateNewMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2.5 bg-primary text-primary-foreground px-4 sm:px-6 rounded-xl h-12 font-bold text-xs uppercase tracking-widest transition-all shadow-elevated shadow-primary/20 hover:scale-[1.02] active:scale-95 outline-none">
+        <button className="flex items-center gap-2.5 bg-primary text-primary-foreground px-4 sm:px-6 rounded-xl h-12 font-bold text-xs uppercase tracking-widest transition-all shadow-elevated shadow-primary/20 outline-none">
           <Plus className="w-4 h-4" />
           <span className="hidden lg:block">Create New</span>
         </button>
@@ -61,7 +61,7 @@ export default function CreateNewMenu() {
               </div>
               <span className="font-bold text-sm">{action.label}</span>
             </div>
-            <ArrowRight className="w-3 h-3 opacity-0 group-focus:opacity-100 -translate-x-2 group-focus:translate-x-0 transition-all" />
+            <ArrowRight className="w-3 h-3 opacity-0 group-focus:opacity-100 transition-all" />
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

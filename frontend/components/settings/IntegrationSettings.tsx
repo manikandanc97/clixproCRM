@@ -127,7 +127,7 @@ const IntegrationSettings = () => {
         {filteredIntegrations.map((integration) => (
           <motion.div
             key={integration.id}
-            whileHover={{ y: -3 }}
+            whileHover={{ borderColor: "var(--primary)" }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             <CRMCard className="group h-full flex flex-col">

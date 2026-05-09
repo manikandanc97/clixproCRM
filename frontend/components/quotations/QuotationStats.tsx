@@ -44,7 +44,7 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
 
               <CardContent className="p-7 relative z-10">
                 <div className="flex justify-between items-start mb-6">
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-3
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg transition-all duration-500
                     ${item.title === 'Total Quotes' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 
                       item.title === 'Pending Approval' ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white' : 
                       'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'}`}>

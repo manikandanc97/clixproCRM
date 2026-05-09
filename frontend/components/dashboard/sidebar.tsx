@@ -40,11 +40,11 @@ export default function Sidebar() {
         {/* Toggle Button */}
         <button 
           onClick={toggleSidebar}
-          className="absolute -right-3.5 top-8 bg-sidebar border border-sidebar-border rounded-full p-1 shadow-sm text-sidebar-foreground/40 hover:text-sidebar-foreground transition-all z-20 hover:scale-105 active:scale-95 group"
+          className="absolute -right-3.5 top-8 bg-sidebar border border-sidebar-border rounded-full p-1 shadow-sm text-sidebar-foreground/40 hover:text-sidebar-foreground transition-all z-20 group"
         >
           {isCollapsed ? 
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /> : 
-            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            <ChevronRight className="w-4 h-4 transition-transform" /> : 
+            <ChevronLeft className="w-4 h-4 transition-transform" />
           }
         </button>
 
@@ -118,7 +118,6 @@ export default function Sidebar() {
                                   }`}
                               >
                                 <motion.div
-                                  whileHover={{ scale: 1.15 }}
                                   whileTap={{ scale: 0.9 }}
                                   animate={isActive ? { 
                                     scale: [1, 1.1, 1],
@@ -151,7 +150,6 @@ export default function Sidebar() {
                               }`}
                           >
                             <motion.div
-                              whileHover={{ scale: 1.1 }}
                               animate={isActive ? { 
                                 scale: [1, 1.05, 1],
                                 transition: { duration: 3, repeat: Infinity, ease: "easeInOut" }

@@ -1,16 +1,89 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  BarChart, Bar, Legend, PieChart, Pie, Cell, LineChart, Line 
-} from 'recharts';
-import { TrendingUp, BarChart3, Filter, UserPlus, Target, CalendarDays, MoreHorizontal, LayoutDashboard, Zap } from 'lucide-react';
-import { CRMCard, CRMCardHeader } from '../shared/crm';
-import { CardContent } from '@/components/ui/card';
-import { ANALYTICS_DATA } from '@/data/analytics-mock';
+import { useEffect, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  BarChart3,
+  CalendarDays,
+  Filter,
+  Sparkles,
+  Target,
+  TrendingUp,
+  UserPlus,
+  Zap,
+} from "lucide-react";
+import { CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ANALYTICS_DATA } from "@/data/analytics-mock";
+import { CRMCard, CRMCardHeader } from "../shared/crm";
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const PIPELINE_COLORS = ["#2563eb", "#10b981", "#f59e0b", "#8b5cf6"];
+const axisTickStyle = { fill: "#94a3b8", fontSize: 11, fontWeight: 500 };
+const gridStyle = "3 3";
+const tooltipStyle = {
+  borderRadius: "12px",
+  border: "1px solid hsl(var(--border))",
+  backgroundColor: "hsl(var(--card))",
+  boxShadow: "0 14px 24px rgba(15,23,42,0.12)",
+};
+
+const ChartTooltipContent = ({
+  active,
+  payload,
+  label,
+  valuePrefix = "",
+  valueSuffix = "",
+}: {
+  active?: boolean;
+  payload?: Array<{ name?: string; value?: number | string; color?: string }>;
+  label?: string;
+  valuePrefix?: string;
+  valueSuffix?: string;
+}) => {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="min-w-[160px] rounded-xl border border-border bg-popover px-3 py-2.5 shadow-premium">
+      {label && (
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+      )}
+      <div className="space-y-1.5">
+        {payload.map((entry, index) => (
+          <div key={`${entry.name ?? "item"}-${index}`} className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-xs text-foreground/90">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color ?? "#94a3b8" }} />
+              {entry.name ?? "Value"}
+            </span>
+            <span className="text-xs font-semibold text-foreground">
+              {valuePrefix}
+              {entry.value ?? 0}
+              {valueSuffix}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const useMounted = () => {
   const [mounted, setMounted] = useState(false);
@@ -23,14 +96,14 @@ const useMounted = () => {
 export const RevenueOverviewChart = () => {
   const mounted = useMounted();
   return (
-    <CRMCard className="h-[440px]" noPadding accentSeed="revenue">
-      <CRMCardHeader 
-        title="Revenue Overview" 
+    <CRMCard className="h-[420px]" noPadding accentSeed="revenue">
+      <CRMCardHeader
+        title="Revenue Overview"
         subtitle={
-          <div className="flex items-center gap-2 mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <span className="text-xl font-bold text-foreground">$428,500</span>
-            <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
-              <TrendingUp className="w-2.5 h-2.5" />
+            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+              <TrendingUp className="h-3 w-3" />
               +14%
             </span>
           </div>
@@ -38,62 +111,62 @@ export const RevenueOverviewChart = () => {
         icon={TrendingUp}
         iconBg="bg-gradient-to-br from-emerald-500/20 to-emerald-500/5"
         iconColor="text-emerald-600 dark:text-emerald-400"
-
         actions={
-          <div className="flex gap-4 text-xs font-medium">
+          <div className="flex gap-3 text-xs font-medium">
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
               <span className="text-muted-foreground">Actual</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+              <div className="h-2.5 w-2.5 rounded-full bg-slate-300" />
               <span className="text-muted-foreground">Target</span>
             </div>
           </div>
         }
       />
       <CardContent className="px-6 pb-6 pt-0">
-        <div className="h-[300px] w-full min-h-[300px]">
+        <div className="h-[280px] w-full min-h-[280px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={ANALYTICS_DATA.revenueOverview}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                <CartesianGrid strokeDasharray={gridStyle} vertical={false} stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={axisTickStyle}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={axisTickStyle}
                   tickFormatter={(value) => `$${value/1000}k`}
                 />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                <RechartsTooltip
+                  cursor={false}
+                  content={(props) => <ChartTooltipContent {...props} valuePrefix="$" />}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3} 
-                  fillOpacity={1} 
-                  fill="url(#colorRev)" 
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#2563eb"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#colorRev)"
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="target" 
-                  stroke="#cbd5e1" 
-                  strokeWidth={2} 
-                  strokeDasharray="5 5" 
-                  fill="transparent" 
+                <Area
+                  type="monotone"
+                  dataKey="target"
+                  stroke="#94a3b8"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  fill="transparent"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -107,40 +180,40 @@ export const RevenueOverviewChart = () => {
 export const LeadsGrowthChart = () => {
   const mounted = useMounted();
   return (
-    <CRMCard className="h-[440px]" noPadding accentSeed="leads">
-      <CRMCardHeader 
-        title="Leads Growth" 
+    <CRMCard className="h-[420px]" noPadding accentSeed="leads">
+      <CRMCardHeader
+        title="Leads Growth"
         subtitle="Weekly sources distribution"
         icon={BarChart3}
         iconBg="bg-gradient-to-br from-blue-500/20 to-blue-500/5"
         iconColor="text-blue-600 dark:text-blue-400"
-
         actions={
-          <button className="p-2 hover:bg-muted rounded-xl transition-colors">
-            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-          </button>
+          <Badge variant="outline" className="border-border/70 bg-background text-[10px] font-medium">
+            Last 30 days
+          </Badge>
         }
       />
       <CardContent className="px-6 pb-6 pt-0">
-        <div className="h-[300px] w-full min-h-[300px]">
+        <div className="h-[280px] w-full min-h-[280px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={ANALYTICS_DATA.leadsGrowth}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                <CartesianGrid strokeDasharray={gridStyle} vertical={false} stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={axisTickStyle}
                 />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                <YAxis axisLine={false} tickLine={false} tick={axisTickStyle} />
+                <RechartsTooltip
+                  cursor={false}
+                  content={(props) => <ChartTooltipContent {...props} />}
                 />
-                <Bar dataKey="direct" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+                <Legend wrapperStyle={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }} />
+                <Bar dataKey="direct" stackId="a" fill="#2563eb" radius={[0, 0, 0, 0]} />
                 <Bar dataKey="social" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="referral" stackId="a" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="referral" stackId="a" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -153,41 +226,44 @@ export const LeadsGrowthChart = () => {
 export const PipelineOverviewChart = () => {
   const mounted = useMounted();
   return (
-    <CRMCard className="h-[440px]" noPadding accentSeed="pipeline">
-      <CRMCardHeader 
-        title="Sales Pipeline" 
+    <CRMCard className="h-[420px]" noPadding accentSeed="pipeline">
+      <CRMCardHeader
+        title="Sales Pipeline"
         subtitle="Stage distribution funnel"
         icon={Filter}
         iconBg="bg-gradient-to-br from-violet-500/20 to-violet-500/5"
         iconColor="text-violet-600 dark:text-violet-400"
-
         actions={
-          <span className="text-[10px] font-bold px-2 py-1 bg-violet-500/5 text-violet-600 rounded-lg">Live Data</span>
+          <Badge className="border border-violet-500/20 bg-violet-500/10 text-[10px] font-semibold text-violet-700">
+            Live Data
+          </Badge>
         }
       />
       <CardContent className="px-6 pb-6 pt-0">
-        <div className="h-[300px] w-full flex items-center justify-center min-h-[300px]">
+        <div className="flex h-[280px] w-full min-h-[280px] items-center justify-center">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={ANALYTICS_DATA.pipelineStages}
                   cx="50%"
-                  cy="50%"
+                  cy="45%"
                   innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
+                  outerRadius={96}
+                  paddingAngle={3}
                   dataKey="count"
                   nameKey="stage"
                 >
                   {ANALYTICS_DATA.pipelineStages.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${entry.stage}`} fill={PIPELINE_COLORS[index % PIPELINE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                <RechartsTooltip content={(props) => <ChartTooltipContent {...props} />} />
+                <Legend
+                  verticalAlign="bottom"
+                  height={42}
+                  wrapperStyle={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}
                 />
-                <Legend verticalAlign="bottom" height={36}/>
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -200,58 +276,55 @@ export const PipelineOverviewChart = () => {
 export const CustomerGrowthChart = () => {
   const mounted = useMounted();
   return (
-    <CRMCard className="h-[440px]" noPadding accentSeed="customers">
-      <CRMCardHeader 
-        title="Customer Growth" 
+    <CRMCard className="h-[420px]" noPadding accentSeed="customers">
+      <CRMCardHeader
+        title="Customer Growth"
         subtitle="Retention & churn analysis"
         icon={UserPlus}
         iconBg="bg-gradient-to-br from-cyan-500/20 to-cyan-500/5"
         iconColor="text-cyan-600 dark:text-cyan-400"
-
         actions={
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
               <span>New</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] font-bold">
-              <div className="w-2 h-2 rounded-full bg-rose-500" />
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
+              <div className="h-2 w-2 rounded-full bg-rose-500" />
               <span>Churned</span>
             </div>
           </div>
         }
       />
       <CardContent className="px-6 pb-6 pt-0">
-        <div className="h-[300px] w-full min-h-[300px]">
+        <div className="h-[280px] w-full min-h-[280px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={ANALYTICS_DATA.customerGrowth}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="month" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                <CartesianGrid strokeDasharray={gridStyle} vertical={false} stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={axisTickStyle}
                 />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="new" 
-                  stroke="#10b981" 
-                  strokeWidth={3} 
-                  dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
+                <YAxis axisLine={false} tickLine={false} tick={axisTickStyle} />
+                <RechartsTooltip content={(props) => <ChartTooltipContent {...props} />} />
+                <Line
+                  type="monotone"
+                  dataKey="new"
+                  stroke="#10b981"
+                  strokeWidth={2.5}
+                  dot={{ r: 3, fill: "#10b981", strokeWidth: 2, stroke: "#fff" }}
                   activeDot={{ r: 6, strokeWidth: 0 }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="churned" 
-                  stroke="#ef4444" 
-                  strokeWidth={2} 
+                <Line
+                  type="monotone"
+                  dataKey="churned"
+                  stroke="#ef4444"
+                  strokeWidth={2}
                   strokeDasharray="5 5"
-                  dot={{ r: 3, fill: '#ef4444', strokeWidth: 2, stroke: '#fff' }}
+                  dot={{ r: 3, fill: "#ef4444", strokeWidth: 2, stroke: "#fff" }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -265,38 +338,37 @@ export const CustomerGrowthChart = () => {
 export const MonthlyPerformanceChart = () => {
   const mounted = useMounted();
   return (
-    <CRMCard className="h-[440px]" noPadding accentSeed="monthly">
-      <CRMCardHeader 
-        title="Monthly Performance" 
+    <CRMCard className="h-[420px]" noPadding accentSeed="monthly">
+      <CRMCardHeader
+        title="Monthly Performance"
         subtitle="Total deals vs targets"
         icon={CalendarDays}
         iconBg="bg-gradient-to-br from-rose-500/20 to-rose-500/5"
         iconColor="text-rose-600 dark:text-rose-400"
-
         actions={
-          <select className="text-[10px] font-bold bg-transparent border-none focus:ring-0 cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-            <option>Last 6 Months</option>
-            <option>Last 12 Months</option>
-          </select>
+          <Badge variant="outline" className="border-border/70 bg-background text-[10px] font-medium">
+            Last 6 months
+          </Badge>
         }
       />
       <CardContent className="px-6 pb-6 pt-0">
-        <div className="h-[300px] w-full min-h-[300px]">
+        <div className="h-[280px] w-full min-h-[280px]">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={ANALYTICS_DATA.revenueOverview}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                <CartesianGrid strokeDasharray={gridStyle} vertical={false} stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={axisTickStyle}
                 />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                <YAxis axisLine={false} tickLine={false} tick={axisTickStyle} />
+                <RechartsTooltip
+                  cursor={false}
+                  content={(props) => <ChartTooltipContent {...props} valuePrefix="$" />}
                 />
-                <Bar dataKey="revenue" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="#f43f5e" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -307,48 +379,48 @@ export const MonthlyPerformanceChart = () => {
 };
 
 export const ConversionAnalyticsChart = () => {
-  const mounted = useMounted();
   return (
-    <CRMCard className="h-[440px]" noPadding accentSeed="conversion">
-      <CRMCardHeader 
-        title="Conversion Analytics" 
+    <CRMCard className="h-[420px]" noPadding accentSeed="conversion">
+      <CRMCardHeader
+        title="Conversion Analytics"
         subtitle="Lead to customer conversion rate"
         icon={Target}
         iconBg="bg-gradient-to-br from-pink-500/20 to-pink-500/5"
         iconColor="text-pink-600 dark:text-pink-400"
-
         actions={
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-pink-600 bg-pink-500/5 px-2 py-1 rounded-lg">
-            <Zap className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 rounded-md bg-pink-500/10 px-2 py-1 text-[10px] font-semibold text-pink-700">
+            <Zap className="h-3 w-3" />
             High Performance
           </div>
         }
       />
       <CardContent className="px-6 pb-6 pt-0">
-        <div className="h-[300px] w-full flex items-center justify-center min-h-[300px]">
-           <div className="text-center">
-              <div className="inline-flex items-center justify-center size-32 rounded-full border-8 border-pink-500/10 border-t-pink-500 mb-4 animate-spin-slow">
-                 <span className="text-3xl font-black text-foreground">24.5%</span>
-              </div>
-              <p className="text-sm font-medium text-muted-foreground">Average Conversion Rate</p>
-              <div className="flex gap-4 mt-6">
-                <div className="text-center">
-                  <p className="text-lg font-bold text-foreground">1.2k</p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Qualified</p>
-                </div>
-                <div className="text-center border-l border-r px-4">
-                  <p className="text-lg font-bold text-foreground">312</p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Won</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold text-foreground">15%</p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Target</p>
-                </div>
-              </div>
-           </div>
+        <div className="flex h-[280px] min-h-[280px] w-full items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-4 inline-flex size-32 items-center justify-center rounded-full border-8 border-pink-500/15 border-t-pink-500">
+              <span className="text-3xl font-bold text-foreground">24.5%</span>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">Average conversion rate</p>
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              <MetricPill label="Qualified" value="1.2k" />
+              <MetricPill label="Won" value="312" />
+              <MetricPill label="Target" value="15%" />
+            </div>
+            <Button variant="outline" size="sm" className="mt-4 text-xs">
+              <Sparkles className="h-3.5 w-3.5" />
+              View breakdown
+            </Button>
+          </div>
         </div>
       </CardContent>
     </CRMCard>
   );
 };
+
+const MetricPill = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-center">
+    <p className="text-base font-semibold text-foreground">{value}</p>
+    <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+  </div>
+);
 

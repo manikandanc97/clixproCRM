@@ -227,7 +227,7 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
       </div>
 
       {/* Hover Quick Actions Bar */}
-      <div className="absolute inset-x-0 bottom-0 translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-full transition-all duration-300 pointer-events-none group-hover:pointer-events-auto z-30 px-3">
+      <div className="absolute inset-x-0 bottom-0 translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto z-30 px-3">
          <div className="bg-foreground text-background rounded-xl shadow-elevated p-1 flex items-center justify-around ring-4 ring-foreground/5 mt-1">
             <button className="flex-1 py-1.5 rounded-lg hover:bg-background/10 transition-colors flex items-center justify-center gap-2">
                <Zap className="w-3.5 h-3.5 text-primary" />

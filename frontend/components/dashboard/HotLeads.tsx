@@ -47,7 +47,7 @@ export default function HotLeads() {
               >
                 <div className="flex items-center gap-3 cursor-pointer">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground shadow-sm group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground shadow-sm">
                       {lead.name.charAt(0)}
                     </div>
                     {lead.score > 90 && (
@@ -67,7 +67,7 @@ export default function HotLeads() {
                     <span className="block font-bold text-foreground text-sm">{lead.value}</span>
                     <span className="text-[10px] font-bold text-warning flex items-center gap-0.5"><Flame className="w-3 h-3"/> {lead.score} Score</span>
                   </div>
-                  <button className="opacity-0 group-hover:opacity-100 p-2 bg-muted hover:bg-warning/10 text-muted-foreground hover:text-warning rounded-xl transition-all -translate-x-2 group-hover:translate-x-0">
+                  <button className="opacity-0 group-hover:opacity-100 p-2 bg-muted hover:bg-warning/10 text-muted-foreground hover:text-warning rounded-xl transition-all">
                     <ArrowUpRight className="w-4 h-4" />
                   </button>
                 </div>

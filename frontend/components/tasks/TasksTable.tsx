@@ -34,7 +34,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
   return (
     <CRMDataTable>
       <CRMTableHeader>
-        <CRMTableRow className="h-14 border-b border-border/30 bg-muted/20 hover:bg-muted/20">
+        <CRMTableRow className="h-14 border-b border-border/30 bg-muted/20">
           <CRMTableHeaderCell className="w-[52px] px-5">
             <Checkbox className="rounded-md border-muted-foreground/20" />
           </CRMTableHeaderCell>
@@ -61,7 +61,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
 
       <CRMTableBody className="divide-y divide-border/15">
         {tasks.map((task) => (
-          <CRMTableRow key={task.id} className="group h-[92px] transition-colors hover:bg-primary/[0.035]">
+          <CRMTableRow key={task.id} className="group h-[92px]">
             <CRMTableCell className="px-5">
               <Checkbox
                 checked={task.status === "Completed"} 
@@ -77,7 +77,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
               >
                 <div className="flex items-center gap-2.5">
                   <p className={cn(
-                    "line-clamp-1 text-[14px] font-semibold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary",
+                    "line-clamp-1 text-[14px] font-semibold leading-tight tracking-tight text-foreground transition-colors",
                     task.status === "Completed" && "text-muted-foreground line-through"
                   )}>
                     {task.title}
@@ -129,7 +129,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
             </CRMTableCell>
 
             <CRMTableCell className="px-4">
-              <div className="mx-auto flex min-w-[132px] flex-col items-center justify-center gap-1 rounded-xl border border-border/60 bg-card px-3 py-2 transition-colors group-hover:border-primary/25">
+              <div className="mx-auto flex min-w-[132px] flex-col items-center justify-center gap-1 rounded-xl border border-border/60 bg-card px-3 py-2 transition-colors">
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
                   <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                   {task.dueDate}
@@ -163,7 +163,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => onTaskClick(task)}
-                  className="text-muted-foreground/60 opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+                  className="text-muted-foreground/40 hover:text-primary transition-all"
                   aria-label={`Open task ${task.title}`}
                 >
                   <Eye className="h-4 w-4" />

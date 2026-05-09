@@ -68,7 +68,6 @@ type SortConfig = {
 
 const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
@@ -154,7 +153,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
       <div className="relative">
         <CRMDataTable>
           <CRMTableHeader>
-            <CRMTableRow className="hover:bg-transparent">
+            <CRMTableRow>
               <CRMTableHeaderCell className="w-[50px]">
                 <Checkbox 
                   checked={selectedIds.length === leads.length && leads.length > 0}
@@ -200,8 +199,6 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                 return (
                   <Fragment key={lead.id}>
                     <CRMTableRow
-                      onMouseEnter={() => setHoveredRow(lead.id)}
-                      onMouseLeave={() => setHoveredRow(null)}
                       onClick={() => toggleExpand(lead.id)}
                       className={cn(
                         isSelected && "bg-primary/5",
@@ -225,7 +222,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                           </div>
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-2">
-                              <p className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">{lead.name}</p>
+                              <p className="font-semibold text-foreground transition-colors text-sm">{lead.name}</p>
                               <div className="flex items-center gap-1 bg-primary/10 px-1.5 py-0.5 rounded text-primary">
                                 <Sparkles className="w-2.5 h-2.5" />
                                 <span className="text-[10px] font-bold">{lead.score}</span>
@@ -278,10 +275,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
 
                       <CRMTableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <div className={cn(
-                            "flex items-center gap-1 mr-2 transition-all duration-300",
-                            hoveredRow === lead.id ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
-                          )}>
+                          <div className="mr-2 flex items-center gap-1">
                             <Button 
                               variant="ghost" 
                               size="icon" 
@@ -360,7 +354,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                                       <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Recommended</p>
                                       <p className="text-xs font-bold leading-snug">{lead.aiInsights?.recommendation}</p>
                                     </div>
-                                    <ArrowUpRight className="absolute -bottom-1 -right-1 w-12 h-12 text-background/10 transition-transform group-hover:scale-110" />
+                                    <ArrowUpRight className="absolute -bottom-1 -right-1 w-12 h-12 text-background/10 transition-transform" />
                                   </div>
                                   <Button 
                                     onClick={() => handleAction("AI Execution", lead)}
@@ -404,7 +398,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                 
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" className="flex flex-col gap-1 items-center h-auto py-1.5 px-3 rounded-lg hover:bg-background/10 text-muted-foreground hover:text-background transition-all group">
-                    <User className="w-3.5 h-3.5 group-hover:scale-110" />
+                    <User className="w-3.5 h-3.5" />
                     <span className="text-[8px] font-bold uppercase tracking-widest">Assign</span>
                   </Button>
                   <Button 
@@ -412,7 +406,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                     onClick={handleBulkEmail}
                     className="flex flex-col gap-1 items-center h-auto py-1.5 px-3 rounded-lg hover:bg-background/10 text-muted-foreground hover:text-background transition-all group"
                   >
-                    <Mail className="w-3.5 h-3.5 group-hover:scale-110" />
+                    <Mail className="w-3.5 h-3.5" />
                     <span className="text-[8px] font-bold uppercase tracking-widest">Email</span>
                   </Button>
                   <Button 
@@ -420,7 +414,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                     onClick={handleBulkExport}
                     className="flex flex-col gap-1 items-center h-auto py-1.5 px-3 rounded-lg hover:bg-background/10 text-muted-foreground hover:text-background transition-all group"
                   >
-                    <Share2 className="w-3.5 h-3.5 group-hover:scale-110" />
+                    <Share2 className="w-3.5 h-3.5" />
                     <span className="text-[8px] font-bold uppercase tracking-widest">Export</span>
                   </Button>
                   <div className="w-px h-6 bg-background/20 mx-1" />
@@ -429,7 +423,7 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
                     onClick={handleBulkDelete}
                     className="flex flex-col gap-1 items-center h-auto py-1.5 px-3 rounded-lg transition-all group"
                   >
-                    <Trash2 className="w-3.5 h-3.5 group-hover:scale-110" />
+                    <Trash2 className="w-3.5 h-3.5" />
                     <span className="text-[8px] font-bold uppercase tracking-widest">Delete</span>
                   </Button>
                 </div>
@@ -452,4 +446,3 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
 };
 
 export default LeadsTable;
-

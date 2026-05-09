@@ -55,7 +55,7 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
   return (
     <CRMDataTable>
       <CRMTableHeader>
-        <CRMTableRow className="hover:bg-transparent">
+        <CRMTableRow>
           <CRMTableHeaderCell 
             className="cursor-pointer group select-none"
             onClick={() => handleSort("name")}
@@ -103,7 +103,7 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
                   )}
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">{item.name}</p>
+                  <p className="font-semibold text-foreground transition-colors text-sm">{item.name}</p>
                   <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Senior Executive</p>
                 </div>
               </div>

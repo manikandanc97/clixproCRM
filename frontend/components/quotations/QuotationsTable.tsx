@@ -134,7 +134,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
     <>
       <CRMDataTable>
         <CRMTableHeader>
-          <CRMTableRow className="hover:bg-transparent">
+          <CRMTableRow>
             <CRMTableHeaderCell 
               className="hidden sm:table-cell cursor-pointer group select-none"
               onClick={() => handleSort("quoteId")}
@@ -181,11 +181,11 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
               >
                 <CRMTableCell className="hidden sm:table-cell">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center border border-border group-hover:bg-background transition-colors">
-                      <FileText className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center border border-border transition-colors">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground text-sm tracking-tight group-hover:text-primary transition-colors">{quote.quoteId}</p>
+                      <p className="font-semibold text-foreground text-sm tracking-tight transition-colors">{quote.quoteId}</p>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">May 2026</p>
                     </div>
                   </div>
@@ -287,4 +287,3 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
 };
 
 export default QuotationsTable;
-

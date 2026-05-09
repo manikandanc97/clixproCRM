@@ -125,7 +125,7 @@
   --crm-page-gap: 1.5rem;
   --crm-card-radius: var(--crm-radius-card);
   --crm-card-shadow: 0 0 0 1px oklch(0.91 0.008 255 / 0.72), 0 1px 2px oklch(0 0 0 / 0.035);
-  --crm-card-hover-shadow: 0 0 0 1px oklch(0.84 0.012 255 / 0.8), 0 8px 22px -18px oklch(0 0 0 / 0.28);
+  --crm-card-hover-shadow: 0 0 0 1px oklch(0.88 0.01 255 / 0.8), 0 4px 12px -8px oklch(0 0 0 / 0.15);
   --crm-border-subtle: oklch(0.91 0.008 255 / 0.5);
 
   /* Sidebar — Clean Light */
@@ -208,7 +208,7 @@
   --crm-radius-pill: 9999px;
   --crm-card-radius: var(--crm-radius-card);
   --crm-card-shadow: 0 0 0 1px oklch(0.24 0.018 265 / 0.82), 0 1px 2px oklch(0 0 0 / 0.28);
-  --crm-card-hover-shadow: 0 0 0 1px oklch(0.32 0.02 265 / 0.9), 0 10px 24px -18px oklch(0 0 0 / 0.65);
+  --crm-card-hover-shadow: 0 0 0 1px oklch(0.28 0.02 265 / 0.9), 0 4px 12px -8px oklch(0 0 0 / 0.4);
   --crm-border-subtle: oklch(0.24 0.018 265 / 0.5);
 
   --sidebar: oklch(0.1 0.018 265);

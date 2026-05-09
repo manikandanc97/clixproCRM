@@ -63,7 +63,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-3.5 hover:bg-accent p-1.5 pr-4 rounded-xl transition-all group border border-transparent hover:border-border shadow-sm hover:shadow-md outline-none">
-          <div className="flex justify-center items-center bg-gradient-to-br from-primary to-emerald-600 rounded-xl w-10 h-10 font-black text-sm text-primary-foreground shadow-lg shadow-primary/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 border border-white/20">
+          <div className="flex justify-center items-center bg-gradient-to-br from-primary to-emerald-600 rounded-xl w-10 h-10 font-black text-sm text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-500 border border-white/20">
             {initials}
           </div>
           <div className="lg:block hidden text-left min-w-[80px]">

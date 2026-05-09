@@ -52,7 +52,7 @@ export default function TeamPerformance() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3 cursor-pointer">
-                      <div className={`w-11 h-11 rounded-xl ${member.color} flex items-center justify-center font-bold text-white shadow-md group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 border border-white/20`}>
+                      <div className={`w-11 h-11 rounded-xl ${member.color} flex items-center justify-center font-bold text-white shadow-md transition-all duration-500 border border-white/20`}>
                         {member.avatar}
                       </div>
                       <div>

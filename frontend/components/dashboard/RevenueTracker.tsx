@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { motion } from "framer-motion";
 import { CRMCard } from "@/components/shared/crm/CRMCard";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,14 +139,14 @@ export default function RevenueTracker() {
             </div>
           </div>
 
-          <button className="mt-3 w-full py-3 bg-slate-950 dark:bg-muted text-white dark:text-slate-950 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 transition-all active:scale-95 group/btn">
+          <button className="mt-3 w-full py-3 bg-slate-950 dark:bg-muted text-white dark:text-slate-950 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 transition-all group/btn">
             View Analytics
-            <ArrowUpRight className="w-4 h-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+            <ArrowUpRight className="w-4 h-4 transition-transform" />
           </button>
         </CardContent>
 
         {/* Subtle background pattern */}
-        <div className="absolute -bottom-6 -left-6 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.05] group-hover:scale-110 group-hover:-rotate-12 transition-all duration-700 pointer-events-none z-0">
+        <div className="absolute -bottom-6 -left-6 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.05] transition-all duration-700 pointer-events-none z-0">
           <DollarSign className="w-64 h-64 text-emerald-500 stroke-[3]" />
         </div>
       </CRMCard>

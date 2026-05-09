@@ -41,11 +41,11 @@ const WelcomeHero = () => {
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-8">
-            <Button variant="secondary" size="lg" className="group h-auto bg-white hover:bg-muted shadow-md px-8 py-4 rounded-xl font-bold text-foreground text-sm active:scale-95 transition-all flex items-center gap-2">
+            <Button variant="secondary" size="lg" className="group h-auto bg-white hover:bg-muted shadow-md px-8 py-4 rounded-xl font-bold text-foreground text-sm transition-all flex items-center gap-2">
               View Analytics
-              <ArrowUpRight className="w-4 h-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              <ArrowUpRight className="w-4 h-4 transition-transform" />
             </Button>
-            <Button variant="outline" size="lg" className="h-auto bg-white/5 hover:bg-white/10 backdrop-blur-md px-8 py-4 border-white/10 rounded-xl font-bold text-white text-sm active:scale-95 transition-all">
+            <Button variant="outline" size="lg" className="h-auto bg-white/5 hover:bg-white/10 backdrop-blur-md px-8 py-4 border-white/10 rounded-xl font-bold text-white text-sm transition-all">
               Manage Leads
             </Button>
           </div>
@@ -57,7 +57,7 @@ const WelcomeHero = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-            className="bg-white/10 backdrop-blur-xl border border-white/10 p-4 rounded-xl flex items-center gap-4 shadow-elevated lg:translate-x-4 hover:translate-x-0 transition-transform cursor-pointer"
+            className="bg-white/10 backdrop-blur-xl border border-white/10 p-4 rounded-xl flex items-center gap-4 shadow-elevated lg:translate-x-4 cursor-pointer"
           >
             <div className="p-3 bg-primary/20 rounded-lg text-primary">
               <Activity className="w-6 h-6" />
@@ -75,7 +75,7 @@ const WelcomeHero = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
-            className="bg-white/10 backdrop-blur-xl border border-white/10 p-4 rounded-xl flex items-center gap-4 shadow-elevated lg:-translate-x-4 hover:translate-x-0 transition-transform cursor-pointer"
+            className="bg-white/10 backdrop-blur-xl border border-white/10 p-4 rounded-xl flex items-center gap-4 shadow-elevated lg:-translate-x-4 cursor-pointer"
           >
             <div className="p-3 bg-teal-500/20 rounded-lg text-teal-400">
               <Users className="w-6 h-6" />

@@ -114,7 +114,7 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
     <>
       <CRMDataTable>
         <CRMTableHeader>
-          <CRMTableRow className="hover:bg-transparent">
+          <CRMTableRow>
             <CRMTableHeaderCell className="w-10 px-4"></CRMTableHeaderCell>
             <CRMTableHeaderCell 
               className="cursor-pointer group select-none"
@@ -181,7 +181,7 @@ const CustomersTable = ({ customers }: CustomersTableProps) => {
                         </div>
                       </div>
                       <div>
-                        <p className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm tracking-tight">{customer.name}</p>
+                        <p className="font-semibold text-foreground transition-colors text-sm tracking-tight">{customer.name}</p>
                         <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 mt-0.5">
                           <Sparkles className="w-2.5 h-2.5 text-primary/60" />
                           {customer.company}

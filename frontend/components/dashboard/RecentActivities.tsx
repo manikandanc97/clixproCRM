@@ -119,7 +119,7 @@ const RecentActivities = ({ activities }: RecentActivitiesProps) => {
                       onClick={() => handleActivityClick(activity.title)}
                       className="flex items-start gap-5 group cursor-pointer relative z-10"
                     >
-                      <div className={`h-11 w-11 rounded-xl ${colorClass} text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shrink-0 border border-white/20`}>
+                      <div className={`h-11 w-11 rounded-xl ${colorClass} text-white flex items-center justify-center shadow-lg transition-all duration-500 shrink-0 border border-white/20`}>
                         <Icon className="w-5 h-5" />
                       </div>
                       
@@ -139,7 +139,7 @@ const RecentActivities = ({ activities }: RecentActivitiesProps) => {
                           }`}>
                             {categoryLabel}
                           </span>
-                          <ArrowRight className="w-3 h-3 text-muted-foreground/30 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="w-3 h-3 text-muted-foreground/30 transition-transform" />
                         </div>
                       </div>
                     </motion.div>
