@@ -14,33 +14,33 @@ const SalesFunnel = () => {
   ];
 
   return (
-    <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-      <CardHeader className="p-6 pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="font-bold text-foreground text-lg tracking-tight">Sales Funnel</CardTitle>
-          <div className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+    <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
+      <CardHeader className="p-6 pb-2 min-w-0">
+        <div className="flex items-center justify-between min-w-0">
+          <CardTitle className="font-bold text-foreground text-lg tracking-tight truncate">Sales Funnel</CardTitle>
+          <div className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
             7.7% Conv.
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-6 pt-4">
-        <div className="space-y-3">
+      <CardContent className="p-6 pt-4 min-w-0">
+        <div className="space-y-3 min-w-0">
           {funnelData.map((item, idx) => (
-            <div key={idx} className="relative">
-              <div className="flex justify-between items-center mb-1 px-1">
-                <span className="text-[10px] font-bold text-muted-foreground">{item.stage}</span>
-                <span className="text-[10px] font-bold text-foreground">{item.count}</span>
+            <div key={idx} className="relative min-w-0">
+              <div className="flex justify-between items-center mb-1 px-1 min-w-0">
+                <span className="text-[10px] font-bold text-muted-foreground truncate">{item.stage}</span>
+                <span className="text-[10px] font-bold text-foreground shrink-0">{item.count}</span>
               </div>
-              <div className="h-8 w-full bg-muted rounded-lg overflow-hidden flex">
+              <div className="h-8 w-full bg-muted rounded-lg overflow-hidden flex min-w-0">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${item.percentage}%` }}
                   transition={{ duration: 1, delay: idx * 0.1 }}
-                  className={`${item.color} h-full relative group cursor-pointer hover:brightness-110 transition-all`}
+                  className={`${item.color} h-full relative group cursor-pointer hover:brightness-110 transition-all min-w-0`}
                 >
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1),transparent)]" />
                 </motion.div>
-                <div className="flex-1 flex items-center justify-end pr-2">
+                <div className="flex-1 flex items-center justify-end pr-2 min-w-0">
                   <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">{item.percentage}%</span>
                 </div>
               </div>

@@ -29,56 +29,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const meetings = [
-  {
-    id: 1,
-    title: "Quarterly Review with Acme Corp",
-    time: "10:00 AM - 11:30 AM",
-    location: "Zoom",
-    isOnline: true,
-    status: "upcoming",
-    attendees: [
-      { name: "Sarah", avatar: "SJ" },
-      { name: "John", avatar: "JD" },
-      { name: "Emily", avatar: "EW" },
-      { name: "Mike", avatar: "MC" },
-    ],
-    color: "emerald",
-    isToday: true,
-  },
-  {
-    id: 2,
-    title: "Product Demo: TechFlow Inc",
-    time: "1:00 PM - 2:00 PM",
-    location: "Google Meet",
-    isOnline: true,
-    status: "pending",
-    attendees: [
-      { name: "Alex", avatar: "AR" },
-      { name: "Jordan", avatar: "JL" },
-    ],
-    color: "blue",
-    isToday: true,
-  },
-  {
-    id: 3,
-    title: "Project Sync: Design Team",
-    time: "3:30 PM - 4:00 PM",
-    location: "Meeting Room A",
-    isOnline: false,
-    status: "confirmed",
-    attendees: [
-      { name: "Taylor", avatar: "TS" },
-      { name: "Chris", avatar: "CP" },
-      { name: "Sam", avatar: "SD" },
-    ],
-    color: "indigo",
-    isToday: false,
-  },
-];
+import { useMeetings } from "@/hooks/use-dashboard";
+import { DashboardWidgetSkeleton } from "@/components/shared/skeletons";
 
 export default function UpcomingMeetings() {
+  const { data, isLoading: loading } = useMeetings();
+  const meetings = data?.meetings ?? [];
   const hasMeetings = meetings.length > 0;
 
   const handleJoin = (e: React.MouseEvent, title: string) => {
@@ -106,6 +62,18 @@ export default function UpcomingMeetings() {
       description: "Opening meeting workspace and shared notes.",
     });
   };
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full"
+      >
+        <DashboardWidgetSkeleton rows={3} />
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

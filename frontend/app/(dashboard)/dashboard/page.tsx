@@ -14,8 +14,8 @@ import CalendarWidget from "@/components/dashboard/CalendarWidget";
 import RevenueTracker from "@/components/dashboard/RevenueTracker";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { PageErrorState } from "@/components/shared/page-states";
-import { useApiResource } from "@/hooks/use-api-resource";
-import { fetchDashboardData, fetchLeadsData, fetchTasksData, fetchPipelineData, fetchCustomersData } from "@/lib/api/crm";
+import { useDashboardData } from "@/hooks/use-dashboard";
+import { fetchLeadsData, fetchTasksData, fetchPipelineData, fetchCustomersData } from "@/lib/api/crm";
 import { Button } from "@/components/ui/button";
 import { 
   CRMPageHeader, 
@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/auth/auth-provider";
 
 const DashboardPage = () => {
-  const { data, loading, error, refetch } = useApiResource(fetchDashboardData);
+  const { data, isLoading: loading, error, refetch } = useDashboardData();
   const { 
     leads, setLeads, 
     tasks, setTasks, 
@@ -69,11 +69,13 @@ const DashboardPage = () => {
     return (
       <PageErrorState
         title="Dashboard unavailable"
-        message={error}
-        onRetry={refetch}
+        message={(error as Error).message}
+        onRetry={() => refetch()}
       />
     );
   }
+
+  const dashboardData = data;
 
   const sparklineData = [
     { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
@@ -135,46 +137,27 @@ const DashboardPage = () => {
       </div>
 
       <CRMMetricsGrid>
-        {widgets.has("revenue") && <CRMMetricCard 
-          title="Total Revenue"
-          value={activeTimeframe === 'today' ? "$4,200" : activeTimeframe === 'week' ? "$28,400" : "$124,500"}
-          change="+15.2%"
-          trend="up"
-          icon={DollarSign}
-          color="emerald"
-          sparklineData={sparklineData}
-          delay={0.1}
-        />}
-        {widgets.has("activeDeals") && <CRMMetricCard 
-          title="Active Deals"
-          value={safePipelineItems.length.toString()}
-          change="+8.4%"
-          trend="up"
-          icon={Target}
-          color="purple"
-          sparklineData={sparklineData}
-          delay={0.2}
-        />}
-        {widgets.has("newLeads") && <CRMMetricCard 
-          title="New Leads"
-          value={safeLeads.length.toString()}
-          change="+12.5%"
-          trend="up"
-          icon={Users}
-          color="blue"
-          sparklineData={sparklineData}
-          delay={0.3}
-        />}
-        {widgets.has("winRate") && <CRMMetricCard 
-          title="Win Rate"
-          value="24%"
-          change="+2.1%"
-          trend="up"
-          icon={TrendingUp}
-          color="indigo"
-          sparklineData={sparklineData}
-          delay={0.4}
-        />}
+        {data?.stats?.map((stat: any, index: number) => {
+          const Icon = stat.title === "Total Revenue" ? DollarSign :
+                       stat.title === "Active Deals" ? Target :
+                       stat.title === "New Leads" ? Users :
+                       TrendingUp;
+          
+          return widgets.has(stat.id || stat.title.toLowerCase().replace(" ", "")) && (
+            <CRMMetricCard 
+              key={stat.title}
+              title={stat.title}
+              value={stat.value}
+              change={stat.change}
+              trend={stat.positive ? "up" : "down"}
+              icon={Icon}
+              color={stat.color || "primary"}
+              sparklineData={stat.sparklineData || sparklineData}
+              delay={0.1 * (index + 1)}
+              loading={loading}
+            />
+          );
+        })}
       </CRMMetricsGrid>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">

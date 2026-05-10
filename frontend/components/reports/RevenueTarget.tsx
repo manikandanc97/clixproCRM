@@ -12,42 +12,42 @@ const RevenueTarget = () => {
   const remaining = targetRevenue - currentRevenue;
 
   return (
-    <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
-      <CardHeader className="p-6 pb-2 flex flex-row items-center justify-between">
-        <div className="space-y-0.5">
-          <CardTitle className="font-bold text-foreground text-lg tracking-tight">Q2 Goal Progress</CardTitle>
-          <div className="flex items-center gap-2 text-muted-foreground text-[10px] font-medium">
+    <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md min-w-0">
+      <CardHeader className="p-6 pb-2 flex flex-row items-center justify-between min-w-0">
+        <div className="space-y-0.5 min-w-0">
+          <CardTitle className="font-bold text-foreground text-lg tracking-tight truncate">Q2 Goal Progress</CardTitle>
+          <div className="flex items-center gap-2 text-muted-foreground text-[10px] font-medium truncate">
             <Calendar className="w-3 h-3" />
             Ends in 24 days
           </div>
         </div>
-        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-sm shrink-0">
           <Target className="w-5 h-5" />
         </div>
       </CardHeader>
       
-      <CardContent className="p-6 pt-4 flex flex-col space-y-6">
-        <div className="space-y-6">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1">Current Revenue</p>
-              <h3 className="text-3xl font-bold text-foreground tracking-tight">${(currentRevenue/1000).toFixed(0)}k</h3>
+      <CardContent className="p-6 pt-4 flex flex-col space-y-6 min-w-0">
+        <div className="space-y-6 min-w-0">
+          <div className="flex items-end justify-between min-w-0">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1 truncate">Current Revenue</p>
+              <h3 className="text-3xl font-bold text-foreground tracking-tight truncate">${(currentRevenue/1000).toFixed(0)}k</h3>
             </div>
-            <div className="text-right">
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1">Target</p>
-              <h4 className="text-lg font-bold text-muted-foreground tracking-tight">${(targetRevenue/1000).toFixed(0)}k</h4>
+            <div className="text-right min-w-0">
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1 truncate">Target</p>
+              <h4 className="text-lg font-bold text-muted-foreground tracking-tight truncate">${(targetRevenue/1000).toFixed(0)}k</h4>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-bold text-foreground">{percentage}% Achieved</span>
-              <div className="flex items-center gap-1 text-emerald-500 font-bold text-[10px] uppercase">
+          <div className="space-y-3 min-w-0">
+            <div className="flex justify-between items-center mb-1 min-w-0">
+              <span className="text-xs font-bold text-foreground truncate">{percentage}% Achieved</span>
+              <div className="flex items-center gap-1 text-emerald-500 font-bold text-[10px] uppercase shrink-0">
                 <ArrowUpRight className="w-3 h-3" />
                 On Track
               </div>
             </div>
-            <div className="relative h-3 w-full bg-muted rounded-full overflow-hidden p-0.5 shadow-inner">
+            <div className="relative h-3 w-full bg-muted rounded-full overflow-hidden p-0.5 shadow-inner min-w-0">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${percentage}%` }}
@@ -60,14 +60,14 @@ const RevenueTarget = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 bg-muted rounded-xl space-y-0.5">
-            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Remaining</p>
-            <p className="text-base font-bold text-foreground">${(remaining/1000).toFixed(0)}k</p>
+        <div className="grid grid-cols-2 gap-3 min-w-0">
+          <div className="p-4 bg-muted rounded-xl space-y-0.5 min-w-0">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider truncate">Remaining</p>
+            <p className="text-base font-bold text-foreground truncate">${(remaining/1000).toFixed(0)}k</p>
           </div>
-          <div className="p-4 bg-indigo-50 rounded-xl space-y-0.5">
-            <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">Avg. Needed</p>
-            <p className="text-base font-bold text-indigo-600">${(remaining/24/1000).toFixed(1)}k/d</p>
+          <div className="p-4 bg-indigo-50 rounded-xl space-y-0.5 min-w-0">
+            <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider truncate">Avg. Needed</p>
+            <p className="text-base font-bold text-indigo-600 truncate">${(remaining/24/1000).toFixed(1)}k/d</p>
           </div>
         </div>
       </CardContent>

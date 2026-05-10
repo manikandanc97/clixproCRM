@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "next-themes";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta" });
@@ -13,8 +11,7 @@ export const metadata: Metadata = {
     "ClientRise CRM dashboard for sales, customers, pipeline, quotations, tasks, and reports.",
 };
 
-import { SettingsProvider } from "@/components/dashboard/SettingsContext";
-import { AuthProvider } from "@/components/auth/auth-provider";
+import { Providers } from "./providers";
 
 export default function RootLayout({
   children,
@@ -22,21 +19,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full antialiased ${inter.variable} ${jakarta.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`h-full antialiased ${inter.variable} ${jakarta.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
       <body className="flex flex-col min-h-full font-sans">
-        <SettingsProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange={false}
-          >
-            <AuthProvider>
-              {children}
-              <Toaster richColors position="top-right" />
-            </AuthProvider>
-          </ThemeProvider>
-        </SettingsProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

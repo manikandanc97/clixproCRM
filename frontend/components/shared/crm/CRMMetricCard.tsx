@@ -6,7 +6,9 @@ import { CRMCard } from "./CRMCard";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 
-export type MetricColor = 'emerald' | 'blue' | 'cyan' | 'orange' | 'purple' | 'pink' | 'indigo' | 'slate';
+import { Skeleton } from "@/components/ui/skeleton";
+
+export type MetricColor = 'emerald' | 'blue' | 'cyan' | 'orange' | 'purple' | 'pink' | 'indigo' | 'slate' | 'primary';
 
 type SparklineDotProps = {
   cx?: number;
@@ -24,7 +26,10 @@ interface CRMMetricCardProps {
   sparklineData?: { value: number }[];
   delay?: number;
   color?: MetricColor;
+  loading?: boolean;
 }
+
+import { ChartContainer } from "../charts/ChartContainer";
 
 export const CRMMetricCard = ({
   title,
@@ -36,17 +41,12 @@ export const CRMMetricCard = ({
   sparklineData,
   delay = 0,
   color = "slate",
+  loading = false,
 }: CRMMetricCardProps) => {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const isUp = trend === "up";
   const isDown = trend === "down";
 
-  const colorMap: Record<MetricColor, { stroke: string; fill: string; icon: string; badge: string }> = {
+  const colorMap: Record<string, { stroke: string; fill: string; icon: string; badge: string }> = {
     emerald: { 
       stroke: "#10b981", 
       fill: "url(#gradient-emerald)", 
@@ -89,6 +89,12 @@ export const CRMMetricCard = ({
       icon: "text-indigo-600 dark:text-indigo-400 bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 border-indigo-500/20",
       badge: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
     },
+    primary: { 
+      stroke: "#6366f1", 
+      fill: "url(#gradient-indigo)", 
+      icon: "text-indigo-600 dark:text-indigo-400 bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 border-indigo-500/20",
+      badge: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
+    },
     slate: { 
       stroke: "#64748b", 
       fill: "url(#gradient-slate)", 
@@ -97,9 +103,9 @@ export const CRMMetricCard = ({
     },
   };
 
-  const theme = colorMap[color];
+  const theme = colorMap[color] || colorMap.slate;
 
-  const borderColors: Record<MetricColor, string> = {
+  const borderColors: Record<string, string> = {
     emerald: "border-l-emerald-500",
     blue: "border-l-blue-500",
     cyan: "border-l-cyan-500",
@@ -107,13 +113,14 @@ export const CRMMetricCard = ({
     purple: "border-l-purple-500",
     pink: "border-l-pink-500",
     indigo: "border-l-indigo-500",
+    primary: "border-l-indigo-500",
     slate: "border-l-slate-400",
   };
 
   return (
     <CRMCard 
       delay={delay} 
-      className="group relative overflow-hidden"
+      className="group relative overflow-hidden min-w-0"
       withAccent={true}
       accentColor={borderColors[color]}
     >
@@ -129,18 +136,22 @@ export const CRMMetricCard = ({
         color === 'indigo' ? "bg-indigo-500" : "bg-muted0"
       )} />
 
-      <div className="flex justify-between items-start mb-3">
-        <div className="space-y-1.5">
-          <p className="crm-label">
+      <div className="flex justify-between items-start mb-3 min-w-0">
+        <div className="space-y-1.5 flex-1 min-w-0">
+          <p className="crm-label truncate">
             {title}
           </p>
-          <h3 className="text-4xl font-bold tracking-normal tabular-nums">
-            {value}
-          </h3>
+          {loading ? (
+            <Skeleton className="h-10 w-24 mt-2" />
+          ) : (
+            <h3 className="text-4xl font-bold tracking-normal tabular-nums truncate">
+              {value}
+            </h3>
+          )}
         </div>
         {Icon && (
           <div className={cn(
-            "crm-icon-box", 
+            "crm-icon-box shrink-0", 
             theme.icon,
             iconColor // Allow override if needed
           )}>
@@ -149,9 +160,11 @@ export const CRMMetricCard = ({
         )}
       </div>
 
-      <div className="flex items-end justify-between gap-4 mt-auto">
-        <div className="flex items-center gap-1.5">
-          {change && (
+      <div className="flex items-end justify-between gap-4 mt-auto min-w-0">
+        <div className="flex items-center gap-1.5 shrink-0">
+          {loading ? (
+            <Skeleton className="h-6 w-16 rounded-full" />
+          ) : change && (
             <div className={cn(
               "flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-full border uppercase tracking-wider",
               isUp ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : 
@@ -165,41 +178,44 @@ export const CRMMetricCard = ({
           )}
         </div>
 
-        {sparklineData && (
-          <div className="h-12 w-24 -mr-2 -mb-1 min-h-[48px]">
-            {mounted && (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={sparklineData}>
-                  <defs>
-                    <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={theme.stroke} stopOpacity={0.15} />
-                      <stop offset="100%" stopColor={theme.stroke} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke={theme.stroke}
-                    strokeWidth={2.5}
-                    fill={theme.fill}
-                    isAnimationActive={true}
-                    animationDuration={1500}
-                    dot={({ cx, cy, index }: SparklineDotProps) => {
-                      // Only show dot on the last point for that "premium" look
-                      if (index === sparklineData.length - 1) {
-                        return (
-                          <g key={`dot-${index}`}>
-                            <circle cx={cx} cy={cy} r={6} fill={theme.stroke} fillOpacity={0.2} />
-                            <circle cx={cx} cy={cy} r={3} fill={theme.stroke} stroke="white" strokeWidth={1.5} className="animate-pulse" />
-                          </g>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
+        {(sparklineData || loading) && (
+          <div className="h-12 w-24 -mr-2 -mb-1 min-h-[48px] min-w-0">
+            <ChartContainer 
+              height="100%" 
+              loading={loading}
+              hasData={!!sparklineData && sparklineData.length > 0}
+              className="w-full h-full"
+            >
+              <AreaChart data={sparklineData}>
+                <defs>
+                  <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={theme.stroke} stopOpacity={0.15} />
+                    <stop offset="100%" stopColor={theme.stroke} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke={theme.stroke}
+                  strokeWidth={2.5}
+                  fill={theme.fill}
+                  isAnimationActive={true}
+                  animationDuration={1500}
+                  dot={({ cx, cy, index }: SparklineDotProps) => {
+                    // Only show dot on the last point for that "premium" look
+                    if (sparklineData && index === sparklineData.length - 1) {
+                      return (
+                        <g key={`dot-${index}`}>
+                          <circle cx={cx} cy={cy} r={6} fill={theme.stroke} fillOpacity={0.2} />
+                          <circle cx={cx} cy={cy} r={3} fill={theme.stroke} stroke="white" strokeWidth={1.5} className="animate-pulse" />
+                        </g>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </AreaChart>
+            </ChartContainer>
           </div>
         )}
       </div>

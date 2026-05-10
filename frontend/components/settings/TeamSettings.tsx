@@ -41,35 +41,18 @@ import {
 import { motion } from "framer-motion";
 import { CRMCard } from "@/components/shared/crm";
 
-const members = [
-  {
-    id: 1,
-    name: "Alex Johnson",
-    email: "alex@clientrise.io",
-    role: "Admin",
-    status: "Active",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-  },
-  {
-    id: 2,
-    name: "Sarah Chen",
-    email: "sarah@clientrise.io",
-    role: "Editor",
-    status: "Active",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-  },
-  {
-    id: 3,
-    name: "Michael Ross",
-    email: "mike@clientrise.io",
-    role: "Viewer",
-    status: "Pending",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
-  },
-];
+import { useEmployees } from "@/hooks/use-hrm";
+import { PageLoadingState } from "@/components/shared/page-states";
 
 const TeamSettings = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { data: hrmData, isLoading: loading } = useEmployees();
+  
+  const members = hrmData?.employees || [];
+
+  if (loading) {
+    return <PageLoadingState label="Loading team structure..." />;
+  }
 
   const filtered = members.filter(
     (m) =>

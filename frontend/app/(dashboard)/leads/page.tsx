@@ -19,8 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useApiResource } from "@/hooks/use-api-resource";
-import { fetchLeadsData } from "@/lib/api/crm";
+import { useLeads } from "@/hooks/use-crm";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -43,7 +42,7 @@ const LeadsPage = () => {
   
   const { leads, setLeads } = useCRMStore();
   const safeLeads = Array.isArray(leads) ? leads : [];
-  const { data, loading, error, refetch } = useApiResource(fetchLeadsData);
+  const { data, isLoading: loading, error, refetch } = useLeads();
 
   useEffect(() => {
     if (data?.leads && safeLeads.length === 0) {

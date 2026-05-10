@@ -40,21 +40,27 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { 
-  EMPLOYEE_STATS, 
-  EMPLOYEES, 
-  EMPLOYEE_ACTIVITIES 
-} from "@/data/mock-data";
+import { useEmployees } from "@/hooks/use-hrm";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { PageLoadingState } from "@/components/shared/page-states";
 
 export default function EmployeesPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { data: hrmData, isLoading: loading } = useEmployees();
+  
+  const employees = hrmData?.employees || [];
+  const employeeStats = hrmData?.stats || [];
+  const employeeActivities = hrmData?.recentActivities || [];
 
-  const filteredEmployees = EMPLOYEES.filter(emp => 
+  const filteredEmployees = employees.filter(emp => 
     emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     emp.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return <PageLoadingState label="Loading employee records..." />;
+  }
 
   const handleAddEmployee = () => {
     toast.info("Add Employee", {
@@ -86,7 +92,7 @@ export default function EmployeesPage() {
 
       {/* Stats Grid */}
       <CRMMetricsGrid>
-        {EMPLOYEE_STATS.map((stat, i) => (
+        {employeeStats.map((stat, i) => (
           <MetricCard
             key={i}
             {...stat}
@@ -175,7 +181,7 @@ export default function EmployeesPage() {
         <div className="space-y-8">
           <CRMPageSection title="Recent Activity">
             <CRMCard className="p-6">
-              <ActivityTimeline items={EMPLOYEE_ACTIVITIES} />
+              <ActivityTimeline items={employeeActivities} />
               <Button variant="ghost" className="w-full mt-6 text-[10px] font-bold uppercase tracking-widest text-primary h-9">
                 View All Activity
               </Button>

@@ -4,8 +4,7 @@ import { useEffect } from "react";
 import { GitBranch, Plus, Download, TrendingUp, DollarSign, Target } from "lucide-react";
 import PipelineBoard from "@/components/pipeline/PipelineBoard";
 import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useApiResource } from "@/hooks/use-api-resource";
-import { fetchPipelineData } from "@/lib/api/crm";
+import { usePipeline } from "@/hooks/use-crm";
 import { 
   CRMPageHeader, 
   CRMMetricCard,
@@ -18,7 +17,7 @@ import { toast } from "sonner";
 const PipelinePage = () => {
   const { pipelineItems, setPipelineItems } = useCRMStore();
   const safePipelineItems = Array.isArray(pipelineItems) ? pipelineItems : [];
-  const { data, loading, error, refetch } = useApiResource(fetchPipelineData);
+  const { data, isLoading: loading, error, refetch } = usePipeline();
 
   useEffect(() => {
     if (data?.items && safePipelineItems.length === 0) {

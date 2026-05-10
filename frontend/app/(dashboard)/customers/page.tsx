@@ -6,8 +6,7 @@ import { Users, UserPlus, Download, TrendingUp, Star, CreditCard, SearchX } from
 
 import CustomersTable from "@/components/customers/CustomersTable";
 import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useApiResource } from "@/hooks/use-api-resource";
-import { fetchCustomersData } from "@/lib/api/crm";
+import { useCustomers } from "@/hooks/use-crm";
 import { CustomerType } from "@/types/customer";
 import { Button } from "@/components/ui/button";
 import { 
@@ -29,7 +28,7 @@ const CustomersPage = () => {
   
   const { customers, setCustomers } = useCRMStore();
   const safeCustomers = Array.isArray(customers) ? customers : [];
-  const { data, loading, error, refetch } = useApiResource(fetchCustomersData);
+  const { data, isLoading: loading, error, refetch } = useCustomers();
 
   useEffect(() => {
     if (data?.customers && safeCustomers.length === 0) {

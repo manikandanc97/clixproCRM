@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { fetchCurrentUser } from "@/lib/api/auth";
-import { useApiResource } from "@/hooks/use-api-resource";
+import { useAuth } from "@/components/auth/auth-provider";
 import { motion } from "framer-motion";
 import { CRMCard } from "@/components/shared/crm";
 
@@ -31,7 +30,7 @@ function getInitials(name?: string) {
 }
 
 const ProfileSettings = () => {
-  const { data: user } = useApiResource(fetchCurrentUser);
+  const { user } = useAuth();
   const initials = getInitials(user?.name);
 
   return (

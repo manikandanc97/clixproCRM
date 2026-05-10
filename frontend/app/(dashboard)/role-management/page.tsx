@@ -36,12 +36,8 @@ import {
   PermissionToggle
 } from "@/components/shared/crm";
 import { Button } from "@/components/ui/button";
-import { 
-  ROLE_STATS, 
-  ROLES, 
-  SECURITY_LOGS,
-  PERMISSION_MODULES
-} from "@/data/mock-data";
+import { useRoles } from "@/hooks/use-hrm";
+import { PageLoadingState } from "@/components/shared/page-states";
 import { 
   Sheet, 
   SheetContent, 
@@ -54,14 +50,25 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export default function RoleManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRole, setSelectedRole] = useState<typeof ROLES[0] | null>(null);
+  const { data: roleData, isLoading: loading } = useRoles();
+  
+  const roles = roleData?.roles || [];
+  const roleStats = roleData?.stats || [];
+  const securityLogs = roleData?.securityLogs || [];
+  const permissionModules = roleData?.permissionModules || [];
+
+  const [selectedRole, setSelectedRole] = useState<any | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  const filteredRoles = ROLES.filter(role => 
+  const filteredRoles = roles.filter(role => 
     role.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleRoleClick = (role: typeof ROLES[0]) => {
+  if (loading) {
+    return <PageLoadingState label="Loading role intelligence engine..." />;
+  }
+
+  const handleRoleClick = (role: any) => {
     setSelectedRole(role);
     setIsSheetOpen(true);
   };
@@ -97,7 +104,7 @@ export default function RoleManagementPage() {
 
       {/* Stats Grid */}
       <CRMMetricsGrid>
-        {ROLE_STATS.map((stat, i) => (
+        {roleStats.map((stat, i) => (
           <MetricCard
             key={i}
             {...stat}
@@ -186,7 +193,7 @@ export default function RoleManagementPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {PERMISSION_MODULES.slice(0, 4).map((module) => (
+                    {permissionModules.slice(0, 4).map((module: any) => (
                       <tr key={module.id} className="border-b border-border/50 h-12">
                         <td className="p-4 text-xs font-bold tracking-tight">{module.name}</td>
                         {filteredRoles.slice(0, 3).map(role => (
@@ -213,7 +220,7 @@ export default function RoleManagementPage() {
         <div className="space-y-8">
           <CRMPageSection title="Security Logs">
             <CRMCard className="p-6">
-              <ActivityTimeline items={SECURITY_LOGS} />
+              <ActivityTimeline items={securityLogs} />
               <Button variant="outline" className="w-full mt-8 text-xs font-bold uppercase tracking-wider h-10">
                 View Security Audit
               </Button>
@@ -259,7 +266,7 @@ export default function RoleManagementPage() {
           </SheetHeader>
 
           <div className="space-y-8 pb-10">
-            {PERMISSION_MODULES.map((module) => (
+            {permissionModules.map((module: any) => (
               <div key={module.id} className="space-y-3">
                 <div className="flex items-center justify-between px-1">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">

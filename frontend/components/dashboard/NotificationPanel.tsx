@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Bell, Check, Clock, UserPlus, FileCheck, AlertCircle, MoreHorizontal, Settings } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Bell, Check, Clock, UserPlus, FileCheck, AlertCircle, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,8 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNotifications } from "@/hooks/use-dashboard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Notification = {
   id: string;
@@ -22,43 +24,24 @@ type Notification = {
   type: "lead" | "quote" | "system" | "task";
 };
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    title: "New lead assigned",
-    description: "John Doe has been assigned to you.",
-    time: new Date(Date.now() - 1000 * 60 * 5), // 5 mins ago
-    read: false,
-    type: "lead",
-  },
-  {
-    id: "2",
-    title: "Quotation Approved",
-    description: "Quote #Q-2024-042 was approved by Acme Corp.",
-    time: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    read: false,
-    type: "quote",
-  },
-  {
-    id: "3",
-    title: "System Update",
-    description: "ClientRise CRM v2.4 is now live with new features.",
-    time: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    read: true,
-    type: "system",
-  },
-  {
-    id: "4",
-    title: "Task Overdue",
-    description: "High priority: 'Contract Review' is overdue.",
-    time: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-    read: false,
-    type: "task",
-  },
-];
-
 export default function NotificationPanel() {
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const { data, isLoading: loading } = useNotifications();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const processedNotifications = useMemo(() => {
+    if (!data?.notifications) return [];
+    return data.notifications.map(n => ({
+      ...n,
+      time: typeof n.time === 'string' ? parseISO(n.time) : n.time
+    }));
+  }, [data]);
+
+  useEffect(() => {
+    if (processedNotifications.length > 0) {
+      setNotifications(processedNotifications);
+    }
+  }, [processedNotifications]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAllAsRead = () => {
@@ -111,49 +94,63 @@ export default function NotificationPanel() {
         </div>
         
         <div className="max-h-[400px] overflow-y-auto">
-          <AnimatePresence initial={false}>
-            {notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <motion.div
-                  key={notification.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  className={`relative flex items-start gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer border-b border-border/30 last:border-0 ${!notification.read ? 'bg-primary/[0.02]' : ''}`}
-                  onClick={() => markAsRead(notification.id)}
-                >
-                  {!notification.read && (
-                    <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full shadow-[0_0_8px_var(--primary)]" />
-                  )}
-                  <div className={`mt-1 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-border/50 ${!notification.read ? 'bg-background' : 'bg-muted'}`}>
-                    {getIcon(notification.type)}
+          {loading ? (
+            <div className="p-4 space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex gap-4">
+                  <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className={`text-sm tracking-tight truncate ${!notification.read ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>
-                        {notification.title}
-                      </p>
-                      <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatDistanceToNow(notification.time, { addSuffix: true }).replace('about ', '')}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                      {notification.description}
-                    </p>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                  <Bell className="w-8 h-8 text-muted-foreground/30" />
                 </div>
-                <h4 className="font-bold text-sm text-foreground mb-1">All caught up!</h4>
-                <p className="text-xs text-muted-foreground">You don&apos;t have any new notifications.</p>
-              </div>
-            )}
-          </AnimatePresence>
+              ))}
+            </div>
+          ) : (
+            <AnimatePresence initial={false}>
+              {notifications.length > 0 ? (
+                notifications.map((notification) => (
+                  <motion.div
+                    key={notification.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className={`relative flex items-start gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer border-b border-border/30 last:border-0 ${!notification.read ? 'bg-primary/[0.02]' : ''}`}
+                    onClick={() => markAsRead(notification.id)}
+                  >
+                    {!notification.read && (
+                      <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full shadow-[0_0_8px_var(--primary)]" />
+                    )}
+                    <div className={`mt-1 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-border/50 ${!notification.read ? 'bg-background' : 'bg-muted'}`}>
+                      {getIcon(notification.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className={`text-sm tracking-tight truncate ${!notification.read ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>
+                          {notification.title}
+                        </p>
+                        <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {formatDistanceToNow(notification.time, { addSuffix: true }).replace('about ', '')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                        {notification.description}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                    <Bell className="w-8 h-8 text-muted-foreground/30" />
+                  </div>
+                  <h4 className="font-bold text-sm text-foreground mb-1">All caught up!</h4>
+                  <p className="text-xs text-muted-foreground">You don&apos;t have any new notifications.</p>
+                </div>
+              )}
+            </AnimatePresence>
+          )}
         </div>
         
         <div className="p-3 border-t border-border/50 bg-muted/20">

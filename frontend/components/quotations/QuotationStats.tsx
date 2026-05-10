@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MetricCardType } from "@/types/common";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 const iconMap: Record<string, LucideIcon> = {
@@ -19,9 +20,11 @@ interface QuotationStatsProps {
   stats: MetricCardType[];
 }
 
+import { ChartContainer } from "../shared/charts/ChartContainer";
+
 const QuotationStats = ({ stats }: QuotationStatsProps) => {
   return (
-    <div className="gap-6 grid grid-cols-1 md:grid-cols-3">
+    <div className="gap-6 grid grid-cols-1 md:grid-cols-3 min-w-0">
       {stats.map((item, index) => {
         const Icon = iconMap[item.title] || FileText;
         const sparklineData = generateSparklineData();
@@ -33,8 +36,9 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
+            className="min-w-0"
           >
-            <Card className="relative overflow-hidden group border-none shadow-elevated bg-card/80 backdrop-blur-xl rounded-xl">
+            <Card className="relative overflow-hidden group border-none shadow-elevated bg-card/80 backdrop-blur-xl rounded-xl min-w-0">
               {/* Decorative background gradient */}
               <div className={`absolute -right-10 -top-10 w-40 h-40 rounded-full blur-3xl opacity-10 transition-all group-hover:opacity-20
                 ${item.title === 'Total Quotes' ? 'bg-blue-500' : 
@@ -42,7 +46,7 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
                   'bg-emerald-500'}`} 
               />
 
-              <CardContent className="p-7 relative z-10">
+              <CardContent className="p-7 relative z-10 min-w-0">
                 <div className="flex justify-between items-start mb-6">
                   <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg transition-all duration-500
                     ${item.title === 'Total Quotes' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' : 
@@ -60,8 +64,8 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
                   </div>
                 </div>
 
-                <div className="flex items-end justify-between gap-4">
-                  <div>
+                <div className="flex items-end justify-between gap-4 min-w-0">
+                  <div className="min-w-0 shrink-0">
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">{item.title}</p>
                     <div className="flex items-baseline gap-2">
                       <h2 className="text-4xl font-black text-foreground tracking-tighter">
@@ -70,8 +74,12 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
                     </div>
                   </div>
 
-                  <div className="h-16 w-24 opacity-50 group-hover:opacity-100 transition-opacity duration-500">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                  <div className="h-16 w-24 opacity-50 group-hover:opacity-100 transition-opacity duration-500 min-w-0">
+                    <ChartContainer 
+                      height="100%" 
+                      hasData={sparklineData.length > 0}
+                      className="w-full h-full"
+                    >
                       <LineChart data={sparklineData}>
                         <Line
                           type="monotone"
@@ -83,7 +91,7 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
                           dot={false}
                         />
                       </LineChart>
-                    </ResponsiveContainer>
+                    </ChartContainer>
                   </div>
                 </div>
                 

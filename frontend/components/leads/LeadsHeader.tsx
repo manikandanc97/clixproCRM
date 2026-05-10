@@ -1,5 +1,6 @@
 // leads page header
 
+import { useState, useEffect } from "react";
 import { Users, UserPlus, Filter, Download, ArrowUpRight, ArrowDownRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,28 +12,36 @@ interface LeadsHeaderProps {
   leads: LeadType[];
 }
 
-const Sparkline = ({ data, color }: { data: { value: number }[], color: string }) => (
-  <div className="h-10 w-20">
-    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-      <AreaChart data={data}>
-        <defs>
-          <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
-            <stop offset="95%" stopColor={color} stopOpacity={0}/>
-          </linearGradient>
-        </defs>
-        <Area 
-          type="monotone" 
-          dataKey="value" 
-          stroke={color} 
-          strokeWidth={2} 
-          fillOpacity={1} 
-          fill={`url(#gradient-${color})`} 
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  </div>
-);
+import { ChartContainer } from "../shared/charts/ChartContainer";
+
+const Sparkline = ({ data, color }: { data: { value: number }[], color: string }) => {
+  return (
+    <div className="h-10 w-24 min-w-0">
+      <ChartContainer 
+        height="100%" 
+        hasData={data.length > 0}
+        className="w-full h-full"
+      >
+        <AreaChart data={data}>
+          <defs>
+            <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
+              <stop offset="95%" stopColor={color} stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <Area 
+            type="monotone" 
+            dataKey="value" 
+            stroke={color} 
+            strokeWidth={2} 
+            fillOpacity={1} 
+            fill={`url(#gradient-${color})`} 
+          />
+        </AreaChart>
+      </ChartContainer>
+    </div>
+  );
+};
 
 const AnimatedCounter = ({ value }: { value: number }) => (
   <motion.span
@@ -135,9 +144,9 @@ const LeadsHeader = ({ leads }: LeadsHeaderProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <Card className="bg-card rounded-xl border-border shadow-sm transition-all hover:shadow-elevated hover:shadow-slate-200 group overflow-hidden relative border-b-4 border-b-transparent hover:border-b-current" style={{ borderBottomColor: stat.color }}>
-              <CardContent className="p-7 relative z-10">
-                <div className="flex justify-between items-start mb-4">
+            <Card className="bg-card rounded-xl border-border shadow-sm transition-all hover:shadow-elevated hover:shadow-slate-200 group overflow-hidden relative border-b-4 border-b-transparent hover:border-b-current min-w-0" style={{ borderBottomColor: stat.color }}>
+              <CardContent className="p-7 relative z-10 min-w-0">
+                <div className="flex justify-between items-start mb-4 min-w-0">
                   <div className={`p-4 rounded-xl ${stat.bg}`} style={{ color: stat.color }}>
                     <stat.icon className="w-7 h-7" />
                   </div>

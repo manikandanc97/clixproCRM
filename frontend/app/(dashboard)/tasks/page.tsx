@@ -22,8 +22,7 @@ import { CalendarView } from "@/components/tasks/CalendarView";
 import { TimelineView } from "@/components/tasks/TimelineView";
 import TaskDetailsDrawer from "@/components/tasks/TaskDetailsDrawer";
 import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useApiResource } from "@/hooks/use-api-resource";
-import { fetchTasksData } from "@/lib/api/crm";
+import { useTasks } from "@/hooks/use-crm";
 import { TaskType } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +61,7 @@ const TasksPage = () => {
 
   const { tasks, setTasks } = useCRMStore();
   const safeTasks = Array.isArray(tasks) ? tasks : [];
-  const { data, loading, error, refetch } = useApiResource(fetchTasksData);
+  const { data, isLoading: loading, error, refetch } = useTasks();
 
   useEffect(() => {
     if (data?.tasks && safeTasks.length === 0) {

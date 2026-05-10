@@ -5,8 +5,7 @@ import { FileText, Plus, Download, TrendingUp, Clock, CheckCircle2, SearchX } fr
 
 import QuotationsTable from "@/components/quotations/QuotationsTable";
 import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useApiResource } from "@/hooks/use-api-resource";
-import { fetchQuotationsData } from "@/lib/api/crm";
+import { useQuotations } from "@/hooks/use-crm";
 import { Button } from "@/components/ui/button";
 import { 
   CRMPageHeader, 
@@ -25,7 +24,7 @@ const QuotationsPage = () => {
   
   const { quotations, setQuotations } = useCRMStore();
   const safeQuotations = Array.isArray(quotations) ? quotations : [];
-  const { data, loading, error, refetch } = useApiResource(fetchQuotationsData);
+  const { data, isLoading: loading, error, refetch } = useQuotations();
 
   useEffect(() => {
     if (data?.quotations && safeQuotations.length === 0) {

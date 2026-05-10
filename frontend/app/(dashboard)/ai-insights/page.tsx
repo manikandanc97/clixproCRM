@@ -25,11 +25,8 @@ import {
   CRMPageSection
 } from "@/components/shared/crm";
 import { Button } from "@/components/ui/button";
-import { 
-  AI_INSIGHTS_STATS, 
-  AI_RECOMMENDATIONS, 
-  AI_TIMELINE 
-} from "@/data/mock-data";
+import { useAiInsights } from "@/hooks/use-dashboard";
+import { PageLoadingState } from "@/components/shared/page-states";
 import { 
   Area, 
   AreaChart, 
@@ -51,18 +48,24 @@ const chartData = [
   { name: "Week 6", revenue: 5500, prediction: 8200 },
 ];
 
-export default function AiInsightsPage() {
-  const [mounted, setMounted] = useState(false);
+import { ChartContainer } from "@/components/shared/charts/ChartContainer";
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+export default function AiInsightsPage() {
+  const { data: insightsData, isLoading: loading } = useAiInsights();
+
+  const recommendations = insightsData?.recommendations || [];
+  const aiStats = insightsData?.stats || [];
+  const aiTimeline = insightsData?.timeline || [];
 
   const handleAskAI = () => {
     toast.success("AI Assistant", {
       description: "How can I help you analyze your business data today?",
     });
   };
+
+  if (loading) {
+    return <PageLoadingState label="Consulting the neural engine..." />;
+  }
 
   return (
     <CRMPageContainer>
@@ -90,7 +93,7 @@ export default function AiInsightsPage() {
 
       {/* AI Stats Grid */}
       <CRMMetricsGrid>
-        {AI_INSIGHTS_STATS.map((stat, i) => (
+        {aiStats.map((stat: any, i: number) => (
           <MetricCard
             key={i}
             {...stat}
@@ -99,67 +102,70 @@ export default function AiInsightsPage() {
         ))}
       </CRMMetricsGrid>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-w-0">
         {/* Main Insights Panel */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-8 min-w-0">
           <CRMPageSection 
             title="Performance Predictions" 
             description="Revenue vs AI Forecast for the next 6 weeks."
+            className="min-w-0"
           >
-            <CRMCard className="h-[400px] min-h-[400px] p-6">
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="colorPrediction" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 10, fontWeight: 600 }}
-                      dy={10}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 10, fontWeight: 600 }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        borderRadius: '12px', 
-                        border: 'none', 
-                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
-                      }} 
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#6366f1" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorRevenue)" 
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="prediction" 
-                      stroke="#10b981" 
-                      strokeWidth={3}
-                      strokeDasharray="5 5"
-                      fillOpacity={1} 
-                      fill="url(#colorPrediction)" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
+            <CRMCard className="h-[400px] min-h-[400px] p-6 min-w-0">
+              <ChartContainer 
+                height="100%" 
+                hasData={!!(insightsData?.forecastData || chartData)}
+                className="w-full h-full"
+              >
+                <AreaChart data={insightsData?.forecastData || chartData}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorPrediction" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 10, fontWeight: 600 }}
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 10, fontWeight: 600 }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      border: 'none', 
+                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                    }} 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#6366f1" 
+                    strokeWidth={3}
+                    fillOpacity={1} 
+                    fill="url(#colorRevenue)" 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="prediction" 
+                    stroke="#10b981" 
+                    strokeWidth={3}
+                    strokeDasharray="5 5"
+                    fillOpacity={1} 
+                    fill="url(#colorPrediction)" 
+                  />
+                </AreaChart>
+              </ChartContainer>
             </CRMCard>
           </CRMPageSection>
 
@@ -168,7 +174,7 @@ export default function AiInsightsPage() {
             description="AI-generated actions to optimize your sales funnel."
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {AI_RECOMMENDATIONS.map((rec, i) => (
+              {recommendations.map((rec: any, i: number) => (
                 <CRMCard 
                   key={rec.id} 
                   className="p-5 flex flex-col justify-between"
@@ -177,7 +183,8 @@ export default function AiInsightsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className={cn("p-2 rounded-lg", rec.bgColor, rec.color)}>
-                        <rec.icon className="w-4 h-4" />
+                        {/* Fallback for icon if it's a component or just use Sparkles as default */}
+                        {typeof rec.icon === 'function' ? <rec.icon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                       </div>
                       <span className={cn(
                         "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
@@ -230,7 +237,7 @@ export default function AiInsightsPage() {
             description="Recent neural observations."
           >
             <CRMCard className="p-6">
-              <ActivityTimeline items={AI_TIMELINE} />
+              <ActivityTimeline items={aiTimeline} />
               <Button variant="outline" className="w-full mt-8 text-xs font-bold uppercase tracking-wider h-10">
                 View All Events
               </Button>

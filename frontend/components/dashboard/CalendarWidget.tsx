@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CRMCard } from "@/components/shared/crm/CRMCard";
 import { CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { format, isSameDay, addMonths, subMonths } from "date-fns";
+import { format, isSameDay, addMonths, subMonths, parseISO } from "date-fns";
 import { toast } from "sonner";
 import {
   Calendar as CalendarIcon,
@@ -14,21 +14,23 @@ import {
   ChevronRight,
   ArrowUpRight,
 } from "lucide-react";
-
-const MOCK_EVENTS = [
-  { date: new Date(), title: "Acme Corp Review", time: "10:00 AM", color: "bg-primary" },
-  { date: new Date(), title: "TechFlow Demo", time: "1:00 PM", color: "bg-chart-2" },
-  {
-    date: new Date(new Date().setDate(new Date().getDate() + 2)),
-    title: "Design Sync",
-    time: "3:30 PM",
-    color: "bg-chart-3",
-  },
-];
+import { useMeetings } from "@/hooks/use-dashboard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CalendarWidget() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [month, setMonth] = useState<Date>(new Date());
+  const { data, isLoading: loading } = useMeetings();
+  
+  const events = useMemo(() => {
+    if (!data?.meetings) return [];
+    return data.meetings.map(m => ({
+      ...m,
+      date: parseISO(m.date),
+      color: m.color === 'emerald' ? 'bg-emerald-500' : 
+             m.color === 'blue' ? 'bg-blue-500' : 'bg-primary'
+    }));
+  }, [data]);
 
   const handlePrevMonth = () => setMonth((prev) => subMonths(prev, 1));
   const handleNextMonth = () => setMonth((prev) => addMonths(prev, 1));
@@ -36,7 +38,7 @@ export default function CalendarWidget() {
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
     if (selectedDate) {
-      const dayEvents = MOCK_EVENTS.filter((e) => isSameDay(e.date, selectedDate));
+      const dayEvents = events.filter((e) => isSameDay(e.date, selectedDate));
       if (dayEvents.length > 0) {
         toast.info(`Schedule for ${format(selectedDate, "MMM d")}`, {
           description: `You have ${dayEvents.length} event${dayEvents.length > 1 ? "s" : ""} scheduled: ${dayEvents.map((e) => e.title).join(", ")}`,
@@ -56,7 +58,19 @@ export default function CalendarWidget() {
     handleDateSelect(today);
   };
 
-  const todayEvents = MOCK_EVENTS.filter((e) => date && isSameDay(e.date, date));
+  const selectedDayEvents = events.filter((e) => date && isSameDay(e.date, date));
+
+  if (loading) {
+    return (
+      <div className="w-full h-[400px] rounded-2xl border border-border/60 bg-card p-6 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-32 rounded-xl" />
+          <Skeleton className="h-10 w-24 rounded-xl" />
+        </div>
+        <Skeleton className="flex-1 w-full rounded-xl" />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -173,9 +187,9 @@ export default function CalendarWidget() {
                   </span>
                 )}
               </div>
-              {todayEvents.length > 0 && (
+              {selectedDayEvents.length > 0 && (
                 <span className="text-[9px] font-medium text-muted-foreground/50">
-                  {todayEvents.length} scheduled
+                  {selectedDayEvents.length} scheduled
                 </span>
               )}
             </div>
@@ -190,8 +204,8 @@ export default function CalendarWidget() {
                 transition={{ duration: 0.2 }}
                 className="flex flex-col gap-2"
               >
-                {todayEvents.length > 0 ? (
-                  todayEvents.map((event, i) => (
+                {selectedDayEvents.length > 0 ? (
+                  selectedDayEvents.map((event, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, x: -6 }}

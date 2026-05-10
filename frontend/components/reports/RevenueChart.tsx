@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { 
   AreaChart, 
   Area, 
@@ -16,18 +17,22 @@ import { Button } from "@/components/ui/button";
 import { RevenueChartPointType } from "@/types/report";
 import { motion } from "framer-motion";
 
+import { ChartContainer } from "../shared/charts/ChartContainer";
+
 interface RevenueChartProps {
   data: RevenueChartPointType[];
+  loading?: boolean;
 }
 
-const RevenueChart = ({ data }: RevenueChartProps) => {
+const RevenueChart = ({ data, loading }: RevenueChartProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
+      className="min-w-0"
     >
-      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden group">
+      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden group min-w-0">
         <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -54,83 +59,85 @@ const RevenueChart = ({ data }: RevenueChartProps) => {
           </div>
         </CardHeader>
 
-        <CardContent className="p-8 pt-0">
-          <div className="h-[350px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-              <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
-                  dy={15}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
-                  tickFormatter={(value) => `$${value/1000}k`}
-                />
-                <Tooltip 
-                  cursor={{ 
-                    stroke: '#3b82f6', 
-                    strokeWidth: 2, 
-                    strokeDasharray: '6 6' 
-                  }} 
-                  contentStyle={{
-                    borderRadius: "20px",
-                    border: "1px solid rgba(59, 130, 246, 0.2)",
-                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                    padding: "16px 20px",
-                    backgroundColor: "rgba(15, 23, 42, 0.9)",
-                    backdropFilter: "blur(12px)",
-                    color: "white",
-                  }}
-                  itemStyle={{
-                    color: "#3b82f6",
-                    fontWeight: 900,
-                    fontSize: "16px",
-                  }}
-                  labelStyle={{
-                    color: "rgba(255, 255, 255, 0.5)",
-                    fontWeight: 800,
-                    fontSize: "10px",
-                    marginBottom: "6px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.2em",
-                  }}
-                  formatter={(value) => [`$${Number(value ?? 0).toLocaleString()}`, "Revenue"]}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorRevenue)" 
-                  animationDuration={2000}
-                  animationBegin={500}
-                  activeDot={{ 
-                    r: 6, 
-                    fill: "#3b82f6", 
-                    stroke: "white", 
-                    strokeWidth: 2.5,
-                    className: "shadow-elevated pulse-dot"
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+        <CardContent className="p-8 pt-0 min-w-0">
+          <ChartContainer 
+            height={350} 
+            loading={loading}
+            hasData={data && data.length > 0}
+            className="mt-4"
+          >
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
+                dy={15}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
+                tickFormatter={(value) => `$${value/1000}k`}
+              />
+              <Tooltip 
+                cursor={{ 
+                  stroke: '#3b82f6', 
+                  strokeWidth: 2, 
+                  strokeDasharray: '6 6' 
+                }} 
+                contentStyle={{
+                  borderRadius: "20px",
+                  border: "1px solid rgba(59, 130, 246, 0.2)",
+                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                  padding: "16px 20px",
+                  backgroundColor: "rgba(15, 23, 42, 0.9)",
+                  backdropFilter: "blur(12px)",
+                  color: "white",
+                }}
+                itemStyle={{
+                  color: "#3b82f6",
+                  fontWeight: 900,
+                  fontSize: "16px",
+                }}
+                labelStyle={{
+                  color: "rgba(255, 255, 255, 0.5)",
+                  fontWeight: 800,
+                  fontSize: "10px",
+                  marginBottom: "6px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.2em",
+                }}
+                formatter={(value) => [`$${Number(value ?? 0).toLocaleString()}`, "Revenue"]}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="revenue" 
+                stroke="#3b82f6" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorRevenue)" 
+                animationDuration={2000}
+                animationBegin={500}
+                activeDot={{ 
+                  r: 6, 
+                  fill: "#3b82f6", 
+                  stroke: "white", 
+                  strokeWidth: 2.5,
+                  className: "shadow-elevated pulse-dot"
+                }}
+              />
+            </AreaChart>
+          </ChartContainer>
         </CardContent>
       </Card>
-    </motion.div>
   );
 };
 

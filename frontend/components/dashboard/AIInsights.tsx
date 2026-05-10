@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -12,65 +12,43 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-
-const INITIAL_INSIGHTS = {
-  recommendations: [
-    {
-      id: 1,
-      title: "High conversion probability",
-      desc: "Acme Corp lead interaction has increased by 40% this week.",
-      icon: TrendingUp,
-      color: "text-emerald-400",
-      bgColor: "bg-emerald-500/20",
-    },
-    {
-      id: 2,
-      title: "Optimized outreach",
-      desc: "Best time to contact Michael Chang is Tuesday at 10 AM.",
-      icon: Zap,
-      color: "text-amber-400",
-      bgColor: "bg-amber-500/20",
-    },
-  ],
-  alerts: [
-    {
-      id: 3,
-      title: "Follow-up recommended",
-      desc: "3 high-value deals have been inactive for over 14 days.",
-      icon: AlertCircle,
-      color: "text-rose-400",
-      bgColor: "bg-rose-500/20",
-    },
-  ],
-  trends: [
-    {
-      id: 4,
-      title: "Revenue Forecast",
-      desc: "Projected to hit 115% of Q2 target based on current pipeline.",
-      icon: BarChart,
-      color: "text-primary",
-      bgColor: "bg-primary/20",
-    },
-  ],
-};
+import { useAiInsights } from "@/hooks/use-dashboard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CRMCard } from "@/components/shared/crm/CRMCard";
 
 type TabType = "recommendations" | "alerts" | "trends";
 
-import { CRMCard } from "@/components/shared/crm/CRMCard";
-
 export default function AIInsights() {
   const [activeTab, setActiveTab] = useState<TabType>("recommendations");
-  const [insights, setInsights] = useState(INITIAL_INSIGHTS);
+  const { data, isLoading: loading } = useAiInsights();
+  const [insights, setInsights] = useState<{
+    recommendations: any[];
+    alerts: any[];
+    trends: any[];
+  }>({
+    recommendations: [],
+    alerts: [],
+    trends: [],
+  });
 
-  const handleDismiss = (e: React.MouseEvent, tab: TabType, id: number) => {
+  useEffect(() => {
+    if (data) {
+      setInsights({
+        recommendations: data.recommendations || [],
+        alerts: data.alerts || [],
+        trends: data.trends || [],
+      });
+    }
+  }, [data]);
+
+  const handleDismiss = (e: React.MouseEvent, tab: TabType, id: string) => {
     e.stopPropagation();
     setInsights((prev) => ({
       ...prev,
       [tab]: prev[tab].filter((item) => item.id !== id),
     }));
     toast.success("Insight dismissed", {
-      description:
-        "We'll adjust future recommendations based on your feedback.",
+      description: "We'll adjust future recommendations based on your feedback.",
     });
   };
 
@@ -85,6 +63,34 @@ export default function AIInsights() {
       description: "Navigating to centralized AI analytics workspace.",
     });
   };
+
+  const getIcon = (tab: TabType) => {
+    switch (tab) {
+      case "recommendations": return Zap;
+      case "alerts": return AlertCircle;
+      case "trends": return TrendingUp;
+      default: return Sparkles;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full h-[400px] rounded-2xl border border-primary/20 bg-[#0d111c] p-6 flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-lg bg-white/5" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24 bg-white/5" />
+            <Skeleton className="h-3 w-16 bg-white/5" />
+          </div>
+        </div>
+        <Skeleton className="h-12 w-full rounded-lg bg-white/5" />
+        <div className="space-y-3">
+          <Skeleton className="h-20 w-full rounded-lg bg-white/5" />
+          <Skeleton className="h-20 w-full rounded-lg bg-white/5" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -166,7 +172,7 @@ export default function AIInsights() {
               >
                 {insights[activeTab].length > 0 ? (
                   insights[activeTab].map((item) => {
-                    const Icon = item.icon;
+                    const Icon = getIcon(activeTab);
                     return (
                       <motion.div
                         key={item.id}
@@ -186,7 +192,7 @@ export default function AIInsights() {
                               {item.title}
                             </h4>
                             <p className="text-white/50 text-[10px] leading-relaxed line-clamp-2">
-                              {item.desc}
+                              {item.description}
                             </p>
                           </div>
                           <button

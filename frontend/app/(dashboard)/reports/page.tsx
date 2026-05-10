@@ -9,8 +9,7 @@ import SalesFunnel from "@/components/reports/SalesFunnel";
 import ActivityHeatmap from "@/components/reports/ActivityHeatmap";
 import RevenueTarget from "@/components/reports/RevenueTarget";
 import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useApiResource } from "@/hooks/use-api-resource";
-import { fetchReportsData } from "@/lib/api/crm";
+import { useReports } from "@/hooks/use-crm";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { 
@@ -28,7 +27,7 @@ const ReportsPage = () => {
   const { leads, quotations, customers } = useCRMStore();
   const safeLeads = Array.isArray(leads) ? leads : [];
   const safeCustomers = Array.isArray(customers) ? customers : [];
-  const { data, loading, error, refetch } = useApiResource(fetchReportsData);
+  const { data, isLoading: loading, error, refetch } = useReports();
 
   const handleTimePeriod = () => {
     toast.info("Time Period Selection", {
