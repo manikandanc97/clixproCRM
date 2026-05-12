@@ -16,26 +16,26 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import TasksTable from "@/components/tasks/TasksTable";
-import { KanbanView } from "@/components/tasks/KanbanView";
-import { CalendarView } from "@/components/tasks/CalendarView";
-import { TimelineView } from "@/components/tasks/TimelineView";
-import TaskDetailsDrawer from "@/components/tasks/TaskDetailsDrawer";
-import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useTasks } from "@/hooks/use-crm";
-import { TaskType } from "@/types/task";
-import { Button } from "@/components/ui/button";
+import TasksTable from "@/features/tasks/components/TasksTable";
+import { KanbanView } from "@/features/tasks/components/KanbanView";
+import { CalendarView } from "@/features/tasks/components/CalendarView";
+import { TimelineView } from "@/features/tasks/components/TimelineView";
+import TaskDetailsDrawer from "@/features/tasks/components/TaskDetailsDrawer";
+import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { useTasks } from "@/shared/hooks/use-crm";
+import { TaskType } from "@/shared/types/task";
+import { Button } from "@/shared/ui/button";
 import {
   CRMPageHeader,
   CRMMetricCard,
   CRMToolbar,
   CRMPageContainer,
   CRMMetricsGrid,
-} from "@/components/shared/crm";
+} from "@/shared/components/crm";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCRMStore } from "@/store/useCRMStore";
+import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 const VIEW_MODES = [
   { id: "list", icon: List, label: "List" },
@@ -117,7 +117,7 @@ const TasksPage = () => {
 
   if (error && safeTasks.length === 0) {
     return (
-      <PageErrorState title="Tasks unavailable" message={error} onRetry={refetch} />
+      <PageErrorState title="Tasks unavailable" message={(error as Error).message || "An error occurred"} onRetry={() => { refetch(); }} />
     );
   }
 
@@ -288,3 +288,15 @@ const TasksPage = () => {
 };
 
 export default TasksPage;
+
+
+
+
+
+
+
+
+
+
+
+

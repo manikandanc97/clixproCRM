@@ -1,31 +1,36 @@
 "use client";
 
 import React, { useEffect } from "react";
+import dynamic from "next/dynamic";
 import { LayoutDashboard, Download, Filter, TrendingUp, Users, DollarSign, Target } from "lucide-react";
-import RecentActivities from "@/components/dashboard/RecentActivities";
-import SalesChart from "@/components/dashboard/SalesChart";
-import UpcomingMeetings from "@/components/dashboard/UpcomingMeetings";
-import HotLeads from "@/components/dashboard/HotLeads";
-import AIInsights from "@/components/dashboard/AIInsights";
-import PendingFollowups from "@/components/dashboard/PendingFollowups";
-import TeamPerformance from "@/components/dashboard/TeamPerformance";
-import LeadFunnel from "@/components/dashboard/LeadFunnel";
-import CalendarWidget from "@/components/dashboard/CalendarWidget";
-import RevenueTracker from "@/components/dashboard/RevenueTracker";
-import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import { PageErrorState } from "@/components/shared/page-states";
-import { useDashboardData } from "@/hooks/use-dashboard";
-import { fetchLeadsData, fetchTasksData, fetchPipelineData, fetchCustomersData } from "@/lib/api/crm";
-import { Button } from "@/components/ui/button";
+import { DashboardSkeleton } from "@/features/dashboard/components/DashboardSkeleton";
+import { PageErrorState } from "@/shared/components/page-states";
+import { useDashboardData } from "@/shared/hooks/use-dashboard";
+import { fetchLeadsData, fetchTasksData, fetchPipelineData, fetchCustomersData } from "@/shared/lib/api/crm";
+import { Button } from "@/shared/ui/button";
+import { PageHeader } from "@/shared/components/PageHeader";
 import { 
-  CRMPageHeader, 
   CRMMetricCard,
   CRMPageContainer,
   CRMMetricsGrid
-} from "@/components/shared/crm";
-import { useCRMStore } from "@/store/useCRMStore";
+} from "@/shared/components/crm";
+import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
-import { useAuth } from "@/components/auth/auth-provider";
+import { useAuth } from "@/features/auth/components/auth-provider";
+
+// Dynamic imports for heavy dashboard components
+const SalesChart = dynamic(() => import("@/features/dashboard/components/SalesChart"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
+const RevenueTracker = dynamic(() => import("@/features/dashboard/components/RevenueTracker"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
+const TeamPerformance = dynamic(() => import("@/features/dashboard/components/TeamPerformance"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
+const LeadFunnel = dynamic(() => import("@/features/dashboard/components/LeadFunnel"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
+
+// Standard dynamic imports
+const RecentActivities = dynamic(() => import("@/features/dashboard/components/RecentActivities"));
+const UpcomingMeetings = dynamic(() => import("@/features/dashboard/components/UpcomingMeetings"));
+const HotLeads = dynamic(() => import("@/features/dashboard/components/HotLeads"));
+const AIInsights = dynamic(() => import("@/features/dashboard/components/AIInsights"));
+const PendingFollowups = dynamic(() => import("@/features/dashboard/components/PendingFollowups"));
+const CalendarWidget = dynamic(() => import("@/features/dashboard/components/CalendarWidget"));
 
 const DashboardPage = () => {
   const { data, isLoading: loading, error, refetch } = useDashboardData();
@@ -70,7 +75,7 @@ const DashboardPage = () => {
       <PageErrorState
         title="Dashboard unavailable"
         message={(error as Error).message}
-        onRetry={() => refetch()}
+        onRetry={() => { refetch(); }}
       />
     );
   }
@@ -101,7 +106,7 @@ const DashboardPage = () => {
 
   return (
     <CRMPageContainer>
-      <CRMPageHeader 
+      <PageHeader 
         title="Command Center"
         subtitle="Welcome back, Agent. Here's what's happening across your sales intelligence landscape today."
         icon={LayoutDashboard}
@@ -129,7 +134,7 @@ const DashboardPage = () => {
             variant={activeTimeframe === t ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveTimeframe(t)}
-            className="capitalize h-8 px-4 rounded-full text-xs font-semibold tracking-wide"
+            className="capitalize h-8 px-4 rounded-full text-xs font-semibold tracking-wide shadow-sm transition-all"
           >
             {t}
           </Button>
@@ -188,3 +193,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+

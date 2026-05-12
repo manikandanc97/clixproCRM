@@ -1,7 +1,7 @@
 "use client";
 
 import { Package } from "lucide-react";
-import RoleModulePlaceholder from "@/components/shared/role/RoleModulePlaceholder";
+import RoleModulePlaceholder from "@/shared/components/role/RoleModulePlaceholder";
 
 export default function BillingPage() {
   return (
@@ -13,3 +13,15 @@ export default function BillingPage() {
     />
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

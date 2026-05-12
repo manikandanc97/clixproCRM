@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 
 export default function UnauthorizedPage() {
   const router = useRouter();
@@ -24,3 +24,15 @@ export default function UnauthorizedPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

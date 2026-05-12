@@ -1,7 +1,7 @@
 "use client";
 
 import { Users } from "lucide-react";
-import RoleModulePlaceholder from "@/components/shared/role/RoleModulePlaceholder";
+import RoleModulePlaceholder from "@/shared/components/role/RoleModulePlaceholder";
 
 export default function MyLeadsPage() {
   return (
@@ -13,3 +13,15 @@ export default function MyLeadsPage() {
     />
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

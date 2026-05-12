@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 
-import AuthLayout from "@/components/auth/auth-layout";
-import { registerUser } from "@/lib/api/auth";
-import { getApiErrorMessage } from "@/lib/api/error";
+import AuthLayout from "@/features/auth/components/auth-layout";
+import { registerUser } from "@/shared/lib/api/auth";
+import { getApiErrorMessage } from "@/shared/lib/api/error";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import PublicRoute from "@/components/auth/public-route";
+import PublicRoute from "@/features/auth/components/public-route";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -134,3 +134,15 @@ export default function RegisterPage() {
     </PublicRoute>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

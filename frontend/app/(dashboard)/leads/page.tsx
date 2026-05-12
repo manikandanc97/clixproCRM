@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import LeadsTable from "@/components/leads/LeadsTable";
+import LeadsTable from "@/features/leads/components/LeadsTable";
 import { 
   SearchX, 
   UserPlus, 
@@ -17,11 +17,11 @@ import {
   TrendingUp,
   ChevronRight
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useLeads } from "@/hooks/use-crm";
+import { Button } from "@/shared/ui/button";
+import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { useLeads } from "@/shared/hooks/use-crm";
 import { motion, AnimatePresence } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/ui/badge";
 import { 
   CRMPageHeader, 
   CRMMetricCard, 
@@ -30,9 +30,9 @@ import {
   CRMAIInsight,
   CRMPageContainer,
   CRMMetricsGrid
-} from "@/components/shared/crm";
-import { useCRMStore } from "@/store/useCRMStore";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+} from "@/shared/components/crm";
+import { useCRMStore } from "@/shared/store/useCRMStore";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { toast } from "sonner";
 
 const LeadsPage = () => {
@@ -99,8 +99,8 @@ const LeadsPage = () => {
     return (
       <PageErrorState
         title="Leads unavailable"
-        message={error}
-        onRetry={refetch}
+        message={(error as Error).message || "An error occurred"}
+        onRetry={() => { refetch(); }}
       />
     );
   }
@@ -283,3 +283,15 @@ const LeadsPage = () => {
 };
 
 export default LeadsPage;
+
+
+
+
+
+
+
+
+
+
+
+

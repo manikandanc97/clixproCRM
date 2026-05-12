@@ -3,19 +3,19 @@
 import { useState, useMemo, useEffect } from "react";
 import { FileText, Plus, Download, TrendingUp, Clock, CheckCircle2, SearchX } from "lucide-react";
 
-import QuotationsTable from "@/components/quotations/QuotationsTable";
-import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useQuotations } from "@/hooks/use-crm";
-import { Button } from "@/components/ui/button";
+import QuotationsTable from "@/features/quotations/components/QuotationsTable";
+import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { useQuotations } from "@/shared/hooks/use-crm";
+import { Button } from "@/shared/ui/button";
 import { 
   CRMPageHeader, 
   CRMMetricCard, 
   CRMToolbar,
   CRMPageContainer,
   CRMMetricsGrid
-} from "@/components/shared/crm";
+} from "@/shared/components/crm";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCRMStore } from "@/store/useCRMStore";
+import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 
 const QuotationsPage = () => {
@@ -73,8 +73,8 @@ const QuotationsPage = () => {
     return (
       <PageErrorState
         title="Quotations unavailable"
-        message={error}
-        onRetry={refetch}
+        message={(error as Error).message || "An error occurred"}
+        onRetry={() => { refetch(); }}
       />
     );
   }
@@ -197,3 +197,15 @@ const QuotationsPage = () => {
 };
 
 export default QuotationsPage;
+
+
+
+
+
+
+
+
+
+
+
+

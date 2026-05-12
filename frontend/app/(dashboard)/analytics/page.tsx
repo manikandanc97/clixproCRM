@@ -1,7 +1,19 @@
 "use client";
 
-import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
+import AnalyticsDashboard from "@/features/analytics/components/AnalyticsDashboard";
 
 export default function AnalyticsPage() {
   return <AnalyticsDashboard />;
 }
+
+
+
+
+
+
+
+
+
+
+
+

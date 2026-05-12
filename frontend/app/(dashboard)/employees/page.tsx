@@ -31,19 +31,19 @@ import {
   CRMStatusBadge,
   ActivityTimeline,
   CRMPageSection
-} from "@/components/shared/crm";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+} from "@/shared/components/crm";
+import { Button } from "@/shared/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { useEmployees } from "@/hooks/use-hrm";
-import { Progress } from "@/components/ui/progress";
+} from "@/shared/ui/dropdown-menu";
+import { useEmployees } from "@/shared/hooks/use-hrm";
+import { Progress } from "@/shared/ui/progress";
 import { toast } from "sonner";
-import { PageLoadingState } from "@/components/shared/page-states";
+import { PageLoadingState } from "@/shared/components/page-states";
 
 export default function EmployeesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -220,3 +220,15 @@ export default function EmployeesPage() {
     </CRMPageContainer>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

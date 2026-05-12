@@ -2,21 +2,22 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, UserPlus, Download, TrendingUp, Star, CreditCard, SearchX } from "lucide-react";
+import { Users, UserPlus, Download, Star, CreditCard, SearchX } from "lucide-react";
 
-import CustomersTable from "@/components/customers/CustomersTable";
-import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useCustomers } from "@/hooks/use-crm";
-import { CustomerType } from "@/types/customer";
-import { Button } from "@/components/ui/button";
+import { CustomersTable } from "@/features/customers/components/CustomersTable";
+import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { useCustomers } from "@/shared/hooks/use-crm";
+import { CustomerType } from "@/shared/types/customer";
+import { Button } from "@/shared/ui/button";
+import { PageHeader } from "@/shared/components/PageHeader";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { 
-  CRMPageHeader, 
   CRMMetricCard, 
   CRMToolbar,
   CRMPageContainer,
   CRMMetricsGrid
-} from "@/components/shared/crm";
-import { useCRMStore } from "@/store/useCRMStore";
+} from "@/shared/components/crm";
+import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 
 const CUSTOMER_SEGMENTS: CustomerType["segment"][] = ["Enterprise", "Growth", "SMB", "VIP"];
@@ -81,8 +82,8 @@ const CustomersPage = () => {
     return (
       <PageErrorState
         title="CRM Intelligence Offline"
-        message={error}
-        onRetry={refetch}
+        message={(error as Error).message || "An error occurred"}
+        onRetry={() => { refetch(); }}
       />
     );
   }
@@ -93,7 +94,7 @@ const CustomersPage = () => {
 
   return (
     <CRMPageContainer>
-      <CRMPageHeader 
+      <PageHeader 
         title="Customers"
         subtitle="Manage your client relationships and monitor account health with AI-powered analytics."
         icon={Users}
@@ -178,26 +179,15 @@ const CustomersPage = () => {
             <CustomersTable customers={filteredCustomers} />
           </motion.div>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-24 bg-card rounded-xl border border-dashed border-border shadow-inner"
-          >
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
-              <SearchX className="w-10 h-10 text-muted-foreground/30" />
-            </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">No customers found</h3>
-            <p className="text-muted-foreground text-center max-w-sm mb-8 text-sm font-medium">
-              Try adjusting your search or filters to find the customers you&apos;re looking for.
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={() => { setSearchQuery(""); setStatusFilter("all"); setSegmentFilter("all"); }}
-              className="font-bold rounded-xl px-6 h-11"
-            >
-              Clear All Filters
-            </Button>
-          </motion.div>
+          <EmptyState
+            icon={SearchX}
+            title="No customers found"
+            description="Try adjusting your search or filters to find the customers you're looking for."
+            action={{
+              label: "Clear All Filters",
+              onClick: () => { setSearchQuery(""); setStatusFilter("all"); setSegmentFilter("all"); }
+            }}
+          />
         )}
       </AnimatePresence>
     </CRMPageContainer>
@@ -205,3 +195,7 @@ const CustomersPage = () => {
 };
 
 export default CustomersPage;
+
+
+
+

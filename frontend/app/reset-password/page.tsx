@@ -1,9 +1,9 @@
 "use client";
 
-import AuthLayout from "@/components/auth/auth-layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import AuthLayout from "@/features/auth/components/auth-layout";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
 
 export default function ResetPasswordPage() {
   return (
@@ -47,3 +47,15 @@ export default function ResetPasswordPage() {
     </AuthLayout>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

@@ -2,16 +2,16 @@
 
 import { useEffect } from "react";
 import { GitBranch, Plus, Download, TrendingUp, DollarSign, Target } from "lucide-react";
-import PipelineBoard from "@/components/pipeline/PipelineBoard";
-import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { usePipeline } from "@/hooks/use-crm";
+import PipelineBoard from "@/features/pipeline/components/PipelineBoard";
+import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { usePipeline } from "@/shared/hooks/use-crm";
 import { 
   CRMPageHeader, 
   CRMMetricCard,
   CRMPageContainer,
   CRMMetricsGrid
-} from "@/components/shared/crm";
-import { useCRMStore } from "@/store/useCRMStore";
+} from "@/shared/components/crm";
+import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 
 const PipelinePage = () => {
@@ -45,8 +45,8 @@ const PipelinePage = () => {
     return (
       <PageErrorState
         title="Pipeline unavailable"
-        message={error}
-        onRetry={refetch}
+        message={(error as Error).message || "An error occurred"}
+        onRetry={() => { refetch(); }}
       />
     );
   }
@@ -122,3 +122,15 @@ const PipelinePage = () => {
 };
 
 export default PipelinePage;
+
+
+
+
+
+
+
+
+
+
+
+

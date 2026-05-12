@@ -4,18 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { Building2, ShieldCheck, Ticket, UserSquare2, Users } from "lucide-react";
 
-import AuthLayout from "@/components/auth/auth-layout";
-import { getApiErrorMessage } from "@/lib/api/error";
-import { CRM_ROLES, roleAccent } from "@/lib/auth/rbac";
+import AuthLayout from "@/features/auth/components/auth-layout";
+import { getApiErrorMessage } from "@/shared/lib/api/error";
+import { CRM_ROLES, roleAccent } from "@/shared/lib/auth/rbac";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import PublicRoute from "@/components/auth/public-route";
-import { useAuth } from "@/components/auth/auth-provider";
+import PublicRoute from "@/features/auth/components/public-route";
+import { useAuth } from "@/features/auth/components/auth-provider";
 
 const demoAccounts = [
   {
@@ -237,3 +237,15 @@ export default function LoginPage() {
     </PublicRoute>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

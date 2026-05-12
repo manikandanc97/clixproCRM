@@ -1,17 +1,17 @@
 "use client";
 
 import { BarChart3, Download, Calendar, TrendingUp, Users, DollarSign, Target, ArrowUpRight } from "lucide-react";
-import RevenueChart from "@/components/reports/RevenueChart";
-import ConversionChart from "@/components/reports/ConversionChart";
-import PerformanceTable from "@/components/reports/PerformanceTable";
-import AnalyticsSummary from "@/components/reports/AnalyticsSummary";
-import SalesFunnel from "@/components/reports/SalesFunnel";
-import ActivityHeatmap from "@/components/reports/ActivityHeatmap";
-import RevenueTarget from "@/components/reports/RevenueTarget";
-import { PageErrorState, PageLoadingState } from "@/components/shared/page-states";
-import { useReports } from "@/hooks/use-crm";
+import RevenueChart from "@/features/reports/components/RevenueChart";
+import ConversionChart from "@/features/reports/components/ConversionChart";
+import PerformanceTable from "@/features/reports/components/PerformanceTable";
+import AnalyticsSummary from "@/features/reports/components/AnalyticsSummary";
+import SalesFunnel from "@/features/reports/components/SalesFunnel";
+import ActivityHeatmap from "@/features/reports/components/ActivityHeatmap";
+import RevenueTarget from "@/features/reports/components/RevenueTarget";
+import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { useReports } from "@/shared/hooks/use-crm";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import { 
   CRMPageHeader, 
   CRMMetricCard, 
@@ -19,8 +19,8 @@ import {
   CRMPageContainer,
   CRMMetricsGrid,
   CRMPageSection
-} from "@/components/shared/crm";
-import { useCRMStore } from "@/store/useCRMStore";
+} from "@/shared/components/crm";
+import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 
 const ReportsPage = () => {
@@ -49,8 +49,8 @@ const ReportsPage = () => {
     return (
       <PageErrorState
         title="Reports unavailable"
-        message={error}
-        onRetry={refetch}
+        message={(error as Error).message || "An error occurred"}
+        onRetry={() => { refetch(); }}
       />
     );
   }
@@ -155,3 +155,15 @@ const ReportsPage = () => {
 };
 
 export default ReportsPage;
+
+
+
+
+
+
+
+
+
+
+
+

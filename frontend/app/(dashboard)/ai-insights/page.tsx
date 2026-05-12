@@ -14,7 +14,7 @@ import {
   Calendar,
   Lightbulb
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { 
   CRMPageContainer, 
   CRMPageHeader, 
@@ -23,10 +23,10 @@ import {
   CRMCard,
   ActivityTimeline,
   CRMPageSection
-} from "@/components/shared/crm";
-import { Button } from "@/components/ui/button";
-import { useAiInsights } from "@/hooks/use-dashboard";
-import { PageLoadingState } from "@/components/shared/page-states";
+} from "@/shared/components/crm";
+import { Button } from "@/shared/ui/button";
+import { useAiInsights } from "@/shared/hooks/use-dashboard";
+import { PageLoadingState } from "@/shared/components/page-states";
 import { 
   Area, 
   AreaChart, 
@@ -48,7 +48,7 @@ const chartData = [
   { name: "Week 6", revenue: 5500, prediction: 8200 },
 ];
 
-import { ChartContainer } from "@/components/shared/charts/ChartContainer";
+import { ChartContainer } from "@/shared/components/charts/ChartContainer";
 
 export default function AiInsightsPage() {
   const { data: insightsData, isLoading: loading } = useAiInsights();
@@ -107,7 +107,7 @@ export default function AiInsightsPage() {
         <div className="lg:col-span-2 space-y-8 min-w-0">
           <CRMPageSection 
             title="Performance Predictions" 
-            description="Revenue vs AI Forecast for the next 6 weeks."
+            subtitle="Revenue vs AI Forecast for the next 6 weeks."
             className="min-w-0"
           >
             <CRMCard className="h-[400px] min-h-[400px] p-6 min-w-0">
@@ -171,7 +171,7 @@ export default function AiInsightsPage() {
 
           <CRMPageSection 
             title="Smart Recommendations" 
-            description="AI-generated actions to optimize your sales funnel."
+            subtitle="AI-generated actions to optimize your sales funnel."
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {recommendations.map((rec: any, i: number) => (
@@ -234,7 +234,7 @@ export default function AiInsightsPage() {
         <div className="space-y-8">
           <CRMPageSection 
             title="Intelligence Timeline" 
-            description="Recent neural observations."
+            subtitle="Recent neural observations."
           >
             <CRMCard className="p-6">
               <ActivityTimeline items={aiTimeline} />
@@ -267,3 +267,15 @@ export default function AiInsightsPage() {
     </CRMPageContainer>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

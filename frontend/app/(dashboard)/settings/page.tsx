@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import SettingsHeader from "@/components/settings/SettingsHeader";
-import ProfileSettings from "@/components/settings/ProfileSettings";
-import SecuritySettings from "@/components/settings/SecuritySettings";
-import NotificationSettings from "@/components/settings/NotificationSettings";
-import SettingsSidebar from "@/components/settings/SettingsSidebar";
-import WorkspaceSettings from "@/components/settings/WorkspaceSettings";
-import TeamSettings from "@/components/settings/TeamSettings";
-import BillingSettings from "@/components/settings/BillingSettings";
-import IntegrationSettings from "@/components/settings/IntegrationSettings";
-import AISettings from "@/components/settings/AISettings";
-import PersonalizationSettings from "@/components/settings/PersonalizationSettings";
+import SettingsHeader from "@/features/settings/components/SettingsHeader";
+import ProfileSettings from "@/features/settings/components/ProfileSettings";
+import SecuritySettings from "@/features/settings/components/SecuritySettings";
+import NotificationSettings from "@/features/settings/components/NotificationSettings";
+import SettingsSidebar from "@/features/settings/components/SettingsSidebar";
+import WorkspaceSettings from "@/features/settings/components/WorkspaceSettings";
+import TeamSettings from "@/features/settings/components/TeamSettings";
+import BillingSettings from "@/features/settings/components/BillingSettings";
+import IntegrationSettings from "@/features/settings/components/IntegrationSettings";
+import AISettings from "@/features/settings/components/AISettings";
+import PersonalizationSettings from "@/features/settings/components/PersonalizationSettings";
 import { motion, AnimatePresence } from "framer-motion";
-import { CRMPageContainer } from "@/components/shared/crm";
+import { CRMPageContainer } from "@/shared/components/crm";
 
 const SettingsPage = () => {
   const [activeSection, setActiveSection] = useState("profile");
@@ -68,3 +68,15 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
+
+
+
+
+
+
+
+
+
+
+
+

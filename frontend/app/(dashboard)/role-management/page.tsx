@@ -34,19 +34,19 @@ import {
   ActivityTimeline,
   CRMPageSection,
   PermissionToggle
-} from "@/components/shared/crm";
-import { Button } from "@/components/ui/button";
-import { useRoles } from "@/hooks/use-hrm";
-import { PageLoadingState } from "@/components/shared/page-states";
+} from "@/shared/components/crm";
+import { Button } from "@/shared/ui/button";
+import { useRoles } from "@/shared/hooks/use-hrm";
+import { PageLoadingState } from "@/shared/components/page-states";
 import { 
   Sheet, 
   SheetContent, 
   SheetHeader, 
   SheetTitle, 
   SheetDescription 
-} from "@/components/ui/sheet";
+} from "@/shared/ui/sheet";
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/shared/ui/checkbox";
 
 export default function RoleManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -180,7 +180,7 @@ export default function RoleManagementPage() {
           </DataTable>
 
           {/* Permission Matrix Preview */}
-          <CRMPageSection title="Quick Permission Matrix" description="Global overview of module access by role.">
+          <CRMPageSection title="Quick Permission Matrix" subtitle="Global overview of module access by role.">
             <CRMCard noPadding>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -278,7 +278,7 @@ export default function RoleManagementPage() {
                   </Button>
                 </div>
                 <div className="grid grid-cols-1 gap-1 border border-border/50 rounded-xl overflow-hidden bg-muted/10">
-                  {module.permissions.map((perm) => (
+                  {module.permissions.map((perm: string) => (
                     <PermissionToggle
                       key={`${module.id}-${perm}`}
                       id={`${module.id}-${perm}`}
@@ -306,3 +306,15 @@ export default function RoleManagementPage() {
     </CRMPageContainer>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
