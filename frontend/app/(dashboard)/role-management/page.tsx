@@ -199,7 +199,7 @@ export default function RoleManagementPage() {
                         {filteredRoles.slice(0, 3).map(role => (
                           <td key={role.id} className="p-4 text-center">
                             <div className="flex justify-center">
-                              {Math.random() > 0.3 ? (
+                              {Array.isArray(module.roleKeys) && module.roleKeys.includes(role.key) ? (
                                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                               ) : (
                                 <XCircle className="w-4 h-4 text-muted-foreground/30" />
@@ -284,7 +284,7 @@ export default function RoleManagementPage() {
                       id={`${module.id}-${perm}`}
                       label={perm.charAt(0).toUpperCase() + perm.slice(1)}
                       description={`Grant ${perm} access to ${module.name}`}
-                      checked={Math.random() > 0.4}
+                      checked={Array.isArray(module.enabledPermissions) && module.enabledPermissions.includes(perm)}
                       onCheckedChange={() => {}}
                     />
                   ))}

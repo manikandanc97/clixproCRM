@@ -3,13 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { motion } from "framer-motion";
 import { Info } from "lucide-react";
+import { EmptyStateCard } from "@/shared/components/page-states";
+import { ActivityHeatmapPointType } from "@/shared/types/report";
 
-const ActivityHeatmap = () => {
+const ActivityHeatmap = ({ data }: { data: ActivityHeatmapPointType[] }) => {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const hours = ["9am", "11am", "1pm", "3pm", "5pm", "7pm"];
-  
-  // Mock data: 7 days x 12 intervals (9am to 9pm)
-  const data = Array.from({ length: 7 * 12 }, (_, index) => (index * 7 + Math.floor(index / 3)) % 10);
+  const valueFor = (day: string, hourIndex: number) => data.find((item) => item.day === day && item.hour === String(9 + hourIndex))?.value ?? 0;
 
   const getColor = (value: number) => {
     if (value === 0) return "bg-muted";
@@ -26,13 +26,17 @@ const ActivityHeatmap = () => {
         <Info className="w-4 h-4 text-slate-300" />
       </CardHeader>
       <CardContent className="p-8 pt-4">
+        {data.length === 0 ? (
+          <EmptyStateCard title="No activity data" message="Sales activity will appear after leads, tasks, or quotations are recorded." />
+        ) : (
+        <>
         <div className="flex flex-col gap-2">
           {days.map((day, dayIdx) => (
             <div key={day} className="flex items-center gap-3">
               <span className="text-[10px] font-black text-muted-foreground uppercase w-8 tracking-wider">{day}</span>
               <div className="flex-1 flex gap-1.5">
                 {Array.from({ length: 12 }).map((_, hourIdx) => {
-                  const val = data[dayIdx * 12 + hourIdx];
+                  const val = valueFor(day, hourIdx);
                   return (
                     <motion.div
                       key={hourIdx}
@@ -70,11 +74,8 @@ const ActivityHeatmap = () => {
           </div>
         </div>
 
-        <div className="mt-8 p-6 bg-blue-50/50 rounded-xl border border-blue-100/50">
-          <p className="text-xs text-blue-700 leading-relaxed font-medium">
-            <span className="font-bold">Pro Tip:</span> Your team is most active on <span className="font-bold">Wednesdays between 1pm - 3pm</span>. This is a great time for team syncs!
-          </p>
-        </div>
+        </>
+        )}
       </CardContent>
     </Card>
   );

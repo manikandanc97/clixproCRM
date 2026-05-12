@@ -73,24 +73,7 @@ export const useCRMStore = create<CRMState>()(
       tasks: [],
       pipelineItems: [],
       quotations: [],
-      notifications: [
-        {
-          id: '1',
-          title: 'New Lead Assigned',
-          description: 'Sarah Johnson has been assigned to you.',
-          type: 'info',
-          timestamp: new Date().toISOString(),
-          read: false,
-        },
-        {
-          id: '2',
-          title: 'Deal Won',
-          description: 'Acme Corp deal has been closed successfully.',
-          type: 'success',
-          timestamp: new Date().toISOString(),
-          read: false,
-        }
-      ],
+      notifications: [],
       sidebarCollapsed: false,
       activeTimeframe: 'month',
       accentColor: 'emerald',

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { FileText, Plus, Download, TrendingUp, Clock, CheckCircle2, SearchX } from "lucide-react";
+import { FileText, Plus, Download, TrendingUp, Clock, SearchX } from "lucide-react";
 
 import QuotationsTable from "@/features/quotations/components/QuotationsTable";
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
@@ -28,14 +28,7 @@ const QuotationsPage = () => {
 
   useEffect(() => {
     if (data?.quotations && safeQuotations.length === 0) {
-      setQuotations(data.quotations.map(q => ({
-        ...q,
-        probability: Math.floor(Math.random() * 40) + 60,
-        viewCount: Math.floor(Math.random() * 10),
-        downloadCount: Math.floor(Math.random() * 5),
-        lastActivity: "2 hours ago",
-        isSigned: q.status === "Approved",
-      })));
+      setQuotations(data.quotations);
     }
   }, [data, safeQuotations.length, setQuotations]);
 
@@ -79,9 +72,9 @@ const QuotationsPage = () => {
     );
   }
 
-  const sparklineData = [
-    { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
-  ];
+  const averageDealSize = safeQuotations.length
+    ? Math.round(safeQuotations.reduce((sum, quote) => sum + (quote.amountValue ?? 0), 0) / safeQuotations.length)
+    : 0;
 
   return (
     <CRMPageContainer>
@@ -110,31 +103,28 @@ const QuotationsPage = () => {
         <CRMMetricCard 
           title="Total Quotes"
           value={safeQuotations.length}
-          change="+8.4%"
+          change="0%"
           trend="up"
           icon={FileText}
           color="indigo"
-          sparklineData={sparklineData}
           delay={0.1}
         />
         <CRMMetricCard 
           title="Avg. Deal Size"
-          value="$4,250"
-          change="+12.5%"
+          value={averageDealSize.toLocaleString("en-US")}
+          change="0%"
           trend="up"
           icon={TrendingUp}
           color="emerald"
-          sparklineData={sparklineData}
           delay={0.2}
         />
         <CRMMetricCard 
           title="Pending Approval"
-          value={safeQuotations.filter(q => q.status === "Pending").length || 8}
-          change="+2"
-          trend="neutral"
+          value={safeQuotations.filter(q => q.status === "Pending").length}
+          change="0%"
+          trend="up"
           icon={Clock}
           color="orange"
-          sparklineData={sparklineData}
           delay={0.3}
         />
       </CRMMetricsGrid>

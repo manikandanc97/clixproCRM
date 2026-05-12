@@ -7,7 +7,6 @@ import { Users, UserPlus, Download, Star, CreditCard, SearchX } from "lucide-rea
 import { CustomersTable } from "@/features/customers/components/CustomersTable";
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
 import { useCustomers } from "@/shared/hooks/use-crm";
-import { CustomerType } from "@/shared/types/customer";
 import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { EmptyState } from "@/shared/components/EmptyState";
@@ -20,8 +19,6 @@ import {
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 
-const CUSTOMER_SEGMENTS: CustomerType["segment"][] = ["Enterprise", "Growth", "SMB", "VIP"];
-
 const CustomersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -33,14 +30,7 @@ const CustomersPage = () => {
 
   useEffect(() => {
     if (data?.customers && safeCustomers.length === 0) {
-      setCustomers(data.customers.map((customer, i) => ({
-        ...customer,
-        healthScore: customer.healthScore || Math.floor(Math.random() * 60) + 40,
-        totalInteractions: customer.totalInteractions || Math.floor(Math.random() * 50) + 5,
-        ltv: customer.ltv || `$${(customer.revenueValue * 2.5).toLocaleString()}`,
-        segment: customer.segment || CUSTOMER_SEGMENTS[i % CUSTOMER_SEGMENTS.length],
-        churnRisk: customer.churnRisk || (Math.random() > 0.8 ? "High" : Math.random() > 0.5 ? "Medium" : "Low"),
-      })));
+      setCustomers(data.customers);
     }
   }, [data, safeCustomers.length, setCustomers]);
 
@@ -88,9 +78,7 @@ const CustomersPage = () => {
     );
   }
 
-  const sparklineData = [
-    { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
-  ];
+  const monthlyRevenue = safeCustomers.reduce((sum, customer) => sum + (customer.revenueValue ?? 0), 0);
 
   return (
     <CRMPageContainer>
@@ -119,31 +107,28 @@ const CustomersPage = () => {
         <CRMMetricCard 
           title="Total Customers"
           value={safeCustomers.length}
-          change="+5.2%"
+          change="0%"
           trend="up"
           icon={Users}
-          color="cyan"
-          sparklineData={sparklineData}
+          color="blue"
           delay={0.1}
         />
         <CRMMetricCard 
           title="VIP Clients"
-          value={safeCustomers.filter(c => c.segment === "VIP").length || 12}
-          change="+2.4%"
+          value={safeCustomers.filter(c => c.status === "Premium").length}
+          change="0%"
           trend="up"
           icon={Star}
           color="pink"
-          sparklineData={sparklineData}
           delay={0.2}
         />
         <CRMMetricCard 
           title="Monthly Revenue"
-          value="$84,250"
-          change="+12.8%"
+          value={monthlyRevenue.toLocaleString("en-US")}
+          change="0%"
           trend="up"
           icon={CreditCard}
           color="emerald"
-          sparklineData={sparklineData}
           delay={0.3}
         />
       </CRMMetricsGrid>

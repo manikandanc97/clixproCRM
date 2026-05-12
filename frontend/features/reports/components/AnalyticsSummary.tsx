@@ -3,29 +3,22 @@
 import { Sparkles, TrendingUp, Users, Target, ArrowRight, Lightbulb } from "lucide-react";
 import { Card, CardContent } from "@/shared/ui/card";
 import { motion } from "framer-motion";
+import { EmptyStateCard } from "@/shared/components/page-states";
+import { ReportInsightType } from "@/shared/types/report";
 
-const AnalyticsSummary = () => {
-  const insights = [
-    {
-      title: "Revenue Growth",
-      description: "Revenue is up 12.5% compared to last month. Projection suggests a further 5% increase if current trends continue.",
-      icon: TrendingUp,
-      color: "blue",
-    },
-    {
-      title: "Lead Quality",
-      description: "High-intent leads have increased by 20%. Consider increasing follow-up frequency for the 'Tech' sector.",
-      icon: Target,
-      color: "emerald",
-    },
-    {
-      title: "Team Performance",
-      description: "Sarah Jenkins is currently outperforming targets by 15%. Team average conversion is stable at 24%.",
-      icon: Users,
-      color: "amber",
-    }
-  ];
+const iconMap = {
+  revenue: TrendingUp,
+  leads: Target,
+  team: Users,
+};
 
+const colorMap = {
+  revenue: "blue",
+  leads: "emerald",
+  team: "amber",
+};
+
+const AnalyticsSummary = ({ insights }: { insights: ReportInsightType[] }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -50,16 +43,23 @@ const AnalyticsSummary = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {insights.map((insight, idx) => (
-          <Card key={idx} className="group relative overflow-hidden bg-card rounded-xl border-border shadow-sm hover:shadow-elevated transition-all duration-500 border-l-4" style={{ borderLeftColor: insight.color === 'blue' ? '#3b82f6' : insight.color === 'emerald' ? '#10b981' : '#f59e0b' }}>
+        {insights.length === 0 ? (
+          <div className="md:col-span-3">
+            <EmptyStateCard title="No insights yet" message="Insights will appear when there is enough CRM activity in the database." />
+          </div>
+        ) : insights.map((insight) => {
+          const Icon = iconMap[insight.type];
+          const color = colorMap[insight.type];
+          return (
+          <Card key={insight.id} className="group relative overflow-hidden bg-card rounded-xl border-border shadow-sm hover:shadow-elevated transition-all duration-500 border-l-4" style={{ borderLeftColor: color === 'blue' ? '#3b82f6' : color === 'emerald' ? '#10b981' : '#f59e0b' }}>
             <CardContent className="p-4">
               <div className="flex items-start gap-4">
                 <div className={`p-3 rounded-xl ${
-                  insight.color === 'blue' ? 'bg-blue-50 text-blue-600' : 
-                  insight.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' : 
+                  color === 'blue' ? 'bg-blue-50 text-blue-600' : 
+                  color === 'emerald' ? 'bg-emerald-50 text-emerald-600' : 
                   'bg-amber-50 text-amber-600'
                 }`}>
-                  <insight.icon className="w-5 h-5" />
+                  <Icon className="w-5 h-5" />
                 </div>
                 <div className="space-y-2">
                   <h3 className="font-bold text-foreground">{insight.title}</h3>
@@ -78,7 +78,7 @@ const AnalyticsSummary = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
+        )})}
       </div>
     </motion.div>
   );

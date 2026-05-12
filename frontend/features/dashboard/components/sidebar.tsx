@@ -65,7 +65,7 @@ export default function Sidebar() {
                     className="overflow-hidden whitespace-nowrap"
                   >
                     <h1 className="text-sidebar-foreground font-semibold text-[13px] tracking-tight leading-tight">
-                      Acme Corp
+                      Workspace
                     </h1>
                     <p className="text-sidebar-foreground/50 text-[11px] font-medium mt-0.5">
                       {roleName}

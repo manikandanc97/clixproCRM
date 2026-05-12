@@ -12,6 +12,32 @@ export interface ConversionChartPointType {
   value: number;
 }
 
+export interface FunnelPointType {
+  stage: string;
+  count: number;
+  percentage: number;
+}
+
+export interface ActivityHeatmapPointType {
+  day: string;
+  hour: string;
+  value: number;
+}
+
+export interface ReportInsightType {
+  id: string;
+  title: string;
+  description: string;
+  type: "revenue" | "leads" | "team";
+}
+
+export interface RevenueTargetType {
+  revenue: number;
+  target: number;
+  change: string;
+  positive: boolean;
+}
+
 export interface PerformanceType {
   id: string;
   name: string;
@@ -28,6 +54,10 @@ export interface ReportsDataType {
   revenueChart: RevenueChartPointType[];
   conversionChart: ConversionChartPointType[];
   performance: PerformanceType[];
+  funnel: FunnelPointType[];
+  activityHeatmap: ActivityHeatmapPointType[];
+  insights: ReportInsightType[];
+  revenueTarget: RevenueTargetType | null;
 }
 
 

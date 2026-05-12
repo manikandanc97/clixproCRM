@@ -221,46 +221,12 @@ const rolePermissionConfig = {
   },
 };
 
-const demoAccounts = [
-  {
-    email: "superadmin@clientrisecrm.com",
-    password: "SuperAdmin@123",
-    name: "Super Admin",
-    role: CRM_ROLES.SUPER_ADMIN,
-  },
-  {
-    email: "salesmanager@clientrisecrm.com",
-    password: "SalesManager@123",
-    name: "Sales Manager",
-    role: CRM_ROLES.SALES_MANAGER,
-  },
-  {
-    email: "salesexec@clientrisecrm.com",
-    password: "SalesExec@123",
-    name: "Sales Executive",
-    role: CRM_ROLES.SALES_EXECUTIVE,
-  },
-  {
-    email: "support@clientrisecrm.com",
-    password: "Support@123",
-    name: "Support Executive",
-    role: CRM_ROLES.SUPPORT_EXECUTIVE,
-  },
-  {
-    email: "hrmanager@clientrisecrm.com",
-    password: "HRManager@123",
-    name: "HR Manager",
-    role: CRM_ROLES.HR_MANAGER,
-  },
-];
-
 function getRoleAccess(role) {
   return rolePermissionConfig[role] || rolePermissionConfig[CRM_ROLES.SALES_EXECUTIVE];
 }
 
 module.exports = {
   CRM_ROLES,
-  demoAccounts,
   getRoleAccess,
   rolePermissionConfig,
 };

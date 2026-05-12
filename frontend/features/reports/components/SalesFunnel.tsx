@@ -2,30 +2,31 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { motion } from "framer-motion";
-import { ChevronRight, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
+import { EmptyStateCard } from "@/shared/components/page-states";
+import { FunnelPointType } from "@/shared/types/report";
 
-const SalesFunnel = () => {
-  const funnelData = [
-    { stage: "Leads", count: 1240, percentage: 100, color: "bg-blue-500" },
-    { stage: "Qualified", count: 860, percentage: 69, color: "bg-blue-400" },
-    { stage: "Proposal", count: 420, percentage: 34, color: "bg-blue-300" },
-    { stage: "Negotiation", count: 180, percentage: 14, color: "bg-blue-200" },
-    { stage: "Closed Won", count: 96, percentage: 8, color: "bg-emerald-500" },
-  ];
+const colors = ["bg-blue-500", "bg-blue-400", "bg-blue-300", "bg-blue-200", "bg-emerald-500"];
 
+const SalesFunnel = ({ data }: { data: FunnelPointType[] }) => {
+  const conversion = data.length > 1 && data[0].count > 0
+    ? Math.round((data[data.length - 1].count / data[0].count) * 1000) / 10
+    : 0;
   return (
     <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md min-w-0">
       <CardHeader className="p-6 pb-2 min-w-0">
         <div className="flex items-center justify-between min-w-0">
           <CardTitle className="font-bold text-foreground text-lg tracking-tight truncate">Sales Funnel</CardTitle>
           <div className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
-            7.7% Conv.
+            {conversion}% Conv.
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-6 pt-4 min-w-0">
         <div className="space-y-3 min-w-0">
-          {funnelData.map((item, idx) => (
+          {data.length === 0 ? (
+            <EmptyStateCard title="No funnel data" message="Funnel metrics will appear after leads are added to the database." />
+          ) : data.map((item, idx) => (
             <div key={idx} className="relative min-w-0">
               <div className="flex justify-between items-center mb-1 px-1 min-w-0">
                 <span className="text-[10px] font-bold text-muted-foreground truncate">{item.stage}</span>
@@ -36,7 +37,7 @@ const SalesFunnel = () => {
                   initial={{ width: 0 }}
                   animate={{ width: `${item.percentage}%` }}
                   transition={{ duration: 1, delay: idx * 0.1 }}
-                  className={`${item.color} h-full relative group cursor-pointer hover:brightness-110 transition-all min-w-0`}
+                  className={`${colors[idx % colors.length]} h-full relative group cursor-pointer hover:brightness-110 transition-all min-w-0`}
                 >
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1),transparent)]" />
                 </motion.div>
@@ -48,15 +49,15 @@ const SalesFunnel = () => {
           ))}
         </div>
 
-        <div className="mt-6 p-3 bg-muted rounded-xl flex items-center gap-3">
+        {data.length > 0 && <div className="mt-6 p-3 bg-muted rounded-xl flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
           <div>
             <p className="text-[11px] font-bold text-foreground">Funnel Efficiency</p>
-            <p className="text-[9px] text-muted-foreground">Up 2.4% vs last Q</p>
+            <p className="text-[9px] text-muted-foreground">Based on current pipeline data</p>
           </div>
-        </div>
+        </div>}
       </CardContent>
     </Card>
   );

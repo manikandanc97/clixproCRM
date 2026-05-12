@@ -154,6 +154,91 @@ function buildPerformanceData(leads, currency) {
     .sort((left, right) => right.revenueValue - left.revenueValue);
 }
 
+function buildFunnelData(leads) {
+  const stages = [
+    { key: "NEW", label: "New" },
+    { key: "CONTACTED", label: "Contacted" },
+    { key: "PROPOSAL_SENT", label: "Proposal Sent" },
+    { key: "WON", label: "Won" },
+  ];
+  const total = leads.length;
+
+  return stages.map((stage) => {
+    const count = leads.filter((lead) => lead.status === stage.key).length;
+    return {
+      stage: stage.label,
+      count,
+      percentage: total ? Math.round((count / total) * 100) : 0,
+    };
+  });
+}
+
+function buildActivityHeatmap(leads, tasks, quotations) {
+  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const buckets = new Map();
+
+  const addEvent = (date) => {
+    if (!date) return;
+    const eventDate = new Date(date);
+    const hour = eventDate.getHours();
+    if (Number.isNaN(eventDate.getTime()) || hour < 9 || hour > 20) return;
+    const key = `${dayLabels[eventDate.getDay()]}-${hour}`;
+    buckets.set(key, (buckets.get(key) || 0) + 1);
+  };
+
+  leads.forEach((lead) => {
+    addEvent(lead.createdAt);
+    addEvent(lead.updatedAt);
+  });
+  tasks.forEach((task) => {
+    addEvent(task.createdAt);
+    addEvent(task.updatedAt);
+  });
+  quotations.forEach((quotation) => {
+    addEvent(quotation.createdAt);
+    addEvent(quotation.updatedAt);
+  });
+
+  return Array.from(buckets.entries()).map(([key, value]) => {
+    const [day, hour] = key.split("-");
+    return { day, hour, value };
+  });
+}
+
+function buildReportInsights(leads) {
+  if (leads.length === 0) return [];
+
+  const wonLeads = leads.filter((lead) => lead.status === "WON");
+  const openLeads = leads.filter((lead) => !["WON", "LOST"].includes(lead.status));
+  const owners = new Map();
+  for (const lead of leads) {
+    const owner = lead.assignedTo || "Unassigned";
+    owners.set(owner, (owners.get(owner) || 0) + 1);
+  }
+  const topOwner = Array.from(owners.entries()).sort((a, b) => b[1] - a[1])[0];
+
+  return [
+    {
+      id: "revenue-from-won-leads",
+      title: "Won Revenue",
+      description: `${wonLeads.length} won deals are contributing to recognized revenue.`,
+      type: "revenue",
+    },
+    {
+      id: "open-pipeline",
+      title: "Open Pipeline",
+      description: `${openLeads.length} active leads are currently moving through the sales funnel.`,
+      type: "leads",
+    },
+    ...(topOwner ? [{
+      id: "top-owner-activity",
+      title: "Team Activity",
+      description: `${topOwner[0]} owns ${topOwner[1]} current lead records.`,
+      type: "team",
+    }] : []),
+  ];
+}
+
 const getDashboardData = async (req, res) => {
   try {
     const currency = getRequestCurrency(req);
@@ -448,9 +533,8 @@ const getPipeline = async (req, res) => {
       // Determine if deal is "stuck"
       const isStuck = daysSinceUpdate > 10 && !["Won", "Lost"].includes(stageLabel);
 
-      // Mock priority and close date for visual polish
-      const priorities = ["High", "Medium", "Low"];
-      const priority = lead.valueAmount > 10000 ? "High" : (lead.valueAmount > 5000 ? "Medium" : "Low");
+      const leadValue = toNumber(lead.value);
+      const priority = leadValue > 10000 ? "High" : (leadValue > 5000 ? "Medium" : "Low");
       
       const expectedCloseDate = new Date(lead.createdAt);
       expectedCloseDate.setDate(expectedCloseDate.getDate() + 30);
@@ -470,7 +554,11 @@ const getPipeline = async (req, res) => {
         probability,
         temperature,
         expectedCloseDate: formatDate(expectedCloseDate),
-        activityCount: Math.floor(Math.random() * 12) + 2,
+        activityCount: [
+          lead.createdAt,
+          lead.updatedAt,
+          lead.followUpAt,
+        ].filter(Boolean).length,
         isStuck,
         aiSummary: `Deal with ${lead.company} is progressing well. ${temperature === "Hot" ? "High engagement detected." : "Follow-up recommended."}`,
       };
@@ -670,18 +758,24 @@ const getQuotations = async (req, res) => {
 const getReports = async (req, res) => {
   try {
     const currency = getRequestCurrency(req);
-    const { leads } = await withCrmDataSource("reports", async () => ({
-      leads: await prisma.lead.findMany({
-        select: {
-          id: true,
-          assignedTo: true,
-          status: true,
-          value: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      }),
-    }));
+    const { leads, tasks, quotations } = await withCrmDataSource("reports", async () => {
+      const [leads, tasks, quotations] = await Promise.all([
+        prisma.lead.findMany({
+          select: {
+            id: true,
+            assignedTo: true,
+            status: true,
+            value: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
+        prisma.task.findMany({ select: { createdAt: true, updatedAt: true } }),
+        prisma.quotation.findMany({ select: { createdAt: true, updatedAt: true } }),
+      ]);
+
+      return { leads, tasks, quotations };
+    });
 
     const { currentMonthStart, nextMonthStart, previousMonthStart } = getMonthRanges();
     const wonLeads = leads.filter((lead) => lead.status === "WON");
@@ -747,6 +841,14 @@ const getReports = async (req, res) => {
         })),
         conversionChart: buildWeeklyConversionData(leads),
         performance: buildPerformanceData(leads, currency),
+        funnel: buildFunnelData(leads),
+        activityHeatmap: buildActivityHeatmap(leads, tasks, quotations),
+        insights: buildReportInsights(leads),
+        revenueTarget: currentMonthRevenue > 0 || previousMonthRevenue > 0 ? {
+          revenue: Number(currentMonthRevenue.toFixed(0)),
+          target: Number(Math.max(currentMonthRevenue, previousMonthRevenue).toFixed(0)),
+          ...calculateTrend(currentMonthRevenue, previousMonthRevenue),
+        } : null,
       },
     });
   } catch (error) {
@@ -905,23 +1007,26 @@ const getEmployees = async (req, res) => {
       role: ROLE_LABELS[u.role] || u.role,
       department: ROLE_TO_DEPT[u.role] || "General",
       status: "active",
-      performance: Math.floor(Math.random() * 20) + 79,
-      avatar: `https://i.pravatar.cc/150?u=${u.email}`,
+      performance: 0,
+      avatar: u.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase(),
       lastActive: formatRelativeDate(u.createdAt, { fallback: "Unknown" }),
     }));
 
+    const newJoiners = employees.filter((e) => {
+      const user = users.find((u) => u.id === e.id);
+      return user && new Date(user.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    });
     const stats = [
-      { title: "Total Employees", value: employees.length.toString(), change: "+2", positive: true },
-      { title: "Active Employees", value: employees.filter((e) => e.status === "active").length.toString(), change: "+1", positive: true },
-      { title: "On Leave", value: "0", change: "0", positive: true },
-      { title: "New Joiners", value: employees.filter((e) => { const d = users.find((u) => u.id === e.id); return d && new Date(d.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); }).length.toString(), change: "+1", positive: true },
+      { title: "Total Employees", value: employees.length.toString(), change: "0%", positive: true },
+      { title: "Active Employees", value: employees.filter((e) => e.status === "active").length.toString(), change: "0%", positive: true },
+      { title: "New Joiners", value: newJoiners.length.toString(), change: "0%", positive: true },
     ];
 
-    const activities = employees.slice(0, 3).map((e, i) => ({
-      id: `ea${i}`,
-      title: i === 0 ? "New Employee Joined" : i === 1 ? "Role Updated" : "Status Changed",
+    const activities = newJoiners.slice(0, 3).map((e) => ({
+      id: `employee-${e.id}`,
+      title: "New Employee Joined",
       description: `${e.name} — ${e.department}`,
-      time: i === 0 ? "Just now" : i === 1 ? "1 hour ago" : "Yesterday",
+      time: e.lastActive,
     }));
 
     return res.status(200).json({ success: true, data: { employees, stats, activities } });
@@ -1054,7 +1159,7 @@ const getAiInsights = async (req, res) => {
     const retention = customers.length > 0 ? Math.min(99.9, 85 + (wonLeads.length / Math.max(leads.length, 1)) * 15) : 0;
 
     const stats = [
-      { title: "Revenue Prediction", value: formatCurrency(totalRevenue * 1.125, currency), change: "+12.5%", trend: "up", color: "emerald", sparklineData: getMonthBuckets(7).map((b) => ({ value: Math.round(Math.random() * 30 + 10) })) },
+      { title: "Revenue Prediction", value: formatCurrency(totalRevenue, currency), change: "0%", trend: "up", color: "emerald", sparklineData: getMonthBuckets(7).map((b) => ({ value: Math.round(sumInRange(wonLeads, (l) => l.updatedAt || l.createdAt, (l) => l.value, b.start, b.end)) })) },
       { title: "Lead Quality Score", value: `${Math.min(99, Math.round(convRate + 60))}/100`, change: "+5.2%", trend: "up", color: "blue", sparklineData: getMonthBuckets(7).map((b, i) => ({ value: Math.round(60 + i * 3.5) })) },
       { title: "Customer Retention", value: formatPercentage(retention, 1), change: retention > 90 ? "+1.2%" : "-0.8%", trend: retention > 90 ? "up" : "down", color: "orange", sparklineData: getMonthBuckets(7).map((b, i) => ({ value: Math.round(retention - (6 - i) * 0.3) })) },
       { title: "Conversion Forecast", value: formatPercentage(convRate * 1.05, 1), change: "+2.1%", trend: "up", color: "purple", sparklineData: getMonthBuckets(7).map((b, i) => ({ value: Math.round(convRate * (1 + i * 0.02)) })) },
@@ -1087,6 +1192,94 @@ const getAiInsights = async (req, res) => {
   }
 };
 
+const getWorkspace = async (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      data: {
+        name: null,
+        plan: null,
+        logo: null,
+        taxId: null,
+        currency: getRequestCurrency(req),
+        timezone: null,
+        address: null,
+      },
+    });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const getSecuritySettings = async (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      data: {
+        activeSessions: [],
+        loginHistory: [],
+        twoFactorEnabled: false,
+      },
+    });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const getBillingSettings = async (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      data: {
+        plan: null,
+        status: null,
+        modules: [],
+        licenseDetails: [],
+      },
+    });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const getIntegrationSettings = async (req, res) => {
+  try {
+    return res.status(200).json({ success: true, data: { integrations: [] } });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const getAiSettings = async (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      data: {
+        features: [],
+        modules: [],
+        controls: [],
+      },
+    });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const getNotificationSettings = async (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      data: {
+        channels: [],
+        categories: [],
+        realtimePulseEnabled: false,
+      },
+    });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
 module.exports = {
   getCustomers,
   getDashboardData,
@@ -1103,4 +1296,10 @@ module.exports = {
   getEmployees,
   getRoles,
   getAiInsights,
+  getWorkspace,
+  getSecuritySettings,
+  getBillingSettings,
+  getIntegrationSettings,
+  getAiSettings,
+  getNotificationSettings,
 };

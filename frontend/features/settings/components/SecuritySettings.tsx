@@ -17,20 +17,23 @@ import { Switch } from "@/shared/ui/switch";
 import { Badge } from "@/shared/ui/badge";
 import { Progress } from "@/shared/ui/progress";
 import { CRMCard } from "@/shared/components/crm";
-
-const activeSessions = [
-  { id: 1, device: "Chrome on macOS", location: "San Francisco, US", ip: "192.168.1.1", current: true },
-  { id: 2, device: "Mobile App on iPhone 15", location: "London, UK", ip: "192.168.1.45", current: false },
-];
-
-const loginHistory = [
-  { id: 1, event: "Password Change", date: "2 days ago", status: "Success" },
-  { id: 2, event: "Login Attempt", date: "4 days ago", status: "Blocked (Unusual IP)" },
-  { id: 3, event: "New Device Added", date: "1 week ago", status: "Verified" },
-];
+import { EmptyStateCard, PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { useSecuritySettings } from "@/shared/hooks/use-settings";
 
 const SecuritySettings = () => {
   const [passwordStrength, setPasswordStrength] = useState(65);
+  const { data, isLoading, error, refetch } = useSecuritySettings();
+
+  if (isLoading) {
+    return <PageLoadingState label="Loading security settings..." />;
+  }
+
+  if (error) {
+    return <PageErrorState title="Security settings unavailable" message={(error as Error).message} onRetry={() => { void refetch(); }} />;
+  }
+
+  const activeSessions = data?.activeSessions ?? [];
+  const loginHistory = data?.loginHistory ?? [];
 
   return (
     <div className="space-y-5">
@@ -99,7 +102,7 @@ const SecuritySettings = () => {
                 <h4 className="font-semibold text-xs text-foreground tracking-tight">Authenticator App</h4>
                 <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Use Google Authenticator or similar.</p>
               </div>
-              <Switch />
+              <Switch checked={data?.twoFactorEnabled ?? false} />
             </div>
 
             <div className="flex items-center justify-between p-3.5 rounded-lg bg-muted/30 border border-border/50">
@@ -134,7 +137,9 @@ const SecuritySettings = () => {
           </div>
 
           <div className="space-y-1.5 mb-4">
-            {activeSessions.map((session) => (
+            {activeSessions.length === 0 ? (
+              <EmptyStateCard title="No active sessions" message="Session records will appear when the backend provides them." />
+            ) : activeSessions.map((session) => (
               <div
                 key={session.id}
                 className="flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-border/50 hover:bg-muted/30 transition-all group"
@@ -180,7 +185,9 @@ const SecuritySettings = () => {
           </div>
 
           <div className="space-y-1">
-            {loginHistory.map((item) => (
+            {loginHistory.length === 0 ? (
+              <EmptyStateCard title="No audit events" message="Security audit events will appear when they exist in the database." />
+            ) : loginHistory.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/40"

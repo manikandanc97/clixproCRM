@@ -2,42 +2,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const prisma = require("../config/prisma");
 const { sendDatabaseAwareError } = require("../utils/db-error-response");
-const { demoAccounts, getRoleAccess } = require("../config/rbac.config");
+const { getRoleAccess } = require("../config/rbac.config");
 
 const crypto = require("crypto");
-
-async function ensureDemoAccount(email, password) {
-  const normalizedEmail = email.toLowerCase().trim();
-  const matchedDemo = demoAccounts.find(
-    (account) =>
-      account.email.toLowerCase() === normalizedEmail &&
-      account.password === password,
-  );
-
-  if (!matchedDemo) {
-    return null;
-  }
-
-  const existingUser = await prisma.user.findUnique({
-    where: {
-      email: matchedDemo.email,
-    },
-  });
-
-  if (existingUser) {
-    return existingUser;
-  }
-
-  const hashedPassword = await bcrypt.hash(matchedDemo.password, 10);
-  return prisma.user.create({
-    data: {
-      name: matchedDemo.name,
-      email: matchedDemo.email,
-      password: hashedPassword,
-      role: matchedDemo.role,
-    },
-  });
-}
 
 /*
  Register User
@@ -111,8 +78,6 @@ const loginUser = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-
-    await ensureDemoAccount(normalizedEmail, password);
 
     // Find user
     const user = await prisma.user.findUnique({

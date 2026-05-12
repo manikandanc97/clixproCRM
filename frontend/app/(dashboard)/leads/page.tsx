@@ -46,18 +46,7 @@ const LeadsPage = () => {
 
   useEffect(() => {
     if (data?.leads && safeLeads.length === 0) {
-      setLeads(data.leads.map(lead => ({
-        ...lead,
-        score: Math.floor(Math.random() * 40) + 60,
-        priority: ["High", "Medium", "Low"][Math.floor(Math.random() * 3)] as "High" | "Medium" | "Low",
-        source: ["LinkedIn", "Website", "Referral", "Google Ads"][Math.floor(Math.random() * 4)],
-        lastActivity: "2 hours ago",
-        aiInsights: {
-          summary: `${lead.name} is showing high intent based on recent website activity and email engagement.`,
-          conversionProbability: Math.floor(Math.random() * 30) + 70,
-          recommendation: "Schedule a demo call within 24 hours."
-        }
-      })));
+      setLeads(data.leads);
     }
   }, [data, safeLeads.length, setLeads]);
   
@@ -105,9 +94,14 @@ const LeadsPage = () => {
     );
   }
 
-  const sparklineData = [
-    { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
-  ];
+  const now = new Date();
+  const newThisMonth = safeLeads.filter((lead) => {
+    const createdAt = lead.createdAt ? new Date(lead.createdAt) : null;
+    return createdAt && createdAt.getMonth() === now.getMonth() && createdAt.getFullYear() === now.getFullYear();
+  }).length;
+  const conversionRate = safeLeads.length
+    ? `${Math.round((safeLeads.filter((lead) => lead.status === "Won").length / safeLeads.length) * 1000) / 10}%`
+    : "0%";
 
   return (
     <CRMPageContainer>
@@ -136,31 +130,28 @@ const LeadsPage = () => {
         <CRMMetricCard 
           title="Total Leads"
           value={safeLeads.length}
-          change="+12.5%"
+          change="0%"
           trend="up"
           icon={Users}
           color="blue"
-          sparklineData={sparklineData}
           delay={0.1}
         />
         <CRMMetricCard 
           title="New This Month"
-          value="24"
-          change="+18.2%"
+          value={newThisMonth}
+          change="0%"
           trend="up"
           icon={UserPlus}
-          color="cyan"
-          sparklineData={sparklineData}
+          color="blue"
           delay={0.2}
         />
         <CRMMetricCard 
           title="Conversion Rate"
-          value="14.2%"
-          change="-2.4%"
-          trend="down"
+          value={conversionRate}
+          change="0%"
+          trend="up"
           icon={TrendingUp}
           color="indigo"
-          sparklineData={sparklineData}
           delay={0.3}
         />
       </CRMMetricsGrid>
@@ -220,7 +211,7 @@ const LeadsPage = () => {
                     </div>
                     <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-lg text-primary">
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span className="text-[11px] font-bold">{lead.score}</span>
+                      <span className="text-[11px] font-bold">{lead.status}</span>
                     </div>
                   </div>
 

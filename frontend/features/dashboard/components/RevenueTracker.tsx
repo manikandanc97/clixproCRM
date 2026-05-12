@@ -12,18 +12,22 @@ import {
 } from "recharts";
 import { Target, TrendingUp, ArrowUpRight, DollarSign, ChevronRight } from "lucide-react";
 import { useAnalytics } from "@/shared/hooks/use-analytics";
-import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
+import { EmptyStateCard } from "@/shared/components/page-states";
 
 import { ChartContainer } from "@/shared/components/charts/ChartContainer";
 
 export default function RevenueTracker() {
   const { data: analyticsData, isLoading: loading } = useAnalytics();
 
-  const latestRevenueData = analyticsData?.revenueOverview[analyticsData.revenueOverview.length - 1] ?? { revenue: 0, target: 100000 };
+  const latestRevenueData = analyticsData?.revenueOverview?.[analyticsData.revenueOverview.length - 1];
   const revenueStat = analyticsData?.topStats.find(s => s.title === "Total Revenue");
+
+  if (!loading && !latestRevenueData) {
+    return <EmptyStateCard title="No revenue target" message="Revenue tracker will appear when revenue data is available." />;
+  }
   
-  const currentRevenue = latestRevenueData.revenue;
-  const targetRevenue = latestRevenueData.target;
+  const currentRevenue = latestRevenueData?.revenue ?? 0;
+  const targetRevenue = latestRevenueData?.target ?? 0;
   const percentage = Math.min(100, Math.round((currentRevenue / (targetRevenue || 1)) * 100));
 
   const chartData = [

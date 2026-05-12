@@ -25,19 +25,19 @@ import { DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { useTheme } from "next-themes";
 import { useSettings } from "./SettingsContext";
 
-// Mock data for search suggestions - in a real app these would come from an API
-const SUGGESTIONS = [
-  { id: "L-1", title: "John Doe", type: "Lead", path: "/leads" },
-  { id: "L-2", title: "Sarah Smith", type: "Lead", path: "/leads" },
-  { id: "C-1", title: "Acme Corp", type: "Customer", path: "/customers" },
-  { id: "Q-1", title: "Q-2024-001", type: "Quotation", path: "/quotations" },
-  { id: "T-1", title: "Follow up with Acme", type: "Task", path: "/tasks" },
-];
+interface SearchSuggestion {
+  id: string;
+  title: string;
+  type: string;
+  path: string;
+}
+
+const SUGGESTIONS: SearchSuggestion[] = [];
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [recent, setRecent] = useState<typeof SUGGESTIONS>(() => {
+  const [recent, setRecent] = useState<SearchSuggestion[]>(() => {
     if (typeof window === "undefined") return [];
     const savedRecent = localStorage.getItem("crm-recent-searches");
     if (!savedRecent) return [];
@@ -63,7 +63,7 @@ export function CommandPalette() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const runCommand = (command: () => void, item?: typeof SUGGESTIONS[0]) => {
+  const runCommand = (command: () => void, item?: SearchSuggestion) => {
     setOpen(false);
     command();
     

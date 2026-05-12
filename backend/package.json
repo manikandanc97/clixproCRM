@@ -22,8 +22,6 @@
     "db:counts": "node scripts/inspect-counts.js",
     "db:inspect": "node scripts/inspect-db.js",
     "db:inspect:migrations": "node scripts/inspect-migrations.js",
-    "db:clear-demo": "node scripts/clear-demo-data.js",
-    "db:seed": "node scripts/seed-demo-data.js",
     "db:sync": "node scripts/sync-schema.js",
     "start": "node server.js",
     "dev": "nodemon server.js"

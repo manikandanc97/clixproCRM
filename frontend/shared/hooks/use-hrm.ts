@@ -10,6 +10,7 @@ export function useEmployees() {
   return useQuery({
     queryKey: ["employees"],
     queryFn: fetchEmployees,
+    refetchInterval: 30000,
   });
 }
 
@@ -17,6 +18,7 @@ export function useRoles() {
   return useQuery({
     queryKey: ["roles"],
     queryFn: fetchRoles,
+    refetchInterval: 30000,
   });
 }
 

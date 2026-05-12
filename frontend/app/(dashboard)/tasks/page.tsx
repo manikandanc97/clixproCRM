@@ -65,22 +65,7 @@ const TasksPage = () => {
 
   useEffect(() => {
     if (data?.tasks && safeTasks.length === 0) {
-      setTasks(
-        data.tasks.map((task: TaskType, idx: number) => ({
-          ...task,
-          progress:
-            task.status === "Completed"
-              ? 100
-              : task.status === "In Progress"
-              ? 45 + ((idx * 7) % 40)
-              : 0,
-          category:
-            idx % 3 === 0 ? "Development" : idx % 3 === 1 ? "Design" : "Marketing",
-          estimatedTime: idx % 2 === 0 ? "4h 30m" : "1h 15m",
-          isOverdue: idx === 1 || idx === 4,
-          isUrgent: idx === 0 || idx === 2,
-        }))
-      );
+      setTasks(data.tasks);
     }
   }, [data, safeTasks.length, setTasks]);
 
@@ -121,11 +106,6 @@ const TasksPage = () => {
     );
   }
 
-  const sparklineData = [
-    { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 },
-    { value: 50 }, { value: 90 }, { value: 100 },
-  ];
-
   return (
     <CRMPageContainer>
       {/* Page Header */}
@@ -145,41 +125,37 @@ const TasksPage = () => {
         <CRMMetricCard
           title="Total Tasks"
           value={safeTasks.length}
-          change="+4.2%"
+          change="0%"
           trend="up"
           icon={CheckSquare}
           color="blue"
-          sparklineData={sparklineData}
           delay={0.05}
         />
         <CRMMetricCard
           title="Completed"
           value={completedCount}
-          change="+5 this week"
+          change="0%"
           trend="up"
           icon={CheckCircle2}
           color="emerald"
-          sparklineData={sparklineData}
           delay={0.1}
         />
         <CRMMetricCard
           title="In Progress"
           value={inProgressCount}
-          change="Active now"
-          trend="neutral"
+          change="0%"
+          trend="up"
           icon={Target}
           color="orange"
-          sparklineData={sparklineData}
           delay={0.15}
         />
         <CRMMetricCard
           title="Overdue"
           value={overdueCount}
-          change="Needs attention"
-          trend={overdueCount > 0 ? "down" : "neutral"}
+          change="0%"
+          trend={overdueCount > 0 ? "down" : "up"}
           icon={AlertCircle}
           color="pink"
-          sparklineData={sparklineData}
           delay={0.2}
         />
       </CRMMetricsGrid>

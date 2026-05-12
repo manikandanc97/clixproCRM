@@ -17,6 +17,12 @@ const {
   getEmployees,
   getRoles,
   getAiInsights,
+  getWorkspace,
+  getSecuritySettings,
+  getBillingSettings,
+  getIntegrationSettings,
+  getAiSettings,
+  getNotificationSettings,
 } = require("../controllers/crm.controller");
 
 const router = express.Router();
@@ -41,5 +47,11 @@ router.get("/notifications", getNotifications);
 router.get("/employees", getEmployees);
 router.get("/roles", getRoles);
 router.get("/ai-insights", getAiInsights);
+router.get("/workspace", getWorkspace);
+router.get("/settings/security", getSecuritySettings);
+router.get("/settings/billing", getBillingSettings);
+router.get("/settings/integrations", getIntegrationSettings);
+router.get("/settings/ai", getAiSettings);
+router.get("/settings/notifications", getNotificationSettings);
 
 module.exports = router;

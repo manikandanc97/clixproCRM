@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Download, Calendar, TrendingUp, Users, DollarSign, Target, ArrowUpRight } from "lucide-react";
+import { BarChart3, Download, Calendar, TrendingUp, Users, DollarSign, Target } from "lucide-react";
 import RevenueChart from "@/features/reports/components/RevenueChart";
 import ConversionChart from "@/features/reports/components/ConversionChart";
 import PerformanceTable from "@/features/reports/components/PerformanceTable";
@@ -10,23 +10,11 @@ import ActivityHeatmap from "@/features/reports/components/ActivityHeatmap";
 import RevenueTarget from "@/features/reports/components/RevenueTarget";
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
 import { useReports } from "@/shared/hooks/use-crm";
-import { motion } from "framer-motion";
 import { Button } from "@/shared/ui/button";
-import { 
-  CRMPageHeader, 
-  CRMMetricCard, 
-  CRMCard,
-  CRMPageContainer,
-  CRMMetricsGrid,
-  CRMPageSection
-} from "@/shared/components/crm";
-import { useCRMStore } from "@/shared/store/useCRMStore";
+import { CRMPageHeader, CRMMetricCard, CRMPageContainer, CRMMetricsGrid } from "@/shared/components/crm";
 import { toast } from "sonner";
 
 const ReportsPage = () => {
-  const { leads, quotations, customers } = useCRMStore();
-  const safeLeads = Array.isArray(leads) ? leads : [];
-  const safeCustomers = Array.isArray(customers) ? customers : [];
   const { data, isLoading: loading, error, refetch } = useReports();
 
   const handleTimePeriod = () => {
@@ -55,10 +43,6 @@ const ReportsPage = () => {
     );
   }
 
-  const sparklineData = [
-    { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
-  ];
-
   return (
     <CRMPageContainer>
       <CRMPageHeader 
@@ -83,62 +67,42 @@ const ReportsPage = () => {
       />
 
       <CRMMetricsGrid cols={4} className="gap-4">
-        <CRMMetricCard 
-          title="Total Revenue"
-          value="$124,500"
-          change="+15.2%"
-          trend="up"
-          icon={DollarSign}
-          color="emerald"
-          sparklineData={sparklineData}
-          delay={0.1}
-        />
-        <CRMMetricCard 
-          title="Avg. Win Rate"
-          value="24.8%"
-          change="+4.2%"
-          trend="up"
-          icon={Target}
-          color="indigo"
-          sparklineData={sparklineData}
-          delay={0.2}
-        />
-        <CRMMetricCard 
-          title="Active Leads"
-          value={safeLeads.length || "142"}
-          change="+12"
-          trend="up"
-          icon={Users}
-          color="blue"
-          sparklineData={sparklineData}
-          delay={0.3}
-        />
-        <CRMMetricCard 
-          title="Total Customers"
-          value={safeCustomers.length || "48"}
-          change="+2.1%"
-          trend="up"
-          icon={TrendingUp}
-          color="pink"
-          sparklineData={sparklineData}
-          delay={0.4}
-        />
+        {(data?.stats ?? []).map((stat, index) => {
+          const Icon = stat.title.toLowerCase().includes("revenue") ? DollarSign :
+            stat.title.toLowerCase().includes("conversion") || stat.title.toLowerCase().includes("win") ? Target :
+            stat.title.toLowerCase().includes("deal") ? Users :
+            TrendingUp;
+
+          return (
+            <CRMMetricCard
+              key={stat.title}
+              title={stat.title}
+              value={stat.value}
+              change={stat.change}
+              trend={stat.positive ? "up" : "down"}
+              icon={Icon}
+              color={stat.color || "primary"}
+              sparklineData={stat.sparklineData}
+              delay={0.1 * (index + 1)}
+            />
+          );
+        })}
       </CRMMetricsGrid>
 
-      <AnalyticsSummary />
+      <AnalyticsSummary insights={data?.insights ?? []} />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start">
         <div className="xl:col-span-2 space-y-5">
           <RevenueChart data={data?.revenueChart || []} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <ConversionChart data={data?.conversionChart || []} />
-            <ActivityHeatmap />
+            <ActivityHeatmap data={data?.activityHeatmap ?? []} />
           </div>
         </div>
         
         <div className="space-y-5">
-          <RevenueTarget />
-          <SalesFunnel />
+          <RevenueTarget data={data?.revenueTarget ?? null} />
+          <SalesFunnel data={data?.funnel ?? []} />
         </div>
       </div>
 

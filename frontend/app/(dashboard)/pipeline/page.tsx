@@ -51,14 +51,14 @@ const PipelinePage = () => {
     );
   }
 
-  const sparklineData = [
-    { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
-  ];
-
   const totalValue = safePipelineItems.reduce((acc, item) => {
-    const val = parseInt(item.value.replace(/[^0-9]/g, ""));
+    const val = item.valueAmount ?? parseInt(item.value.replace(/[^0-9]/g, ""));
     return acc + (isNaN(val) ? 0 : val);
   }, 0);
+  const averageProbability = safePipelineItems.length
+    ? Math.round(safePipelineItems.reduce((sum, item) => sum + (item.probability ?? 0), 0) / safePipelineItems.length)
+    : 0;
+  const stuckDeals = safePipelineItems.filter((item) => item.isStuck).length;
 
   return (
     <CRMPageContainer className="pb-6">
@@ -86,32 +86,29 @@ const PipelinePage = () => {
       <CRMMetricsGrid cols={3} className="gap-4">
         <CRMMetricCard 
           title="Pipeline Value"
-          value={`$${totalValue.toLocaleString()}`}
-          change="+14.2%"
+          value={totalValue.toLocaleString()}
+          change="0%"
           trend="up"
           icon={DollarSign}
           color="purple"
-          sparklineData={sparklineData}
           delay={0.1}
         />
         <CRMMetricCard 
           title="Avg. Probability"
-          value="68%"
-          change="+5%"
+          value={`${averageProbability}%`}
+          change="0%"
           trend="up"
           icon={Target}
-          color="cyan"
-          sparklineData={sparklineData}
+          color="blue"
           delay={0.2}
         />
         <CRMMetricCard 
-          title="Win Velocity"
-          value="18 Days"
-          change="-2 Days"
-          trend="up"
+          title="Stuck Deals"
+          value={stuckDeals}
+          change="0%"
+          trend={stuckDeals > 0 ? "down" : "up"}
           icon={TrendingUp}
           color="blue"
-          sparklineData={sparklineData}
           delay={0.3}
         />
       </CRMMetricsGrid>

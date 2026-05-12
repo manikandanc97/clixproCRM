@@ -16,14 +16,18 @@ import { Badge } from "@/shared/ui/badge";
 import { CRMCard } from "@/shared/components/crm";
 
 import { useWorkspace } from "@/shared/hooks/use-settings";
-import { PageLoadingState } from "@/shared/components/page-states";
+import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
 
 const WorkspaceSettings = () => {
-  const { data: workspace, isLoading: loading } = useWorkspace();
+  const { data: workspace, isLoading: loading, error, refetch } = useWorkspace();
   const [logo, setLogo] = useState<string | null>(null);
 
   if (loading) {
     return <PageLoadingState label="Loading workspace configuration..." />;
+  }
+
+  if (error) {
+    return <PageErrorState title="Workspace settings unavailable" message={(error as Error).message} onRetry={() => { void refetch(); }} />;
   }
 
   return (
@@ -41,7 +45,7 @@ const WorkspaceSettings = () => {
               variant="outline"
               className="rounded-md px-2.5 py-0.5 bg-primary/8 text-primary border-primary/20 font-bold text-[9px] uppercase tracking-widest"
             >
-              {workspace?.plan || "Pro Plan"}
+              {workspace?.plan ?? "No plan configured"}
             </Badge>
           </div>
   
@@ -49,7 +53,7 @@ const WorkspaceSettings = () => {
             <div className="relative group shrink-0">
               <div className="w-20 h-20 rounded-xl bg-muted border border-dashed border-border flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/50">
                 {(logo || workspace?.logo) ? (
-                  <img src={logo || workspace?.logo} alt="Workspace Logo" className="w-full h-full object-cover" />
+                  <img src={(logo ?? workspace?.logo) || undefined} alt="Workspace Logo" className="w-full h-full object-cover" />
                 ) : (
                   <Building2 className="w-7 h-7 text-muted-foreground/50" />
                 )}
@@ -98,7 +102,7 @@ const WorkspaceSettings = () => {
               <div className="relative group">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
-                  defaultValue={workspace?.name || "ClientRise CRM"}
+                  defaultValue={workspace?.name ?? ""}
                   className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all"
                 />
               </div>
@@ -109,7 +113,7 @@ const WorkspaceSettings = () => {
               <div className="relative group">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
-                  defaultValue={workspace?.taxId || "GST123456789"}
+                  defaultValue={workspace?.taxId ?? ""}
                   className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all"
                 />
               </div>
@@ -119,7 +123,7 @@ const WorkspaceSettings = () => {
               <Label className="text-xs font-semibold text-muted-foreground">Default Currency</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
-                <Select defaultValue={workspace?.currency || "USD"}>
+                <Select defaultValue={workspace?.currency ?? undefined}>
                   <SelectTrigger className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:ring-primary/20 font-medium text-sm">
                     <SelectValue placeholder="Select Currency" />
                   </SelectTrigger>
@@ -136,7 +140,7 @@ const WorkspaceSettings = () => {
               <Label className="text-xs font-semibold text-muted-foreground">Timezone</Label>
               <div className="relative">
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
-                <Select defaultValue={workspace?.timezone || "utc"}>
+                <Select defaultValue={workspace?.timezone ?? undefined}>
                   <SelectTrigger className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:ring-primary/20 font-medium text-sm">
                     <SelectValue placeholder="Select Timezone" />
                   </SelectTrigger>
@@ -154,7 +158,7 @@ const WorkspaceSettings = () => {
               <div className="relative group">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
-                  defaultValue={workspace?.address || "123 Business Ave, Suite 100, Silicon Valley, CA"}
+                  defaultValue={workspace?.address ?? ""}
                   className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all"
                 />
               </div>

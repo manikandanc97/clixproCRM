@@ -82,9 +82,6 @@ const DashboardPage = () => {
 
   const dashboardData = data;
 
-  const sparklineData = [
-    { value: 40 }, { value: 30 }, { value: 60 }, { value: 80 }, { value: 50 }, { value: 90 }, { value: 100 }
-  ];
   const widgets = new Set(access.dashboardWidgets);
 
   const handleExport = () => {
@@ -157,7 +154,7 @@ const DashboardPage = () => {
               trend={stat.positive ? "up" : "down"}
               icon={Icon}
               color={stat.color || "primary"}
-              sparklineData={stat.sparklineData || sparklineData}
+              sparklineData={stat.sparklineData}
               delay={0.1 * (index + 1)}
               loading={loading}
             />
@@ -167,7 +164,7 @@ const DashboardPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <div className="lg:col-span-2 xl:col-span-3 flex flex-col gap-6">
-          {widgets.has("salesChart") && <SalesChart data={data?.salesChartData || []} />}
+          {widgets.has("salesChart") && <SalesChart data={data?.salesChartData ?? []} />}
           {widgets.has("upcomingMeetings") && <UpcomingMeetings />}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {widgets.has("hotLeads") && <HotLeads />}
@@ -178,7 +175,7 @@ const DashboardPage = () => {
             {widgets.has("revenueTracker") && <RevenueTracker />}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {widgets.has("recentActivities") && <RecentActivities activities={data?.recentActivities || []} />}
+            {widgets.has("recentActivities") && <RecentActivities activities={data?.recentActivities ?? []} />}
             {widgets.has("pendingFollowups") && <PendingFollowups />}
           </div>
         </div>
