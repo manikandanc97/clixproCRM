@@ -23,6 +23,11 @@ const {
   getIntegrationSettings,
   getAiSettings,
   getNotificationSettings,
+  createLead,
+  createCustomer,
+  createTask,
+  createQuotation,
+  createEmployee,
 } = require("../controllers/crm.controller");
 
 const router = express.Router();
@@ -32,10 +37,14 @@ router.use(authMiddleware);
 // Existing routes
 router.get("/dashboard", getDashboardData);
 router.get("/customers", getCustomers);
+router.post("/customers", createCustomer);
 router.get("/leads", getLeads);
+router.post("/leads", createLead);
 router.get("/pipeline", getPipeline);
 router.get("/tasks", getTasks);
+router.post("/tasks", createTask);
 router.get("/quotations", getQuotations);
+router.post("/quotations", createQuotation);
 router.get("/reports", getReports);
 
 // New dynamic data routes
@@ -45,6 +54,7 @@ router.get("/team-performance", getTeamPerformance);
 router.get("/meetings", getMeetings);
 router.get("/notifications", getNotifications);
 router.get("/employees", getEmployees);
+router.post("/employees", createEmployee);
 router.get("/roles", getRoles);
 router.get("/ai-insights", getAiInsights);
 router.get("/workspace", getWorkspace);

@@ -13,11 +13,26 @@ import {
 } from "@/shared/components/crm";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
+import { FormModal } from "@/shared/components/form-modal";
+import { LeadForm } from "@/features/forms/LeadForm";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 const PipelinePage = () => {
   const { pipelineItems, setPipelineItems } = useCRMStore();
   const safePipelineItems = Array.isArray(pipelineItems) ? pipelineItems : [];
   const { data, isLoading: loading, error, refetch } = usePipeline();
+
+  const searchParams = useSearchParams();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsAddModalOpen(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (data?.items && safePipelineItems.length === 0) {
@@ -26,9 +41,7 @@ const PipelinePage = () => {
   }, [data, safePipelineItems.length, setPipelineItems]);
 
   const handleAddDeal = () => {
-    toast.info("Add Deal", {
-      description: "Opening revenue opportunity workspace...",
-    });
+    setIsAddModalOpen(true);
   };
 
   const handleExport = () => {
@@ -114,6 +127,19 @@ const PipelinePage = () => {
       </CRMMetricsGrid>
 
       <PipelineBoard items={safePipelineItems} />
+
+      <FormModal
+        title="Add New Opportunity"
+        description="Create a new deal in your sales pipeline."
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        size="lg"
+      >
+        <LeadForm 
+          onSuccess={() => setIsAddModalOpen(false)} 
+          onCancel={() => setIsAddModalOpen(false)} 
+        />
+      </FormModal>
     </CRMPageContainer>
   );
 };

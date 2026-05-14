@@ -144,6 +144,27 @@ export function fetchNotificationSettings() {
   return unwrapResponse<NotificationSettingsDataType>(client.get("/crm/settings/notifications"));
 }
 
+// ─── Creation endpoints ──────────────────────────────────────────────────────
+export function createLead(data: any) {
+  return unwrapResponse<any>(client.post("/crm/leads", data));
+}
+
+export function createCustomer(data: any) {
+  return unwrapResponse<any>(client.post("/crm/customers", data));
+}
+
+export function createTask(data: any) {
+  return unwrapResponse<any>(client.post("/crm/tasks", data));
+}
+
+export function createQuotation(data: any) {
+  return unwrapResponse<any>(client.post("/crm/quotations", data));
+}
+
+export function createEmployee(data: any) {
+  return unwrapResponse<any>(client.post("/crm/employees", data));
+}
+
 
 
 

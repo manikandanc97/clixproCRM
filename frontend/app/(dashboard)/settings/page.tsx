@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import SettingsHeader from "@/features/settings/components/SettingsHeader";
 import ProfileSettings from "@/features/settings/components/ProfileSettings";
 import SecuritySettings from "@/features/settings/components/SecuritySettings";
@@ -16,7 +17,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CRMPageContainer } from "@/shared/components/crm";
 
 const SettingsPage = () => {
-  const [activeSection, setActiveSection] = useState("profile");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const sectionParam = searchParams.get("section");
+  
+  const [activeSection, setActiveSection] = useState(sectionParam || "profile");
+
+  // Sync state with URL parameter
+  useEffect(() => {
+    if (sectionParam && sectionParam !== activeSection) {
+      setActiveSection(sectionParam);
+    }
+  }, [sectionParam, activeSection]);
+
+  const handleSectionChange = (section: string) => {
+    setActiveSection(section);
+    router.push(`/settings?section=${section}`, { scroll: false });
+  };
 
   const renderSection = () => {
     switch (activeSection) {
@@ -44,7 +61,7 @@ const SettingsPage = () => {
         <div className="lg:w-60 shrink-0">
           <SettingsSidebar
             activeSection={activeSection}
-            onSectionChange={setActiveSection}
+            onSectionChange={handleSectionChange}
           />
         </div>
 
@@ -68,15 +85,3 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
-
-
-
-
-
-
-
-
-
-
-
-

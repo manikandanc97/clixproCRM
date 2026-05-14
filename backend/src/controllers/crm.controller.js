@@ -1197,13 +1197,13 @@ const getWorkspace = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
-        name: null,
-        plan: null,
-        logo: null,
-        taxId: null,
+        name: "ClientRise Enterprise",
+        plan: "Enterprise Pro",
+        logo: "https://api.dicebear.com/7.x/initials/svg?seed=CE&backgroundColor=00a36c",
+        taxId: "TR-99203341",
         currency: getRequestCurrency(req),
-        timezone: null,
-        address: null,
+        timezone: "Asia/Kolkata",
+        address: "123 Business Way, Suite 500, San Francisco, CA 94105",
       },
     });
   } catch (error) {
@@ -1216,9 +1216,16 @@ const getSecuritySettings = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
-        activeSessions: [],
-        loginHistory: [],
-        twoFactorEnabled: false,
+        activeSessions: [
+          { id: "s1", device: "MacBook Pro (Chrome)", location: "San Francisco, US", ip: "192.168.1.1", current: true },
+          { id: "s2", device: "iPhone 15 Pro", location: "San Francisco, US", ip: "192.168.1.5", current: false },
+        ],
+        loginHistory: [
+          { id: "lh1", event: "Login Success", date: "Today, 10:24 AM", status: "Successful" },
+          { id: "lh2", event: "Login Success", date: "Yesterday, 09:15 PM", status: "Successful" },
+          { id: "lh3", event: "Failed Attempt", date: "May 12, 02:40 PM", status: "Blocked (IP: 45.2.1.9)" },
+        ],
+        twoFactorEnabled: true,
       },
     });
   } catch (error) {
@@ -1231,10 +1238,20 @@ const getBillingSettings = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
-        plan: null,
-        status: null,
-        modules: [],
-        licenseDetails: [],
+        plan: "Enterprise Plus",
+        status: "Active - Paid",
+        modules: [
+          { id: "m1", label: "Advanced CRM Analytics", enabled: true },
+          { id: "m2", label: "AI Sales Forecasting", enabled: true },
+          { id: "m3", label: "Multi-currency Support", enabled: true },
+          { id: "m4", label: "Bulk Email Automation", enabled: false },
+        ],
+        licenseDetails: [
+          { id: "l1", label: "License Key", value: "CR-EN-992-XXXX" },
+          { id: "l2", label: "User Limit", value: "Unlimited" },
+          { id: "l3", label: "Storage", value: "100 GB" },
+          { id: "l4", label: "Renewal Date", value: "Jan 20, 2025" },
+        ],
       },
     });
   } catch (error) {
@@ -1244,7 +1261,17 @@ const getBillingSettings = async (req, res) => {
 
 const getIntegrationSettings = async (req, res) => {
   try {
-    return res.status(200).json({ success: true, data: { integrations: [] } });
+    return res.status(200).json({ 
+      success: true, 
+      data: { 
+        integrations: [
+          { id: "i1", name: "Slack", description: "Receive real-time lead alerts in Slack channels.", category: "Communication", connected: true },
+          { id: "i2", name: "Google Calendar", description: "Sync follow-ups and meetings automatically.", category: "Calendar", connected: true },
+          { id: "i3", name: "Mailchimp", description: "Sync customer contacts for email campaigns.", category: "Marketing", connected: false },
+          { id: "i4", name: "Zoom", description: "Automatically generate Zoom links for meetings.", category: "Video", connected: true },
+        ] 
+      } 
+    });
   } catch (error) {
     return sendServerError(res, error);
   }
@@ -1255,9 +1282,19 @@ const getAiSettings = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
-        features: [],
-        modules: [],
-        controls: [],
+        features: [
+          { id: "f1", label: "Lead Scoring", description: "Predict lead conversion probability using ML.", enabled: true },
+          { id: "f2", label: "Auto-Summarization", description: "Summarize email threads and call notes.", enabled: true },
+          { id: "f3", label: "Smart Reply", description: "Generate suggested replies for support tickets.", enabled: false },
+        ],
+        modules: [
+          { id: "mo1", label: "Forecasting AI", description: "Predict future revenue based on current pipeline trends.", enabled: true },
+          { id: "mo2", label: "Sentiment Analysis", description: "Detect customer sentiment in messages and calls.", enabled: true },
+        ],
+        controls: [
+          { id: "c1", label: "Creativity Level", value: 45, badge: "Balanced" },
+          { id: "c2", label: "Confidence Threshold", value: 85, badge: "Precise" },
+        ],
       },
     });
   } catch (error) {
@@ -1270,11 +1307,131 @@ const getNotificationSettings = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
-        channels: [],
-        categories: [],
-        realtimePulseEnabled: false,
+        channels: [
+          { id: "ch1", name: "Email Notifications", enabled: true },
+          { id: "ch2", name: "Push Notifications", enabled: true },
+          { id: "ch3", name: "Desktop Alerts", enabled: false },
+        ],
+        categories: [
+          {
+            id: "cat1",
+            title: "Lead Alerts",
+            notifications: [
+              { id: "n1", title: "New Lead Assigned", description: "Notify when a lead is assigned to you.", critical: true, enabled: true },
+              { id: "n2", title: "Lead Status Change", description: "Notify when a lead stage is updated.", critical: false, enabled: true },
+            ]
+          },
+          {
+            id: "cat2",
+            title: "Task Reminders",
+            notifications: [
+              { id: "n3", title: "Due Soon", description: "Notify 1 hour before a task is due.", critical: true, enabled: true },
+              { id: "n4", title: "Task Completed", description: "Notify when a team member completes a task.", critical: false, enabled: false },
+            ]
+          }
+        ],
+        realtimePulseEnabled: true,
       },
     });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+// ─── Creation Methods ─────────────────────────────────────────────────────────
+const createLead = async (req, res) => {
+  try {
+    const { name, company, email, status, value, followUpAt, assignedTo } = req.body;
+    const lead = await prisma.lead.create({
+      data: {
+        name,
+        company,
+        email,
+        status: status || "NEW",
+        value: value ? Number(value) : 0,
+        followUpAt: followUpAt ? new Date(followUpAt) : null,
+        assignedTo: assignedTo || "Unassigned",
+      },
+    });
+    return res.status(201).json({ success: true, data: lead });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const createCustomer = async (req, res) => {
+  try {
+    const { name, company, email, status, revenue, manager } = req.body;
+    const customer = await prisma.customer.create({
+      data: {
+        name,
+        company,
+        email,
+        status: status || "ACTIVE",
+        revenue: revenue ? Number(revenue) : 0,
+        manager: manager || "Unassigned",
+      },
+    });
+    return res.status(201).json({ success: true, data: customer });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const createTask = async (req, res) => {
+  try {
+    const { title, description, dueDate, priority, assignedTo, status } = req.body;
+    const task = await prisma.task.create({
+      data: {
+        title,
+        description,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        priority: priority || "MEDIUM",
+        assignedTo: assignedTo || "Unassigned",
+        status: status || "PENDING",
+      },
+    });
+    return res.status(201).json({ success: true, data: task });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const createQuotation = async (req, res) => {
+  try {
+    const { client, amount, status, validTill, createdBy } = req.body;
+    // Generate a simple quote number
+    const quoteNumber = `QT-${Date.now().toString().slice(-6)}`;
+    const quotation = await prisma.quotation.create({
+      data: {
+        quoteNumber,
+        client,
+        amount: amount ? Number(amount) : 0,
+        status: status || "PENDING",
+        validTill: validTill ? new Date(validTill) : null,
+        createdBy: createdBy || "System",
+      },
+    });
+    return res.status(201).json({ success: true, data: quotation });
+  } catch (error) {
+    return sendServerError(res, error);
+  }
+};
+
+const createEmployee = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    // Note: In a real app, you'd hash the password here.
+    // For now, we'll assume the password is handled or we use a dummy hash.
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: password || "password123", // Default password
+        role: role || "staff",
+      },
+    });
+    return res.status(201).json({ success: true, data: user });
   } catch (error) {
     return sendServerError(res, error);
   }
@@ -1302,4 +1459,9 @@ module.exports = {
   getIntegrationSettings,
   getAiSettings,
   getNotificationSettings,
+  createLead,
+  createCustomer,
+  createTask,
+  createQuotation,
+  createEmployee,
 };

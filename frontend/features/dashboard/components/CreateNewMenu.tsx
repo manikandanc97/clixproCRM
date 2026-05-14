@@ -7,7 +7,10 @@ import {
   FileText, 
   CheckSquare, 
   DollarSign,
-  ArrowRight
+  ArrowRight,
+  Calendar,
+  Shield,
+  Users
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,10 +22,12 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/components/auth-provider";
+import { useGlobalModalStore } from "@/shared/store/useGlobalModalStore";
 
 export default function CreateNewMenu() {
   const router = useRouter();
   const { hasPermission } = useAuth();
+  const { openModal } = useGlobalModalStore();
 
   const actions = [
     { label: "New Lead", icon: <UserPlus className="w-4 h-4 text-emerald-500" />, path: "/leads?new=true", color: "hover:bg-emerald-500/5 hover:text-emerald-600", permission: "leads.create" },
@@ -30,6 +35,9 @@ export default function CreateNewMenu() {
     { label: "New Quote", icon: <FileText className="w-4 h-4 text-violet-500" />, path: "/quotations?new=true", color: "hover:bg-violet-500/5 hover:text-violet-600", permission: "quotations.create" },
     { label: "New Task", icon: <CheckSquare className="w-4 h-4 text-amber-500" />, path: "/tasks?new=true", color: "hover:bg-amber-500/5 hover:text-amber-600", permission: "tasks.create" },
     { label: "New Deal", icon: <DollarSign className="w-4 h-4 text-rose-500" />, path: "/pipeline?new=true", color: "hover:bg-rose-500/5 hover:text-rose-600", permission: "pipeline.create" },
+    { label: "New Meeting", icon: <Calendar className="w-4 h-4 text-orange-500" />, onClick: () => openModal("meeting"), color: "hover:bg-orange-500/5 hover:text-orange-600", permission: "leads.view" },
+    { label: "New Employee", icon: <Users className="w-4 h-4 text-indigo-500" />, path: "/employees?new=true", color: "hover:bg-indigo-500/5 hover:text-indigo-600", permission: "employees.create" },
+    { label: "New Role", icon: <Shield className="w-4 h-4 text-slate-500" />, path: "/role-management?new=true", color: "hover:bg-slate-500/5 hover:text-slate-600", permission: "roles.create" },
   ].filter((action) => hasPermission(action.permission));
 
   if (actions.length === 0) {
@@ -52,7 +60,7 @@ export default function CreateNewMenu() {
         {actions.map((action) => (
           <DropdownMenuItem 
             key={action.label} 
-            onClick={() => router.push(action.path)}
+            onClick={() => action.onClick ? action.onClick() : router.push(action.path!)}
             className={`cursor-pointer py-3 px-3 rounded-xl focus:bg-accent group flex items-center justify-between ${action.color} transition-all duration-300`}
           >
             <div className="flex items-center gap-3">

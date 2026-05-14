@@ -18,6 +18,9 @@ import {
 } from "@/shared/components/crm";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
+import { FormModal } from "@/shared/components/form-modal";
+import { CustomerForm } from "@/features/forms/CustomerForm";
+import { useSearchParams } from "next/navigation";
 
 const CustomersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +30,17 @@ const CustomersPage = () => {
   const { customers, setCustomers } = useCRMStore();
   const safeCustomers = Array.isArray(customers) ? customers : [];
   const { data, isLoading: loading, error, refetch } = useCustomers();
+
+  const searchParams = useSearchParams();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsAddModalOpen(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (data?.customers && safeCustomers.length === 0) {
@@ -53,9 +67,7 @@ const CustomersPage = () => {
   }, [safeCustomers, searchQuery, statusFilter, segmentFilter]);
 
   const handleNewCustomer = () => {
-    toast.info("Add Customer", {
-      description: "Opening customer onboarding workspace...",
-    });
+    setIsAddModalOpen(true);
   };
 
   const handleExport = () => {
@@ -175,6 +187,19 @@ const CustomersPage = () => {
           />
         )}
       </AnimatePresence>
+
+      <FormModal
+        title="Register New Customer"
+        description="Add a new client to your CRM database."
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        size="lg"
+      >
+        <CustomerForm 
+          onSuccess={() => setIsAddModalOpen(false)} 
+          onCancel={() => setIsAddModalOpen(false)} 
+        />
+      </FormModal>
     </CRMPageContainer>
   );
 };

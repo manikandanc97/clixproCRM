@@ -17,6 +17,9 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
+import { FormModal } from "@/shared/components/form-modal";
+import { QuoteForm } from "@/features/forms/QuoteForm";
+import { useSearchParams } from "next/navigation";
 
 const QuotationsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,6 +28,17 @@ const QuotationsPage = () => {
   const { quotations, setQuotations } = useCRMStore();
   const safeQuotations = Array.isArray(quotations) ? quotations : [];
   const { data, isLoading: loading, error, refetch } = useQuotations();
+
+  const searchParams = useSearchParams();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsAddModalOpen(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (data?.quotations && safeQuotations.length === 0) {
@@ -47,9 +61,7 @@ const QuotationsPage = () => {
   }, [safeQuotations, searchQuery, statusFilter]);
 
   const handleCreateQuote = () => {
-    toast.info("Create Quotation", {
-      description: "Opening smart quotation builder...",
-    });
+    setIsAddModalOpen(true);
   };
 
   const handleExport = () => {
@@ -182,6 +194,19 @@ const QuotationsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <FormModal
+        title="Create Sales Quotation"
+        description="Generate a professional quote for your client."
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        size="lg"
+      >
+        <QuoteForm 
+          onSuccess={() => setIsAddModalOpen(false)} 
+          onCancel={() => setIsAddModalOpen(false)} 
+        />
+      </FormModal>
     </CRMPageContainer>
   );
 };

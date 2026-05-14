@@ -34,6 +34,9 @@ import {
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { toast } from "sonner";
+import { FormModal } from "@/shared/components/form-modal";
+import { LeadForm } from "@/features/forms/LeadForm";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const LeadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +46,19 @@ const LeadsPage = () => {
   const { leads, setLeads } = useCRMStore();
   const safeLeads = Array.isArray(leads) ? leads : [];
   const { data, isLoading: loading, error, refetch } = useLeads();
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsAddModalOpen(true);
+      // Remove query param without refreshing to avoid re-opening
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (data?.leads && safeLeads.length === 0) {
@@ -64,9 +80,7 @@ const LeadsPage = () => {
   }, [safeLeads, searchQuery, statusFilter]);
 
   const handleAddLead = () => {
-    toast.info("Add Lead", {
-      description: "Opening lead creation workspace...",
-    });
+    setIsAddModalOpen(true);
   };
 
   const handleExport = () => {
@@ -269,6 +283,19 @@ const LeadsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <FormModal
+        title="Create New Lead"
+        description="Fill in the details below to add a new lead to your sales pipeline."
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        size="lg"
+      >
+        <LeadForm 
+          onSuccess={() => setIsAddModalOpen(false)} 
+          onCancel={() => setIsAddModalOpen(false)} 
+        />
+      </FormModal>
     </CRMPageContainer>
   );
 };

@@ -36,6 +36,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
+import { FormModal } from "@/shared/components/form-modal";
+import { TaskForm } from "@/features/forms/TaskForm";
+import { useSearchParams } from "next/navigation";
 
 const VIEW_MODES = [
   { id: "list", icon: List, label: "List" },
@@ -63,6 +66,17 @@ const TasksPage = () => {
   const safeTasks = Array.isArray(tasks) ? tasks : [];
   const { data, isLoading: loading, error, refetch } = useTasks();
 
+  const searchParams = useSearchParams();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsAddModalOpen(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (data?.tasks && safeTasks.length === 0) {
       setTasks(data.tasks);
@@ -87,7 +101,7 @@ const TasksPage = () => {
   const overdueCount = safeTasks.filter((t) => t.isOverdue).length;
 
   const handleNewTask = () => {
-    toast.info("New Task", { description: "Opening task composer workspace..." });
+    setIsAddModalOpen(true);
   };
 
   const handleExport = () => {
@@ -259,6 +273,19 @@ const TasksPage = () => {
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
       />
+
+      <FormModal
+        title="Create New Task"
+        description="Add a new task to your productivity list."
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        size="lg"
+      >
+        <TaskForm 
+          onSuccess={() => setIsAddModalOpen(false)} 
+          onCancel={() => setIsAddModalOpen(false)} 
+        />
+      </FormModal>
     </CRMPageContainer>
   );
 };

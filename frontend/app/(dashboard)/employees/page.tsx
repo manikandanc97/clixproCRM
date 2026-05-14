@@ -44,6 +44,10 @@ import { useEmployees } from "@/shared/hooks/use-hrm";
 import { Progress } from "@/shared/ui/progress";
 import { toast } from "sonner";
 import { PageLoadingState } from "@/shared/components/page-states";
+import { FormModal } from "@/shared/components/form-modal";
+import { EmployeeForm } from "@/features/forms/EmployeeForm";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export default function EmployeesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,6 +56,17 @@ export default function EmployeesPage() {
   const employees = hrmData?.employees || [];
   const employeeStats = hrmData?.stats || [];
   const employeeActivities = hrmData?.recentActivities || [];
+  
+  const searchParams = useSearchParams();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsAddModalOpen(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
 
   const filteredEmployees = employees.filter(emp => 
     emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,9 +78,7 @@ export default function EmployeesPage() {
   }
 
   const handleAddEmployee = () => {
-    toast.info("Add Employee", {
-      description: "Opening employee onboarding workflow...",
-    });
+    setIsAddModalOpen(true);
   };
 
   return (
@@ -217,6 +230,19 @@ export default function EmployeesPage() {
           </CRMPageSection>
         </div>
       </div>
+
+      <FormModal
+        title="Onboard New Employee"
+        description="Add a new team member to your organization."
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        size="lg"
+      >
+        <EmployeeForm 
+          onSuccess={() => setIsAddModalOpen(false)} 
+          onCancel={() => setIsAddModalOpen(false)} 
+        />
+      </FormModal>
     </CRMPageContainer>
   );
 }

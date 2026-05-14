@@ -38,6 +38,8 @@ import {
 import { Button } from "@/shared/ui/button";
 import { useRoles } from "@/shared/hooks/use-hrm";
 import { PageLoadingState } from "@/shared/components/page-states";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { 
   Sheet, 
   SheetContent, 
@@ -47,6 +49,8 @@ import {
 } from "@/shared/ui/sheet";
 import { toast } from "sonner";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { FormModal } from "@/shared/components/form-modal";
+import { RoleForm } from "@/features/forms/RoleForm";
 
 export default function RoleManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,6 +63,17 @@ export default function RoleManagementPage() {
 
   const [selectedRole, setSelectedRole] = useState<any | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsAddModalOpen(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
 
   const filteredRoles = roles.filter(role => 
     role.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -74,9 +89,7 @@ export default function RoleManagementPage() {
   };
 
   const handleCreateRole = () => {
-    toast.success("New Role", {
-      description: "Redirecting to Role Creation Wizard...",
-    });
+    setIsAddModalOpen(true);
   };
 
   return (
@@ -303,6 +316,19 @@ export default function RoleManagementPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <FormModal
+        title="Create Custom Role"
+        description="Define a new security profile for your organization."
+        isOpen={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        size="md"
+      >
+        <RoleForm 
+          onSuccess={() => setIsAddModalOpen(false)} 
+          onCancel={() => setIsAddModalOpen(false)} 
+        />
+      </FormModal>
     </CRMPageContainer>
   );
 }

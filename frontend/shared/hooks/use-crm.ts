@@ -7,8 +7,14 @@ import {
   fetchPipelineData, 
   fetchTasksData, 
   fetchQuotationsData,
-  fetchReportsData
+  fetchReportsData,
+  createLead,
+  createCustomer,
+  createTask,
+  createQuotation
 } from "@/shared/lib/api/crm";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export function useCustomers() {
   return useQuery({
@@ -55,6 +61,67 @@ export function useReports() {
     queryKey: ["reports"],
     queryFn: fetchReportsData,
     refetchInterval: 30000,
+  });
+}
+
+// ─── Mutations ───────────────────────────────────────────────────────────────
+export function useCreateLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createLead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Lead created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create lead");
+    },
+  });
+}
+
+export function useCreateCustomer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createCustomer,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Customer created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create customer");
+    },
+  });
+}
+
+export function useCreateTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Task created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create task");
+    },
+  });
+}
+
+export function useCreateQuotation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createQuotation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Quotation created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create quotation");
+    },
   });
 }
 

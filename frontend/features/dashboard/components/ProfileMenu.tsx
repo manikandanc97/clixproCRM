@@ -84,11 +84,11 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
         <DropdownMenuSeparator />
         
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push("/settings/profile")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
+          <DropdownMenuItem onClick={() => router.push("/settings?section=profile")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
             <User className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className="font-semibold text-sm">My Profile</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/settings/workspace")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
+          <DropdownMenuItem onClick={() => router.push("/settings?section=workspace")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
             <Layout className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className="font-semibold text-sm">Workspace</span>
           </DropdownMenuItem>
