@@ -18,7 +18,6 @@ import {
   Clock, 
   User, 
   Sparkles,
-  CreditCard,
   Printer,
   Copy,
   Trash2,
@@ -255,15 +254,3 @@ const QuotationPreview = ({ quotation, isOpen, onClose }: QuotationPreviewProps)
 };
 
 export default QuotationPreview;
-
-
-
-
-
-
-
-
-
-
-
-

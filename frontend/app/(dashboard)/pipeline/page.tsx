@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { GitBranch, Plus, Download, TrendingUp, DollarSign, Target } from "lucide-react";
 import PipelineBoard from "@/features/pipeline/components/PipelineBoard";
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
 import { LeadForm } from "@/features/forms/LeadForm";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 const PipelinePage = () => {
   const { pipelineItems, setPipelineItems } = useCRMStore();
@@ -28,9 +27,12 @@ const PipelinePage = () => {
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
-      setIsAddModalOpen(true);
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, "", newUrl);
+      const timer = setTimeout(() => {
+        setIsAddModalOpen(true);
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [searchParams]);
 
@@ -145,15 +147,3 @@ const PipelinePage = () => {
 };
 
 export default PipelinePage;
-
-
-
-
-
-
-
-
-
-
-
-

@@ -5,7 +5,6 @@ import { Badge } from "@/shared/ui/badge";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { TrendingDown, TrendingUp, Trophy, ArrowUpRight } from "lucide-react";
 import { PerformanceType } from "@/shared/types/report";
-import { motion } from "framer-motion";
 import { Progress } from "@/shared/ui/progress";
 import { 
   CRMDataTable, 
@@ -14,7 +13,6 @@ import {
   CRMTableRow, 
   CRMTableCell, 
   CRMTableHeaderCell,
-  CRMCard,
   CRMSortIndicator,
 } from "@/shared/components/crm";
 import { cn } from "@/shared/lib/utils";
@@ -155,16 +153,3 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
 };
 
 export default PerformanceTable;
-
-
-
-
-
-
-
-
-
-
-
-
-

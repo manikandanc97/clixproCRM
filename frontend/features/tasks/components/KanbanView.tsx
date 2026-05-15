@@ -15,7 +15,6 @@ import {
   defaultDropAnimationSideEffects
 } from "@dnd-kit/core";
 import { 
-  arrayMove, 
   sortableKeyboardCoordinates, 
 } from "@dnd-kit/sortable";
 import { TaskType } from "@/shared/types/task";
@@ -32,7 +31,7 @@ interface KanbanViewProps {
 export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
   const statuses: TaskType["status"][] = ["Pending", "In Progress", "Completed"];
   const [activeTask, setActiveTask] = useState<TaskType | null>(null);
-  const { updateTask, setTasks } = useCRMStore();
+  const { updateTask } = useCRMStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -83,12 +82,12 @@ export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    const { over } = event;
     setActiveTask(null);
 
     if (!over) return;
 
-    const activeId = active.id;
+    const activeId = event.active.id;
     const overId = over.id;
 
     if (activeId !== overId) {
@@ -142,16 +141,3 @@ export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
     </div>
   );
 };
-
-
-
-
-
-
-
-
-
-
-
-
-

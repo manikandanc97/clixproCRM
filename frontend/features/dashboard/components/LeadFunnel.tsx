@@ -7,8 +7,9 @@ import { Filter, ChevronRight } from "lucide-react";
 import { useAnalytics } from "@/shared/hooks/use-analytics";
 import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
 
-export default function LeadFunnel() {
-  const { data, isLoading: loading } = useAnalytics();
+export default function LeadFunnel({ loading: externalLoading }: { loading?: boolean }) {
+  const { data, isLoading: internalLoading } = useAnalytics();
+  const loading = externalLoading || internalLoading;
   const stages = data?.pipelineStages ?? [];
 
   if (loading) {

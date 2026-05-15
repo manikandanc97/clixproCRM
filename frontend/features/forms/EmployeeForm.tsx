@@ -36,7 +36,7 @@ export const EmployeeForm = ({ onSuccess, onCancel }: EmployeeFormProps) => {
       toast.success("Employee created successfully");
       onSuccess?.();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create employee");
     },
   });
@@ -82,7 +82,7 @@ export const EmployeeForm = ({ onSuccess, onCancel }: EmployeeFormProps) => {
           <Button type="button" variant="outline" onClick={onCancel} disabled={mutation.isPending}>
             Cancel
           </Button>
-          <Button type="submit" disabled={mutation.isPending} className="min-w-32">
+          <Button type="submit" disabled={mutation.isPending} className="min-w-32 font-bold">
             {mutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

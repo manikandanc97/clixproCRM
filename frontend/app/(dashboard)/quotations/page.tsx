@@ -34,9 +34,12 @@ const QuotationsPage = () => {
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
-      setIsAddModalOpen(true);
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, "", newUrl);
+      const timer = setTimeout(() => {
+        setIsAddModalOpen(true);
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [searchParams]);
 
@@ -212,15 +215,3 @@ const QuotationsPage = () => {
 };
 
 export default QuotationsPage;
-
-
-
-
-
-
-
-
-
-
-
-

@@ -7,7 +7,6 @@ import {
 } from "@dnd-kit/sortable";
 import { TaskType } from "@/shared/types/task";
 import { Badge } from "@/shared/ui/badge";
-import { Button } from "@/shared/ui/button";
 import { Plus } from "lucide-react";
 import { TaskKanbanCard } from "./TaskKanbanCard";
 import { toast } from "sonner";
@@ -75,15 +74,3 @@ export const TaskKanbanColumn = ({ id, title, tasks, onTaskClick }: TaskKanbanCo
     </div>
   );
 };
-
-
-
-
-
-
-
-
-
-
-
-

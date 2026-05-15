@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { CRMCard } from "./CRMCard";
-import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { Area, AreaChart } from "recharts";
 import { cn } from "@/shared/lib/utils";
 
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -222,14 +222,3 @@ export const CRMMetricCard = ({
     </CRMCard>
   );
 };
-
-
-
-
-
-
-
-
-
-
-

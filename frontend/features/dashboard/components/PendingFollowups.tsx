@@ -10,7 +10,7 @@ import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 
 export default function PendingFollowups() {
-  const { data, isLoading: loading } = useTasks();
+  const { data } = useTasks();
   const allTasks = data?.tasks ?? [];
   const pendingTasks = allTasks.filter(t => t.status !== "Completed").slice(0, 4);
 
@@ -24,18 +24,6 @@ export default function PendingFollowups() {
       return dateStr;
     }
   };
-
-  if (loading) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full"
-      >
-        <DashboardWidgetSkeleton rows={3} />
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div

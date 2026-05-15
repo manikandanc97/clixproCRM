@@ -9,20 +9,8 @@ import { useTeamPerformance } from "@/shared/hooks/use-dashboard";
 import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
 
 export default function TeamPerformance() {
-  const { data, isLoading: loading } = useTeamPerformance();
+  const { data } = useTeamPerformance();
   const team = data?.team ?? [];
-
-  if (loading) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full h-full"
-      >
-        <DashboardWidgetSkeleton rows={3} />
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div

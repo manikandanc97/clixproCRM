@@ -12,22 +12,17 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "@/features/dashboard/components/SidebarContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/features/auth/components/auth-provider";
-import { getRoleMenu, normalizeRole } from "@/shared/lib/auth/rbac";
+import { getRoleMenu } from "@/shared/lib/auth/rbac";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { isCollapsed, toggleSidebar } = useSidebar();
-  const { user } = useAuth();
+  const { user, access } = useAuth();
 
   const menuGroups = getRoleMenu(user?.role);
-  const roleName =
-    user?.roleName ||
-    normalizeRole(user?.role)
-      .split("_")
-      .map((value) => value.charAt(0).toUpperCase() + value.slice(1))
-      .join(" ");
+  const roleName = access.roleName;
 
   return (
     <motion.aside 
@@ -188,15 +183,3 @@ export default function Sidebar() {
     </motion.aside>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

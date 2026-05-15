@@ -38,36 +38,28 @@ export const ChartContainer = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if the container has valid dimensions before rendering the chart
-    const checkDimensions = () => {
-      if (containerRef.current) {
-        const { clientWidth, clientHeight } = containerRef.current;
-        // Recharts needs dimensions > 0 to render without warnings
-        if (clientWidth > 0 && clientHeight > 0) {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
           setIsReady(true);
-          return true;
         }
       }
-      return false;
-    };
+    });
 
-    // Initial check
-    if (!checkDimensions()) {
-      // If dimensions are not ready (e.g. hidden tab), poll until they are
-      const interval = setInterval(() => {
-        if (checkDimensions()) {
-          clearInterval(interval);
-        }
-      }, 100);
-      
-      // Also listen for window resize which might fix dimensions
-      window.addEventListener('resize', checkDimensions);
-      
-      return () => {
-        clearInterval(interval);
-        window.removeEventListener('resize', checkDimensions);
-      };
+    observer.observe(containerRef.current);
+
+    // Initial check in case it's already sized
+    const { clientWidth, clientHeight } = containerRef.current;
+    if (clientWidth > 0 && clientHeight > 0) {
+      setIsReady(true);
     }
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   const containerStyle = {
@@ -82,9 +74,9 @@ export const ChartContainer = ({
       style={containerStyle}
     >
       {(!isReady || loading) ? (
-        <div className="absolute inset-0 flex flex-col gap-4 p-4 bg-card/50 rounded-xl animate-pulse">
-          <Skeleton className="h-4 w-1/4" />
-          <Skeleton className="flex-1 w-full rounded-xl" />
+        <div className="absolute inset-0 flex flex-col gap-4 p-4 rounded-xl skeleton overflow-hidden">
+          <div className="h-4 w-1/4 bg-foreground/5 rounded animate-pulse" />
+          <div className="flex-1 w-full rounded-xl bg-foreground/5 animate-pulse" />
         </div>
       ) : !hasData ? (
         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/5 rounded-xl border border-dashed border-border/50">

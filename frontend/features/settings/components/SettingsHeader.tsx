@@ -1,10 +1,8 @@
 "use client";
 
 import { Save, Loader2, CheckCircle2, Settings2 } from "lucide-react";
-import { Button } from "@/shared/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
 import { CRMPageHeader } from "@/shared/components/crm";
 
 interface SettingsHeaderProps {
@@ -86,15 +84,3 @@ const SettingsHeader = ({ activeSection }: SettingsHeaderProps) => {
 };
 
 export default SettingsHeader;
-
-
-
-
-
-
-
-
-
-
-
-

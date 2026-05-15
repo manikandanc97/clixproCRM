@@ -13,11 +13,8 @@ import {
   ExternalLink, 
   Trash2, 
   Eye, 
-  Sparkles,
-  Zap,
   Copy,
   Clock,
-  ArrowUpRight,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -174,7 +171,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
 
         <CRMTableBody>
           <AnimatePresence mode="popLayout">
-            {sortedQuotations.map((quote, index) => (
+            {sortedQuotations.map((quote) => (
               <CRMTableRow
                 key={quote.id}
                 onClick={() => setSelectedQuote(quote)}
@@ -287,15 +284,3 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
 };
 
 export default QuotationsTable;
-
-
-
-
-
-
-
-
-
-
-
-

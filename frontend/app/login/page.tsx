@@ -1,9 +1,16 @@
+/**
+ * Login Page Component
+ *
+ * Handles user authentication with both regular login form and demo account access.
+ * Uses the same auth flow for both regular and demo logins.
+ */
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 
 import AuthLayout from "@/features/auth/components/auth-layout";
+import DemoAccountsSection from "@/features/auth/components/demo-accounts-section";
 import { getApiErrorMessage } from "@/shared/lib/api/error";
 
 import { Button } from "@/shared/ui/button";
@@ -22,23 +29,38 @@ export default function LoginPage() {
   // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Loading state
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Handles regular user login
+   */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       setLoading(true);
       await login(email, password);
-
       toast.success("Login successful");
-      router.push("/dashboard");
+      // Redirect is handled by PublicRoute once auth state is confirmed.
     } catch (error: unknown) {
+      console.error("Login failed:", error);
       toast.error(getApiErrorMessage(error, "Login failed"));
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Handles demo account login
+   * Uses the same login function as regular login
+   */
+  const handleDemoLogin = async (demoEmail: string, demoPassword: string) => {
+    try {
+      await login(demoEmail, demoPassword);
+      // Redirect is handled by PublicRoute once auth state is confirmed.
+    } catch (error: unknown) {
+      console.error("Demo login failed:", error);
+      throw error; // Re-throw to let DemoAccountsSection handle the toast
     }
   };
 
@@ -55,7 +77,6 @@ export default function LoginPage() {
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email Address</Label>
-
             <Input
               id="email"
               type="email"
@@ -63,6 +84,7 @@ export default function LoginPage() {
               className="rounded-xl h-11"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
           </div>
 
@@ -70,7 +92,6 @@ export default function LoginPage() {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label htmlFor="password">Password</Label>
-
               <Link
                 href="/forgot-password"
                 className="text-emerald-700 text-sm hover:underline"
@@ -78,7 +99,6 @@ export default function LoginPage() {
                 Forgot Password?
               </Link>
             </div>
-
             <Input
               id="password"
               type="password"
@@ -86,13 +106,13 @@ export default function LoginPage() {
               className="rounded-xl h-11"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
 
           {/* Remember */}
           <div className="flex items-center space-x-2">
             <Checkbox id="remember" />
-
             <Label
               htmlFor="remember"
               className="font-normal text-muted-foreground text-sm"
@@ -111,6 +131,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
+        <DemoAccountsSection onDemoLogin={handleDemoLogin} />
       </AuthLayout>
     </PublicRoute>
   );

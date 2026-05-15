@@ -5,13 +5,9 @@ import {
   Shield, 
   ShieldAlert, 
   ShieldCheck, 
-  UserCog, 
   Plus,
-  Settings,
-  MoreVertical,
   CheckCircle2,
   XCircle,
-  Eye,
   Edit2,
   Trash2,
   Lock,
@@ -48,7 +44,6 @@ import {
   SheetDescription 
 } from "@/shared/ui/sheet";
 import { toast } from "sonner";
-import { Checkbox } from "@/shared/ui/checkbox";
 import { FormModal } from "@/shared/components/form-modal";
 import { RoleForm } from "@/features/forms/RoleForm";
 
@@ -69,9 +64,12 @@ export default function RoleManagementPage() {
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
-      setIsAddModalOpen(true);
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, "", newUrl);
+      const timer = setTimeout(() => {
+        setIsAddModalOpen(true);
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [searchParams]);
 
@@ -332,15 +330,3 @@ export default function RoleManagementPage() {
     </CRMPageContainer>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

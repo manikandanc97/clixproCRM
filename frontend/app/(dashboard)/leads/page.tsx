@@ -5,15 +5,11 @@ import LeadsTable from "@/features/leads/components/LeadsTable";
 import { 
   SearchX, 
   UserPlus, 
-  XCircle, 
   Mail, 
-  Phone, 
-  ArrowUpRight, 
   Sparkles, 
   Zap, 
   Download, 
   Users, 
-  Filter,
   TrendingUp,
   ChevronRight
 } from "lucide-react";
@@ -27,7 +23,6 @@ import {
   CRMMetricCard, 
   CRMToolbar, 
   CRMCard,
-  CRMAIInsight,
   CRMPageContainer,
   CRMMetricsGrid
 } from "@/shared/components/crm";
@@ -36,7 +31,7 @@ import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
 import { LeadForm } from "@/features/forms/LeadForm";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 const LeadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,19 +39,22 @@ const LeadsPage = () => {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   
   const { leads, setLeads } = useCRMStore();
-  const safeLeads = Array.isArray(leads) ? leads : [];
+  
+  const safeLeads = useMemo(() => Array.isArray(leads) ? leads : [], [leads]);
+  
   const { data, isLoading: loading, error, refetch } = useLeads();
 
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
-      setIsAddModalOpen(true);
-      // Remove query param without refreshing to avoid re-opening
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, "", newUrl);
+      const timer = setTimeout(() => {
+        setIsAddModalOpen(true);
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [searchParams]);
 
@@ -301,15 +299,3 @@ const LeadsPage = () => {
 };
 
 export default LeadsPage;
-
-
-
-
-
-
-
-
-
-
-
-

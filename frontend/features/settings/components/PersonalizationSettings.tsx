@@ -11,13 +11,11 @@ import {
   Maximize2, 
   CheckCircle2,
   Sidebar,
-  Zap,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { Label } from "@/shared/ui/label";
 import { useTheme } from "next-themes";
-import { motion } from "framer-motion";
 import { cn } from "@/shared/lib/utils";
 import { CRMCard } from "@/shared/components/crm";
 import { useSettings, type AccentColor } from "@/features/dashboard/components/SettingsContext";
@@ -182,15 +180,3 @@ const PersonalizationSettings = () => {
 };
 
 export default PersonalizationSettings;
-
-
-
-
-
-
-
-
-
-
-
-

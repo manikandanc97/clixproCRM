@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import SettingsHeader from "@/features/settings/components/SettingsHeader";
 import ProfileSettings from "@/features/settings/components/ProfileSettings";
@@ -21,17 +20,9 @@ const SettingsPage = () => {
   const router = useRouter();
   const sectionParam = searchParams.get("section");
   
-  const [activeSection, setActiveSection] = useState(sectionParam || "profile");
-
-  // Sync state with URL parameter
-  useEffect(() => {
-    if (sectionParam && sectionParam !== activeSection) {
-      setActiveSection(sectionParam);
-    }
-  }, [sectionParam, activeSection]);
+  const activeSection = sectionParam || "profile";
 
   const handleSectionChange = (section: string) => {
-    setActiveSection(section);
     router.push(`/settings?section=${section}`, { scroll: false });
   };
 

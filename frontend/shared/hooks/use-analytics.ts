@@ -2,12 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchAnalyticsData } from "@/shared/lib/api/crm";
+import { useAuth } from "@/features/auth/components/auth-provider";
 
 export function useAnalytics() {
+  const { isAuthenticated, token } = useAuth();
   return useQuery({
-    queryKey: ["analytics"],
+    queryKey: ["analytics", token],
     queryFn: fetchAnalyticsData,
-    refetchInterval: 30000,
+    enabled: isAuthenticated && !!token,
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
 }
 

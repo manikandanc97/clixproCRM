@@ -6,19 +6,10 @@ import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Flame, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useHotLeads } from "@/shared/hooks/use-dashboard";
-import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
 
 export default function HotLeads() {
-  const { data, isLoading: loading } = useHotLeads();
+  const { data } = useHotLeads();
   const leads = data?.leads ?? [];
-
-  if (loading) {
-    return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full h-full">
-        <DashboardWidgetSkeleton rows={4} />
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div

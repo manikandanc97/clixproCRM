@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { 
   AreaChart, 
   Area, 
@@ -8,8 +8,6 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  ReferenceLine
 } from "recharts";
 import { MoreHorizontal, Download, Filter, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/ui/card";
@@ -143,15 +141,3 @@ const RevenueChart = ({ data, loading }: RevenueChartProps) => {
 };
 
 export default React.memo(RevenueChart);
-
-
-
-
-
-
-
-
-
-
-
-

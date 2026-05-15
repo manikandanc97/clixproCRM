@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import {
   Lock,
-  ShieldCheck,
   Smartphone,
   History,
   Globe,
@@ -19,6 +18,7 @@ import { Progress } from "@/shared/ui/progress";
 import { CRMCard } from "@/shared/components/crm";
 import { EmptyStateCard, PageErrorState, PageLoadingState } from "@/shared/components/page-states";
 import { useSecuritySettings } from "@/shared/hooks/use-settings";
+import { SecuritySessionType, SecurityAuditEventType } from "@/shared/types/settings";
 
 const SecuritySettings = () => {
   const [passwordStrength, setPasswordStrength] = useState(65);
@@ -139,7 +139,7 @@ const SecuritySettings = () => {
           <div className="space-y-1.5 mb-4">
             {activeSessions.length === 0 ? (
               <EmptyStateCard title="No active sessions" message="Session records will appear when the backend provides them." />
-            ) : activeSessions.map((session) => (
+            ) : activeSessions.map((session: SecuritySessionType) => (
               <div
                 key={session.id}
                 className="flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-border/50 hover:bg-muted/30 transition-all group"
@@ -187,7 +187,7 @@ const SecuritySettings = () => {
           <div className="space-y-1">
             {loginHistory.length === 0 ? (
               <EmptyStateCard title="No audit events" message="Security audit events will appear when they exist in the database." />
-            ) : loginHistory.map((item) => (
+            ) : loginHistory.map((item: SecurityAuditEventType) => (
               <div
                 key={item.id}
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/40"
@@ -216,15 +216,3 @@ const SecuritySettings = () => {
 };
 
 export default SecuritySettings;
-
-
-
-
-
-
-
-
-
-
-
-

@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { motion } from "framer-motion";
-import { Target, TrendingUp, Calendar, ArrowUpRight } from "lucide-react";
+import { Target, Calendar, ArrowUpRight } from "lucide-react";
 import { EmptyStateCard } from "@/shared/components/page-states";
 import { RevenueTargetType } from "@/shared/types/report";
 
@@ -81,15 +81,3 @@ const RevenueTarget = ({ data }: { data: RevenueTargetType | null }) => {
 };
 
 export default RevenueTarget;
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,14 +1,14 @@
 import client from "./client";
 import { ApiResponseType } from "@/shared/types/api";
-import { CustomersDataType } from "@/shared/types/customer";
+import { CustomersDataType, CustomerType } from "@/shared/types/customer";
 import { DashboardDataType } from "@/shared/types/dashboard";
-import { LeadsDataType } from "@/shared/types/lead";
+import { LeadsDataType, LeadType } from "@/shared/types/lead";
 import { PipelineDataType } from "@/shared/types/pipeline";
-import { QuotationsDataType } from "@/shared/types/quotation";
+import { QuotationsDataType, QuotationType } from "@/shared/types/quotation";
 import { ReportsDataType } from "@/shared/types/report";
-import { TasksDataType } from "@/shared/types/task";
+import { TasksDataType, TaskType } from "@/shared/types/task";
 import { AnalyticsDataType } from "@/shared/types/analytics";
-import { EmployeesDataType, RolesDataType } from "@/shared/types/employee";
+import { EmployeesDataType, RolesDataType, EmployeeType } from "@/shared/types/employee";
 import { MeetingsDataType } from "@/shared/types/meeting";
 import {
   HotLeadsDataType,
@@ -145,33 +145,22 @@ export function fetchNotificationSettings() {
 }
 
 // ─── Creation endpoints ──────────────────────────────────────────────────────
-export function createLead(data: any) {
-  return unwrapResponse<any>(client.post("/crm/leads", data));
+export function createLead(data: Partial<LeadType>) {
+  return unwrapResponse<LeadType>(client.post("/crm/leads", data));
 }
 
-export function createCustomer(data: any) {
-  return unwrapResponse<any>(client.post("/crm/customers", data));
+export function createCustomer(data: Partial<CustomerType>) {
+  return unwrapResponse<CustomerType>(client.post("/crm/customers", data));
 }
 
-export function createTask(data: any) {
-  return unwrapResponse<any>(client.post("/crm/tasks", data));
+export function createTask(data: Partial<TaskType>) {
+  return unwrapResponse<TaskType>(client.post("/crm/tasks", data));
 }
 
-export function createQuotation(data: any) {
-  return unwrapResponse<any>(client.post("/crm/quotations", data));
+export function createQuotation(data: Partial<QuotationType>) {
+  return unwrapResponse<QuotationType>(client.post("/crm/quotations", data));
 }
 
-export function createEmployee(data: any) {
-  return unwrapResponse<any>(client.post("/crm/employees", data));
+export function createEmployee(data: Partial<EmployeeType>) {
+  return unwrapResponse<EmployeeType>(client.post("/crm/employees", data));
 }
-
-
-
-
-
-
-
-
-
-
-

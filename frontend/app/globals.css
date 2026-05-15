@@ -584,6 +584,16 @@
     }
   }
 
+  .dark .skeleton {
+    background: linear-gradient(
+      90deg,
+      oklch(0.24 0.018 265) 25%,
+      oklch(0.28 0.02 265) 50%,
+      oklch(0.24 0.018 265) 75%
+    );
+    background-size: 200% 100%;
+  }
+
   /* Stat card accents */
   .stat-accent-indigo {
     background: linear-gradient(

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { 
   BarChart, 
   Bar, 
@@ -8,10 +7,9 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
   Cell
 } from "recharts";
-import { MoreHorizontal, BarChart3, ArrowUpRight } from "lucide-react";
+import { MoreHorizontal, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { ConversionChartPointType } from "@/shared/types/report";
@@ -120,15 +118,3 @@ const ConversionChart = ({ data, loading }: ConversionChartProps) => {
 };
 
 export default ConversionChart;
-
-
-
-
-
-
-
-
-
-
-
-

@@ -23,6 +23,7 @@
     "db:inspect": "node scripts/inspect-db.js",
     "db:inspect:migrations": "node scripts/inspect-migrations.js",
     "db:sync": "node scripts/sync-schema.js",
+    "db:seed:demo": "node scripts/seed-demo-users.js",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },

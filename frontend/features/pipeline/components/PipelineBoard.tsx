@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   DndContext, 
   DragOverlay, 
@@ -16,9 +16,7 @@ import {
 } from "@dnd-kit/core";
 import { 
   arrayMove, 
-  SortableContext, 
   sortableKeyboardCoordinates, 
-  horizontalListSortingStrategy 
 } from "@dnd-kit/sortable";
 import PipelineColumn from "./PipelineColumn";
 import PipelineCard from "./PipelineCard";
@@ -164,16 +162,3 @@ const PipelineBoard = ({ items }: PipelineBoardProps) => {
 };
 
 export default PipelineBoard;
-
-
-
-
-
-
-
-
-
-
-
-
-

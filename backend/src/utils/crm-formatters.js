@@ -183,6 +183,11 @@ function formatRelativeDate(date, options = {}) {
 
   const now = new Date();
   const input = new Date(date);
+  
+  if (isNaN(input.getTime())) {
+    return fallback;
+  }
+
   const currentDayStart = startOfDay(now);
   const inputDayStart = startOfDay(input);
   const dayDifference = Math.round(
@@ -217,7 +222,13 @@ function formatDate(date, fallback = "Not available") {
     return fallback;
   }
 
-  return longDateFormatter.format(new Date(date));
+  const input = new Date(date);
+  if (isNaN(input.getTime())) {
+    return fallback;
+  }
+
+  return longDateFormatter.format(input);
+
 }
 
 function getStatusLabel(labels, value) {

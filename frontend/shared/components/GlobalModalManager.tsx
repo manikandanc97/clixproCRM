@@ -6,10 +6,6 @@ import { FormModal } from "@/shared/components/form-modal";
 import { MeetingForm } from "@/features/forms/MeetingForm";
 import { LeadForm } from "@/features/forms/LeadForm";
 import { CustomerForm } from "@/features/forms/CustomerForm";
-import { TaskForm } from "@/features/forms/TaskForm";
-import { QuoteForm } from "@/features/forms/QuoteForm";
-import { EmployeeForm } from "@/features/forms/EmployeeForm";
-import { RoleForm } from "@/features/forms/RoleForm";
 
 export const GlobalModalManager = () => {
   const { activeModal, closeModal } = useGlobalModalStore();

@@ -51,7 +51,35 @@ const permissionMiddleware = (...requiredPermissions) => {
   };
 };
 
+const hasAnyPermissionMiddleware = (...requiredPermissions) => {
+  return (req, res, next) => {
+    try {
+      const userRole = req.user.role;
+      const access = getRoleAccess(userRole);
+      const hasAtLeastOne = requiredPermissions.some((permission) =>
+        access.permissions.includes(permission),
+      );
+
+      if (!hasAtLeastOne) {
+        return res.status(403).json({
+          success: false,
+          message: "Access forbidden: permission denied",
+        });
+      }
+
+      req.userAccess = access;
+      next();
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Permission validation failed",
+      });
+    }
+  };
+};
+
 module.exports = {
   roleMiddleware,
   permissionMiddleware,
+  hasAnyPermissionMiddleware,
 };

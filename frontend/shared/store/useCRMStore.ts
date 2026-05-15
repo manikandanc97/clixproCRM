@@ -54,6 +54,7 @@ interface CRMState {
   addNotification: (notification: Notification) => void;
   clearNotifications: () => void;
   markNotificationAsRead: (id: string) => void;
+  reset: () => void;
 }
 
 interface Notification {
@@ -137,6 +138,14 @@ export const useCRMStore = create<CRMState>()(
       markNotificationAsRead: (id) => set((state) => ({
         notifications: state.notifications.map((n) => n.id === id ? { ...n, read: true } : n)
       })),
+      reset: () => set({
+        leads: [],
+        customers: [],
+        tasks: [],
+        pipelineItems: [],
+        quotations: [],
+        notifications: [],
+      }),
     }),
     {
       name: 'crm-storage',

@@ -4,16 +4,8 @@ import { useState } from "react";
 import { 
   Users, 
   UserPlus, 
-  Search, 
-  Filter, 
   MoreVertical, 
-  Mail, 
-  Phone,
-  Briefcase,
-  CheckCircle2,
-  Clock,
-  TrendingUp,
-  BarChart3
+  TrendingUp
 } from "lucide-react";
 import { 
   CRMPageContainer, 
@@ -62,9 +54,13 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
-      setIsAddModalOpen(true);
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, "", newUrl);
+      // Avoid synchronous setState during render/effect cycle that might cause cascading renders
+      const timer = setTimeout(() => {
+        setIsAddModalOpen(true);
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [searchParams]);
 
@@ -246,15 +242,3 @@ export default function EmployeesPage() {
     </CRMPageContainer>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

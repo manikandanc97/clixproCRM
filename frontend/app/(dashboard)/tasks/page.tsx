@@ -57,25 +57,23 @@ const STATUS_FILTERS = [
 ];
 
 const TasksPage = () => {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<TaskViewMode>("list");
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(searchParams.get("new") === "true");
 
   const { tasks, setTasks } = useCRMStore();
-  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const safeTasks = useMemo(() => Array.isArray(tasks) ? tasks : [], [tasks]);
   const { data, isLoading: loading, error, refetch } = useTasks();
-
-  const searchParams = useSearchParams();
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
-      setIsAddModalOpen(true);
       const newUrl = window.location.pathname;
       window.history.replaceState({}, "", newUrl);
     }
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     if (data?.tasks && safeTasks.length === 0) {
@@ -291,15 +289,3 @@ const TasksPage = () => {
 };
 
 export default TasksPage;
-
-
-
-
-
-
-
-
-
-
-
-

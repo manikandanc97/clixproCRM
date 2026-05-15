@@ -14,6 +14,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { CRMCard } from "@/shared/components/crm";
+import Image from "next/image";
 
 import { useWorkspace } from "@/shared/hooks/use-settings";
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
@@ -29,6 +30,8 @@ const WorkspaceSettings = () => {
   if (error) {
     return <PageErrorState title="Workspace settings unavailable" message={(error as Error).message} onRetry={() => { void refetch(); }} />;
   }
+
+  const workspaceLogo = logo ?? workspace?.logo;
 
   return (
     <div className="space-y-5">
@@ -52,17 +55,24 @@ const WorkspaceSettings = () => {
           <div className="flex flex-col sm:flex-row items-start gap-5">
             <div className="relative group shrink-0">
               <div className="w-20 h-20 rounded-xl bg-muted border border-dashed border-border flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/50">
-                {(logo || workspace?.logo) ? (
-                  <img src={(logo ?? workspace?.logo) || undefined} alt="Workspace Logo" className="w-full h-full object-cover" />
+                {workspaceLogo ? (
+                  <div className="relative w-full h-full">
+                    <Image 
+                      src={workspaceLogo} 
+                      alt="Workspace Logo" 
+                      fill 
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <Building2 className="w-7 h-7 text-muted-foreground/50" />
                 )}
-                <div className="absolute inset-0 bg-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                <div className="absolute inset-0 bg-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl z-10">
                   <Upload className="w-4 h-4 text-white" />
                 </div>
                 <input
                   type="file"
-                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  className="absolute inset-0 opacity-0 cursor-pointer z-20"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) setLogo(URL.createObjectURL(file));
@@ -165,7 +175,7 @@ const WorkspaceSettings = () => {
             </div>
         </div>
       </CRMCard>
-
+  
       {/* Danger Zone */}
       <CRMCard className="border-destructive/20 bg-destructive/5 hover:border-destructive/30">
         <div className="flex items-center justify-between">
@@ -188,15 +198,3 @@ const WorkspaceSettings = () => {
 };
 
 export default WorkspaceSettings;
-
-
-
-
-
-
-
-
-
-
-
-

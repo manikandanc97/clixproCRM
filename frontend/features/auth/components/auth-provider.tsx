@@ -2,8 +2,21 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { fetchCurrentUser, loginUser, logoutUser as clearSessionToken } from "@/shared/lib/api/auth";
-import { defaultRoleAccess, normalizeRole, type RoleAccess } from "@/shared/lib/auth/rbac";
+import { 
+  defaultRoleAccess, 
+  normalizeRole, 
+  type RoleAccess, 
+  CRM_ROLES, 
+  getRoleMenu,
+  roleRouteConfig,
+  type RoleAccess,
+} from "@/shared/lib/auth/rbac";
+import { useCRMStore } from "@/shared/store/useCRMStore";
+
+const STORAGE_TOKEN_KEY = "clientrise_token";
+const STORAGE_USER_KEY = "clientrise_user";
 
 type AuthUser = {
   id: string;
@@ -18,12 +31,16 @@ type AuthUser = {
   description?: string;
 };
 
+type AuthStatus = "initializing" | "authenticated" | "unauthenticated";
+
 type AuthContextState = {
   user: AuthUser | null;
   access: RoleAccess;
   token: string | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isInitializing: boolean;
+  isHydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -37,54 +54,122 @@ function buildAccess(user: AuthUser | null): RoleAccess {
     return defaultRoleAccess;
   }
 
+  const roleKey = normalizeRole(user.role);
+  const allowedRoutes = roleRouteConfig[roleKey] || ["/dashboard"];
+
   return {
     roleName:
       user.roleName ||
-      normalizeRole(user.role)
+      roleKey
         .split("_")
         .map((value) => value.charAt(0).toUpperCase() + value.slice(1))
         .join(" "),
     description: user.description || defaultRoleAccess.description,
     permissions: user.permissions || [],
-    routes: user.routes || ["/dashboard"],
+    routes: allowedRoutes,
     dashboardWidgets: user.dashboardWidgets || [],
     analyticsVisibility: user.analyticsVisibility || "self",
   };
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window === "undefined") {
-      return null;
-    }
+function readLocalStorage<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
 
-    return localStorage.getItem("token");
-  });
+function writeLocalStorage(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+  } catch {
+  }
+}
+
+function clearAuthStorage(): void {
+  try {
+    localStorage.removeItem(STORAGE_TOKEN_KEY);
+    localStorage.removeItem(STORAGE_USER_KEY);
+    localStorage.removeItem("token");
+  } catch {
+  }
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
+  const [status, setStatus] = useState<AuthStatus>("initializing");
+  const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
-  const loading = Boolean(token) && !user;
+  const [loading, setLoading] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  const isInitializing = status === "initializing";
 
   const logout = useCallback(() => {
+    clearAuthStorage();
     clearSessionToken();
     setToken(null);
     setUser(null);
-  }, []);
+    setStatus("unauthenticated");
+    queryClient.clear(); // Clear all cached data on logout
+    useCRMStore.getState().reset(); // Reset CRM store
+  }, [queryClient]);
 
-  const refreshUser = useCallback(async () => {
-    try {
-      const currentUser = await fetchCurrentUser();
-      setUser(currentUser);
-    } catch {
+  const refreshUser = useCallback(async (currentToken?: string | null) => {
+    const activeToken = currentToken ?? token;
+    if (!activeToken) {
       logout();
-    }
-  }, [logout]);
-
-  useEffect(() => {
-    if (!token) {
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refreshUser();
-  }, [refreshUser, token]);
+
+    try {
+      setLoading(true);
+      const currentUser = await fetchCurrentUser();
+      setUser(currentUser);
+      writeLocalStorage(STORAGE_USER_KEY, currentUser);
+      setStatus("authenticated");
+    } catch (error: unknown) {
+      const httpStatus = (error as { response?: { status?: number } })?.response?.status;
+      if (httpStatus === 401) {
+        logout();
+      } else {
+        setStatus("authenticated");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [logout, token]);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem(STORAGE_TOKEN_KEY) 
+      ?? localStorage.getItem("token");
+    
+    if (!storedToken) {
+      console.log("[Auth] No token found in storage, setting unauthenticated.");
+      setStatus("unauthenticated");
+      setIsHydrated(true);
+      return;
+    }
+
+    const cachedUser = readLocalStorage<AuthUser>(STORAGE_USER_KEY);
+    console.log(`[Auth] Token found, cachedUser: ${cachedUser ? "Yes" : "No"}`);
+    
+    // Batch these updates
+    setToken(storedToken);
+
+    if (cachedUser) {
+      setUser(cachedUser);
+      setStatus("authenticated");
+      setIsHydrated(true);
+      // Still refresh in background to ensure we have the latest permissions/widgets
+      void refreshUser(storedToken);
+    } else {
+      refreshUser(storedToken).finally(() => setIsHydrated(true));
+    }
+  }, []);
 
   useEffect(() => {
     const handleAuthExpired = () => logout();
@@ -93,25 +178,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [logout]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const response = await loginUser({ email, password });
-    localStorage.setItem("token", response.token);
-    setToken(response.token);
-    setUser(response.user);
-  }, []);
+    try {
+      setLoading(true);
+      const response = await loginUser({ email, password });
+      
+      // Save to storage
+      writeLocalStorage(STORAGE_TOKEN_KEY, response.token);
+      writeLocalStorage("token", response.token);
+      writeLocalStorage(STORAGE_USER_KEY, response.user);
+      
+      // Update state
+      setToken(response.token);
+      setUser(response.user);
+      setStatus("authenticated");
+      
+      // Clear cache to ensure fresh data for the new user
+      await queryClient.clear();
+    } finally {
+      setLoading(false);
+    }
+  }, [queryClient]);
 
   const value = useMemo<AuthContextState>(
     () => ({
       user,
       access: buildAccess(user),
       token,
-      loading,
-      isAuthenticated: Boolean(token && user),
+      loading: loading || status === "initializing",
+      isAuthenticated: status === "authenticated",
+      isInitializing: status === "initializing",
+      isHydrated,
       login,
       logout,
       refreshUser,
-      hasPermission: (permission: string) => Boolean(user?.permissions?.includes(permission)),
+      hasPermission: (permission: string) => {
+        if (!user) return false;
+        if (user.role === CRM_ROLES.SUPER_ADMIN) return true;
+        return Boolean(user.permissions?.includes(permission));
+      },
     }),
-    [loading, login, logout, refreshUser, token, user],
+    [status, token, user, login, logout, refreshUser, loading, isHydrated],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -122,18 +228,5 @@ export function useAuth() {
   if (!context) {
     throw new Error("useAuth must be used within AuthProvider");
   }
-
   return context;
 }
-
-
-
-
-
-
-
-
-
-
-
-

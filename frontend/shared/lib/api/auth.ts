@@ -51,7 +51,9 @@ export const fetchCurrentUser = async () => {
 
 export const logoutUser = () => {
   if (typeof window !== "undefined") {
-    localStorage.removeItem("token");
+    localStorage.removeItem("clientrise_token");
+    localStorage.removeItem("clientrise_user");
+    localStorage.removeItem("token"); // legacy key
   }
 };
 

@@ -3,7 +3,6 @@
 import { PipelineLeadType } from "@/shared/types/pipeline";
 import { 
   MoreHorizontal, 
-  Calendar, 
   DollarSign, 
   Flame, 
   Clock, 
@@ -27,6 +26,7 @@ import { motion } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/shared/lib/utils";
+import Image from "next/image";
 
 interface Props {
   item: PipelineLeadType;
@@ -136,11 +136,13 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
       </div>
 
       <div className="flex items-center gap-2 mb-5">
-        <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden">
-           <img 
+        <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden relative">
+           <Image 
              src={`https://api.dicebear.com/7.x/initials/svg?seed=${item.company}&backgroundColor=f1f5f9&textColor=64748b`} 
              alt={item.company}
-             className="w-full h-full object-cover"
+             fill
+             className="object-cover"
+             unoptimized
            />
         </div>
         <p className="text-[11px] font-bold text-muted-foreground truncate tracking-tight">{item.company}</p>
@@ -245,15 +247,3 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
 };
 
 export default PipelineCard;
-
-
-
-
-
-
-
-
-
-
-
-

@@ -24,6 +24,13 @@ const {
   toNumber,
 } = require("../utils/crm-formatters");
 
+// Simple in-memory cache for dashboard aggregations
+const dashboardCache = {
+  data: null,
+  timestamp: 0,
+  TTL: 60 * 1000, // 1 minute cache
+};
+
 function getMonthRanges() {
   const currentMonthStart = startOfMonth(new Date());
   const nextMonthStart = addMonths(currentMonthStart, 1);
@@ -40,11 +47,109 @@ function getRequestCurrency(req) {
   return getSupportedCurrency(req.headers["x-currency"]);
 }
 
-function sendServerError(res, error) {
-  console.error(error);
+function sendServerError(res, error, fallbackData = {}) {
+  console.error(`[CRM API ERROR]:`, error.message || error);
 
-  return sendDatabaseAwareError(res, error, "Unable to load CRM data");
+  // Return 500 instead of 200 so the frontend React Query knows it's an error and can retry.
+  // We still send the fallbackData in case the frontend wants to use it,
+  // but most importantly, the status code is NOT 200.
+  return res.status(500).json({
+    success: false,
+    message: error.message || "Internal server error",
+    data: fallbackData || {},
+    isFallback: true,
+  });
 }
+
+function buildEmptyDashboardResponse() {
+  return {
+    stats: [
+      { title: "Total Leads", value: "0", change: "0.0%", positive: true },
+      { title: "New Customers", value: "0", change: "0.0%", positive: true },
+      { title: "Revenue", value: "$0", change: "0.0%", positive: true },
+      { title: "Pending Tasks", value: "0", change: "0.0%", positive: true },
+    ],
+    recentActivities: [],
+    salesChartData: [],
+  };
+}
+
+function buildEmptyCustomersResponse() {
+  return { stats: [], customers: [] };
+}
+
+function buildEmptyLeadsResponse() {
+  return { summary: { total: 0 }, leads: [] };
+}
+
+function buildEmptyPipelineResponse() {
+  return { stats: [], items: [] };
+}
+
+function buildEmptyTasksResponse() {
+  return { stats: [], tasks: [] };
+}
+
+function buildEmptyQuotationsResponse() {
+  return { stats: [], quotations: [] };
+}
+
+function buildEmptyReportsResponse() {
+  return {
+    stats: [],
+    revenueChart: [],
+    conversionChart: [],
+    performance: [],
+    funnel: [],
+    activityHeatmap: [],
+    insights: [],
+    revenueTarget: null,
+  };
+}
+
+function buildEmptyAnalyticsResponse() {
+  return {
+    topStats: [],
+    revenueOverview: [],
+    leadsGrowth: [],
+    pipelineStages: [],
+    topAgents: [],
+    customerGrowth: [],
+    recentActivity: [],
+  };
+}
+
+function buildEmptyAiInsightsResponse() {
+  return {
+    stats: [],
+    recommendations: [],
+    alerts: [],
+    trends: [],
+    forecastData: [],
+    timeline: [],
+  };
+}
+
+function buildEmptyEmployeesResponse() {
+  return { employees: [], stats: [], activities: [] };
+}
+
+function buildEmptyRolesResponse() {
+  return { roles: [], stats: [], securityLogs: [] };
+}
+
+function buildEmptyNotificationsResponse() {
+  return { notifications: [] };
+}
+
+function sendFallbackDashboardResponse(res, error) {
+  return sendServerError(res, error, buildEmptyDashboardResponse());
+}
+
+function sendFallbackNotificationsResponse(res, error) {
+  return sendServerError(res, error, buildEmptyNotificationsResponse());
+}
+
 
 function buildMonthlyRevenueData(leads, monthCount = 7) {
   const wonLeads = leads.filter((lead) => lead.status === "WON");
@@ -242,143 +347,159 @@ function buildReportInsights(leads) {
 const getDashboardData = async (req, res) => {
   try {
     const currency = getRequestCurrency(req);
-    const { customers, leads, tasks, quotations } = await withCrmDataSource(
+    const { currentMonthStart, nextMonthStart, previousMonthStart } = getMonthRanges();
+
+    // Return cached data if valid
+    const nowTime = Date.now();
+    if (dashboardCache.data && (nowTime - dashboardCache.timestamp) < dashboardCache.TTL) {
+      return res.status(200).json({
+        success: true,
+        data: dashboardCache.data,
+        cached: true,
+      });
+    }
+
+    const data = await withCrmDataSource(
       "dashboard",
       async () => {
-        const [customers, leads, tasks, quotations] = await Promise.all([
-          prisma.customer.findMany({
-            select: {
-              createdAt: true,
-            },
+        // Parallel aggregations using allSettled for maximum resilience
+        const results = await Promise.allSettled([
+          // 0: Total Leads
+          prisma.lead.count(),
+          // 1: Current Month Leads
+          prisma.lead.count({ where: { createdAt: { gte: currentMonthStart, lt: nextMonthStart } } }),
+          // 2: Previous Month Leads
+          prisma.lead.count({ where: { createdAt: { gte: previousMonthStart, lt: currentMonthStart } } }),
+          // 3: Current Month Customers
+          prisma.customer.count({ where: { createdAt: { gte: currentMonthStart, lt: nextMonthStart } } }),
+          // 4: Previous Month Customers
+          prisma.customer.count({ where: { createdAt: { gte: previousMonthStart, lt: currentMonthStart } } }),
+          // 5: Current Revenue (Won Leads in current month)
+          prisma.lead.aggregate({
+            _sum: { value: true },
+            where: { status: "WON", updatedAt: { gte: currentMonthStart, lt: nextMonthStart } }
           }),
+          // 6: Previous Revenue (Won Leads in previous month)
+          prisma.lead.aggregate({
+            _sum: { value: true },
+            where: { status: "WON", updatedAt: { gte: previousMonthStart, lt: currentMonthStart } }
+          }),
+          // 7: Total Pending Tasks
+          prisma.task.count({ where: { status: { not: "COMPLETED" } } }),
+          // 8: Current Month Pending Tasks
+          prisma.task.count({ where: { status: { not: "COMPLETED" }, createdAt: { gte: currentMonthStart, lt: nextMonthStart } } }),
+          // 9: Previous Month Pending Tasks
+          prisma.task.count({ where: { status: { not: "COMPLETED" }, createdAt: { gte: previousMonthStart, lt: currentMonthStart } } }),
+          
+          // 10: Recent Leads
+          prisma.lead.findMany({ select: { id: true, name: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 5 }),
+          // 11: Recent Quotations
+          prisma.quotation.findMany({ select: { id: true, client: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 5 }),
+          // 12: Recent Completed Tasks
+          prisma.task.findMany({ select: { id: true, title: true, updatedAt: true }, where: { status: "COMPLETED" }, orderBy: { updatedAt: "desc" }, take: 5 }),
+          
+          // 13: Monthly Sales Data
           prisma.lead.findMany({
-            select: {
-              id: true,
-              name: true,
-              status: true,
-              value: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          }),
-          prisma.task.findMany({
-            select: {
-              id: true,
-              title: true,
-              status: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          }),
-          prisma.quotation.findMany({
-            select: {
-              id: true,
-              client: true,
-              createdAt: true,
-            },
-          }),
+            where: { status: "WON" },
+            select: { value: true, updatedAt: true, createdAt: true },
+            orderBy: { updatedAt: "desc" }
+          })
         ]);
 
-        return {
-          customers,
-          leads,
-          tasks,
-          quotations,
+        // Helper to extract value safely
+        const val = (idx, fallback = 0) => results[idx].status === 'fulfilled' ? results[idx].value : fallback;
+
+        const totalLeads = val(0);
+        const currentMonthLeads = val(1);
+        const previousMonthLeads = val(2);
+        const currentMonthCustomers = val(3);
+        const previousMonthCustomers = val(4);
+        const currentRevenueAgg = val(5, { _sum: { value: 0 } });
+        const previousRevenueAgg = val(6, { _sum: { value: 0 } });
+        const totalPendingTasks = val(7);
+        const currentMonthPendingTasks = val(8);
+        const previousMonthPendingTasks = val(9);
+        const recentLeads = val(10, []);
+        const recentQuotations = val(11, []);
+        const recentCompletedTasks = val(12, []);
+        const monthlySalesData = val(13, []);
+
+        const currentRevenue = toNumber(currentRevenueAgg._sum.value);
+        const previousRevenue = toNumber(previousRevenueAgg._sum.value);
+
+        const dashboardStats = [
+          {
+            title: "Total Leads",
+            value: totalLeads.toLocaleString("en-US"),
+            ...calculateTrend(currentMonthLeads, previousMonthLeads),
+          },
+          {
+            title: "New Customers",
+            value: currentMonthCustomers.toLocaleString("en-US"),
+            ...calculateTrend(currentMonthCustomers, previousMonthCustomers),
+          },
+          {
+            title: "Revenue",
+            value: formatCurrency(currentRevenue, currency),
+            ...calculateTrend(currentRevenue, previousRevenue),
+          },
+          {
+            title: "Pending Tasks",
+            value: totalPendingTasks.toLocaleString("en-US"),
+            ...calculateTrend(currentMonthPendingTasks, previousMonthPendingTasks),
+          },
+        ];
+
+        // Process recent activities from fetched subsets
+        const leadActivities = recentLeads.map((l) => ({
+          id: `lead-${l.id}`,
+          title: `New lead added: ${l.name}`,
+          time: l.createdAt,
+        }));
+        const quotationActivities = recentQuotations.map((q) => ({
+          id: `quote-${q.id}`,
+          title: `Quotation created for ${q.client}`,
+          time: q.createdAt,
+        }));
+        const taskActivities = recentCompletedTasks.map((t) => ({
+          id: `task-${t.id}`,
+          title: `Task completed: ${t.title}`,
+          time: t.updatedAt,
+        }));
+
+        const recentActivities = [...leadActivities, ...quotationActivities, ...taskActivities]
+          .sort((a, b) => new Date(b.time) - new Date(a.time))
+          .slice(0, 5)
+          .map((a) => ({
+            ...a,
+            time: formatRelativeDate(a.time, { fallback: "Just now" })
+          }));
+
+        const dashboardData = {
+          stats: dashboardStats,
+          recentActivities,
+          salesChartData: buildMonthlyRevenueData(monthlySalesData),
         };
-      },
-    );
 
-    const { currentMonthStart, nextMonthStart, previousMonthStart } = getMonthRanges();
-    const wonLeads = leads.filter((lead) => lead.status === "WON");
-    const openTasks = tasks.filter((task) => task.status !== "COMPLETED");
-    const currentLeadCount = countInRange(
-      leads,
-      (lead) => lead.createdAt,
-      currentMonthStart,
-      nextMonthStart,
-    );
-    const previousLeadCount = countInRange(
-      leads,
-      (lead) => lead.createdAt,
-      previousMonthStart,
-      currentMonthStart,
-    );
-    const currentCustomerCount = countInRange(
-      customers,
-      (customer) => customer.createdAt,
-      currentMonthStart,
-      nextMonthStart,
-    );
-    const previousCustomerCount = countInRange(
-      customers,
-      (customer) => customer.createdAt,
-      previousMonthStart,
-      currentMonthStart,
-    );
-    const currentRevenue = sumInRange(
-      wonLeads,
-      (lead) => lead.updatedAt || lead.createdAt,
-      (lead) => lead.value,
-      currentMonthStart,
-      nextMonthStart,
-    );
-    const previousRevenue = sumInRange(
-      wonLeads,
-      (lead) => lead.updatedAt || lead.createdAt,
-      (lead) => lead.value,
-      previousMonthStart,
-      currentMonthStart,
-    );
-    const currentPendingCount = countInRange(
-      openTasks,
-      (task) => task.createdAt,
-      currentMonthStart,
-      nextMonthStart,
-    );
-    const previousPendingCount = countInRange(
-      openTasks,
-      (task) => task.createdAt,
-      previousMonthStart,
-      currentMonthStart,
-    );
+        // Update cache
+        dashboardCache.data = dashboardData;
+        dashboardCache.timestamp = Date.now();
 
-    const dashboardStats = [
-      {
-        title: "Total Leads",
-        value: leads.length.toLocaleString("en-US"),
-        ...calculateTrend(currentLeadCount, previousLeadCount),
+        return dashboardData;
       },
-      {
-        title: "New Customers",
-        value: currentCustomerCount.toLocaleString("en-US"),
-        ...calculateTrend(currentCustomerCount, previousCustomerCount),
-      },
-      {
-        title: "Revenue",
-        value: formatCurrency(currentRevenue, currency),
-        ...calculateTrend(currentRevenue, previousRevenue),
-      },
-      {
-        title: "Pending Tasks",
-        value: openTasks.length.toLocaleString("en-US"),
-        ...calculateTrend(currentPendingCount, previousPendingCount),
-      },
-    ];
+    );
 
     return res.status(200).json({
       success: true,
-      data: {
-        stats: dashboardStats,
-        recentActivities: buildRecentActivities(leads, quotations, tasks),
-        salesChartData: buildMonthlyRevenueData(leads),
-      },
+      data,
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendFallbackDashboardResponse(res, error);
   }
 };
 
 const getCustomers = async (req, res) => {
+
   try {
     const currency = getRequestCurrency(req);
     const { customers } = await withCrmDataSource("customers", async () => ({
@@ -457,11 +578,13 @@ const getCustomers = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyCustomersResponse());
   }
 };
 
+
 const getLeads = async (req, res) => {
+
   try {
     const currency = getRequestCurrency(req);
     const { leads } = await withCrmDataSource("leads", async () => ({
@@ -492,15 +615,27 @@ const getLeads = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyLeadsResponse());
   }
 };
+
 
 const getPipeline = async (req, res) => {
   try {
     const currency = getRequestCurrency(req);
     const { leads } = await withCrmDataSource("pipeline", async () => ({
       leads: await prisma.lead.findMany({
+        select: {
+          id: true,
+          name: true,
+          company: true,
+          value: true,
+          status: true,
+          updatedAt: true,
+          createdAt: true,
+          followUpAt: true,
+          assignedTo: true,
+        },
         orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
       }),
     }));
@@ -585,9 +720,10 @@ const getPipeline = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyPipelineResponse());
   }
 };
+
 
 const getTasks = async (req, res) => {
   try {
@@ -659,9 +795,10 @@ const getTasks = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyTasksResponse());
   }
 };
+
 
 const getQuotations = async (req, res) => {
   try {
@@ -751,9 +888,10 @@ const getQuotations = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyQuotationsResponse());
   }
 };
+
 
 const getReports = async (req, res) => {
   try {
@@ -852,9 +990,10 @@ const getReports = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyReportsResponse());
   }
 };
+
 
 // ─── Hot Leads ───────────────────────────────────────────────────────────────
 const getHotLeads = async (req, res) => {
@@ -884,9 +1023,10 @@ const getHotLeads = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, { leads: [] });
   }
 };
+
 
 // ─── Team Performance ────────────────────────────────────────────────────────
 const getTeamPerformance = async (req, res) => {
@@ -921,9 +1061,10 @@ const getTeamPerformance = async (req, res) => {
 
     return res.status(200).json({ success: true, data: { team } });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, { team: [] });
   }
 };
+
 
 // ─── Meetings (derived from upcoming follow-ups) ──────────────────────────────
 const getMeetings = async (req, res) => {
@@ -962,20 +1103,26 @@ const getMeetings = async (req, res) => {
 
     return res.status(200).json({ success: true, data: { meetings } });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, { meetings: [] });
   }
 };
 
+
 // ─── Notifications (derived from recent DB events) ───────────────────────────
 const getNotifications = async (req, res) => {
+
   try {
     const { leads, tasks, quotations } = await withCrmDataSource("notifications", async () => {
-      const [leads, tasks, quotations] = await Promise.all([
+      const results = await Promise.allSettled([
         prisma.lead.findMany({ orderBy: { createdAt: "desc" }, take: 3, select: { id: true, name: true, company: true, createdAt: true } }),
         prisma.task.findMany({ where: { dueDate: { lte: new Date() }, status: { not: "COMPLETED" } }, take: 3, select: { id: true, title: true, dueDate: true } }),
         prisma.quotation.findMany({ where: { status: "APPROVED" }, orderBy: { updatedAt: "desc" }, take: 2, select: { id: true, quoteNumber: true, client: true, updatedAt: true } }),
       ]);
-      return { leads, tasks, quotations };
+      return { 
+        leads: results[0].status === 'fulfilled' ? results[0].value : [], 
+        tasks: results[1].status === 'fulfilled' ? results[1].value : [], 
+        quotations: results[2].status === 'fulfilled' ? results[2].value : [] 
+      };
     });
 
     const notifications = [
@@ -986,7 +1133,7 @@ const getNotifications = async (req, res) => {
 
     return res.status(200).json({ success: true, data: { notifications } });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendFallbackNotificationsResponse(res, error);
   }
 };
 
@@ -1031,9 +1178,10 @@ const getEmployees = async (req, res) => {
 
     return res.status(200).json({ success: true, data: { employees, stats, activities } });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyEmployeesResponse());
   }
 };
+
 
 // ─── Roles ────────────────────────────────────────────────────────────────────
 const getRoles = async (req, res) => {
@@ -1071,21 +1219,26 @@ const getRoles = async (req, res) => {
 
     return res.status(200).json({ success: true, data: { roles, stats, securityLogs } });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyRolesResponse());
   }
 };
+
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
 const getAnalytics = async (req, res) => {
   try {
     const currency = getRequestCurrency(req);
     const { leads, customers, tasks } = await withCrmDataSource("analytics", async () => {
-      const [leads, customers, tasks] = await Promise.all([
+      const results = await Promise.allSettled([
         prisma.lead.findMany(),
         prisma.customer.findMany({ select: { createdAt: true, revenue: true } }),
         prisma.task.findMany({ select: { status: true, createdAt: true } }),
       ]);
-      return { leads, customers, tasks };
+      return { 
+        leads: results[0].status === 'fulfilled' ? results[0].value : [], 
+        customers: results[1].status === 'fulfilled' ? results[1].value : [], 
+        tasks: results[2].status === 'fulfilled' ? results[2].value : [] 
+      };
     });
 
     const { currentMonthStart, nextMonthStart, previousMonthStart } = getMonthRanges();
@@ -1134,21 +1287,26 @@ const getAnalytics = async (req, res) => {
 
     return res.status(200).json({ success: true, data: { topStats, revenueOverview, leadsGrowth, pipelineStages, topAgents, customerGrowth, recentActivity } });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyAnalyticsResponse());
   }
 };
+
 
 // ─── AI Insights ──────────────────────────────────────────────────────────────
 const getAiInsights = async (req, res) => {
   try {
     const currency = getRequestCurrency(req);
     const { leads, customers, tasks } = await withCrmDataSource("ai-insights", async () => {
-      const [leads, customers, tasks] = await Promise.all([
+      const results = await Promise.allSettled([
         prisma.lead.findMany(),
         prisma.customer.findMany({ select: { createdAt: true, revenue: true } }),
         prisma.task.findMany({ select: { status: true } }),
       ]);
-      return { leads, customers, tasks };
+      return { 
+        leads: results[0].status === 'fulfilled' ? results[0].value : [], 
+        customers: results[1].status === 'fulfilled' ? results[1].value : [], 
+        tasks: results[2].status === 'fulfilled' ? results[2].value : [] 
+      };
     });
 
     const wonLeads = leads.filter((l) => l.status === "WON");
@@ -1188,9 +1346,10 @@ const getAiInsights = async (req, res) => {
 
     return res.status(200).json({ success: true, data: { stats, recommendations, alerts, trends, forecastData, timeline } });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, buildEmptyAiInsightsResponse());
   }
 };
+
 
 const getWorkspace = async (req, res) => {
   try {
@@ -1207,9 +1366,10 @@ const getWorkspace = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, { name: "ClientRise", plan: "Enterprise" });
   }
 };
+
 
 const getSecuritySettings = async (req, res) => {
   try {
@@ -1229,9 +1389,10 @@ const getSecuritySettings = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, { activeSessions: [], loginHistory: [] });
   }
 };
+
 
 const getBillingSettings = async (req, res) => {
   try {
@@ -1273,9 +1434,10 @@ const getIntegrationSettings = async (req, res) => {
       } 
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, { integrations: [] });
   }
 };
+
 
 const getAiSettings = async (req, res) => {
   try {
@@ -1334,9 +1496,10 @@ const getNotificationSettings = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, { channels: [], categories: [] });
   }
 };
+
 
 // ─── Creation Methods ─────────────────────────────────────────────────────────
 const createLead = async (req, res) => {
@@ -1355,9 +1518,10 @@ const createLead = async (req, res) => {
     });
     return res.status(201).json({ success: true, data: lead });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, {});
   }
 };
+
 
 const createCustomer = async (req, res) => {
   try {
@@ -1374,9 +1538,10 @@ const createCustomer = async (req, res) => {
     });
     return res.status(201).json({ success: true, data: customer });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, {});
   }
 };
+
 
 const createTask = async (req, res) => {
   try {
@@ -1393,9 +1558,10 @@ const createTask = async (req, res) => {
     });
     return res.status(201).json({ success: true, data: task });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, {});
   }
 };
+
 
 const createQuotation = async (req, res) => {
   try {
@@ -1414,9 +1580,10 @@ const createQuotation = async (req, res) => {
     });
     return res.status(201).json({ success: true, data: quotation });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, {});
   }
 };
+
 
 const createEmployee = async (req, res) => {
   try {
@@ -1433,9 +1600,10 @@ const createEmployee = async (req, res) => {
     });
     return res.status(201).json({ success: true, data: user });
   } catch (error) {
-    return sendServerError(res, error);
+    return sendServerError(res, error, {});
   }
 };
+
 
 module.exports = {
   getCustomers,

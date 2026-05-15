@@ -4,6 +4,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 const client = axios.create({
   baseURL: API_URL,
+  timeout: 15000, // 15 seconds timeout
   headers: {
     "Content-Type": "application/json",
   },
@@ -13,7 +14,10 @@ const client = axios.create({
 client.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
+      // Read from primary key first, fall back to legacy key
+      const token =
+        localStorage.getItem("clientrise_token") ??
+        localStorage.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -32,7 +36,9 @@ client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("token");
+      localStorage.removeItem("clientrise_token");
+      localStorage.removeItem("clientrise_user");
+      localStorage.removeItem("token"); // legacy key
       window.dispatchEvent(new CustomEvent("auth:expired"));
     }
 

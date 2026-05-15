@@ -3,8 +3,8 @@ import { Card, CardContent } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { MetricCardType } from "@/shared/types/common";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { LineChart, Line, ResponsiveContainer } from "recharts";
+import { LineChart, Line } from "recharts";
+import { ChartContainer } from "@/shared/components/charts/ChartContainer";
 
 const iconMap: Record<string, LucideIcon> = {
   "Total Quotes": FileText,
@@ -19,8 +19,6 @@ const generateSparklineData = () =>
 interface QuotationStatsProps {
   stats: MetricCardType[];
 }
-
-import { ChartContainer } from "@/shared/components/charts/ChartContainer";
 
 const QuotationStats = ({ stats }: QuotationStatsProps) => {
   return (
@@ -111,15 +109,3 @@ const QuotationStats = ({ stats }: QuotationStatsProps) => {
 };
 
 export default QuotationStats;
-
-
-
-
-
-
-
-
-
-
-
-

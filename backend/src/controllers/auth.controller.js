@@ -1,8 +1,16 @@
+/**
+ * Authentication Controller
+ *
+ * Handles user authentication including regular login and demo account access.
+ * Demo accounts bypass database checks for development environments.
+ */
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const prisma = require("../config/prisma");
 const { sendDatabaseAwareError } = require("../utils/db-error-response");
 const { getRoleAccess } = require("../config/rbac.config");
+const { DEMO_ACCOUNTS, DEMO_ACCOUNT_EMAILS } = require("../config/demo-accounts.config");
 
 const crypto = require("crypto");
 
@@ -56,7 +64,7 @@ const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
+
 
     sendDatabaseAwareError(res, error, "Server Error");
   }
@@ -78,8 +86,65 @@ const loginUser = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const demoLoginEnabled =
+      process.env.DEMO_LOGIN_ENABLED === "true" || process.env.NODE_ENV !== "production";
 
-    // Find user
+    // Check if this is a demo login
+    const isDemoLogin = DEMO_ACCOUNT_EMAILS.includes(normalizedEmail) && demoLoginEnabled;
+
+    if (isDemoLogin) {
+      // Find demo account data
+      const demoAccount = DEMO_ACCOUNTS.find(account => account.email === normalizedEmail);
+
+      if (!demoAccount) {
+        return res.status(400).json({
+          success: false,
+          message: "Demo account not found",
+        });
+      }
+
+      // Verify demo password
+      if (password !== demoAccount.password) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid demo credentials",
+        });
+      }
+
+      // Generate JWT token for demo user
+      const token = jwt.sign(
+        {
+          userId: `demo-${demoAccount.role}`,
+          email: demoAccount.email,
+          role: demoAccount.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "24h" },
+      );
+
+      // Get permissions for the role
+      const roleAccess = getRoleAccess(demoAccount.role);
+
+      return res.status(200).json({
+        success: true,
+        message: "Demo login successful",
+        token,
+        user: {
+          id: `demo-${demoAccount.role}`,
+          name: demoAccount.name,
+          email: demoAccount.email,
+          role: demoAccount.role,
+          roleName: roleAccess.roleName,
+          description: roleAccess.description,
+          permissions: roleAccess.permissions,
+          routes: roleAccess.routes,
+          dashboardWidgets: roleAccess.dashboardWidgets,
+          analyticsVisibility: roleAccess.analyticsVisibility,
+        },
+      });
+    }
+
+    // Regular login flow - Find user in database
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
@@ -133,7 +198,7 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
+
 
     sendDatabaseAwareError(res, error, "Server Error");
   }
@@ -181,7 +246,7 @@ const forgotPassword = async (req, res) => {
       resetToken, // later email ku anupuvom
     });
   } catch (error) {
-    console.log(error);
+
 
     sendDatabaseAwareError(res, error, "Server Error");
   }
@@ -232,7 +297,7 @@ const resetPassword = async (req, res) => {
       message: "Password reset successful 🔥",
     });
   } catch (error) {
-    console.log(error);
+
 
     sendDatabaseAwareError(res, error, "Server Error");
   }
@@ -240,9 +305,38 @@ const resetPassword = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
   try {
+    const userId = req.user.id;
+
+    // Check if this is a demo user
+    if (String(userId).startsWith('demo-')) {
+      const role = String(userId).replace('demo-', '');
+      const demoAccount = DEMO_ACCOUNTS.find(account => account.role === role);
+
+      if (demoAccount) {
+        const access = getRoleAccess(demoAccount.role);
+        return res.status(200).json({
+          success: true,
+          message: "Demo user loaded",
+          user: {
+            id: userId,
+            name: demoAccount.name,
+            email: demoAccount.email,
+            role: demoAccount.role,
+            roleName: access.roleName,
+            description: access.description,
+            permissions: access.permissions,
+            routes: access.routes,
+            dashboardWidgets: access.dashboardWidgets,
+            analyticsVisibility: access.analyticsVisibility,
+          },
+        });
+      }
+    }
+
+    // Regular user lookup - requires database connection
     const user = await prisma.user.findUnique({
       where: {
-        id: req.user.id,
+        id: userId,
       },
       select: {
         id: true,
@@ -259,17 +353,26 @@ const getCurrentUser = async (req, res) => {
       });
     }
 
+    const access = getRoleAccess(user.role);
+
     return res.status(200).json({
       success: true,
       message: "Current user loaded",
       user: {
-        ...user,
-        ...getRoleAccess(user.role),
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        roleName: access.roleName,
+        description: access.description,
+        permissions: access.permissions,
+        routes: access.routes,
+        dashboardWidgets: access.dashboardWidgets,
+        analyticsVisibility: access.analyticsVisibility,
       },
     });
   } catch (error) {
-    console.log(error);
-
+    console.error("Get current user error:", error);
     return sendDatabaseAwareError(res, error, "Server Error");
   }
 };

@@ -31,13 +31,12 @@ import {
   DropdownMenuSeparator,
 } from "@/shared/ui/dropdown-menu";
 
-interface SalesChartProps {
-  data: SalesChartPointType[];
-}
-
+import { useDashboardData } from "@/shared/hooks/use-dashboard";
 import { ChartContainer } from "@/shared/components/charts/ChartContainer";
 
-const SalesChart = ({ data }: SalesChartProps) => {
+const SalesChart = () => {
+  const { data: dashboardData, isLoading } = useDashboardData();
+  const data = dashboardData?.salesChartData ?? [];
   const [chartType, setChartType] = useState<"revenue" | "deals">("revenue");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -167,6 +166,7 @@ const SalesChart = ({ data }: SalesChartProps) => {
         <CardContent className="min-w-0">
           <ChartContainer 
             height={300}
+            loading={isLoading}
             hasData={chartData && chartData.length > 0}
             className="mt-3"
           >

@@ -37,22 +37,27 @@ function getDatabaseErrorDetails(error) {
   return null;
 }
 
-function sendDatabaseAwareError(res, error, fallbackMessage) {
+function sendDatabaseAwareError(res, error, fallbackMessage, forceStatus = null) {
   const databaseError = getDatabaseErrorDetails(error);
 
   if (databaseError) {
-    return res.status(databaseError.status).json({
-      success: false,
+    const status = forceStatus || databaseError.status;
+    return res.status(status).json({
+      success: status === 200, // If we force 200, it's a "success" with fallback
       code: databaseError.code,
       message: databaseError.message,
+      isFallback: status === 200,
     });
   }
 
-  return res.status(500).json({
-    success: false,
+  const status = forceStatus || 500;
+  return res.status(status).json({
+    success: status === 200,
     message: fallbackMessage,
+    isFallback: status === 200,
   });
 }
+
 
 module.exports = {
   sendDatabaseAwareError,

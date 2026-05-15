@@ -15,51 +15,64 @@ import {
 } from "@/shared/lib/api/crm";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAuth } from "@/features/auth/components/auth-provider";
 
 export function useCustomers() {
+  const { isAuthenticated, token } = useAuth();
   return useQuery({
-    queryKey: ["customers"],
+    queryKey: ["customers", token],
     queryFn: fetchCustomersData,
+    enabled: isAuthenticated && !!token,
     refetchInterval: 30000,
   });
 }
 
 export function useLeads() {
+  const { isAuthenticated, token } = useAuth();
   return useQuery({
-    queryKey: ["leads"],
+    queryKey: ["leads", token],
     queryFn: fetchLeadsData,
+    enabled: isAuthenticated && !!token,
     refetchInterval: 30000,
   });
 }
 
 export function usePipeline() {
+  const { isAuthenticated, token } = useAuth();
   return useQuery({
-    queryKey: ["pipeline"],
+    queryKey: ["pipeline", token],
     queryFn: fetchPipelineData,
+    enabled: isAuthenticated && !!token,
     refetchInterval: 30000,
   });
 }
 
 export function useTasks() {
+  const { isAuthenticated, token } = useAuth();
   return useQuery({
-    queryKey: ["tasks"],
+    queryKey: ["tasks", token],
     queryFn: fetchTasksData,
+    enabled: isAuthenticated && !!token,
     refetchInterval: 30000,
   });
 }
 
 export function useQuotations() {
+  const { isAuthenticated, token } = useAuth();
   return useQuery({
-    queryKey: ["quotations"],
+    queryKey: ["quotations", token],
     queryFn: fetchQuotationsData,
+    enabled: isAuthenticated && !!token,
     refetchInterval: 30000,
   });
 }
 
 export function useReports() {
+  const { isAuthenticated, token } = useAuth();
   return useQuery({
-    queryKey: ["reports"],
+    queryKey: ["reports", token],
     queryFn: fetchReportsData,
+    enabled: isAuthenticated && !!token,
     refetchInterval: 30000,
   });
 }
@@ -74,7 +87,7 @@ export function useCreateLead() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Lead created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create lead");
     },
   });
@@ -89,7 +102,7 @@ export function useCreateCustomer() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Customer created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create customer");
     },
   });
@@ -104,7 +117,7 @@ export function useCreateTask() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Task created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create task");
     },
   });
@@ -119,19 +132,8 @@ export function useCreateQuotation() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Quotation created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to create quotation");
     },
   });
 }
-
-
-
-
-
-
-
-
-
-
-

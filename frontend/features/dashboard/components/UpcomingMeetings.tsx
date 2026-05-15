@@ -30,10 +30,9 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { useMeetings } from "@/shared/hooks/use-dashboard";
-import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
 
 export default function UpcomingMeetings() {
-  const { data, isLoading: loading } = useMeetings();
+  const { data } = useMeetings();
   const meetings = data?.meetings ?? [];
   const hasMeetings = meetings.length > 0;
 
@@ -63,17 +62,6 @@ export default function UpcomingMeetings() {
     });
   };
 
-  if (loading) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full"
-      >
-        <DashboardWidgetSkeleton rows={3} />
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div

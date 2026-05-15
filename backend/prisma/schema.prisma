@@ -73,6 +73,7 @@ model Customer {
 
   @@index([status])
   @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model Lead {
@@ -89,6 +90,7 @@ model Lead {
 
   @@index([status])
   @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model Task {
@@ -105,6 +107,7 @@ model Task {
   @@index([status])
   @@index([dueDate])
   @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model Quotation {
@@ -120,4 +123,5 @@ model Quotation {
 
   @@index([status])
   @@index([createdAt])
+  @@index([updatedAt])
 }

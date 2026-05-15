@@ -8,7 +8,7 @@ import { Form } from "@/shared/ui/form";
 import { FormInput, FormTextarea } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
-import { Loader2, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 
 const roleSchema = z.object({
   name: z.string().min(2, "Role name must be at least 2 characters"),

@@ -25,8 +25,12 @@ const authMiddleware = (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Save user info in request
-    req.user = decoded;
+    // Normalize: demo JWTs use 'userId', regular JWTs use 'id'.
+    // Always expose req.user.id so controllers can use one field.
+    req.user = {
+      ...decoded,
+      id: decoded.id || decoded.userId,
+    };
 
     next();
   } catch (error) {
