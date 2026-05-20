@@ -80,7 +80,6 @@ export const MeetingForm = ({ onSuccess, onCancel }: MeetingFormProps) => {
           name="location" 
           label={meetingType === "online" ? "Meeting Link / Platform" : "Office Address / Location"} 
           placeholder={meetingType === "online" ? "Zoom, Google Meet, or Link" : "e.g. 123 Business St, New York"} 
-          icon={meetingType === "online" ? <Video className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
         />
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">

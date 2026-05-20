@@ -40,13 +40,9 @@ export default function LeadFunnel({ loading: externalLoading }: { loading?: boo
   });
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.5 }}
-      className="w-full h-full min-w-0"
-    >
+    <div className="w-full h-full min-w-0">
       <CRMCard 
+        animate={false}
         accentSeed="Lead Funnel"
         noPadding
         className="h-full flex flex-col bg-gradient-to-br from-card to-background/50 min-w-0"
@@ -75,7 +71,7 @@ export default function LeadFunnel({ loading: externalLoading }: { loading?: boo
                   key={item.stage}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6 + (index * 0.1) }}
+                  transition={{ duration: 0.4, delay: 0.1 + (index * 0.05) }}
                   className="group relative min-w-0"
                 >
                   <div className="flex justify-between items-center mb-2 min-w-0 gap-2">
@@ -93,7 +89,7 @@ export default function LeadFunnel({ loading: externalLoading }: { loading?: boo
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: item.width }}
-                      transition={{ duration: 1, delay: 0.8 + (index * 0.1), type: "spring", stiffness: 40, damping: 15 }}
+                      transition={{ duration: 1, delay: 0.3 + (index * 0.05), type: "spring", stiffness: 40, damping: 15 }}
                       className={`h-full rounded-lg ${item.color} relative overflow-hidden`}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out" />
@@ -105,7 +101,7 @@ export default function LeadFunnel({ loading: externalLoading }: { loading?: boo
           </div>
         </CardContent>
       </CRMCard>
-    </motion.div>
+    </div>
   );
 }
 

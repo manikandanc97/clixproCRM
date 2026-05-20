@@ -8,10 +8,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
 } from "recharts";
-import { MoreHorizontal, RefreshCw, Download, Filter, TrendingUp, BarChart3 } from "lucide-react";
-import { SalesChartPointType } from "@/shared/types/dashboard";
+import { TrendingUp, Download, Filter, RefreshCw, BarChart3, MoreHorizontal } from "lucide-react";
 
 import { CRMCard } from "@/shared/components/crm/CRMCard";
 import {
@@ -21,8 +19,6 @@ import {
   CardDescription,
 } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,10 +29,10 @@ import {
 
 import { useDashboardData } from "@/shared/hooks/use-dashboard";
 import { ChartContainer } from "@/shared/components/charts/ChartContainer";
+import { toast } from "sonner";
 
 const SalesChart = () => {
   const { data: dashboardData, isLoading } = useDashboardData();
-  const data = dashboardData?.salesChartData ?? [];
   const [chartType, setChartType] = useState<"revenue" | "deals">("revenue");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -58,24 +54,18 @@ const SalesChart = () => {
   // Simulate deal count data based on revenue
   const chartData = useMemo(
     () =>
-      data.map((point, index) => ({
+      (dashboardData?.salesChartData ?? []).map((point, index) => ({
         ...point,
         deals: Math.round(point.value / 5000) + ((index * 3) % 5),
       })),
-    [data]
+    [dashboardData?.salesChartData]
   );
 
   const currentColor = chartType === "revenue" ? "#10b981" : "#6366f1";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-      className="min-w-0"
-    >
-      <CRMCard accentSeed="Sales Chart" noPadding className="overflow-visible bg-card min-w-0">
+    <div className="min-w-0">
+      <CRMCard animate={false} accentSeed="Sales Chart" noPadding className="overflow-visible bg-card min-w-0">
         <CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-6 min-w-0">
           <div className="space-y-4 min-w-0">
             <div className="flex items-center gap-3">
@@ -256,7 +246,7 @@ const SalesChart = () => {
           </ChartContainer>
         </CardContent>
       </CRMCard>
-    </motion.div>
+    </div>
   );
 };
 

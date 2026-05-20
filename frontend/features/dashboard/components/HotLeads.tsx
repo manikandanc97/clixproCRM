@@ -12,13 +12,8 @@ export default function HotLeads() {
   const leads = data?.leads ?? [];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.5 }}
-      className="w-full h-full"
-    >
-      <CRMCard accentSeed="Hot Leads" noPadding className="h-full flex flex-col bg-gradient-to-br from-card to-background/50">
+    <div className="w-full h-full">
+      <CRMCard animate={false} accentSeed="Hot Leads" noPadding className="h-full flex flex-col bg-gradient-to-br from-card to-background/50">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-warning/10 text-warning rounded-xl">
@@ -42,7 +37,7 @@ export default function HotLeads() {
                   key={lead.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
+                  transition={{ duration: 0.4, delay: 0.1 + index * 0.05 }}
                   className="group flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3 cursor-pointer">
@@ -78,7 +73,7 @@ export default function HotLeads() {
           )}
         </CardContent>
       </CRMCard>
-    </motion.div>
+    </div>
   );
 }
 

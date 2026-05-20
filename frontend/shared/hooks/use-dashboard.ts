@@ -135,7 +135,7 @@ import { useAnalytics } from "./use-analytics";
  * the core CRM data is being fetched and cached.
  */
 export function useDashboardInitializer() {
-  const { isAuthenticated, isInitializing: isAuthInitializing, isHydrated, token } = useAuth();
+  const { isAuthenticated, isInitializing: isAuthInitializing } = useAuth();
   
   // Primary dashboard data
   const dashboard = useDashboardData();

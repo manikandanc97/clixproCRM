@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, CheckCircle2, FileText, ArrowRight, Filter, Activity } from "lucide-react";
+import { Filter, Activity } from "lucide-react";
 import { ActivityType } from "@/shared/types/dashboard";
 
 import { CRMCard } from "@/shared/components/crm/CRMCard";
@@ -43,6 +43,7 @@ const RecentActivities = () => {
 
   return (
     <CRMCard 
+      animate={false}
       accentSeed="Recent Activities"
       noPadding 
       className="flex flex-col h-full bg-gradient-to-br from-card to-background/50"

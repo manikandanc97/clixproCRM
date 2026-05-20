@@ -1,13 +1,11 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import { CRMCard } from "@/shared/components/crm/CRMCard";
 import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import {
   RadialBarChart,
   RadialBar,
-  ResponsiveContainer,
   PolarAngleAxis,
 } from "recharts";
 import { Target, TrendingUp, ArrowUpRight, DollarSign, ChevronRight } from "lucide-react";
@@ -40,6 +38,7 @@ export default function RevenueTracker() {
 
   return (
     <CRMCard 
+      animate={false}
       accentSeed="Revenue Tracker"
       noPadding
       className="h-full bg-gradient-to-br from-card to-background/50 relative overflow-hidden group flex flex-col min-w-0"

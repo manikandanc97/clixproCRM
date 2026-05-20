@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Bell, Check, Clock, UserPlus, FileCheck, AlertCircle, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { formatDistanceToNow, parseISO } from "date-fns";
@@ -26,30 +23,26 @@ type Notification = {
 
 export default function NotificationPanel() {
   const { data, isLoading: loading } = useNotifications();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
-  const processedNotifications = useMemo(() => {
+  const notifications = useMemo(() => {
     if (!data?.notifications) return [];
     return data.notifications.map(n => ({
       ...n,
-      time: typeof n.time === 'string' ? parseISO(n.time) : n.time
+      time: typeof n.time === 'string' ? parseISO(n.time) : n.time,
+      read: n.read || readIds.has(n.id)
     }));
-  }, [data]);
-
-  useEffect(() => {
-    if (processedNotifications.length > 0) {
-      setNotifications(processedNotifications);
-    }
-  }, [processedNotifications]);
+  }, [data, readIds]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAllAsRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, read: true })));
+    const allIds = notifications.map(n => n.id);
+    setReadIds(new Set([...readIds, ...allIds]));
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    setReadIds(new Set([...readIds, id]));
   };
 
   const getIcon = (type: Notification["type"]) => {

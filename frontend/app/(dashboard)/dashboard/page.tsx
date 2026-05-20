@@ -1,21 +1,14 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import dynamic from "next/dynamic";
-import { LayoutDashboard, Download, Filter, TrendingUp, Users, DollarSign, Target } from "lucide-react";
+import { Download, Filter } from "lucide-react";
 import { DashboardSkeleton } from "@/features/dashboard/components/DashboardSkeleton";
-import { PageErrorState } from "@/shared/components/page-states";
 import { useDashboardInitializer } from "@/shared/hooks/use-dashboard";
 import { Button } from "@/shared/ui/button";
-import { 
-  CRMMetricCard,
-  CRMPageContainer,
-  CRMMetricsGrid
-} from "@/shared/components/crm";
+import { CRMPageContainer } from "@/shared/components/crm";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
-import { useAuth } from "@/features/auth/components/auth-provider";
-import { MetricCardType } from "@/shared/types/common";
 
 // Dynamic imports for heavy dashboard components
 const SalesChart = dynamic(() => import("@/features/dashboard/components/SalesChart"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
@@ -33,66 +26,23 @@ const CalendarWidget = dynamic(() => import("@/features/dashboard/components/Cal
 import WelcomeBanner from "@/features/dashboard/components/WelcomeBanner";
 import { DashboardWidgetWrapper } from "@/features/dashboard/components/DashboardWidgetWrapper";
 import CreateNewMenu from "@/features/dashboard/components/CreateNewMenu";
+import DashboardKPIs from "@/features/dashboard/components/DashboardKPIs";
 
 const DashboardPage = () => {
   const { 
     queries, 
-    isInitializing, 
     isAuthInitializing,
-    isAuthenticated,
   } = useDashboardInitializer();
 
   const { 
-    setLeads, 
-    setTasks, 
-    setPipelineItems,
-    setCustomers,
     activeTimeframe, setActiveTimeframe 
   } = useCRMStore();
 
-  const { access } = useAuth();
-
-  // Optimized store synchronization - only update if data is actually present and different
-  useEffect(() => {
-    if (queries.leads.data?.leads) {
-      setLeads(queries.leads.data.leads);
-    }
-  }, [queries.leads.data?.leads, setLeads]);
-
-  useEffect(() => {
-    if (queries.tasks.data?.tasks) {
-      setTasks(queries.tasks.data.tasks);
-    }
-  }, [queries.tasks.data?.tasks, setTasks]);
-
-  useEffect(() => {
-    if (queries.pipeline.data?.items) {
-      setPipelineItems(queries.pipeline.data.items);
-    }
-  }, [queries.pipeline.data?.items, setPipelineItems]);
-
-  useEffect(() => {
-    if (queries.customers.data?.customers) {
-      setCustomers(queries.customers.data.customers);
-    }
-  }, [queries.customers.data?.customers, setCustomers]);
-
-  const statsData = queries.dashboard.data?.stats;
-
-  // CRITICAL STABILITY CHECK:
-  // We show the global skeleton if:
-  // 1. Auth is still initializing from localStorage.
-  // 2. We are authenticated but we haven't even started fetching yet.
-  if (isAuthInitializing || (isAuthenticated && isInitializing && !statsData && queries.dashboard.isLoading)) {
+  // Progressive loading: Only show full skeleton during INITIAL auth hydration.
+  // Individual widgets will handle their own loading states via DashboardWidgetWrapper.
+  if (isAuthInitializing) {
     return <DashboardSkeleton />;
   }
-
-  const WIDGET_ID_MAP: Record<string, string> = {
-    "Total Revenue": "revenue",
-    "Active Deals": "activeDeals",
-    "New Leads": "newLeads",
-    "Win Rate": "winRate"
-  };
 
   const handleExport = () => {
     toast.success("Preparing PDF export...", {
@@ -146,64 +96,22 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      <CRMMetricsGrid>
-        {statsData?.map((stat: MetricCardType, index: number) => {
-          const Icon = stat.title === "Total Revenue" ? DollarSign :
-                       stat.title === "Active Deals" ? Target :
-                       stat.title === "New Leads" ? Users :
-                       TrendingUp;
-          
-          const widgetId = WIDGET_ID_MAP[stat.title] || (stat as any).id || stat.title.toLowerCase().replace(" ", "");
-          const hasAccess = access.dashboardWidgets.includes(widgetId);
+      <DashboardKPIs />
 
-          if (!hasAccess) return null;
-          
-          return (
-            <CRMMetricCard 
-              key={stat.title}
-              title={stat.title}
-              value={stat.value}
-              change={stat.change}
-              trend={stat.positive ? "up" : "down"}
-              icon={Icon}
-              color={stat.color || "primary"}
-              sparklineData={(stat as any).sparklineData}
-              delay={0.1 * (index + 1)}
-              loading={queries.dashboard.isLoading}
-              isError={queries.dashboard.isError}
-            />
-          );
-        }) || (
-          // Fallback skeletons if data is not yet available and we are loading
-          queries.dashboard.isLoading ? (
-            [...Array(4)].map((_, i) => (
-              <CRMMetricCard key={i} title="Loading..." value="---" loading={true} icon={TrendingUp} />
-            ))
-          ) : queries.dashboard.isError ? (
-             <div className="col-span-full py-10 text-center border border-destructive/20 bg-destructive/5 rounded-xl">
-               <p className="text-sm font-bold text-destructive">Failed to load dashboard metrics. <button onClick={() => queries.dashboard.refetch()} className="underline ml-2">Retry</button></p>
-             </div>
-          ) : (
-            <div className="col-span-full py-10 text-center border border-dashed border-border rounded-xl">
-              <p className="text-sm text-muted-foreground">No metric data available.</p>
-            </div>
-          )
-        )}
-      </CRMMetricsGrid>
+      <DashboardWidgetWrapper 
+        id="salesChart" 
+        title="Sales Chart"
+        isLoading={queries.dashboard.isLoading}
+        isError={queries.dashboard.isError}
+        onRetry={() => queries.dashboard.refetch()}
+        delay={0.5}
+        className="w-full"
+      >
+        <SalesChart />
+      </DashboardWidgetWrapper>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div className="lg:col-span-2 xl:col-span-3 flex flex-col gap-6">
-          <DashboardWidgetWrapper 
-            id="salesChart" 
-            title="Sales Chart"
-            isLoading={queries.dashboard.isLoading}
-            isError={queries.dashboard.isError}
-            onRetry={() => queries.dashboard.refetch()}
-            delay={0.5}
-          >
-            <SalesChart />
-          </DashboardWidgetWrapper>
-
+      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="lg:col-span-2 xl:col-span-3 flex flex-col gap-8">
           <DashboardWidgetWrapper 
             id="upcomingMeetings" 
             title="Upcoming Meetings"
@@ -215,7 +123,7 @@ const DashboardPage = () => {
             <UpcomingMeetings />
           </DashboardWidgetWrapper>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <DashboardWidgetWrapper 
               id="hotLeads" 
               title="Hot Leads"
@@ -239,7 +147,7 @@ const DashboardPage = () => {
             </DashboardWidgetWrapper>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <DashboardWidgetWrapper 
               id="leadFunnel" 
               title="Lead Funnel"
@@ -263,7 +171,7 @@ const DashboardPage = () => {
             </DashboardWidgetWrapper>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <DashboardWidgetWrapper 
               id="recentActivities" 
               title="Recent Activities"
@@ -288,7 +196,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-6 self-start w-full lg:sticky lg:top-24">
+        <div className="flex flex-col gap-8 self-start w-full lg:sticky lg:top-24">
           <DashboardWidgetWrapper 
             id="aiInsights" 
             title="AI Insights"

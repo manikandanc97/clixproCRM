@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react";
 
 const quoteSchema = z.object({
   client: z.string().min(2, "Client name is required"),
-  amount: z.string().min(1, "Amount is required").transform(v => Number(v)),
+  amount: z.string().min(1, "Amount is required"),
   status: z.enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED"]),
   validTill: z.date().optional(),
   createdBy: z.string().optional(),
@@ -32,7 +32,7 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
     resolver: zodResolver(quoteSchema),
     defaultValues: {
       client: "",
-      amount: 0,
+      amount: "",
       status: "PENDING",
       createdBy: "System",
     },
@@ -40,7 +40,18 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
 
   const onSubmit = async (data: QuoteFormValues) => {
     try {
-      await createQuote.mutateAsync(data);
+      const mappedStatus = 
+        data.status === "PENDING" ? "Pending" :
+        data.status === "APPROVED" ? "Approved" :
+        data.status === "REJECTED" ? "Rejected" : "Expired";
+
+      await createQuote.mutateAsync({
+        client: data.client,
+        amount: data.amount,
+        status: mappedStatus,
+        validTill: data.validTill ? data.validTill.toISOString() : undefined,
+        createdBy: data.createdBy || "",
+      });
       onSuccess?.();
     } catch (error) {
       // Error handled by hook

@@ -6,7 +6,6 @@ import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { CheckSquare, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useTasks } from "@/shared/hooks/use-crm";
-import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 
 export default function PendingFollowups() {
@@ -26,13 +25,8 @@ export default function PendingFollowups() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.7 }}
-      className="w-full"
-    >
-      <CRMCard accentSeed="Pending Tasks" className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
+    <div className="w-full">
+      <CRMCard animate={false} accentSeed="Pending Tasks" className="border-none shadow-premium bg-gradient-to-br from-card to-background/50">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-info/10 text-info rounded-xl">
@@ -61,7 +55,7 @@ export default function PendingFollowups() {
                   key={task.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.8 + (index * 0.1) }}
+                  transition={{ duration: 0.4, delay: 0.1 + (index * 0.05) }}
                   className="group flex items-start gap-4 p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
                 >
                   <div className="mt-0.5">
@@ -92,7 +86,7 @@ export default function PendingFollowups() {
           </Button>
         </CardContent>
       </CRMCard>
-    </motion.div>
+    </div>
   );
 }
 

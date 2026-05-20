@@ -73,13 +73,9 @@ export default function CalendarWidget() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.4 }}
-      className="w-full"
-    >
+    <div className="w-full">
       <CRMCard
+        animate={false}
         accentSeed="Calendar"
         noPadding
         className="relative overflow-hidden border border-border/60 bg-card shadow-sm"
@@ -245,7 +241,7 @@ export default function CalendarWidget() {
 
         </CardContent>
       </CRMCard>
-    </motion.div>
+    </div>
   );
 }
 

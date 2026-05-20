@@ -4,6 +4,7 @@ import React, { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
 import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
 import { useAuth } from "@/features/auth/components/auth-provider";
 
@@ -49,10 +50,10 @@ export function DashboardWidgetWrapper({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      className={className}
+      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+      className={cn("min-h-[200px]", className)}
     >
       <AnimatePresence mode="wait">
         {isLoading ? (
@@ -68,20 +69,20 @@ export function DashboardWidgetWrapper({
         ) : isError ? (
           <motion.div
             key="error"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             className="flex flex-col items-center justify-center p-8 rounded-2xl border border-destructive/20 bg-destructive/5 text-center h-full min-h-[200px]"
           >
             <AlertCircle className="w-8 h-8 text-destructive mb-3 opacity-50" />
             <h4 className="text-sm font-bold text-foreground mb-1">{title} Failed</h4>
-            <p className="text-xs text-muted-foreground mb-4 max-w-[200px]">We couldn't load this widget's data.</p>
+            <p className="text-xs text-muted-foreground mb-4 max-w-[200px]">We couldn&apos;t load this widget&apos;s data.</p>
             {onRetry && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={onRetry}
-                className="h-8 text-xs font-bold gap-2 rounded-xl border-destructive/20 hover:bg-destructive/10"
+                className="h-8 text-xs font-bold gap-2 rounded-xl border-destructive/20 hover:bg-destructive/10 transition-all active:scale-95"
               >
                 <RefreshCw className="w-3 h-3" />
                 Retry

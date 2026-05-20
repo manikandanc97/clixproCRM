@@ -42,7 +42,22 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
 
   const onSubmit = async (data: TaskFormValues) => {
     try {
-      await createTask.mutateAsync(data);
+      const mappedPriority = 
+        data.priority === "HIGH" ? "High" :
+        data.priority === "MEDIUM" ? "Medium" : "Low";
+
+      const mappedStatus = 
+        data.status === "PENDING" ? "Pending" :
+        data.status === "IN_PROGRESS" ? "In Progress" : "Completed";
+
+      await createTask.mutateAsync({
+        title: data.title,
+        description: data.description || "",
+        dueDate: data.dueDate ? data.dueDate.toISOString() : undefined,
+        priority: mappedPriority,
+        assignedTo: data.assignedTo || "",
+        status: mappedStatus,
+      });
       onSuccess?.();
     } catch (error) {
       // Error handled by hook

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { CRMCard } from "@/shared/components/crm/CRMCard";
 import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import {
@@ -8,14 +8,12 @@ import {
   Clock,
   Video,
   MoreHorizontal,
-  Users,
   MapPin,
+  Plus,
   ArrowRight,
   ExternalLink,
-  Plus,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { Badge } from "@/shared/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -64,13 +62,9 @@ export default function UpcomingMeetings() {
 
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.6 }}
-      className="w-full"
-    >
+    <div className="w-full">
       <CRMCard 
+        animate={false}
         accentSeed="Upcoming Meetings"
         noPadding
         className="bg-gradient-to-br from-card to-background/50"
@@ -262,7 +256,7 @@ export default function UpcomingMeetings() {
           )}
         </CardContent>
       </CRMCard>
-    </motion.div>
+    </div>
   );
 }
 

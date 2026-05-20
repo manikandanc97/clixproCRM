@@ -11,7 +11,6 @@ import {
   CRM_ROLES, 
   getRoleMenu,
   roleRouteConfig,
-  type RoleAccess,
 } from "@/shared/lib/auth/rbac";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 

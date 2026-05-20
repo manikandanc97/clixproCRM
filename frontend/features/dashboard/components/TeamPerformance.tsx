@@ -6,20 +6,15 @@ import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Award, TrendingUp } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useTeamPerformance } from "@/shared/hooks/use-dashboard";
-import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
 
 export default function TeamPerformance() {
   const { data } = useTeamPerformance();
   const team = data?.team ?? [];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.8 }}
-      className="w-full h-full min-w-0"
-    >
+    <div className="w-full h-full min-w-0">
       <CRMCard 
+        animate={false}
         accentSeed="Team Performance"
         noPadding
         className="h-full flex flex-col bg-gradient-to-br from-card to-background/50 min-w-0"
@@ -54,7 +49,7 @@ export default function TeamPerformance() {
                     key={member.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.9 + (index * 0.1) }}
+                    transition={{ duration: 0.4, delay: 0.1 + (index * 0.05) }}
                     className="group py-3 first:pt-0 last:pb-0 min-w-0"
                   >
                     <div className="flex items-center justify-between mb-3 min-w-0 gap-3">
@@ -79,7 +74,7 @@ export default function TeamPerformance() {
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${progress}%` }}
-                        transition={{ duration: 1.2, delay: 1 + (index * 0.1), ease: "easeOut" }}
+                        transition={{ duration: 1.2, delay: 0.3 + (index * 0.1), ease: "easeOut" }}
                         className={`h-full rounded-full ${barColor} relative overflow-hidden shadow-[0_0_8px_-2px_currentColor]`}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
@@ -92,7 +87,7 @@ export default function TeamPerformance() {
           </div>
         </CardContent>
       </CRMCard>
-    </motion.div>
+    </div>
   );
 }
 

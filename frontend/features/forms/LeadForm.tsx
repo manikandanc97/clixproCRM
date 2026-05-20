@@ -15,7 +15,7 @@ const leadSchema = z.object({
   company: z.string().min(2, "Company must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   status: z.enum(["NEW", "CONTACTED", "PROPOSAL_SENT", "WON", "LOST"]),
-  value: z.string().optional().transform(v => v ? Number(v) : 0),
+  value: z.string().optional(),
   followUpAt: z.date().optional(),
   assignedTo: z.string().optional(),
 });
@@ -37,14 +37,28 @@ export const LeadForm = ({ onSuccess, onCancel }: LeadFormProps) => {
       company: "",
       email: "",
       status: "NEW",
-      value: 0,
+      value: "",
       assignedTo: "Unassigned",
     },
   });
 
   const onSubmit = async (data: LeadFormValues) => {
     try {
-      await createLead.mutateAsync(data);
+      const mappedStatus = 
+        data.status === "NEW" ? "New" :
+        data.status === "CONTACTED" ? "Contacted" :
+        data.status === "PROPOSAL_SENT" ? "Proposal Sent" :
+        data.status === "WON" ? "Won" : "Lost";
+
+      await createLead.mutateAsync({
+        name: data.name,
+        company: data.company,
+        email: data.email,
+        status: mappedStatus,
+        value: data.value || "",
+        followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
+        assignedTo: data.assignedTo || "",
+      });
       onSuccess?.();
     } catch (error) {
       // Error handled by hook

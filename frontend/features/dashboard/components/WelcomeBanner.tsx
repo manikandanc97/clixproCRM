@@ -6,7 +6,6 @@ import {
   ArrowUpRight, 
   Activity, 
   Users, 
-  ChevronRight,
   Zap,
   Sparkles
 } from "lucide-react";
@@ -15,7 +14,7 @@ import { Button } from "@/shared/ui/button";
 import Link from "next/link";
 
 export default function WelcomeBanner() {
-  const { user, access } = useAuth();
+  const { access } = useAuth();
 
   return (
     <motion.div

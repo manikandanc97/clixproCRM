@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -8,7 +8,6 @@ import {
   AlertCircle,
   ArrowRight,
   Zap,
-  BarChart,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -21,14 +20,10 @@ export default function AIInsights() {
   const [activeTab, setActiveTab] = useState<TabType>("recommendations");
   const { data } = useAiInsights();
 
-  const insights = data ?? { recommendations: [], alerts: [], trends: [] };
+  const insights = useMemo(() => data ?? { recommendations: [], alerts: [], trends: [] }, [data]);
 
   const handleDismiss = (e: React.MouseEvent, tab: TabType, id: string) => {
     e.stopPropagation();
-    // Since we're no longer using local state for the whole list, 
-    // we should ideally trigger a mutation to dismiss an insight.
-    // For now, we'll just show the toast as the original code's state update 
-    // was local-only and would be overwritten on next fetch anyway.
     toast.success("Insight dismissed", {
       description: "We'll adjust future recommendations based on your feedback.",
     });
@@ -57,13 +52,9 @@ export default function AIInsights() {
 
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="w-full"
-    >
+    <div className="w-full">
       <CRMCard 
+        animate={false}
         accentSeed="AI Insights"
         noPadding
         className="relative flex flex-col overflow-hidden bg-[#0d111c] border-primary/20 shadow-2xl"
@@ -189,7 +180,7 @@ export default function AIInsights() {
           </button>
         </div>
       </CRMCard>
-    </motion.div>
+    </div>
   );
 }
 

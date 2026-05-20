@@ -15,7 +15,7 @@ const customerSchema = z.object({
   company: z.string().min(2, "Company must be at least 2 characters"),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   status: z.enum(["ACTIVE", "PREMIUM", "INACTIVE"]),
-  revenue: z.string().optional().transform(v => v ? Number(v) : 0),
+  revenue: z.string().optional(),
   manager: z.string().optional(),
 });
 
@@ -36,14 +36,25 @@ export const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
       company: "",
       email: "",
       status: "ACTIVE",
-      revenue: 0,
+      revenue: "",
       manager: "Unassigned",
     },
   });
 
   const onSubmit = async (data: CustomerFormValues) => {
     try {
-      await createCustomer.mutateAsync(data);
+      const mappedStatus = 
+        data.status === "ACTIVE" ? "Active" :
+        data.status === "PREMIUM" ? "Premium" : "Inactive";
+
+      await createCustomer.mutateAsync({
+        name: data.name,
+        company: data.company,
+        email: data.email || "",
+        status: mappedStatus,
+        revenue: data.revenue || "",
+        manager: data.manager || "",
+      });
       onSuccess?.();
     } catch (error) {
       // Error handled by hook
