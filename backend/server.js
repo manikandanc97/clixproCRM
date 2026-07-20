@@ -54,7 +54,7 @@ app.use("/api/crm", crmRoutes);
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "ClientRise CRM Backend Running 🚀",
+    message: "Orbit CRM Backend Running 🚀",
   });
 });
 

@@ -49,11 +49,16 @@ export const fetchCurrentUser = async () => {
   return response.data.user;
 };
 
-export const logoutUser = () => {
+export const logoutUser = async () => {
   if (typeof window !== "undefined") {
-    localStorage.removeItem("clientrise_token");
-    localStorage.removeItem("clientrise_user");
+    localStorage.removeItem("orbit_token");
+    localStorage.removeItem("orbit_user");
     localStorage.removeItem("token"); // legacy key
+    try {
+      await client.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout API failed", error);
+    }
   }
 };
 

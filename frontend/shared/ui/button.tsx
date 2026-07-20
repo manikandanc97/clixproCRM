@@ -10,15 +10,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "border border-transparent bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+          "border border-primary/20 bg-gradient-to-b from-primary/90 to-primary text-primary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110 active:brightness-95",
         emerald:
-          "border border-transparent bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+          "border border-transparent bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110",
         navy:
           "border border-transparent bg-foreground text-background shadow-sm hover:bg-foreground/90",
         secondary:
-          "border border-border bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+          "border border-border bg-secondary bg-gradient-to-b from-secondary/80 to-secondary text-secondary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:brightness-105",
         outline:
-          "border border-border bg-background text-foreground shadow-sm hover:bg-muted",
+          "border border-border bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.05),inset_0_-1px_0_rgba(0,0,0,0.05)] hover:bg-muted dark:shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_-1px_0_rgba(255,255,255,0.05)]",
         ghost:
           "border border-transparent text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-muted/50",
         link: 
@@ -26,7 +26,7 @@ const buttonVariants = cva(
         destructive:
           "border border-destructive/20 bg-destructive/10 text-destructive shadow-sm hover:bg-destructive/20",
         premium:
-          "border border-transparent bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+          "border border-primary/20 bg-gradient-to-b from-primary/90 to-primary text-primary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:brightness-110",
       },
       size: {
         default: "h-10 px-4",

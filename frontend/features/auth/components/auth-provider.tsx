@@ -14,8 +14,8 @@ import {
 } from "@/shared/lib/auth/rbac";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 
-const STORAGE_TOKEN_KEY = "clientrise_token";
-const STORAGE_USER_KEY = "clientrise_user";
+const STORAGE_TOKEN_KEY = "orbit_token";
+const STORAGE_USER_KEY = "orbit_user";
 
 type AuthUser = {
   id: string;

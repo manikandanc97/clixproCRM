@@ -1356,7 +1356,7 @@ const getWorkspace = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
-        name: "ClientRise Enterprise",
+        name: "Orbit Enterprise",
         plan: "Enterprise Pro",
         logo: "https://api.dicebear.com/7.x/initials/svg?seed=CE&backgroundColor=00a36c",
         taxId: "TR-99203341",
@@ -1366,7 +1366,7 @@ const getWorkspace = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendServerError(res, error, { name: "ClientRise", plan: "Enterprise" });
+    return sendServerError(res, error, { name: "Orbit", plan: "Enterprise" });
   }
 };
 

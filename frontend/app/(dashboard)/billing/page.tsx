@@ -228,7 +228,7 @@ export default function BillingPage() {
               Genuine License Verified
             </h4>
             <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
-              Your ClientRise CRM is activated with a valid Business Elite lifetime license.
+              Your Orbit CRM is activated with a valid Business Elite lifetime license.
             </p>
             <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />

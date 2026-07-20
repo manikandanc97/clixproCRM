@@ -1,37 +1,37 @@
 const DEMO_ACCOUNTS = [
   {
     name: "Demo Super Admin",
-    email: "superadmin@demo.clientrise.com",
+    email: "superadmin@demo.orbit.com",
     password: "DemoPass123!",
     role: "super_admin",
   },
   {
     name: "Demo Admin",
-    email: "admin@demo.clientrise.com",
+    email: "admin@demo.orbit.com",
     password: "DemoPass123!",
     role: "admin",
   },
   {
     name: "Demo Manager",
-    email: "manager@demo.clientrise.com",
+    email: "manager@demo.orbit.com",
     password: "DemoPass123!",
     role: "manager",
   },
   {
     name: "Demo Sales",
-    email: "sales@demo.clientrise.com",
+    email: "sales@demo.orbit.com",
     password: "DemoPass123!",
     role: "sales",
   },
   {
     name: "Demo Support",
-    email: "support@demo.clientrise.com",
+    email: "support@demo.orbit.com",
     password: "DemoPass123!",
     role: "support",
   },
   {
     name: "Demo Employee",
-    email: "employee@demo.clientrise.com",
+    email: "employee@demo.orbit.com",
     password: "DemoPass123!",
     role: "employee",
   },

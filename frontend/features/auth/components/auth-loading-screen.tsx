@@ -46,7 +46,7 @@ export default function AuthLoadingScreen() {
           className="text-center"
         >
           <h1 className="font-bold text-foreground text-2xl tracking-tight">
-            ClientRise
+            Orbit
           </h1>
           <p className="mt-1 text-muted-foreground text-sm font-medium">
             Restoring your session...

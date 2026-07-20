@@ -1,17 +1,20 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
 }
 
 enum CustomerStatus {
@@ -47,20 +50,55 @@ enum QuotationStatus {
   EXPIRED
 }
 
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  plan      String   @default("free")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  users      TenantUser[]
+  customers  Customer[]
+  leads      Lead[]
+  tasks      Task[]
+  quotations Quotation[]
+}
+
 model User {
   id               String    @id @default(uuid())
   name             String
   email            String    @unique
   password         String
-  role             String    @default("staff")
   resetToken       String?
   resetTokenExpiry DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  memberships      TenantUser[]
+}
+
+model TenantUser {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  role      Role     @default(MEMBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@index([userId])
 }
 
 model Customer {
   id            String         @id @default(uuid())
+  tenantId      String
   name          String
   company       String
   email         String?
@@ -68,16 +106,21 @@ model Customer {
   revenue       Decimal        @default(0) @db.Decimal(12, 2)
   lastContactAt DateTime?
   manager       String         @default("Unassigned")
+  createdBy     String?
+  updatedBy     String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
 
-  @@index([status])
-  @@index([createdAt])
-  @@index([updatedAt])
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
 }
 
 model Lead {
   id         String     @id @default(uuid())
+  tenantId   String
   name       String
   company    String
   email      String
@@ -85,43 +128,57 @@ model Lead {
   value      Decimal    @default(0) @db.Decimal(12, 2)
   followUpAt DateTime?
   assignedTo String     @default("Unassigned")
+  createdBy  String?
+  updatedBy  String?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+  deletedAt  DateTime?
 
-  @@index([status])
-  @@index([createdAt])
-  @@index([updatedAt])
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
 }
 
 model Task {
   id          String       @id @default(uuid())
+  tenantId    String
   title       String
   description String?
   dueDate     DateTime?
   priority    TaskPriority @default(MEDIUM)
   assignedTo  String       @default("Unassigned")
   status      TaskStatus   @default(PENDING)
+  createdBy   String?
+  updatedBy   String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
 
-  @@index([status])
-  @@index([dueDate])
-  @@index([createdAt])
-  @@index([updatedAt])
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+  @@index([tenantId, createdAt])
 }
 
 model Quotation {
   id          String          @id @default(uuid())
-  quoteNumber String          @unique
+  tenantId    String
+  quoteNumber String
   client      String
   amount      Decimal         @default(0) @db.Decimal(12, 2)
   status      QuotationStatus @default(PENDING)
   validTill   DateTime?
-  createdBy   String          @default("System")
+  createdBy   String?
+  updatedBy   String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
 
-  @@index([status])
-  @@index([createdAt])
-  @@index([updatedAt])
+  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, quoteNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
 }

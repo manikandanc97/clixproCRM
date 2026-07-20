@@ -77,7 +77,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-bold leading-none">{user?.name}</p>
             <p className="text-[10px] font-medium leading-none text-muted-foreground mt-1 truncate">
-              {user?.email || "user@clientrise.com"}
+              {user?.email || "user@orbit.com"}
             </p>
           </div>
         </DropdownMenuLabel>

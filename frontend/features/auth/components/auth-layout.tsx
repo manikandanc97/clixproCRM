@@ -49,7 +49,7 @@ export default function AuthLayout({
           </div>
 
           <h1 className="font-bold text-foreground text-3xl tracking-tight">
-            ClientRise
+            Orbit
           </h1>
           <p className="mt-2 font-medium text-muted-foreground text-sm">
             Premium CRM for modern business growth
