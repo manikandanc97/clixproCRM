@@ -12,7 +12,7 @@ interface CRMPageContainerProps {
 export const CRMPageContainer = ({
   children,
   className,
-  maxWidth = "max-w-[1600px]",
+  maxWidth = "max-w-none",
 }: CRMPageContainerProps) => {
   return (
     <motion.div
@@ -20,7 +20,7 @@ export const CRMPageContainer = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       className={cn(
-        "mx-auto flex w-full flex-col gap-8 p-4 pb-16 sm:p-6 lg:p-8",
+        "mx-auto flex w-full flex-col gap-8 px-6 lg:px-10 pt-8 pb-16",
         maxWidth,
         className
       )}

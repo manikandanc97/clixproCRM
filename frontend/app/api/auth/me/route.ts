@@ -20,27 +20,6 @@ export async function GET() {
       process.env.JWT_SECRET || "default_secret"
     ) as { id: string; role?: string };
 
-    if (decoded.id.startsWith("demo-")) {
-      const role = decoded.id.replace("demo-", "");
-      const { getDemoAccountByRole } = await import("@/shared/lib/demo-accounts");
-      const demoAccount = getDemoAccountByRole(role);
-      
-      if (demoAccount) {
-        return NextResponse.json(
-          {
-            success: true,
-            user: {
-              id: decoded.id,
-              name: demoAccount.name,
-              email: demoAccount.email,
-              role: demoAccount.role,
-              memberships: [],
-            },
-          },
-          { status: 200 }
-        );
-      }
-    }
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
@@ -66,7 +45,11 @@ export async function GET() {
         user: {
           id: user.id,
           name: user.name,
+          displayName: user.displayName || user.name,
           email: user.email,
+          avatar: user.avatar,
+          status: user.status,
+          role: user.memberships?.[0]?.role || "EMPLOYEE",
           memberships: user.memberships,
         },
       },

@@ -42,7 +42,7 @@ const PersonalizationSettings = () => {
               <Palette className="w-4 h-4 text-primary" />
               Interface Theme
             </h3>
-            <p className="text-xs text-muted-foreground font-medium mt-0.5">Choose how Orbit looks on your screen.</p>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Choose how ClixProCRM looks on your screen.</p>
           </div>
           
           <div className="space-y-6">

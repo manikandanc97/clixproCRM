@@ -48,7 +48,7 @@ const navLibrary: Record<string, NavItem> = {
 };
 
 export const roleMenuConfig: Record<RoleKey, NavGroup[]> = {
-  [CRM_ROLES.SUPER_ADMIN]: [
+  [CRM_ROLES.ADMIN]: [
     {
       label: "Core",
       items: [
@@ -72,28 +72,6 @@ export const roleMenuConfig: Record<RoleKey, NavGroup[]> = {
         navLibrary.roleManagement,
         navLibrary.settings,
       ],
-    },
-  ],
-  [CRM_ROLES.ADMIN]: [
-    {
-      label: "Core",
-      items: [
-        navLibrary.dashboard,
-        navLibrary.leads,
-        navLibrary.customers,
-        navLibrary.pipeline,
-        navLibrary.tasks,
-        navLibrary.calendar,
-        navLibrary.quotations,
-      ],
-    },
-    {
-      label: "Operations",
-      items: [navLibrary.reports, navLibrary.supportTickets],
-    },
-    {
-      label: "Management",
-      items: [navLibrary.employees, navLibrary.settings],
     },
   ],
   [CRM_ROLES.MANAGER]: [

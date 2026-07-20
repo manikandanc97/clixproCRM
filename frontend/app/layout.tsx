@@ -6,9 +6,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta" });
 
 export const metadata: Metadata = {
-  title: "Orbit CRM",
+  title: "ClixProCRM",
   description:
-    "Orbit CRM dashboard for sales, customers, pipeline, quotations, tasks, and reports.",
+    "ClixProCRM dashboard for sales, customers, pipeline, quotations, tasks, and reports.",
 };
 
 import { Providers } from "./providers";

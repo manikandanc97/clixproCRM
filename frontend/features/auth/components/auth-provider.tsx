@@ -23,6 +23,9 @@ type AuthUser = {
   email: string;
   role: string;
   roleName?: string;
+  displayName?: string;
+  avatar?: string;
+  status?: string;
   permissions?: string[];
   routes?: string[];
   dashboardWidgets?: string[];
@@ -48,6 +51,14 @@ type AuthContextState = {
 
 const AuthContext = createContext<AuthContextState | null>(null);
 
+const WIDGETS_BY_ROLE: Record<string, string[]> = {
+  [CRM_ROLES.ADMIN]: ["salesChart", "upcomingMeetings", "hotLeads", "teamPerformance", "leadFunnel", "revenueTracker", "recentActivities", "pendingFollowups", "aiInsights", "calendarWidget"],
+  [CRM_ROLES.MANAGER]: ["salesChart", "upcomingMeetings", "hotLeads", "teamPerformance", "leadFunnel", "recentActivities", "pendingFollowups", "calendarWidget"],
+  [CRM_ROLES.SALES]: ["salesChart", "upcomingMeetings", "hotLeads", "leadFunnel", "recentActivities", "pendingFollowups", "calendarWidget"],
+  [CRM_ROLES.SUPPORT]: ["upcomingMeetings", "recentActivities", "pendingFollowups", "calendarWidget"],
+  [CRM_ROLES.EMPLOYEE]: ["upcomingMeetings", "recentActivities", "pendingFollowups", "calendarWidget"],
+};
+
 function buildAccess(user: AuthUser | null): RoleAccess {
   if (!user) {
     return defaultRoleAccess;
@@ -66,7 +77,7 @@ function buildAccess(user: AuthUser | null): RoleAccess {
     description: user.description || defaultRoleAccess.description,
     permissions: user.permissions || [],
     routes: allowedRoutes,
-    dashboardWidgets: user.dashboardWidgets || [],
+    dashboardWidgets: WIDGETS_BY_ROLE[roleKey] || WIDGETS_BY_ROLE[CRM_ROLES.EMPLOYEE],
     analyticsVisibility: user.analyticsVisibility || "self",
   };
 }
@@ -212,7 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshUser,
       hasPermission: (permission: string) => {
         if (!user) return false;
-        if (user.role === CRM_ROLES.SUPER_ADMIN) return true;
+        if (user.role === CRM_ROLES.ADMIN) return true;
         return Boolean(user.permissions?.includes(permission));
       },
     }),

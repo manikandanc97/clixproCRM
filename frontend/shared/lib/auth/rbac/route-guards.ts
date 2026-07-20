@@ -1,7 +1,7 @@
 import { CRM_ROLES, type RoleKey } from "./roles";
 
 export const roleRouteConfig: Record<RoleKey, string[]> = {
-  [CRM_ROLES.SUPER_ADMIN]: [
+  [CRM_ROLES.ADMIN]: [
     "/dashboard",
     "/leads",
     "/customers",
@@ -14,23 +14,6 @@ export const roleRouteConfig: Record<RoleKey, string[]> = {
     "/ai-insights",
     "/employees",
     "/role-management",
-    "/settings",
-    "/support-tickets",
-    "/attendance",
-    "/performance",
-    "/team-performance",
-  ],
-  [CRM_ROLES.ADMIN]: [
-    "/dashboard",
-    "/leads",
-    "/customers",
-    "/pipeline",
-    "/tasks",
-    "/calendar",
-    "/quotations",
-    "/reports",
-    "/support-tickets",
-    "/employees",
     "/settings",
   ],
   [CRM_ROLES.MANAGER]: [

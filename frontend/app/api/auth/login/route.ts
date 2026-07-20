@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
-import { getDemoAccountByEmail } from "@/shared/lib/demo-accounts";
+
 
 export async function POST(req: Request) {
   try {
@@ -18,45 +18,6 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check for demo account
-    const demoAccount = getDemoAccountByEmail(normalizedEmail);
-    if (demoAccount) {
-      if (password !== demoAccount.password) {
-        return NextResponse.json(
-          { success: false, message: "Invalid demo credentials" },
-          { status: 400 }
-        );
-      }
-
-      const token = jwt.sign(
-        { id: `demo-${demoAccount.role}`, role: demoAccount.role },
-        process.env.JWT_SECRET || "default_secret",
-        { expiresIn: "24h" }
-      );
-
-      const cookieStore = await cookies();
-      cookieStore.set("orbit_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 24 * 60 * 60,
-        path: "/",
-      });
-
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Demo login successful",
-          user: {
-            id: `demo-${demoAccount.role}`,
-            name: demoAccount.name,
-            email: demoAccount.email,
-            role: demoAccount.role,
-          },
-        },
-        { status: 200 }
-      );
-    }
 
     // Regular DB Login
     const user = await prisma.user.findUnique({
@@ -66,7 +27,7 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found" },
-        { status: 400 }
+        { status: 401 }
       );
     }
 
@@ -74,8 +35,8 @@ export async function POST(req: Request) {
 
     if (!isMatch) {
       return NextResponse.json(
-        { success: false, message: "Invalid credentials" },
-        { status: 400 }
+        { success: false, message: "Incorrect password" },
+        { status: 401 }
       );
     }
 
@@ -94,14 +55,26 @@ export async function POST(req: Request) {
       path: "/",
     });
 
+    // Fetch memberships to determine role
+    const userWithRole = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { memberships: true },
+    });
+    const role = userWithRole?.memberships?.[0]?.role || "employee";
+
     return NextResponse.json(
       {
         success: true,
         message: "Login successful",
+        token,
         user: {
           id: user.id,
           name: user.name,
+          displayName: user.displayName || user.name,
           email: user.email,
+          avatar: user.avatar,
+          status: user.status,
+          role,
         },
       },
       { status: 200 }

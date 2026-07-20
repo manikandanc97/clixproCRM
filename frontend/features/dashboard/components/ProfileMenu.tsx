@@ -30,7 +30,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/components/auth-provider";
 
 type ProfileMenuProps = {
-  user: { name?: string; email?: string; role?: string; roleName?: string } | null;
+  user: { name?: string; email?: string; role?: string; roleName?: string; displayName?: string; avatar?: string; } | null;
   initials: string;
 };
 
@@ -67,7 +67,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
             {initials}
           </div>
           <div className="lg:block hidden text-left min-w-[80px]">
-            <p className="font-bold text-foreground text-sm leading-none tracking-tight">{user?.name || "Account"}</p>
+            <p className="font-bold text-foreground text-sm leading-none tracking-tight">{user?.displayName || user?.name || "Account"}</p>
             <p className="mt-1.5 text-muted-foreground text-[10px] font-black tracking-[0.1em] uppercase">{user?.roleName || user?.role || "Team Member"}</p>
           </div>
         </button>
@@ -75,9 +75,9 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
       <DropdownMenuContent className="w-64 rounded-xl p-2 shadow-elevated border-border bg-popover/95 backdrop-blur-xl" align="end" sideOffset={8}>
         <DropdownMenuLabel className="px-3 py-3">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-bold leading-none">{user?.name}</p>
+            <p className="text-sm font-bold leading-none">{user?.displayName || user?.name}</p>
             <p className="text-[10px] font-medium leading-none text-muted-foreground mt-1 truncate">
-              {user?.email || "user@orbit.com"}
+              {user?.email || "user@clixprocrm.com"}
             </p>
           </div>
         </DropdownMenuLabel>

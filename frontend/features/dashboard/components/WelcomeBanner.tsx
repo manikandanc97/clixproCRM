@@ -14,7 +14,7 @@ import { Button } from "@/shared/ui/button";
 import Link from "next/link";
 
 export default function WelcomeBanner() {
-  const { access } = useAuth();
+  const { user, access } = useAuth();
 
   return (
     <motion.div
@@ -38,7 +38,7 @@ export default function WelcomeBanner() {
 
           <div className="space-y-2">
             <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-              Welcome back, <span className="text-emerald-400">{access.roleName}</span>
+              Welcome back, <span className="text-emerald-400">{user?.displayName || user?.name || access.roleName}</span>
             </h1>
             <p className="text-slate-400 text-lg max-w-xl leading-relaxed">
               Your business grew by <span className="text-emerald-400 font-semibold">+12.5%</span> this week. Check your latest leads and conversion reports below.

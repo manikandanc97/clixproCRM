@@ -35,8 +35,15 @@ interface LoginResponse extends AuthResponse {
 }
 
 export const loginUser = async (data: LoginPayload) => {
-  const response = await client.post<LoginResponse>("/auth/login", data);
-  return response.data;
+  try {
+    const response = await client.post<LoginResponse>("/auth/login", data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw error;
+  }
 };
 
 export const registerUser = async (data: RegisterPayload) => {

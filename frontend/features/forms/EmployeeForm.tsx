@@ -16,7 +16,7 @@ const employeeSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
-  role: z.enum(["super_admin", "admin", "sales_manager", "manager", "staff", "employee"]),
+  role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
@@ -47,7 +47,7 @@ export const EmployeeForm = ({ onSuccess, onCancel }: EmployeeFormProps) => {
       name: "",
       email: "",
       password: "",
-      role: "staff",
+      role: "EMPLOYEE",
     },
   });
 
@@ -58,21 +58,19 @@ export const EmployeeForm = ({ onSuccess, onCancel }: EmployeeFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormInput name="name" label="Full Name" placeholder="e.g. Michael Scott" />
+        <FormInput name="name" label="Name" placeholder="Name" />
         
-        <FormInput name="email" label="Professional Email" placeholder="michael@dundermifflin.com" />
+        <FormInput name="email" label="Email" placeholder="Email" />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormSelect 
             name="role" 
-            label="System Role" 
+            label="Role" 
             options={[
-              { label: "Super Admin", value: "super_admin" },
-              { label: "Admin", value: "admin" },
-              { label: "Sales Manager", value: "sales_manager" },
-              { label: "Manager", value: "manager" },
-              { label: "Staff", value: "staff" },
-              { label: "Employee", value: "employee" },
+              { label: "Admin", value: "ADMIN" },
+              { label: "Manager", value: "MANAGER" },
+              { label: "Sales", value: "SALES" },
+              { label: "Employee", value: "EMPLOYEE" },
             ]} 
           />
           <FormInput name="password" label="Temporary Password" placeholder="••••••••" />

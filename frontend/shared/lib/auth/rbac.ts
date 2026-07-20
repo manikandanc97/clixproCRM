@@ -50,7 +50,7 @@ export const defaultRoleAccess: RoleAccess = {
  * Role mapping for backward compatibility
  */
 const legacyRoleMap: Record<string, RoleKey> = {
-  "super_admin": CRM_ROLES.SUPER_ADMIN,
+  "super_admin": CRM_ROLES.ADMIN,
   "admin": CRM_ROLES.ADMIN,
   "sales_manager": CRM_ROLES.MANAGER,
   "sales_executive": CRM_ROLES.SALES,
@@ -80,8 +80,7 @@ export function getRoleMenu(role?: string) {
 }
 
 export const roleAccent: Record<RoleKey, string> = {
-  [CRM_ROLES.SUPER_ADMIN]: "from-violet-500 to-purple-600",
-  [CRM_ROLES.ADMIN]: "from-indigo-500 to-blue-600",
+  [CRM_ROLES.ADMIN]: "from-violet-500 to-purple-600",
   [CRM_ROLES.MANAGER]: "from-emerald-500 to-green-600",
   [CRM_ROLES.SALES]: "from-blue-500 to-cyan-600",
   [CRM_ROLES.SUPPORT]: "from-orange-500 to-amber-600",
@@ -89,8 +88,7 @@ export const roleAccent: Record<RoleKey, string> = {
 };
 
 export const roleIcon: Record<RoleKey, React.ComponentType<{ className?: string }>> = {
-  [CRM_ROLES.SUPER_ADMIN]: ShieldCheck,
-  [CRM_ROLES.ADMIN]: Building2,
+  [CRM_ROLES.ADMIN]: ShieldCheck,
   [CRM_ROLES.MANAGER]: Building2,
   [CRM_ROLES.SALES]: Users,
   [CRM_ROLES.SUPPORT]: Ticket,
