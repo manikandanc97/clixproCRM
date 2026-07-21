@@ -17,7 +17,6 @@ const leadSchema = z.object({
   status: z.enum(["NEW", "CONTACTED", "PROPOSAL_SENT", "WON", "LOST"]),
   value: z.string().optional(),
   followUpAt: z.date().optional(),
-  assignedTo: z.string().optional(),
 });
 
 type LeadFormValues = z.infer<typeof leadSchema>;
@@ -38,7 +37,6 @@ export const LeadForm = ({ onSuccess, onCancel }: LeadFormProps) => {
       email: "",
       status: "NEW",
       value: "",
-      assignedTo: "Unassigned",
     },
   });
 
@@ -57,7 +55,6 @@ export const LeadForm = ({ onSuccess, onCancel }: LeadFormProps) => {
         status: mappedStatus,
         value: data.value || "",
         followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
-        assignedTo: data.assignedTo || "",
       });
       onSuccess?.();
     } catch (error) {
@@ -92,7 +89,6 @@ export const LeadForm = ({ onSuccess, onCancel }: LeadFormProps) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormDatePicker name="followUpAt" label="Follow-up Date" />
-          <FormInput name="assignedTo" label="Assign To" placeholder="e.g. Jane Smith" />
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">

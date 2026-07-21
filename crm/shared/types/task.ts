@@ -9,7 +9,6 @@ export interface TaskType {
   dueDate: string;
   dueDateValue: string | null;
   priority: "High" | "Medium" | "Low";
-  assignedTo: string;
   status: "Pending" | "In Progress" | "Completed";
   // New premium fields
   progress: number;
@@ -23,7 +22,7 @@ export interface TaskType {
   notesCount?: number;
   attachmentsCount?: number;
   isUrgent?: boolean;
-  collaborators?: { name: string; avatar: string; id: string }[];
+  collaborators?: { name: string; id: string }[];
   aiPriorityScore?: number;
   aiSummary?: string;
 }

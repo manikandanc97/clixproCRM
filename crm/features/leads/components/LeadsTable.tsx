@@ -143,16 +143,6 @@ const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
       ),
     },
     {
-      header: "Rep",
-      cell: (lead: LeadType) => (
-        <CommonTooltip content={lead.assignedTo}>
-          <Avatar className="w-7 h-7 rounded-md border border-border bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
-            <AvatarFallback>{lead.assignedTo[0]}</AvatarFallback>
-          </Avatar>
-        </CommonTooltip>
-      ),
-    },
-    {
       header: "Actions",
       headerClassName: "text-right",
       cell: (lead: LeadType) => (

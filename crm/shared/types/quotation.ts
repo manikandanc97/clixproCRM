@@ -9,7 +9,6 @@ export interface QuotationType {
   status: "Pending" | "Approved" | "Rejected" | "Expired";
   validTill: string;
   validTillValue: string | null;
-  createdBy: string;
   probability?: number;
   viewCount?: number;
   downloadCount?: number;

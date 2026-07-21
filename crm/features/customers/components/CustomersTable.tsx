@@ -76,7 +76,7 @@ export const CustomersTable = ({ customers }: CustomersTableProps) => {
       cell: (customer: CustomerType) => (
         <div className="flex items-center gap-3">
           <Avatar className="w-9 h-9 rounded-xl border border-border">
-            <AvatarImage src={customer.avatar} />
+            <AvatarImage src={""} />
             <AvatarFallback className="font-bold text-[10px]">{customer.name.substring(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">

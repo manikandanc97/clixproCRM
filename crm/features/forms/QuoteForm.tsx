@@ -15,7 +15,6 @@ const quoteSchema = z.object({
   amount: z.string().min(1, "Amount is required"),
   status: z.enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED"]),
   validTill: z.date().optional(),
-  createdBy: z.string().optional(),
 });
 
 type QuoteFormValues = z.infer<typeof quoteSchema>;
@@ -34,7 +33,6 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
       client: "",
       amount: "",
       status: "PENDING",
-      createdBy: "System",
     },
   });
 
@@ -50,7 +48,6 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
         amount: data.amount,
         status: mappedStatus,
         validTill: data.validTill ? data.validTill.toISOString() : undefined,
-        createdBy: data.createdBy || "",
       });
       onSuccess?.();
     } catch (error) {
@@ -79,7 +76,6 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormDatePicker name="validTill" label="Valid Until" />
-          <FormInput name="createdBy" label="Created By" placeholder="e.g. Sales Team" />
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">

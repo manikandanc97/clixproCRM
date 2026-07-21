@@ -7,8 +7,21 @@ export async function GET() {
     const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
-    const leads = await CrmService.getLeads(session.activeTenantId);
+    const leads = await CrmService.getLeads(session.tenantId);
     return NextResponse.json({ success: true, data: leads }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await getAuthSession();
+    if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+
+    const body = await req.json();
+    const lead = await CrmService.createLead(session.tenantId, body);
+    return NextResponse.json({ success: true, data: lead }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }

@@ -127,7 +127,7 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay }: TaskKanbanCardProps
         <div className="flex items-center -space-x-1.5">
           <Avatar className="w-6 h-6 border-2 border-card shadow-sm rounded-lg">
             <AvatarFallback className="text-[8px] font-bold bg-muted text-muted-foreground">
-              {task.assignedTo.split(' ').map(n => n[0]).join('')}
+              {"Unassigned".split(' ').map(n => n[0]).join('')}
             </AvatarFallback>
           </Avatar>
           {task.collaborators?.slice(0, 2).map(c => (

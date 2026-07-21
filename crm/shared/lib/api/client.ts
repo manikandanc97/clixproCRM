@@ -29,9 +29,6 @@ client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("orbit_token");
-      localStorage.removeItem("orbit_user");
-      localStorage.removeItem("token"); // legacy key
       window.dispatchEvent(new CustomEvent("auth:expired"));
     }
 

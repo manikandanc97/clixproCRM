@@ -3,11 +3,8 @@ export interface EmployeeType {
   name: string;
   email: string;
   role: string;
-  department: string;
-  status: "active" | "on-leave" | "inactive" | "pending";
-  performance: number;
-  avatar: string;
-  lastActive: string;
+  status: string;
+  createdAt: string;
 }
 
 export interface EmployeeStatType {

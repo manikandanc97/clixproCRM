@@ -44,7 +44,6 @@ export async function GET(req: Request) {
     const formattedUsers = users.map((u) => ({
       id: u.id,
       name: u.name,
-      displayName: u.displayName,
       email: u.email,
       status: u.status,
       role: u.memberships[0]?.role || "EMPLOYEE",
@@ -77,39 +76,48 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-    if (existingUser) {
-      return NextResponse.json({ success: false, message: "User with this email already exists" }, { status: 400 });
+    const normalizedEmail = email.toLowerCase();
+    
+    let newUser;
+    try {
+      newUser = await prisma.$transaction(async (tx) => {
+        let u = await tx.user.findUnique({ where: { email: normalizedEmail } });
+        
+        if (u) {
+          const existingTenantUser = await tx.tenantUser.findUnique({
+            where: { tenantId_userId: { tenantId, userId: u.id } }
+          });
+          if (existingTenantUser) {
+            throw new Error("USER_EXISTS_IN_TENANT");
+          }
+        } else {
+          const hashedPassword = await bcrypt.hash(password, 10);
+          u = await tx.user.create({
+            data: {
+              name,
+              email: normalizedEmail,
+              password: hashedPassword,
+              status: status || "ACTIVE",
+            },
+          });
+        }
+
+        await tx.tenantUser.create({
+          data: {
+            tenantId,
+            userId: u.id,
+            role: role,
+          },
+        });
+
+        return u;
+      });
+    } catch (txError: any) {
+      if (txError.message === "USER_EXISTS_IN_TENANT") {
+        return NextResponse.json({ success: false, message: "User is already an employee in this workspace" }, { status: 400 });
+      }
+      throw txError;
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const nameParts = name.trim().split(" ");
-    const firstName = nameParts[0];
-    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : null;
-
-    const newUser = await prisma.$transaction(async (tx) => {
-      const u = await tx.user.create({
-        data: {
-          name,
-          firstName,
-          lastName,
-          displayName: name,
-          email: email.toLowerCase(),
-          password: hashedPassword,
-          status: status || "ACTIVE",
-        },
-      });
-
-      await tx.tenantUser.create({
-        data: {
-          tenantId,
-          userId: u.id,
-          role: role,
-        },
-      });
-
-      return u;
-    });
 
     return NextResponse.json({ success: true, message: "User created successfully", user: { id: newUser.id } }, { status: 201 });
   } catch (error: any) {

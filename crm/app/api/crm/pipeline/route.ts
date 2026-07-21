@@ -7,7 +7,7 @@ export async function GET() {
     const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
-    const pipeline = await CrmService.getPipeline(session.activeTenantId);
+    const pipeline = await CrmService.getPipeline(session.tenantId);
     return NextResponse.json({ success: true, data: pipeline }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });

@@ -180,17 +180,6 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
       {/* Footer Info */}
       <div className="flex items-center justify-between pt-4 border-t border-border/50 mt-auto">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-             <Avatar className="w-7 h-7 rounded-lg border border-border bg-muted flex items-center justify-center font-bold text-[10px]">
-               <AvatarFallback>
-                 {item.assignedTo.split(' ').map(n => n[0]).join('')}
-               </AvatarFallback>
-             </Avatar>
-             <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider leading-none mb-0.5">Owner</span>
-                <span className="text-[10px] font-bold text-foreground truncate max-w-[60px] leading-none">{item.assignedTo.split(' ')[0]}</span>
-             </div>
-          </div>
         </div>
 
         <div className="flex items-center gap-2">

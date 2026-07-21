@@ -9,7 +9,7 @@ export async function GET() {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const customers = await CustomerService.getCustomers(session.activeTenantId);
+    const customers = await CustomerService.getCustomers(session.tenantId);
     return NextResponse.json({ success: true, data: customers }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const customer = await CustomerService.createCustomer(session.activeTenantId, body, session.user.id);
+    const customer = await CustomerService.createCustomer(session.tenantId, body, session.userId);
     
     return NextResponse.json({ success: true, data: customer }, { status: 201 });
   } catch (error: any) {

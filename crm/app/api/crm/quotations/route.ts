@@ -11,8 +11,21 @@ export async function GET() {
     const moduleName = "quotations";
     const methodName = "get" + moduleName.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
     
-    const data = await (CrmService as any)[methodName](session.activeTenantId);
+    const data = await (CrmService as any)[methodName](session.tenantId);
     return NextResponse.json({ success: true, data }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await getAuthSession();
+    if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+
+    const body = await req.json();
+    const quotation = await CrmService.createQuotation(session.tenantId, body);
+    return NextResponse.json({ success: true, data: quotation }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }

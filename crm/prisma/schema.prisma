@@ -62,9 +62,9 @@ model Tenant {
   name      String
   slug      String   @unique
   plan      String   @default("free")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  deletedAt DateTime?
 
   users      TenantUser[]
   customers  Customer[]
@@ -75,21 +75,17 @@ model Tenant {
 
 model User {
   id               String      @id @default(uuid())
-  firstName        String?
-  lastName         String?
-  displayName      String?
-  avatar           String?
-  status           UserStatus  @default(ACTIVE)
   name             String
   email            String      @unique
   password         String
+  status           UserStatus  @default(ACTIVE)
   resetToken       String?
   resetTokenExpiry DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  deletedAt        DateTime?
 
-  memberships      TenantUser[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships TenantUser[]
 }
 
 model TenantUser {
@@ -117,17 +113,13 @@ model Customer {
   status        CustomerStatus @default(ACTIVE)
   revenue       Decimal        @default(0) @db.Decimal(12, 2)
   lastContactAt DateTime?
-  manager       String         @default("Unassigned")
-  createdBy     String?
-  updatedBy     String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  deletedAt     DateTime?
 
-  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, status])
-  @@index([tenantId, createdAt])
 }
 
 model Lead {
@@ -139,17 +131,13 @@ model Lead {
   status     LeadStatus @default(NEW)
   value      Decimal    @default(0) @db.Decimal(12, 2)
   followUpAt DateTime?
-  assignedTo String     @default("Unassigned")
-  createdBy  String?
-  updatedBy  String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  deletedAt  DateTime?
 
-  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, status])
-  @@index([tenantId, createdAt])
 }
 
 model Task {
@@ -159,19 +147,14 @@ model Task {
   description String?
   dueDate     DateTime?
   priority    TaskPriority @default(MEDIUM)
-  assignedTo  String       @default("Unassigned")
   status      TaskStatus   @default(PENDING)
-  createdBy   String?
-  updatedBy   String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?
 
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, status])
-  @@index([tenantId, dueDate])
-  @@index([tenantId, createdAt])
 }
 
 model Quotation {
@@ -182,15 +165,11 @@ model Quotation {
   amount      Decimal         @default(0) @db.Decimal(12, 2)
   status      QuotationStatus @default(PENDING)
   validTill   DateTime?
-  createdBy   String?
-  updatedBy   String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  deletedAt   DateTime?
 
-  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, quoteNumber])
-  @@index([tenantId, status])
-  @@index([tenantId, createdAt])
 }

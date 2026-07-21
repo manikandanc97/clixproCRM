@@ -11,7 +11,7 @@ export async function GET() {
     const moduleName = "team-performance";
     const methodName = "get" + moduleName.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
     
-    const data = await (CrmService as any)[methodName](session.activeTenantId);
+    const data = await (CrmService as any)[methodName](session.tenantId);
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });

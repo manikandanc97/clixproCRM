@@ -41,16 +41,9 @@ export async function POST(req: Request) {
         },
       });
 
-      const nameParts = name.trim().split(" ");
-      const firstName = nameParts[0];
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : null;
-
       const newUser = await tx.user.create({
         data: {
           name,
-          firstName,
-          lastName,
-          displayName: name,
           email: normalizedEmail,
           password: hashedPassword,
         },

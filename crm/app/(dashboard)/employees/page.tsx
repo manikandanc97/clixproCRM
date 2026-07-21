@@ -64,10 +64,12 @@ export default function EmployeesPage() {
     }
   }, [searchParams]);
 
-  const filteredEmployees = employees.filter(emp => 
-    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.department.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredEmployees = employees.filter(emp => {
+    const nameMatch = (emp.name || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const emailMatch = (emp.email || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const roleMatch = (emp.role || "").toLowerCase().includes(searchQuery.toLowerCase());
+    return nameMatch || emailMatch || roleMatch;
+  });
 
   if (loading) {
     return <PageLoadingState label="Loading employee records..." />;
@@ -124,9 +126,9 @@ export default function EmployeesPage() {
             <CRMTableHeader>
               <CRMTableRow>
                 <CRMTableHeaderCell>Employee</CRMTableHeaderCell>
-                <CRMTableHeaderCell>Department</CRMTableHeaderCell>
+                <CRMTableHeaderCell>Role</CRMTableHeaderCell>
                 <CRMTableHeaderCell>Status</CRMTableHeaderCell>
-                <CRMTableHeaderCell>Performance</CRMTableHeaderCell>
+                <CRMTableHeaderCell>Joined Date</CRMTableHeaderCell>
                 <CRMTableHeaderCell className="text-right">Actions</CRMTableHeaderCell>
               </CRMTableRow>
             </CRMTableHeader>
@@ -136,34 +138,27 @@ export default function EmployeesPage() {
                   <CRMTableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-                        <AvatarImage src={emp.avatar} alt={emp.name} />
+                        <AvatarImage src={""} alt={emp.name} />
                         <AvatarFallback>{emp.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-bold text-sm tracking-tight">{emp.name}</div>
-                        <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{emp.role}</div>
+                        <div className="text-[10px] text-muted-foreground font-medium">{emp.email}</div>
                       </div>
                     </div>
                   </CRMTableCell>
                   <CRMTableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold">{emp.department}</span>
-                      <span className="text-[10px] text-muted-foreground">{emp.email}</span>
-                    </div>
+                    <span className="text-sm font-semibold capitalize">{emp.role.toLowerCase()}</span>
                   </CRMTableCell>
                   <CRMTableCell>
-                    <CRMStatusBadge tone={emp.status === 'active' ? 'success' : 'warning'}>
+                    <CRMStatusBadge tone={emp.status === 'ACTIVE' ? 'success' : 'warning'}>
                       {emp.status}
                     </CRMStatusBadge>
                   </CRMTableCell>
                   <CRMTableCell>
-                    <div className="w-32 space-y-1.5">
-                      <div className="flex justify-between text-[10px] font-bold">
-                        <span className="text-muted-foreground">{emp.performance}%</span>
-                        <span className="text-emerald-500">Target Hit</span>
-                      </div>
-                      <Progress value={emp.performance} className="h-1.5" />
-                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(emp.createdAt).toLocaleDateString()}
+                    </span>
                   </CRMTableCell>
                   <CRMTableCell className="text-right">
                     <DropdownMenu>

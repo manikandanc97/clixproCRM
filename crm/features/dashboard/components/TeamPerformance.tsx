@@ -55,7 +55,7 @@ export default function TeamPerformance() {
                     <div className="flex items-center justify-between mb-3 min-w-0 gap-3">
                       <div className="flex items-center gap-3 cursor-pointer min-w-0">
                         <div className={`w-11 h-11 rounded-xl shrink-0 ${avatarBg} ${avatarText} flex items-center justify-center font-bold shadow-sm transition-all duration-500 border border-current/10`}>
-                          {member.avatar}
+                          {""}
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors leading-none mb-1.5 truncate">{member.name}</h4>

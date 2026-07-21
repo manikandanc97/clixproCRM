@@ -1,9 +1,24 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import jwt from "jsonwebtoken";
-import prisma from "@/lib/prisma";
 
-export async function getAuthSession() {
+interface AuthSession {
+  userId: string;
+  tenantId: string;
+  role: string;
+}
+
+export async function getAuthSession(): Promise<AuthSession | null> {
   try {
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    const tenantId = headersList.get("x-tenant-id");
+    const role = headersList.get("x-role");
+
+    if (userId && tenantId && role) {
+      return { userId, tenantId, role };
+    }
+
+    // Fallback if headers are not set
     const cookieStore = await cookies();
     const token = cookieStore.get("orbit_token")?.value;
 
@@ -12,23 +27,28 @@ export async function getAuthSession() {
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET || "default_secret"
-    ) as { id: string };
+    ) as AuthSession;
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      include: {
-        memberships: true,
-      }
-    });
-
-    if (!user || user.memberships.length === 0) return null;
-
-    // For simplicity in this migration, we assume the first membership is the active tenant.
-    // In a full implementation, you would store the 'activeTenantId' in the session or cookie.
-    const activeTenantId = user.memberships[0].tenantId;
-
-    return { user, activeTenantId };
+    return {
+      userId: decoded.userId || (decoded as any).id,
+      tenantId: decoded.tenantId,
+      role: decoded.role,
+    };
   } catch (error) {
     return null;
   }
+}
+
+export async function requireRole(allowedRoles: string[]) {
+  const session = await getAuthSession();
+  
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  if (!allowedRoles.includes(session.role)) {
+    throw new Error("Forbidden");
+  }
+
+  return session;
 }

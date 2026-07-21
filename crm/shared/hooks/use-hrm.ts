@@ -8,21 +8,21 @@ import {
 import { useAuth } from "@/features/auth/components/auth-provider";
 
 export function useEmployees() {
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
   return useQuery({
-    queryKey: ["employees", token],
+    queryKey: ["employees"],
     queryFn: fetchEmployees,
-    enabled: isAuthenticated && !!token,
+    enabled: isAuthenticated,
     refetchInterval: 30000,
   });
 }
 
 export function useRoles() {
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
   return useQuery({
-    queryKey: ["roles", token],
+    queryKey: ["roles"],
     queryFn: fetchRoles,
-    enabled: isAuthenticated && !!token,
+    enabled: isAuthenticated,
     refetchInterval: 30000,
   });
 }

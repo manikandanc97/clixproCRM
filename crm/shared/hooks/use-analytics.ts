@@ -9,7 +9,7 @@ export function useAnalytics() {
   return useQuery({
     queryKey: ["analytics", token],
     queryFn: fetchAnalyticsData,
-    enabled: isAuthenticated && !!token,
+    enabled: isAuthenticated ,
     refetchInterval: 5 * 60 * 1000,
     staleTime: 60 * 1000,
   });

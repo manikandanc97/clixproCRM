@@ -15,7 +15,6 @@ const taskSchema = z.object({
   description: z.string().optional(),
   dueDate: z.date().optional(),
   priority: z.enum(["HIGH", "MEDIUM", "LOW"]),
-  assignedTo: z.string().optional(),
   status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]),
 });
 
@@ -36,7 +35,6 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
       description: "",
       priority: "MEDIUM",
       status: "PENDING",
-      assignedTo: "Unassigned",
     },
   });
 
@@ -55,7 +53,6 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
         description: data.description || "",
         dueDate: data.dueDate ? data.dueDate.toISOString() : undefined,
         priority: mappedPriority,
-        assignedTo: data.assignedTo || "",
         status: mappedStatus,
       });
       onSuccess?.();
@@ -94,7 +91,6 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
               { label: "Completed", value: "COMPLETED" },
             ]} 
           />
-          <FormInput name="assignedTo" label="Assign To" placeholder="e.g. Mike Smith" />
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">

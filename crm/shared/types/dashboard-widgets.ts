@@ -18,7 +18,6 @@ export interface HotLead {
   value: string;
   score: number;
   status: string;
-  assignedTo: string;
 }
 
 export interface HotLeadsDataType {
@@ -32,8 +31,7 @@ export interface TeamMember {
   sales: number;
   target: number;
   revenue: string;
-  avatar: string;
-}
+  }
 
 export interface TeamPerformanceDataType {
   team: TeamMember[];

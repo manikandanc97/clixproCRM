@@ -20,7 +20,7 @@ export function useDashboardData() {
   return useQuery({
     queryKey: ["dashboardData", token],
     queryFn: fetchDashboardData,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     refetchInterval: 5 * 60 * 1000, // 5 minutes
     staleTime: 60 * 1000, // 1 minute
     retry: 1,
@@ -33,7 +33,7 @@ export function useHotLeads() {
   return useQuery({
     queryKey: ["hotLeads", token],
     queryFn: fetchHotLeads,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     refetchInterval: 5 * 60 * 1000,
     staleTime: 60 * 1000,
   });
@@ -44,7 +44,7 @@ export function useTeamPerformance() {
   return useQuery({
     queryKey: ["teamPerformance", token],
     queryFn: fetchTeamPerformance,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     refetchInterval: 5 * 60 * 1000,
     staleTime: 60 * 1000,
   });
@@ -55,7 +55,7 @@ export function useMeetings() {
   return useQuery({
     queryKey: ["meetings", token],
     queryFn: fetchMeetings,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     refetchInterval: 5 * 60 * 1000,
     staleTime: 60 * 1000,
   });
@@ -66,7 +66,7 @@ export function useNotifications() {
   return useQuery({
     queryKey: ["notifications", token],
     queryFn: fetchNotifications,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     refetchInterval: 5 * 60 * 1000,
     staleTime: 30 * 1000, // Notifications can be slightly more frequent
     retry: 1,
@@ -79,7 +79,7 @@ export function useAiInsights() {
   return useQuery({
     queryKey: ["aiInsights", token],
     queryFn: fetchAiInsights,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     refetchInterval: 10 * 60 * 1000, // AI insights change slowly
     staleTime: 5 * 60 * 1000,
   });
@@ -92,7 +92,7 @@ export function useLeads() {
   return useQuery({
     queryKey: ["leads", token],
     queryFn: fetchLeadsData,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -102,7 +102,7 @@ export function useTasks() {
   return useQuery({
     queryKey: ["tasks", token],
     queryFn: fetchTasksData,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -112,7 +112,7 @@ export function usePipeline() {
   return useQuery({
     queryKey: ["pipeline", token],
     queryFn: fetchPipelineData,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -122,7 +122,7 @@ export function useCustomers() {
   return useQuery({
     queryKey: ["customers", token],
     queryFn: fetchCustomersData,
-    enabled: isHydrated && isAuthenticated && !!token,
+    enabled: isHydrated && isAuthenticated ,
     staleTime: 5 * 60 * 1000,
   });
 }

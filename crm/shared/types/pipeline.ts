@@ -13,7 +13,6 @@ export interface PipelineLeadType {
   valueAmount: number;
   followUp: string;
   followUpAt: string | null;
-  assignedTo: string;
   stage: "New Lead" | "Contacted" | "Proposal Sent" | "Won" | "Lost";
   // Deal Intelligence
   priority: "High" | "Medium" | "Low";

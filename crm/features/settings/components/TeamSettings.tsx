@@ -133,7 +133,7 @@ const TeamSettings = () => {
           <div className="flex -space-x-2 ml-auto">
             {members.slice(0, 3).map((member) => (
               <Avatar key={member.id} className="border-2 border-card w-7 h-7 rounded-lg shadow-sm">
-                <AvatarImage src={member.avatar} />
+                <AvatarImage src={""} />
                 <AvatarFallback className="text-[9px] font-bold bg-muted">{member.name[0]}</AvatarFallback>
               </Avatar>
             ))}
@@ -154,7 +154,7 @@ const TeamSettings = () => {
             >
               <div className="flex items-center gap-3">
                 <Avatar className="w-9 h-9 rounded-lg border border-border shadow-sm">
-                  <AvatarImage src={member.avatar} />
+                  <AvatarImage src={""} />
                   <AvatarFallback className="text-xs font-bold bg-muted">{member.name[0]}</AvatarFallback>
                 </Avatar>
                 <div>

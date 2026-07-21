@@ -30,9 +30,7 @@ interface AuthResponse {
   user: AuthUser;
 }
 
-interface LoginResponse extends AuthResponse {
-  token: string;
-}
+interface LoginResponse extends AuthResponse {}
 
 export const loginUser = async (data: LoginPayload) => {
   try {
@@ -58,9 +56,6 @@ export const fetchCurrentUser = async () => {
 
 export const logoutUser = async () => {
   if (typeof window !== "undefined") {
-    localStorage.removeItem("orbit_token");
-    localStorage.removeItem("orbit_user");
-    localStorage.removeItem("token"); // legacy key
     try {
       await client.post("/auth/logout");
     } catch (error) {

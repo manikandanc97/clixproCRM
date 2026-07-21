@@ -141,21 +141,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
               </div>
             </CRMTableCell>
 
-            <CRMTableCell className="px-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9 rounded-lg border border-border/50">
-                  <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
-                    {task.assignedTo.split(" ").map((name) => name[0]).join("").slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-[12px] font-semibold leading-none text-foreground">{task.assignedTo}</span>
-                  <span className="mt-1 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
-                    Team Lead
-                  </span>
-                </div>
-              </div>
-            </CRMTableCell>
+
 
             <CRMTableCell className="px-5 text-right">
               <div className="flex items-center justify-end gap-1">

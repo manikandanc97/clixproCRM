@@ -16,7 +16,6 @@ const customerSchema = z.object({
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   status: z.enum(["ACTIVE", "PREMIUM", "INACTIVE"]),
   revenue: z.string().optional(),
-  manager: z.string().optional(),
 });
 
 type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -37,7 +36,6 @@ export const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
       email: "",
       status: "ACTIVE",
       revenue: "",
-      manager: "Unassigned",
     },
   });
 
@@ -53,7 +51,6 @@ export const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
         email: data.email || "",
         status: mappedStatus,
         revenue: data.revenue || "",
-        manager: data.manager || "",
       });
       onSuccess?.();
     } catch (error) {
@@ -83,8 +80,6 @@ export const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
           />
           <FormInput name="revenue" label="Annual Revenue ($)" placeholder="50000" />
         </div>
-
-        <FormInput name="manager" label="Account Manager" placeholder="e.g. Robert Brown" />
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onCancel} disabled={createCustomer.isPending}>

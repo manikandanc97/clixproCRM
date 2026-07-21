@@ -40,8 +40,22 @@ export async function POST(req: Request) {
       );
     }
 
+    // Fetch memberships to determine role and tenant
+    const userWithRole = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { memberships: true },
+    });
+    
+    const firstMembership = userWithRole?.memberships?.[0];
+    const role = firstMembership?.role || "EMPLOYEE";
+    const tenantId = firstMembership?.tenantId;
+
     const token = jwt.sign(
-      { id: user.id },
+      { 
+        id: user.id,
+        role: role,
+        tenantId: tenantId
+      },
       process.env.JWT_SECRET || "default_secret",
       { expiresIn: "7d" }
     );
@@ -55,26 +69,17 @@ export async function POST(req: Request) {
       path: "/",
     });
 
-    // Fetch memberships to determine role
-    const userWithRole = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: { memberships: true },
-    });
-    const role = userWithRole?.memberships?.[0]?.role || "employee";
-
     return NextResponse.json(
       {
         success: true,
         message: "Login successful",
-        token,
         user: {
           id: user.id,
           name: user.name,
-          displayName: user.displayName || user.name,
           email: user.email,
-          avatar: user.avatar,
           status: user.status,
           role,
+          tenantId
         },
       },
       { status: 200 }

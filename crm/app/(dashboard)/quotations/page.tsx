@@ -55,7 +55,7 @@ const QuotationsPage = () => {
       const matchesSearch =
         quotation.quoteId.toLowerCase().includes(normalizedQuery) ||
         quotation.client.toLowerCase().includes(normalizedQuery) ||
-        quotation.createdBy.toLowerCase().includes(normalizedQuery);
+        "System".toLowerCase().includes(normalizedQuery);
       const matchesStatus =
         statusFilter === "all" || quotation.status.toLowerCase() === statusFilter.toLowerCase();
 

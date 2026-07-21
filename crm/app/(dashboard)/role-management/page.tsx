@@ -70,10 +70,12 @@ export default function RoleManagementPage() {
     }
   }, [searchParams]);
 
-  const filteredUsers = users.filter((u) =>
-    (u.displayName || u.name).toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = users.filter((u) => {
+    const nameStr = u.displayName || u.name || "";
+    const emailStr = u.email || "";
+    return nameStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           emailStr.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const handleCreateRole = () => {
     setIsAddModalOpen(true);

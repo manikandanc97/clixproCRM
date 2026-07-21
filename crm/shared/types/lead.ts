@@ -10,7 +10,6 @@ export interface LeadType {
   valueAmount: number;
   followUp: string;
   followUpAt: string | null;
-  assignedTo: string;
   createdAt: string;
   // intelligence fields
   score: number;

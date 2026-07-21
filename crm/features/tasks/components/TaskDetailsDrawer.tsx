@@ -52,7 +52,7 @@ const TaskDetailsDrawer = ({
     {
       id: `${task.id}-activity-1`,
       title: "Task created",
-      description: `Assigned to ${task.assignedTo} under ${task.category ?? "General"} workspace.`,
+      description: `Assigned to ${"Unassigned"} under ${task.category ?? "General"} workspace.`,
       time: "Recently",
       icon: Sparkles,
       iconBg: "bg-primary/10",
@@ -124,7 +124,7 @@ const TaskDetailsDrawer = ({
             {task.title}
           </SheetTitle>
           <SheetDescription className="mt-2 text-sm text-muted-foreground">
-            Managed by {task.assignedTo} • Last updated{" "}
+            Managed by {"Unassigned"} • Last updated{" "}
             {task.lastActivity ?? "recently"}
           </SheetDescription>
 
@@ -132,7 +132,7 @@ const TaskDetailsDrawer = ({
             <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/80 px-3 py-2">
               <Avatar className="h-7 w-7 border border-border/60">
                 <AvatarFallback className="bg-primary/10 text-[10px] font-bold text-primary">
-                  {task.assignedTo
+                  {"Unassigned"
                     .split(" ")
                     .filter(Boolean)
                     .map((name) => name[0])
@@ -142,7 +142,7 @@ const TaskDetailsDrawer = ({
               </Avatar>
               <div className="flex flex-col leading-tight">
                 <span className="text-xs font-semibold text-foreground">
-                  {task.assignedTo}
+                  {"Unassigned"}
                 </span>
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                   Owner

@@ -1,7 +1,6 @@
 export interface MeetingAttendee {
   name: string;
-  avatar: string;
-}
+  }
 
 export interface MeetingType {
   id: string;

@@ -213,7 +213,7 @@ export default function UpcomingMeetings() {
                             <TooltipTrigger asChild>
                               <div className="w-9 h-9 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground shadow-sm transition-all hover:scale-110 hover:z-20 relative ring-1 ring-border/30 overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-br from-info/5 to-transparent" />
-                                {person.avatar}
+                                {person.name[0]}
                               </div>
                             </TooltipTrigger>
                             <TooltipContent className="bg-foreground text-background border-none rounded-lg font-bold">

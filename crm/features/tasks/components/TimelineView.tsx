@@ -71,7 +71,7 @@ export const TimelineView = ({ tasks, onTaskClick }: TimelineViewProps) => {
                     >
                       <Avatar className="w-4 h-4 border border-white/20 shrink-0">
                         <AvatarFallback className="text-[6px] font-black bg-white/20 text-white">
-                          {task.assignedTo.split(' ').map(n => n[0]).join('')}
+                          {"Unassigned".split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-[9px] font-black tracking-widest">{task.progress}%</span>

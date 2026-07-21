@@ -1,28 +1,22 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
-import { cookies } from "next/headers";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("orbit_token")?.value;
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    const tenantId = headersList.get("x-tenant-id");
 
-    if (!token) {
+    if (!userId) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "default_secret"
-    ) as { id: string; role?: string };
-
-
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
+      where: { id: userId },
       include: {
         memberships: {
           include: {
@@ -45,12 +39,10 @@ export async function GET() {
         user: {
           id: user.id,
           name: user.name,
-          displayName: user.displayName || user.name,
           email: user.email,
-          avatar: user.avatar,
           status: user.status,
-          role: user.memberships?.[0]?.role || "EMPLOYEE",
-          memberships: user.memberships,
+          role: user.memberships?.find(m => m.tenantId === tenantId)?.role || user.memberships?.[0]?.role || "EMPLOYEE",
+          tenantId: tenantId || user.memberships?.[0]?.tenantId,
         },
       },
       { status: 200 }
@@ -59,7 +51,7 @@ export async function GET() {
     console.error("Auth /me Error:", error);
     return NextResponse.json(
       { success: false, message: "Server error", error: error.message },
-      { status: 401 }
+      { status: 500 }
     );
   }
 }

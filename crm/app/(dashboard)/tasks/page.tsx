@@ -87,7 +87,7 @@ const TasksPage = () => {
       const matchesSearch =
         task.title.toLowerCase().includes(normalizedQuery) ||
         task.description.toLowerCase().includes(normalizedQuery) ||
-        task.assignedTo.toLowerCase().includes(normalizedQuery);
+        "Unassigned".toLowerCase().includes(normalizedQuery);
       const normalizedStatus = task.status.toLowerCase().replace(/\s+/g, "-");
       const matchesStatus = statusFilter === "all" || normalizedStatus === statusFilter;
       return matchesSearch && matchesStatus;

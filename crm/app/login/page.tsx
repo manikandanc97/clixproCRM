@@ -68,6 +68,7 @@ export default function LoginPage() {
             <Label htmlFor="email">Email Address</Label>
             <Input
               id="email"
+              data-testid="email-input"
               type="email"
               placeholder="name@company.com"
               className="rounded-xl h-11"
@@ -91,6 +92,7 @@ export default function LoginPage() {
             <div className="relative">
               <Input
                 id="password"
+                data-testid="password-input"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 className="rounded-xl h-11 pr-10"
@@ -122,6 +124,7 @@ export default function LoginPage() {
           {/* Submit */}
           <Button
             type="submit"
+            data-testid="login-btn"
             disabled={loading}
             className="bg-emerald-700 hover:bg-emerald-800 rounded-xl w-full h-11"
           >

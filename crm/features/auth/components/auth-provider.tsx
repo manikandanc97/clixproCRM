@@ -82,104 +82,39 @@ function buildAccess(user: AuthUser | null): RoleAccess {
   };
 }
 
-function readLocalStorage<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
-}
-
-function writeLocalStorage(key: string, value: unknown): void {
-  try {
-    localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
-  } catch {
-  }
-}
-
-function clearAuthStorage(): void {
-  try {
-    localStorage.removeItem(STORAGE_TOKEN_KEY);
-    localStorage.removeItem(STORAGE_USER_KEY);
-    localStorage.removeItem("token");
-  } catch {
-  }
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<AuthStatus>("initializing");
-  const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
   const isInitializing = status === "initializing";
 
-  const logout = useCallback(() => {
-    clearAuthStorage();
-    clearSessionToken();
-    setToken(null);
+  const logout = useCallback(async () => {
+    await clearSessionToken(); // hits /api/auth/logout
     setUser(null);
     setStatus("unauthenticated");
     queryClient.clear(); // Clear all cached data on logout
     useCRMStore.getState().reset(); // Reset CRM store
   }, [queryClient]);
 
-  const refreshUser = useCallback(async (currentToken?: string | null) => {
-    const activeToken = currentToken ?? token;
-    if (!activeToken) {
-      logout();
-      return;
-    }
-
+  const refreshUser = useCallback(async () => {
     try {
       setLoading(true);
       const currentUser = await fetchCurrentUser();
       setUser(currentUser);
-      writeLocalStorage(STORAGE_USER_KEY, currentUser);
       setStatus("authenticated");
     } catch (error: unknown) {
-      const httpStatus = (error as { response?: { status?: number } })?.response?.status;
-      if (httpStatus === 401) {
-        logout();
-      } else {
-        setStatus("authenticated");
-      }
+      setStatus("unauthenticated");
     } finally {
       setLoading(false);
     }
-  }, [logout, token]);
+  }, []);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem(STORAGE_TOKEN_KEY) 
-      ?? localStorage.getItem("token");
-    
-    if (!storedToken) {
-      console.log("[Auth] No token found in storage, setting unauthenticated.");
-      setStatus("unauthenticated");
-      setIsHydrated(true);
-      return;
-    }
-
-    const cachedUser = readLocalStorage<AuthUser>(STORAGE_USER_KEY);
-    console.log(`[Auth] Token found, cachedUser: ${cachedUser ? "Yes" : "No"}`);
-    
-    // Batch these updates
-    setToken(storedToken);
-
-    if (cachedUser) {
-      setUser(cachedUser);
-      setStatus("authenticated");
-      setIsHydrated(true);
-      // Still refresh in background to ensure we have the latest permissions/widgets
-      void refreshUser(storedToken);
-    } else {
-      refreshUser(storedToken).finally(() => setIsHydrated(true));
-    }
-  }, []);
+    refreshUser().finally(() => setIsHydrated(true));
+  }, [refreshUser]);
 
   useEffect(() => {
     const handleAuthExpired = () => logout();
@@ -192,13 +127,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       const response = await loginUser({ email, password });
       
-      // Save to storage
-      writeLocalStorage(STORAGE_TOKEN_KEY, response.token);
-      writeLocalStorage("token", response.token);
-      writeLocalStorage(STORAGE_USER_KEY, response.user);
-      
-      // Update state
-      setToken(response.token);
       setUser(response.user);
       setStatus("authenticated");
       
@@ -213,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       access: buildAccess(user),
-      token,
+      token: null, // Token is no longer exposed to frontend
       loading: loading || status === "initializing",
       isAuthenticated: status === "authenticated",
       isInitializing: status === "initializing",
@@ -227,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return Boolean(user.permissions?.includes(permission));
       },
     }),
-    [status, token, user, login, logout, refreshUser, loading, isHydrated],
+    [status, user, login, logout, refreshUser, loading, isHydrated],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

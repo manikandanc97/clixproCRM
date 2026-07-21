@@ -198,7 +198,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
                     <div>
                       <p className="font-semibold text-foreground text-sm tracking-tight">{quote.client}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">{quote.createdBy}</span>
+                        <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">{"System"}</span>
                         <span className="hidden sm:inline w-1 h-1 rounded-full bg-border" />
                         <span className="hidden sm:inline text-[9px] font-bold text-primary uppercase tracking-wider">VIP</span>
                       </div>
