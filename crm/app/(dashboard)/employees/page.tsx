@@ -5,7 +5,13 @@ import {
   Users, 
   UserPlus, 
   MoreVertical, 
-  TrendingUp
+  TrendingUp,
+  User,
+  Shield,
+  UserMinus,
+  Edit2,
+  Trash2,
+  Power
 } from "lucide-react";
 import { 
   CRMPageContainer, 
@@ -30,9 +36,20 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/shared/ui/dropdown-menu";
-import { useEmployees } from "@/shared/hooks/use-hrm";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
+import { useEmployees, useToggleEmployeeStatus, useDeleteEmployee } from "@/shared/hooks/use-hrm";
 import { Progress } from "@/shared/ui/progress";
 import { toast } from "sonner";
 import { PageLoadingState } from "@/shared/components/page-states";
@@ -51,6 +68,13 @@ export default function EmployeesPage() {
   
   const searchParams = useSearchParams();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+
+  const toggleStatusMutation = useToggleEmployeeStatus();
+  const deleteMutation = useDeleteEmployee();
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
@@ -88,11 +112,6 @@ export default function EmployeesPage() {
         icon={Users}
         actions={[
           {
-            label: "Export CSV",
-            onClick: () => toast.success("Exporting employee data..."),
-            variant: "outline",
-          },
-          {
             label: "Add Employee",
             icon: UserPlus,
             onClick: handleAddEmployee,
@@ -119,7 +138,6 @@ export default function EmployeesPage() {
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             placeholder="Search employees by name or department..."
-            onFilterClick={() => toast.info("Filters coming soon")}
           />
 
           <DataTable>
@@ -167,11 +185,39 @@ export default function EmployeesPage() {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Performance Review</DropdownMenuItem>
-                        <DropdownMenuItem>Change Role</DropdownMenuItem>
-                        <DropdownMenuItem className="text-rose-500">Deactivate</DropdownMenuItem>
+                      <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5 shadow-elevated border-border bg-popover/95 backdrop-blur-xl">
+                        <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setIsViewModalOpen(true); }} className="cursor-pointer py-2.5 rounded-xl group">
+                          <User className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <span className="font-semibold text-sm">View Details</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setIsEditModalOpen(true); }} className="cursor-pointer py-2.5 rounded-xl group">
+                          <Edit2 className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <span className="font-semibold text-sm">Edit Employee</span>
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuSeparator />
+                        
+                        <DropdownMenuItem 
+                          onClick={() => {
+                            const newStatus = emp.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+                            toggleStatusMutation.mutate(
+                              { id: emp.id, status: newStatus },
+                              { onSuccess: () => toast.success(`Employee ${newStatus.toLowerCase()}d`) }
+                            );
+                          }}
+                          className="cursor-pointer py-2.5 rounded-xl group"
+                        >
+                          <Power className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <span className="font-semibold text-sm">{emp.status === "ACTIVE" ? "Deactivate" : "Activate"}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          variant="destructive"
+                          onClick={() => { setSelectedEmployee(emp); setIsDeleteModalOpen(true); }}
+                          className="cursor-pointer py-2.5 rounded-xl group"
+                        >
+                          <Trash2 className="mr-3 h-4 w-4 transition-colors" />
+                          <span className="font-bold text-sm transition-colors">Delete Employee</span>
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </CRMTableCell>
@@ -234,6 +280,91 @@ export default function EmployeesPage() {
           onCancel={() => setIsAddModalOpen(false)} 
         />
       </FormModal>
+
+      <FormModal
+        title="Edit Employee"
+        description="Update employee details and roles."
+        isOpen={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        size="lg"
+      >
+        {selectedEmployee && (
+          <EmployeeForm 
+            initialData={selectedEmployee}
+            onSuccess={() => setIsEditModalOpen(false)} 
+            onCancel={() => setIsEditModalOpen(false)} 
+          />
+        )}
+      </FormModal>
+
+      <FormModal
+        title="Employee Details"
+        description="Read-only view of employee information."
+        isOpen={isViewModalOpen}
+        onOpenChange={setIsViewModalOpen}
+        size="md"
+      >
+        {selectedEmployee && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase">Name</label>
+                <div className="font-medium">{selectedEmployee.name}</div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase">Email</label>
+                <div className="font-medium">{selectedEmployee.email}</div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase">Role</label>
+                <div className="font-medium capitalize">{selectedEmployee.role.toLowerCase()}</div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase">Status</label>
+                <div>
+                  <CRMStatusBadge tone={selectedEmployee.status === 'ACTIVE' ? 'success' : 'warning'}>
+                    {selectedEmployee.status}
+                  </CRMStatusBadge>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase">Joined Date</label>
+                <div className="font-medium">{new Date(selectedEmployee.createdAt).toLocaleDateString()}</div>
+              </div>
+            </div>
+            <div className="flex justify-end pt-4 border-t border-border mt-6">
+              <Button onClick={() => setIsViewModalOpen(false)}>Close</Button>
+            </div>
+          </div>
+        )}
+      </FormModal>
+
+      <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {selectedEmployee?.name}'s account and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                deleteMutation.mutate(selectedEmployee?.id, {
+                  onSuccess: () => {
+                    toast.success("Employee deleted permanently");
+                    setIsDeleteModalOpen(false);
+                  }
+                });
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Employee"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </CRMPageContainer>
   );
 }

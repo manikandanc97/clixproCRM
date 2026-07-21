@@ -164,3 +164,16 @@ export function createQuotation(data: Partial<QuotationType>) {
 export function createEmployee(data: Partial<EmployeeType>) {
   return unwrapResponse<EmployeeType>(client.post("/crm/employees", data));
 }
+
+// ─── Employee operations ──────────────────────────────────────────────────────
+export function updateEmployee(id: string, data: Partial<EmployeeType>) {
+  return unwrapResponse<any>(client.put(`/crm/employees/${id}`, data));
+}
+
+export function toggleEmployeeStatus(id: string, status: "ACTIVE" | "INACTIVE") {
+  return unwrapResponse<any>(client.patch(`/crm/employees/${id}`, { status }));
+}
+
+export function deleteEmployee(id: string) {
+  return unwrapResponse<any>(client.delete(`/crm/employees/${id}`));
+}
