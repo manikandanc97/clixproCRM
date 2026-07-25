@@ -42,7 +42,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       }
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, data: { id } });
   } catch (error: any) {
     console.error("Failed to update employee:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -72,7 +72,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       data: { status },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, data: { id } });
   } catch (error: any) {
     console.error("Failed to update employee status:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -104,7 +104,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       }),
     ]);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, data: { id } });
   } catch (error: any) {
     console.error("Failed to delete employee:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

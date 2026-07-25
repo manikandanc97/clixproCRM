@@ -24,15 +24,16 @@ export default function LeadFunnel({ loading: externalLoading }: { loading?: boo
     );
   }
 
-  const maxCount = stages.length > 0 ? stages[0].count : 1;
+  const maxCount = stages.length > 0 ? (stages[0].count || 1) : 1;
   const funnelData = stages.map((item, index) => {
-    const width = `${Math.max(15, Math.round((item.count / (maxCount || 1)) * 100))}%`;
-    const conversion = index === 0 ? null : `${Math.round((item.count / (maxCount || 1)) * 100)}%`;
+    const count = item.count || 0;
+    const width = `${Math.max(15, Math.round((count / maxCount) * 100))}%`;
+    const conversion = index === 0 ? null : `${Math.round((count / maxCount) * 100)}%`;
     const colors = ["bg-blue-500", "bg-[#8B5CF6]", "bg-[#A855F7]", "bg-[#10B981]"];
     
     return {
       stage: item.stage,
-      count: item.count,
+      count: count,
       color: colors[index % colors.length],
       width,
       conversion
@@ -68,7 +69,7 @@ export default function LeadFunnel({ loading: externalLoading }: { loading?: boo
             ) : (
               funnelData.map((item, index) => (
                 <motion.div 
-                  key={item.stage}
+                  key={`${item.stage}-${index}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 + (index * 0.05) }}
