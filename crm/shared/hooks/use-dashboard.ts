@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   fetchDashboardData, 
   fetchHotLeads, 
-  fetchTeamPerformance, 
   fetchMeetings, 
   fetchNotifications, 
   fetchAiInsights,
@@ -39,16 +38,7 @@ export function useHotLeads() {
   });
 }
 
-export function useTeamPerformance() {
-  const { isAuthenticated, isHydrated, token } = useAuth();
-  return useQuery({
-    queryKey: ["teamPerformance", token],
-    queryFn: fetchTeamPerformance,
-    enabled: isHydrated && isAuthenticated ,
-    refetchInterval: 5 * 60 * 1000,
-    staleTime: 60 * 1000,
-  });
-}
+
 
 export function useMeetings() {
   const { isAuthenticated, isHydrated, token } = useAuth();
@@ -149,7 +139,6 @@ export function useDashboardInitializer() {
   // Widget specific data
   const meetings = useMeetings();
   const hotLeads = useHotLeads();
-  const teamPerformance = useTeamPerformance();
   const aiInsights = useAiInsights();
   const analytics = useAnalytics();
 
@@ -161,7 +150,6 @@ export function useDashboardInitializer() {
     customers,
     meetings,
     hotLeads,
-    teamPerformance,
     aiInsights,
     analytics,
   };
@@ -185,7 +173,6 @@ export function useDashboardInitializer() {
       customers: customers.data,
       meetings: meetings.data,
       hotLeads: hotLeads.data,
-      teamPerformance: teamPerformance.data,
       aiInsights: aiInsights.data,
       analytics: analytics.data,
     },

@@ -34,7 +34,6 @@ export function useCustomers() {
     queryKey: ["customers", token],
     queryFn: fetchCustomersData,
     enabled: isAuthenticated ,
-    refetchInterval: 30000,
   });
 }
 
@@ -44,7 +43,6 @@ export function useLeads() {
     queryKey: ["leads", token],
     queryFn: fetchLeadsData,
     enabled: isAuthenticated ,
-    refetchInterval: 30000,
   });
 }
 
@@ -54,7 +52,6 @@ export function usePipeline() {
     queryKey: ["pipeline", token],
     queryFn: fetchPipelineData,
     enabled: isAuthenticated ,
-    refetchInterval: 30000,
   });
 }
 
@@ -64,7 +61,6 @@ export function useTasks() {
     queryKey: ["tasks", token],
     queryFn: fetchTasksData,
     enabled: isAuthenticated ,
-    refetchInterval: 30000,
   });
 }
 
@@ -74,7 +70,6 @@ export function useQuotations() {
     queryKey: ["quotations", token],
     queryFn: fetchQuotationsData,
     enabled: isAuthenticated ,
-    refetchInterval: 30000,
   });
 }
 
@@ -84,7 +79,6 @@ export function useReports() {
     queryKey: ["reports", token],
     queryFn: fetchReportsData,
     enabled: isAuthenticated ,
-    refetchInterval: 30000,
   });
 }
 

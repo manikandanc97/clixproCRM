@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const ip = getClientIp(req);
     const identifier = `login_${ip}_${normalizedEmail}`;
 
-    const rateLimit = checkRateLimit(identifier, LOGIN_RATE_LIMIT);
+    const rateLimit = await checkRateLimit(identifier, LOGIN_RATE_LIMIT);
     if (!rateLimit.allowed) {
       const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
       return NextResponse.json(
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      incrementRateLimit(identifier, LOGIN_RATE_LIMIT);
+      await incrementRateLimit(identifier, LOGIN_RATE_LIMIT);
       return NextResponse.json(
         { success: false, message: "Invalid credentials" },
         { status: 401 }
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     }
 
     if (user.status !== "ACTIVE") {
-      incrementRateLimit(identifier, LOGIN_RATE_LIMIT);
+      await incrementRateLimit(identifier, LOGIN_RATE_LIMIT);
       return NextResponse.json(
         { success: false, message: "Account is inactive or suspended" },
         { status: 403 }
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      incrementRateLimit(identifier, LOGIN_RATE_LIMIT);
+      await incrementRateLimit(identifier, LOGIN_RATE_LIMIT);
       return NextResponse.json(
         { success: false, message: "Invalid credentials" },
         { status: 401 }

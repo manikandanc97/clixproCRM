@@ -77,8 +77,20 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ success: false, message: "User not found in workspace" }, { status: 404 });
     }
 
-    await prisma.user.delete({
-      where: { id: targetUserId },
+    await prisma.$transaction(async (tx) => {
+      await tx.tenantUser.delete({
+        where: { tenantId_userId: { tenantId, userId: targetUserId } },
+      });
+
+      const remainingMemberships = await tx.tenantUser.count({
+        where: { userId: targetUserId },
+      });
+
+      if (remainingMemberships === 0) {
+        await tx.user.delete({
+          where: { id: targetUserId },
+        });
+      }
     });
 
     return NextResponse.json({ success: true, message: "User deleted successfully" }, { status: 200 });

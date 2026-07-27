@@ -96,9 +96,7 @@ export function fetchHotLeads() {
   return unwrapResponse<HotLeadsDataType>(client.get("/crm/hot-leads"));
 }
 
-export function fetchTeamPerformance() {
-  return unwrapResponse<TeamPerformanceDataType>(client.get("/crm/team-performance"));
-}
+
 
 export function fetchMeetings() {
   return unwrapResponse<MeetingsDataType>(client.get("/crm/meetings"));
@@ -112,9 +110,7 @@ export function fetchEmployees() {
   return unwrapResponse<EmployeesDataType>(client.get("/crm/employees"));
 }
 
-export function fetchRoles() {
-  return unwrapResponse<RolesDataType>(client.get("/crm/roles"));
-}
+
 
 export function fetchAiInsights() {
   return unwrapResponse<AiInsightsDataType>(client.get("/crm/ai-insights"));

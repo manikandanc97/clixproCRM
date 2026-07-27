@@ -5,7 +5,6 @@ import Sidebar from "@/features/dashboard/components/sidebar";
 import Topbar from "@/features/dashboard/components/topbar";
 import { useSidebar } from "@/features/dashboard/components/SidebarContext";
 import { motion } from "framer-motion";
-import { CommandPalette } from "@/features/dashboard/components/CommandPalette";
 import { MobileBottomNav } from "@/features/dashboard/components/MobileBottomNav";
 
 export default function DashboardShell({
@@ -52,7 +51,6 @@ export default function DashboardShell({
       </motion.div>
 
       {/* Global Components */}
-      <CommandPalette />
       <MobileBottomNav />
     </div>
   );

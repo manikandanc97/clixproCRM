@@ -16,11 +16,21 @@ import {
 } from "@/lib/crm-formatters";
 
 export class CrmService {
-  static async getCustomers(tenantId: string) {
-    return prisma.customer.findMany({
-      where: { tenantId },
-      orderBy: { createdAt: "desc" },
-    });
+  static async getCustomers(tenantId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [customers, total] = await Promise.all([
+      prisma.customer.findMany({
+        where: { tenantId },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.customer.count({ where: { tenantId } }),
+    ]);
+    return {
+      customers,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   static async createCustomer(tenantId: string, data: any, userId: string) {
@@ -47,11 +57,17 @@ export class CrmService {
     });
   }
 
-  static async getLeads(tenantId: string, currency = "USD") {
-    const leads = await prisma.lead.findMany({
-      where: { tenantId },
-      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-    });
+  static async getLeads(tenantId: string, currency = "USD", page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [leads, total] = await Promise.all([
+      prisma.lead.findMany({
+        where: { tenantId },
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+        skip,
+        take: limit,
+      }),
+      prisma.lead.count({ where: { tenantId } }),
+    ]);
 
     return {
       summary: { total: leads.length },
@@ -67,6 +83,7 @@ export class CrmService {
         followUpAt: lead.followUpAt,
         createdAt: lead.createdAt,
       })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
@@ -166,11 +183,17 @@ export class CrmService {
     };
   }
 
-  static async getTasks(tenantId: string) {
-    const tasks = await prisma.task.findMany({
-      where: { tenantId },
-      orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
-    });
+  static async getTasks(tenantId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [tasks, total] = await Promise.all([
+      prisma.task.findMany({
+        where: { tenantId },
+        orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+        skip,
+        take: limit,
+      }),
+      prisma.task.count({ where: { tenantId } }),
+    ]);
 
     const { currentMonthStart, nextMonthStart, previousMonthStart } = getMonthRanges();
     const now = new Date();
@@ -218,6 +241,7 @@ export class CrmService {
         priority: task.priority,
         status: task.status,
       })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
@@ -363,8 +387,17 @@ export class CrmService {
     };
   }
 
-  static async getQuotations(tenantId: string) {
-    const quotations = await prisma.quotation.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
+  static async getQuotations(tenantId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [quotations, total] = await Promise.all([
+      prisma.quotation.findMany({
+        where: { tenantId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.quotation.count({ where: { tenantId } }),
+    ]);
     const approved = quotations.filter((q) => q.status === "APPROVED");
     const pending = quotations.filter((q) => q.status === "PENDING");
     return {
@@ -374,10 +407,20 @@ export class CrmService {
         { title: "Pending", value: pending.length.toString() },
       ],
       quotations: quotations.map((q) => ({
-        id: q.id, quoteNumber: q.quoteNumber, client: q.client,
+        id: q.id, 
+        quoteId: q.quoteNumber, 
+        client: q.client,
         amount: formatCurrency(toNumber(q.amount), "USD"),
-        status: q.status, date: formatDate(q.createdAt), validTill: formatDate(q.validTill || new Date())
-      }))
+        amountValue: toNumber(q.amount),
+        status: q.status, 
+        validTill: formatDate(q.validTill || new Date()),
+        validTillValue: q.validTill ? new Date(q.validTill).toISOString() : null,
+        probability: 50,
+        viewCount: 0,
+        downloadCount: 0,
+        lastActivity: formatDate(q.updatedAt || q.createdAt)
+      })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
@@ -509,8 +552,8 @@ export class CrmService {
 
     return { 
       stats: [
-        { label: "New Opportunities", value: leads.length.toString(), change: "+2%", trend: "up" },
-        { label: "Risks Detected", value: tasks.length.toString(), change: "-1%", trend: "down" }
+        { title: "New Opportunities", value: leads.length.toString(), change: "+2%", trend: "up", color: "#10b981", sparklineData: [{value: 0}] },
+        { title: "Risks Detected", value: tasks.length.toString(), change: "-1%", trend: "down", color: "#ef4444", sparklineData: [{value: 0}] }
       ], 
       recommendations, 
       alerts: tasks.map(t => ({ id: t.id, message: `Task "${t.title}" is overdue`, severity: "high", time: "Now" })), 
@@ -518,17 +561,23 @@ export class CrmService {
     };
   }
 
-  static async getEmployees(tenantId: string) {
-    const users = await prisma.user.findMany({
-      where: { memberships: { some: { tenantId } } },
-      include: {
-        memberships: {
-          where: { tenantId },
-          select: { role: true },
+  static async getEmployees(tenantId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where: { memberships: { some: { tenantId } } },
+        include: {
+          memberships: {
+            where: { tenantId },
+            select: { role: true },
+          },
         },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.user.count({ where: { memberships: { some: { tenantId } } } }),
+    ]);
 
     return {
       employees: users.map(u => ({ 
@@ -544,38 +593,12 @@ export class CrmService {
         { title: "Active Staff", value: users.length.toString(), change: "+1", positive: true },
         { title: "On Leave", value: "0", change: "0", positive: true }
       ],
-      activities: []
+      activities: [],
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
-  static async getRoles(tenantId: string) {
-    const users = await prisma.tenantUser.findMany({ where: { tenantId } });
-    const admins = users.filter(u => u.role === "ADMIN").length;
-    const managers = users.filter(u => u.role === "MANAGER").length;
-    const sales = users.filter(u => u.role === "SALES").length;
-    
-    const roles = [
-      { id: "admin", name: "Admin", users: admins, permissions: ["All"] },
-      { id: "manager", name: "Manager", users: managers, permissions: ["Read", "Write", "Manage"] },
-      { id: "sales", name: "Sales", users: sales, permissions: ["Read", "Write"] }
-    ];
-    return { roles, stats: [{ title: "Total Roles", value: "3" }], securityLogs: [] };
-  }
 
-  static async getTeamPerformance(tenantId: string) {
-    const users = await prisma.tenantUser.findMany({ where: { tenantId }, include: { user: true }, take: 5 });
-    
-    return {
-      team: users.map((u) => ({
-        id: u.id, 
-        name: u.user.name || "Unknown", 
-        role: u.role, 
-        sales: 0,
-        target: 100,
-        revenue: "N/A"
-      }))
-    };
-  }
 
   static async getWorkspace(tenantId: string) {
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
@@ -607,6 +630,6 @@ export class CrmService {
 
   static async getNotifications(tenantId: string) {
     const tasks = await prisma.task.findMany({ where: { tenantId, status: "PENDING" }, take: 5, orderBy: { createdAt: 'desc' } });
-    return { notifications: tasks.map(t => ({ id: t.id, title: t.title, message: "Task pending", isRead: false, time: formatDate(t.createdAt), type: "alert" })) };
+    return { notifications: tasks.map(t => ({ id: t.id, title: t.title, description: "Task pending", read: false, time: formatDate(t.createdAt), type: "task" as const })) };
   }
 }

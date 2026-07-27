@@ -3,7 +3,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   fetchEmployees, 
-  fetchRoles,
   updateEmployee,
   toggleEmployeeStatus,
   deleteEmployee
@@ -48,19 +47,5 @@ export function useDeleteEmployee() {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
   });
+
 }
-
-export function useRoles() {
-  const { isAuthenticated } = useAuth();
-  return useQuery({
-    queryKey: ["roles"],
-    queryFn: fetchRoles,
-    enabled: isAuthenticated,
-    refetchInterval: 30000,
-  });
-}
-
-
-
-
-

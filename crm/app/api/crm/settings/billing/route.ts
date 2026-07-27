@@ -7,14 +7,10 @@ export async function GET() {
   try {
     const session = await requireRole(["ADMIN", "MANAGER"]);
     
-    // Using PascalCase for method name mapping
-            // Type-safe lookup object approach
-    const serviceMap = {
-      method: CrmService.getSettings
-    };
-    const data = await serviceMap.method(session.tenantId);
-    return NextResponse.json({ success: true, data }, { status: 200 });
+    // Mark as Coming Soon
+    return NextResponse.json(
+      { success: false, message: "Coming Soon - This feature is currently under development" },
+      { status: 501 }
+    );
   } catch (error: any) { return handleApiError(error); }
 }
-
-

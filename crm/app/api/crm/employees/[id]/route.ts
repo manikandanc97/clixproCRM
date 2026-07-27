@@ -14,6 +14,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const body = employeeSchema.partial().parse(rawBody);
     const { name, email, password, role } = body;
 
+    if (role === "ADMIN" && session.role !== "ADMIN") {
+      return NextResponse.json({ success: false, message: "Only ADMIN can assign the ADMIN role" }, { status: 403 });
+    }
+
     const existingUser = await prisma.tenantUser.findFirst({
       where: { userId: id, tenantId: session.tenantId },
       include: { user: true },
@@ -86,14 +90,21 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ success: false, message: "Employee not found" }, { status: 404 });
     }
 
-    await prisma.$transaction([
-      prisma.tenantUser.delete({
+    await prisma.$transaction(async (tx) => {
+      await tx.tenantUser.delete({
         where: { id: existingUser.id },
-      }),
-      prisma.user.delete({
-        where: { id: id },
-      }),
-    ]);
+      });
+
+      const remainingMemberships = await tx.tenantUser.count({
+        where: { userId: id },
+      });
+
+      if (remainingMemberships === 0) {
+        await tx.user.delete({
+          where: { id: id },
+        });
+      }
+    });
 
     return NextResponse.json({ success: true, data: { id } });
   } catch (error: any) { return handleApiError(error); }

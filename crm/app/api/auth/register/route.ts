@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     // Rate limit by IP for registration
     const identifier = `register_${ip}`;
 
-    const rateLimit = checkRateLimit(identifier, REGISTER_RATE_LIMIT);
+    const rateLimit = await checkRateLimit(identifier, REGISTER_RATE_LIMIT);
     if (!rateLimit.allowed) {
       const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
       return NextResponse.json(
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     }
 
     // Increment rate limit for each registration attempt
-    incrementRateLimit(identifier, REGISTER_RATE_LIMIT);
+    await incrementRateLimit(identifier, REGISTER_RATE_LIMIT);
 
     const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail },

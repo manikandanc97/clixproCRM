@@ -13,7 +13,6 @@ import { toast } from "sonner";
 // Dynamic imports for heavy dashboard components
 const SalesChart = dynamic(() => import("@/features/dashboard/components/SalesChart"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
 const RevenueTracker = dynamic(() => import("@/features/dashboard/components/RevenueTracker"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
-const TeamPerformance = dynamic(() => import("@/features/dashboard/components/TeamPerformance"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
 const LeadFunnel = dynamic(() => import("@/features/dashboard/components/LeadFunnel"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
 
 // Standard dynamic imports
@@ -135,16 +134,6 @@ const DashboardPage = () => {
               <HotLeads />
             </DashboardWidgetWrapper>
 
-            <DashboardWidgetWrapper 
-              id="teamPerformance" 
-              title="Team Performance"
-              isLoading={queries.teamPerformance.isLoading}
-              isError={queries.teamPerformance.isError}
-              onRetry={() => queries.teamPerformance.refetch()}
-              delay={0.8}
-            >
-              <TeamPerformance />
-            </DashboardWidgetWrapper>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
