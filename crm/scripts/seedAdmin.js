@@ -5,9 +5,16 @@ const prisma = new PrismaClient();
 
 async function seedAdmin() {
   try {
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    const email = 'admin@admin.com';
-    const name = 'admin';
+    const email = process.env.ADMIN_EMAIL;
+    const password = process.env.ADMIN_PASSWORD;
+    const name = process.env.ADMIN_NAME || 'admin';
+
+    if (!email || !password) {
+      console.error('Please provide ADMIN_EMAIL and ADMIN_PASSWORD environment variables');
+      process.exit(1);
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
     
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {

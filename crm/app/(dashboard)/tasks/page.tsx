@@ -76,10 +76,10 @@ const TasksPage = () => {
   }, []);
 
   useEffect(() => {
-    if (data?.tasks && safeTasks.length === 0) {
+    if (data?.tasks) {
       setTasks(data.tasks);
     }
-  }, [data, safeTasks.length, setTasks]);
+  }, [data?.tasks, setTasks]);
 
   const filteredTasks = useMemo(() => {
     return safeTasks.filter((task: TaskType) => {

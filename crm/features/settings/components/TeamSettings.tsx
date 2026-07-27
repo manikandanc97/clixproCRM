@@ -42,7 +42,7 @@ import { motion } from "framer-motion";
 import { CRMCard } from "@/shared/components/crm";
 
 import { useEmployees } from "@/shared/hooks/use-hrm";
-import { PageLoadingState } from "@/shared/components/page-states";
+import { ComponentLoadingState } from "@/shared/components/page-states";
 
 const TeamSettings = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,7 +51,7 @@ const TeamSettings = () => {
   const members = hrmData?.employees || [];
 
   if (loading) {
-    return <PageLoadingState label="Loading team structure..." />;
+    return <ComponentLoadingState label="Loading team structure..." />;
   }
 
   const filtered = members.filter(
@@ -75,7 +75,7 @@ const TeamSettings = () => {
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" disabled>
                 <UserPlus className="w-4 h-4" />
                 Invite Member
               </Button>
@@ -113,7 +113,7 @@ const TeamSettings = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button className="w-full" size="lg">Send Invitation</Button>
+                <Button className="w-full" size="lg" disabled>Send Invitation</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -193,10 +193,10 @@ const TeamSettings = () => {
                       Member Actions
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator className="my-1" />
-                    <DropdownMenuItem className="text-xs font-medium rounded-lg cursor-pointer">Change Role</DropdownMenuItem>
-                    <DropdownMenuItem className="text-xs font-medium rounded-lg cursor-pointer">Resend Invitation</DropdownMenuItem>
+                    <DropdownMenuItem className="text-xs font-medium rounded-lg cursor-pointer" disabled>Change Role</DropdownMenuItem>
+                    <DropdownMenuItem className="text-xs font-medium rounded-lg cursor-pointer" disabled>Resend Invitation</DropdownMenuItem>
                     <DropdownMenuSeparator className="my-1" />
-                    <DropdownMenuItem className="text-xs font-bold text-destructive focus:bg-destructive/10 rounded-lg cursor-pointer">
+                    <DropdownMenuItem className="text-xs font-bold text-destructive focus:bg-destructive/10 rounded-lg cursor-pointer" disabled>
                       Remove from Team
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -222,7 +222,7 @@ const TeamSettings = () => {
             </h4>
             <p className="text-xs text-primary/70 font-medium mt-0.5">
               Create custom roles with granular permissions for specific modules.{" "}
-              <Button variant="link" className="p-0 h-auto text-xs text-primary font-bold decoration-primary/30">
+              <Button variant="link" className="p-0 h-auto text-xs text-primary font-bold decoration-primary/30" disabled>
                 Configure RBAC <ExternalLink className="w-3 h-3 ml-1 inline" />
               </Button>
             </p>

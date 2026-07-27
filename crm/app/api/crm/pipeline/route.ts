@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { CrmService } from "@/services/crm.service";
 import { getAuthSession } from "@/lib/auth-utils";
+import { handleApiError } from "@/lib/api-error";
 
 export async function GET() {
   try {
@@ -9,7 +10,5 @@ export async function GET() {
 
     const pipeline = await CrmService.getPipeline(session.tenantId);
     return NextResponse.json({ success: true, data: pipeline }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-  }
+  } catch (error: any) { return handleApiError(error); }
 }

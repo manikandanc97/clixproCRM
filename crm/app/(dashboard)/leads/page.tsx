@@ -59,10 +59,10 @@ const LeadsPage = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (data?.leads && safeLeads.length === 0) {
+    if (data?.leads) {
       setLeads(data.leads);
     }
-  }, [data, safeLeads.length, setLeads]);
+  }, [data?.leads, setLeads]);
   
   const filteredLeads = useMemo(() => {
     return safeLeads.filter((lead) => {

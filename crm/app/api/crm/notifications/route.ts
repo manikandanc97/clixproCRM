@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { CrmService } from "@/services/crm.service";
 import { getAuthSession } from "@/lib/auth-utils";
+import { handleApiError } from "@/lib/api-error";
 
 export async function GET() {
   try {
@@ -8,12 +9,11 @@ export async function GET() {
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     
     // Using PascalCase for method name mapping
-    const moduleName = "notifications";
-    const methodName = "get" + moduleName.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-    
-    const data = await (CrmService as any)[methodName](session.tenantId);
+            // Type-safe lookup object approach
+    const serviceMap = {
+      method: CrmService.getNotifications
+    };
+    const data = await serviceMap.method(session.tenantId);
     return NextResponse.json({ success: true, data }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-  }
+  } catch (error: any) { return handleApiError(error); }
 }

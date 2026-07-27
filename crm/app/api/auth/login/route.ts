@@ -3,21 +3,39 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
+import { env } from "@/lib/env";
+import { getRolePermissions } from "@/shared/lib/auth/rbac/permissions";
+import { checkRateLimit, incrementRateLimit, resetRateLimit, getClientIp } from "@/lib/rate-limit";
+import { handleApiError } from "@/lib/api-error";
+import { loginSchema } from "@/shared/validations";
 
+const LOGIN_RATE_LIMIT = {
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxRequests: 5, // 5 failures allowed
+};
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { success: false, message: "Email and password required" },
-        { status: 400 }
-      );
-    }
+    const body = await req.json();
+    const { email, password } = loginSchema.parse(body);
 
     const normalizedEmail = email.toLowerCase().trim();
+    const ip = getClientIp(req);
+    const identifier = `login_${ip}_${normalizedEmail}`;
 
+    const rateLimit = checkRateLimit(identifier, LOGIN_RATE_LIMIT);
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      return NextResponse.json(
+        { success: false, message: "Too many login attempts. Please try again later." },
+        { 
+          status: 429,
+          headers: {
+            "Retry-After": retryAfterSeconds.toString(),
+          }
+        }
+      );
+    }
 
     // Regular DB Login
     const user = await prisma.user.findUnique({
@@ -25,20 +43,32 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
+      incrementRateLimit(identifier, LOGIN_RATE_LIMIT);
       return NextResponse.json(
-        { success: false, message: "User not found" },
+        { success: false, message: "Invalid credentials" },
         { status: 401 }
+      );
+    }
+
+    if (user.status !== "ACTIVE") {
+      incrementRateLimit(identifier, LOGIN_RATE_LIMIT);
+      return NextResponse.json(
+        { success: false, message: "Account is inactive or suspended" },
+        { status: 403 }
       );
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
+      incrementRateLimit(identifier, LOGIN_RATE_LIMIT);
       return NextResponse.json(
-        { success: false, message: "Incorrect password" },
+        { success: false, message: "Invalid credentials" },
         { status: 401 }
       );
     }
+    
+    resetRateLimit(identifier);
 
     // Fetch memberships to determine role and tenant
     const userWithRole = await prisma.user.findUnique({
@@ -56,7 +86,7 @@ export async function POST(req: Request) {
         role: role,
         tenantId: tenantId
       },
-      process.env.JWT_SECRET || "default_secret",
+      env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
@@ -79,16 +109,11 @@ export async function POST(req: Request) {
           email: user.email,
           status: user.status,
           role,
-          tenantId
+          tenantId,
+          permissions: getRolePermissions(role)
         },
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.error("Login API Error:", error);
-    return NextResponse.json(
-      { success: false, message: "Server error", error: error.message },
-      { status: 500 }
-    );
-  }
+  } catch (error) { return handleApiError(error); }
 }

@@ -24,6 +24,7 @@ import { PipelineLeadType } from "@/shared/types/pipeline";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useCRMStore } from "@/shared/store/useCRMStore";
+import { useUpdatePipelineItem } from "@/shared/hooks/use-crm";
 
 const stages: PipelineLeadType["stage"][] = ["New Lead", "Contacted", "Proposal Sent", "Won", "Lost"];
 
@@ -34,6 +35,7 @@ interface PipelineBoardProps {
 const PipelineBoard = ({ items }: PipelineBoardProps) => {
   const [activeItem, setActiveItem] = useState<PipelineLeadType | null>(null);
   const { movePipelineItem, setPipelineItems } = useCRMStore();
+  const { mutate: updatePipelineItem } = useUpdatePipelineItem();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -96,8 +98,24 @@ const PipelineBoard = ({ items }: PipelineBoardProps) => {
     if (activeId !== overId) {
       const movedItem = items.find(i => i.id === activeId);
       if (movedItem) {
-        toast.success(`Deal moved to ${movedItem.stage}`, {
-          description: `${movedItem.name} stage updated successfully.`,
+        const stageToStatus: Record<string, string> = {
+          "New Lead": "NEW",
+          "Contacted": "CONTACTED",
+          "Proposal Sent": "PROPOSAL_SENT",
+          "Won": "WON",
+          "Lost": "LOST",
+        };
+        const status = stageToStatus[movedItem.stage] || "NEW";
+
+        updatePipelineItem({ 
+          id: movedItem.id as string, 
+          data: { status } 
+        }, {
+          onSuccess: () => {
+            toast.success(`Deal moved to ${movedItem.stage}`, {
+              description: `${movedItem.name} stage updated successfully.`,
+            });
+          }
         });
       }
     }

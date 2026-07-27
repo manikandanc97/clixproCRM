@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
 import { CrmService } from "@/services/crm.service";
 import { getAuthSession } from "@/lib/auth-utils";
+import { handleApiError } from "@/lib/api-error";
+import { quoteSchema } from "@/shared/validations";
 
 export async function GET() {
   try {
     const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-    
-    // Using PascalCase for method name mapping
-    const moduleName = "quotations";
-    const methodName = "get" + moduleName.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-    
-    const data = await (CrmService as any)[methodName](session.tenantId);
-    return NextResponse.json({ success: true, data }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-  }
+
+    const quotations = await CrmService.getQuotations(session.tenantId);
+    return NextResponse.json({ success: true, data: quotations }, { status: 200 });
+  } catch (error: any) { return handleApiError(error); }
 }
 
 export async function POST(req: Request) {
@@ -23,10 +19,9 @@ export async function POST(req: Request) {
     const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = quoteSchema.parse(rawBody);
     const quotation = await CrmService.createQuotation(session.tenantId, body);
     return NextResponse.json({ success: true, data: quotation }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-  }
+  } catch (error: any) { return handleApiError(error); }
 }

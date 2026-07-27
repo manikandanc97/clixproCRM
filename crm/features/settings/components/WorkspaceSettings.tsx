@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Building2, Hash, Globe, MapPin, DollarSign, Upload, AlertTriangle } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -17,21 +17,19 @@ import { CRMCard } from "@/shared/components/crm";
 import Image from "next/image";
 
 import { useWorkspace } from "@/shared/hooks/use-settings";
-import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
 
 const WorkspaceSettings = () => {
   const { data: workspace, isLoading: loading, error, refetch } = useWorkspace();
-  const [logo, setLogo] = useState<string | null>(null);
+  const workspaceLogo = workspace?.logo;
 
   if (loading) {
-    return <PageLoadingState label="Loading workspace configuration..." />;
+    return <ComponentLoadingState label="Loading workspace configuration..." />;
   }
 
   if (error) {
     return <PageErrorState title="Workspace settings unavailable" message={(error as Error).message} onRetry={() => { void refetch(); }} />;
   }
-
-  const workspaceLogo = logo ?? workspace?.logo;
 
   return (
     <div className="space-y-5">
@@ -72,11 +70,8 @@ const WorkspaceSettings = () => {
                 </div>
                 <input
                   type="file"
-                  className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setLogo(URL.createObjectURL(file));
-                  }}
+                  className="absolute inset-0 opacity-0 cursor-not-allowed z-20"
+                  disabled
                 />
               </div>
             </div>
@@ -88,8 +83,8 @@ const WorkspaceSettings = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">Upload New</Button>
-                <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10">
+                <Button variant="outline" size="sm" disabled>Upload New</Button>
+                <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" disabled>
                   Remove
                 </Button>
               </div>
@@ -190,7 +185,7 @@ const WorkspaceSettings = () => {
               </p>
             </div>
           </div>
-          <Button variant="destructive" size="sm">Delete</Button>
+          <Button variant="destructive" size="sm" disabled>Delete</Button>
         </div>
       </CRMCard>
     </div>

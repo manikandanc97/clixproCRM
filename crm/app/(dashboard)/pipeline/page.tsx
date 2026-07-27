@@ -37,10 +37,10 @@ const PipelinePage = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (data?.items && safePipelineItems.length === 0) {
+    if (data?.items) {
       setPipelineItems(data.items);
     }
-  }, [data, safePipelineItems.length, setPipelineItems]);
+  }, [data?.items, setPipelineItems]);
 
   const handleAddDeal = () => {
     setIsAddModalOpen(true);

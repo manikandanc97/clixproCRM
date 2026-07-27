@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { TaskIntelligenceBadge } from "./TaskIntelligenceBadge";
-import { useCRMStore } from "@/shared/store/useCRMStore";
+import { useDeleteTask } from "@/shared/hooks/use-crm";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -50,14 +50,11 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay }: TaskKanbanCardProps
     transform: CSS.Translate.toString(transform),
   };
 
-  const { deleteTask } = useCRMStore();
+  const { mutate: deleteTask } = useDeleteTask();
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     deleteTask(task.id);
-    toast.error("Task Deleted", {
-      description: `"${task.title}" has been removed.`,
-    });
   };
 
   if (isDragging) {

@@ -1,5 +1,7 @@
 import { cookies, headers } from "next/headers";
 import jwt from "jsonwebtoken";
+import { env } from "@/lib/env";
+import { ApiError } from "@/lib/api-error";
 
 interface AuthSession {
   userId: string;
@@ -26,7 +28,7 @@ export async function getAuthSession(): Promise<AuthSession | null> {
 
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || "default_secret"
+      env.JWT_SECRET
     ) as AuthSession;
 
     return {
@@ -43,11 +45,11 @@ export async function requireRole(allowedRoles: string[]) {
   const session = await getAuthSession();
   
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new ApiError("Unauthorized", 401);
   }
 
   if (!allowedRoles.includes(session.role)) {
-    throw new Error("Forbidden");
+    throw new ApiError("Forbidden", 403);
   }
 
   return session;

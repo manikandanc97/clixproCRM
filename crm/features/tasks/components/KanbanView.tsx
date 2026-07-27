@@ -20,7 +20,7 @@ import {
 import { TaskType } from "@/shared/types/task";
 import { TaskKanbanColumn } from "./TaskKanbanColumn";
 import { TaskKanbanCard } from "./TaskKanbanCard";
-import { useCRMStore } from "@/shared/store/useCRMStore";
+import { useUpdateTask } from "@/shared/hooks/use-crm";
 import { toast } from "sonner";
 
 interface KanbanViewProps {
@@ -31,7 +31,7 @@ interface KanbanViewProps {
 export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
   const statuses: TaskType["status"][] = ["Pending", "In Progress", "Completed"];
   const [activeTask, setActiveTask] = useState<TaskType | null>(null);
-  const { updateTask } = useCRMStore();
+  const { mutate: updateTask } = useUpdateTask();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -70,13 +70,13 @@ export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
       const overIndex = tasks.findIndex((t) => t.id === overId);
 
       if (tasks[activeIndex].status !== tasks[overIndex].status) {
-        updateTask(activeId as string, { status: tasks[overIndex].status });
+        updateTask({ id: activeId as string, data: { status: tasks[overIndex].status } });
       }
     }
 
     if (isOverAColumn) {
       if (statuses.includes(overId as TaskType["status"])) {
-        updateTask(activeId as string, { status: overId as TaskType["status"] });
+        updateTask({ id: activeId as string, data: { status: overId as TaskType["status"] } });
       }
     }
   };

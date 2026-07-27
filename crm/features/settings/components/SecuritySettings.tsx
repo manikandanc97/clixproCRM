@@ -16,7 +16,7 @@ import { Switch } from "@/shared/ui/switch";
 import { Badge } from "@/shared/ui/badge";
 import { Progress } from "@/shared/ui/progress";
 import { CRMCard } from "@/shared/components/crm";
-import { EmptyStateCard, PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { EmptyStateCard, PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
 import { useSecuritySettings } from "@/shared/hooks/use-settings";
 import { SecuritySessionType, SecurityAuditEventType } from "@/shared/types/settings";
 
@@ -25,7 +25,7 @@ const SecuritySettings = () => {
   const { data, isLoading, error, refetch } = useSecuritySettings();
 
   if (isLoading) {
-    return <PageLoadingState label="Loading security settings..." />;
+    return <ComponentLoadingState label="Loading security settings..." />;
   }
 
   if (error) {
@@ -81,7 +81,7 @@ const SecuritySettings = () => {
             <Progress value={passwordStrength} className="h-1.5 bg-muted" />
           </div>
 
-          <Button className="w-full">Update Password</Button>
+          <Button className="w-full" disabled>Update Password</Button>
         </CRMCard>
 
         {/* 2FA */}
@@ -102,7 +102,7 @@ const SecuritySettings = () => {
                 <h4 className="font-semibold text-xs text-foreground tracking-tight">Authenticator App</h4>
                 <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Use Google Authenticator or similar.</p>
               </div>
-              <Switch checked={data?.twoFactorEnabled ?? false} />
+              <Switch checked={data?.twoFactorEnabled ?? false} disabled />
             </div>
 
             <div className="flex items-center justify-between p-3.5 rounded-lg bg-muted/30 border border-border/50">
@@ -159,7 +159,7 @@ const SecuritySettings = () => {
                   </div>
                 </div>
                 {!session.current && (
-                  <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 h-7 text-xs font-semibold">
+                  <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 h-7 text-xs font-semibold" disabled>
                     Revoke
                   </Button>
                 )}
@@ -167,7 +167,7 @@ const SecuritySettings = () => {
             ))}
           </div>
 
-          <Button variant="outline" size="sm" className="w-full text-destructive hover:bg-destructive/5 border-destructive/20">
+          <Button variant="outline" size="sm" className="w-full text-destructive hover:bg-destructive/5 border-destructive/20" disabled>
             Sign out from all devices
           </Button>
         </CRMCard>
@@ -206,7 +206,7 @@ const SecuritySettings = () => {
             ))}
           </div>
 
-          <Button variant="ghost" size="sm" className="w-full mt-4 text-primary hover:bg-primary/5">
+          <Button variant="ghost" size="sm" className="w-full mt-4 text-primary hover:bg-primary/5" disabled>
             View Full Audit Log
           </Button>
         </CRMCard>

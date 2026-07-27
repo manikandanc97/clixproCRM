@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
+import { getRolePermissions } from "@/shared/lib/auth/rbac/permissions";
+import { handleApiError } from "@/lib/api-error";
 
 export async function GET() {
   try {
@@ -33,6 +35,9 @@ export async function GET() {
       );
     }
 
+    const userRole = user.memberships?.find(m => m.tenantId === tenantId)?.role || user.memberships?.[0]?.role || "EMPLOYEE";
+    const userPermissions = getRolePermissions(userRole);
+
     return NextResponse.json(
       {
         success: true,
@@ -41,17 +46,12 @@ export async function GET() {
           name: user.name,
           email: user.email,
           status: user.status,
-          role: user.memberships?.find(m => m.tenantId === tenantId)?.role || user.memberships?.[0]?.role || "EMPLOYEE",
+          role: userRole,
           tenantId: tenantId || user.memberships?.[0]?.tenantId,
+          permissions: userPermissions,
         },
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.error("Auth /me Error:", error);
-    return NextResponse.json(
-      { success: false, message: "Server error", error: error.message },
-      { status: 500 }
-    );
-  }
+  } catch (error: any) { return handleApiError(error); }
 }

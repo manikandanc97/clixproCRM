@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 import { logger } from "./logger";
 
 export class ApiError extends Error {
@@ -14,10 +15,29 @@ export class ApiError extends Error {
 export function handleApiError(error: unknown) {
   logger.error(error);
 
+  if (error instanceof ZodError) {
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: "Validation Error", 
+        errors: error.issues 
+      },
+      { status: 400 }
+    );
+  }
+
   if (error instanceof ApiError) {
     return NextResponse.json(
       { success: false, message: error.message },
       { status: error.statusCode }
+    );
+  }
+
+  if (error instanceof SyntaxError && "body" in (error as any) === false) {
+    // Basic check for JSON parse errors from req.json()
+    return NextResponse.json(
+      { success: false, message: "Malformed JSON payload" },
+      { status: 400 }
     );
   }
 

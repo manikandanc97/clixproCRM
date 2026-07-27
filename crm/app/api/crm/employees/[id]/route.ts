@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-import { getAuthSession } from "@/lib/auth-utils";
+import { requireRole } from "@/lib/auth-utils";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { handleApiError } from "@/lib/api-error";
+import { employeeSchema } from "@/shared/validations";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session = await getAuthSession();
-    if (!session?.tenantId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireRole(["ADMIN", "MANAGER"]);
 
-    const { name, email, password, role } = await req.json();
+    const rawBody = await req.json();
+    const body = employeeSchema.partial().parse(rawBody);
+    const { name, email, password, role } = body;
 
     const existingUser = await prisma.tenantUser.findFirst({
       where: { userId: id, tenantId: session.tenantId },
@@ -19,7 +20,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     });
 
     if (!existingUser) {
-      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      return NextResponse.json({ success: false, message: "Employee not found" }, { status: 404 });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -43,28 +44,24 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     });
 
     return NextResponse.json({ success: true, data: { id } });
-  } catch (error: any) {
-    console.error("Failed to update employee:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  } catch (error: any) { return handleApiError(error); }
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session = await getAuthSession();
-    if (!session?.tenantId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireRole(["ADMIN", "MANAGER"]);
 
-    const { status } = await req.json();
+    const rawBody = await req.json();
+    const body = employeeSchema.partial().parse(rawBody);
+    const { status } = body;
 
     const existingUser = await prisma.tenantUser.findFirst({
       where: { userId: id, tenantId: session.tenantId },
     });
 
     if (!existingUser) {
-      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      return NextResponse.json({ success: false, message: "Employee not found" }, { status: 404 });
     }
 
     await prisma.user.update({
@@ -73,26 +70,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
 
     return NextResponse.json({ success: true, data: { id } });
-  } catch (error: any) {
-    console.error("Failed to update employee status:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  } catch (error: any) { return handleApiError(error); }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session = await getAuthSession();
-    if (!session?.tenantId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireRole(["ADMIN", "MANAGER"]);
 
     const existingUser = await prisma.tenantUser.findFirst({
       where: { userId: id, tenantId: session.tenantId },
     });
 
     if (!existingUser) {
-      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      return NextResponse.json({ success: false, message: "Employee not found" }, { status: 404 });
     }
 
     await prisma.$transaction([
@@ -105,8 +96,5 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     ]);
 
     return NextResponse.json({ success: true, data: { id } });
-  } catch (error: any) {
-    console.error("Failed to delete employee:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  } catch (error: any) { return handleApiError(error); }
 }

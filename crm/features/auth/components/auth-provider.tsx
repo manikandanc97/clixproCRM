@@ -11,6 +11,7 @@ import {
   CRM_ROLES, 
   getRoleMenu,
   roleRouteConfig,
+  PERMISSIONS,
 } from "@/shared/lib/auth/rbac";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 
@@ -59,6 +60,42 @@ const WIDGETS_BY_ROLE: Record<string, string[]> = {
   [CRM_ROLES.EMPLOYEE]: ["upcomingMeetings", "recentActivities", "pendingFollowups", "calendarWidget"],
 };
 
+const PERMISSIONS_BY_ROLE: Record<string, string[]> = {
+  [CRM_ROLES.ADMIN]: Object.values(PERMISSIONS),
+  [CRM_ROLES.MANAGER]: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.LEADS_CREATE, PERMISSIONS.LEADS_READ, PERMISSIONS.LEADS_UPDATE, PERMISSIONS.LEADS_DELETE,
+    PERMISSIONS.CUSTOMERS_CREATE, PERMISSIONS.CUSTOMERS_READ, PERMISSIONS.CUSTOMERS_UPDATE, PERMISSIONS.CUSTOMERS_DELETE,
+    PERMISSIONS.PIPELINE_CREATE, PERMISSIONS.PIPELINE_READ, PERMISSIONS.PIPELINE_UPDATE, PERMISSIONS.PIPELINE_DELETE,
+    PERMISSIONS.TASKS_CREATE, PERMISSIONS.TASKS_READ, PERMISSIONS.TASKS_UPDATE, PERMISSIONS.TASKS_DELETE,
+    PERMISSIONS.QUOTATIONS_CREATE, PERMISSIONS.QUOTATIONS_READ, PERMISSIONS.QUOTATIONS_UPDATE, PERMISSIONS.QUOTATIONS_DELETE, PERMISSIONS.QUOTATIONS_APPROVE,
+    PERMISSIONS.REPORTS_READ, PERMISSIONS.ANALYTICS_READ, PERMISSIONS.AI_INSIGHTS_READ,
+    PERMISSIONS.EMPLOYEES_READ, PERMISSIONS.ATTENDANCE_READ, PERMISSIONS.PERFORMANCE_READ,
+    "leads.view", // Extra specific to CreateNewMenu
+  ],
+  [CRM_ROLES.SALES]: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.LEADS_CREATE, PERMISSIONS.LEADS_READ_ASSIGNED, PERMISSIONS.LEADS_UPDATE_ASSIGNED,
+    PERMISSIONS.CUSTOMERS_CREATE, PERMISSIONS.CUSTOMERS_READ, PERMISSIONS.CUSTOMERS_UPDATE,
+    PERMISSIONS.PIPELINE_READ, PERMISSIONS.PIPELINE_UPDATE,
+    PERMISSIONS.TASKS_CREATE, PERMISSIONS.TASKS_READ_ASSIGNED, PERMISSIONS.TASKS_UPDATE_ASSIGNED,
+    PERMISSIONS.QUOTATIONS_CREATE, PERMISSIONS.QUOTATIONS_READ_ASSIGNED, PERMISSIONS.QUOTATIONS_UPDATE_ASSIGNED,
+    "leads.view",
+  ],
+  [CRM_ROLES.SUPPORT]: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.CUSTOMERS_READ,
+    PERMISSIONS.SUPPORT_TICKETS_READ, PERMISSIONS.SUPPORT_TICKETS_MANAGE,
+    PERMISSIONS.TASKS_READ_ASSIGNED, PERMISSIONS.TASKS_UPDATE_ASSIGNED,
+    "leads.view",
+  ],
+  [CRM_ROLES.EMPLOYEE]: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.TASKS_READ_ASSIGNED, PERMISSIONS.TASKS_UPDATE_ASSIGNED,
+    "leads.view",
+  ],
+};
+
 function buildAccess(user: AuthUser | null): RoleAccess {
   if (!user) {
     return defaultRoleAccess;
@@ -75,7 +112,9 @@ function buildAccess(user: AuthUser | null): RoleAccess {
         .map((value) => value.charAt(0).toUpperCase() + value.slice(1))
         .join(" "),
     description: user.description || defaultRoleAccess.description,
-    permissions: user.permissions || [],
+    permissions: user.permissions && user.permissions.length > 0 
+      ? user.permissions 
+      : (PERMISSIONS_BY_ROLE[roleKey] || []),
     routes: allowedRoutes,
     dashboardWidgets: WIDGETS_BY_ROLE[roleKey] || WIDGETS_BY_ROLE[CRM_ROLES.EMPLOYEE],
     analyticsVisibility: user.analyticsVisibility || "self",
@@ -137,10 +176,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient]);
 
-  const value = useMemo<AuthContextState>(
-    () => ({
+  const value = useMemo<AuthContextState>(() => {
+    const access = buildAccess(user);
+    return {
       user,
-      access: buildAccess(user),
+      access,
       token: null, // Token is no longer exposed to frontend
       loading: loading || status === "initializing",
       isAuthenticated: status === "authenticated",
@@ -152,11 +192,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hasPermission: (permission: string) => {
         if (!user) return false;
         if (user.role === CRM_ROLES.ADMIN) return true;
-        return Boolean(user.permissions?.includes(permission));
+        return Boolean(access.permissions.includes(permission));
       },
-    }),
-    [status, user, login, logout, refreshUser, loading, isHydrated],
-  );
+    };
+  }, [status, user, login, logout, refreshUser, loading, isHydrated]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

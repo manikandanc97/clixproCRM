@@ -12,9 +12,10 @@ import {
 import { useAuth } from "@/features/auth/components/auth-provider";
 import { Button } from "@/shared/ui/button";
 import Link from "next/link";
+import { PERMISSIONS } from "@/shared/lib/auth/rbac/permissions";
 
 export default function WelcomeBanner() {
-  const { user, access } = useAuth();
+  const { user, access, hasPermission } = useAuth();
 
   return (
     <motion.div
@@ -46,17 +47,21 @@ export default function WelcomeBanner() {
           </div>
 
           <div className="flex flex-wrap gap-4 pt-2">
-            <Button asChild className="rounded-full px-8 h-12 bg-white text-slate-950 hover:bg-slate-200 font-bold transition-all shadow-lg shadow-white/10 group">
-              <Link href="/analytics" className="flex items-center gap-2">
-                View Analytics
-                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="rounded-full px-8 h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 font-bold transition-all backdrop-blur-sm">
-              <Link href="/leads">
-                Manage Leads
-              </Link>
-            </Button>
+            {hasPermission(PERMISSIONS.ANALYTICS_READ) && (
+              <Button asChild className="rounded-full px-8 h-12 bg-white text-slate-950 hover:bg-slate-200 font-bold transition-all shadow-lg shadow-white/10 group">
+                <Link href="/analytics" className="flex items-center gap-2">
+                  View Analytics
+                  <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+              </Button>
+            )}
+            {hasPermission(PERMISSIONS.LEADS_READ) && (
+              <Button asChild variant="outline" className="rounded-full px-8 h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 font-bold transition-all backdrop-blur-sm">
+                <Link href="/leads">
+                  Manage Leads
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 

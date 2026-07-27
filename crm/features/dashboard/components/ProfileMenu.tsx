@@ -28,6 +28,7 @@ import { useTheme } from "next-themes";
 import { useSettings, AccentColor, FontFamily } from "./SettingsContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/components/auth-provider";
+import { PERMISSIONS } from "@/shared/lib/auth/rbac/permissions";
 
 type ProfileMenuProps = {
   user: { name?: string; email?: string; role?: string; roleName?: string; displayName?: string; avatar?: string; } | null;
@@ -52,7 +53,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   const { theme, setTheme } = useTheme();
   const { accentColor, setAccentColor, fontFamily, setFontFamily } = useSettings();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, hasPermission } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -88,10 +89,12 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
             <User className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className="font-semibold text-sm">My Profile</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/settings?section=workspace")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
-            <Layout className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="font-semibold text-sm">Workspace</span>
-          </DropdownMenuItem>
+          {hasPermission(PERMISSIONS.SETTINGS_READ) && (
+            <DropdownMenuItem onClick={() => router.push("/settings?section=workspace")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
+              <Layout className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <span className="font-semibold text-sm">Workspace</span>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         
         <DropdownMenuSeparator />
@@ -181,10 +184,12 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
-          <Settings className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-          <span className="font-semibold text-sm">Settings</span>
-        </DropdownMenuItem>
+        {hasPermission(PERMISSIONS.SETTINGS_READ) && (
+          <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
+            <Settings className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="font-semibold text-sm">Settings</span>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem onClick={handleLogout} variant="destructive" className="cursor-pointer py-2.5 rounded-xl group">
           <LogOut className="mr-3 h-4 w-4 transition-colors" />

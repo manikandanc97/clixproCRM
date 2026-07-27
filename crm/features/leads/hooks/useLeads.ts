@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { LeadType } from "@/shared/types/lead";
 import { useCRMStore } from "@/shared/store/useCRMStore";
+import { useDeleteLead } from "@/shared/hooks/use-crm";
 import { toast } from "sonner";
 
 export function useLeads(leads: LeadType[]) {
@@ -13,7 +14,7 @@ export function useLeads(leads: LeadType[]) {
     direction: "asc" | "desc";
   } | null>(null);
 
-  const { deleteLead } = useCRMStore();
+  const deleteLeadMutation = useDeleteLead();
 
   const sortedLeads = useMemo(() => {
     if (!sortConfig) return leads;
@@ -57,9 +58,12 @@ export function useLeads(leads: LeadType[]) {
   };
 
   const handleDelete = (id: string, name: string) => {
-    deleteLead(id);
-    toast.error("Lead Deleted", {
-      description: `${name} has been removed from the CRM.`,
+    deleteLeadMutation.mutate(id, {
+      onSuccess: () => {
+        toast.error("Lead Deleted", {
+          description: `${name} has been removed from the CRM.`,
+        });
+      }
     });
   };
 

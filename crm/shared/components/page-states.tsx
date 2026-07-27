@@ -2,9 +2,10 @@
 
 import { AlertCircle, LoaderCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 interface LoadingStateProps {
-  label: string;
+  label?: string;
 }
 
 interface ErrorStateProps {
@@ -20,12 +21,65 @@ interface EmptyStateProps {
 
 export function PageLoadingState({ label }: LoadingStateProps) {
   return (
-    <div className="flex min-h-[320px] items-center justify-center p-6">
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-8 py-10 text-center shadow-card">
-        <LoaderCircle className="h-10 w-10 animate-spin text-emerald-600" />
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Loading live data</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{label}</p>
+    <div className="flex flex-col space-y-6 w-full animate-pulse p-2">
+      {/* Header Skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-[200px] sm:w-[250px]" />
+          <Skeleton className="h-4 w-[250px] sm:w-[350px]" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-[100px]" />
+          <Skeleton className="h-9 w-[140px]" />
+        </div>
+      </div>
+
+      {/* Metrics Grid Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Skeleton className="h-[120px] rounded-xl w-full" />
+        <Skeleton className="h-[120px] rounded-xl w-full" />
+        <Skeleton className="h-[120px] rounded-xl w-full hidden md:block" />
+      </div>
+
+      {/* Toolbar Skeleton */}
+      <div className="flex items-center gap-4 pt-2">
+        <Skeleton className="h-10 flex-1" />
+        <Skeleton className="h-10 w-[120px]" />
+      </div>
+
+      {/* Table/List Skeleton */}
+      <div className="space-y-3 pt-2">
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg hidden sm:block" />
+      </div>
+    </div>
+  );
+}
+
+export function ComponentLoadingState({ label }: LoadingStateProps) {
+  return (
+    <div className="flex flex-col space-y-6 w-full animate-pulse">
+      <div className="rounded-xl border border-border bg-card p-6 space-y-6 shadow-sm">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-[150px]" />
+          <Skeleton className="h-4 w-[250px]" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[100px]" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[100px]" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[100px]" />
+            <Skeleton className="h-10 w-full" />
+          </div>
         </div>
       </div>
     </div>

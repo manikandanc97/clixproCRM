@@ -5,6 +5,7 @@ export interface EmployeeType {
   role: string;
   status: string;
   createdAt: string;
+  temporaryPassword?: string;
 }
 
 export interface EmployeeStatType {

@@ -1,3 +1,4 @@
+import axios from "axios";
 import client from "./client";
 
 interface LoginPayload {
@@ -9,6 +10,15 @@ interface RegisterPayload {
   name: string;
   email: string;
   password: string;
+}
+
+interface ForgotPasswordPayload {
+  email: string;
+}
+
+interface ResetPasswordPayload {
+  token: string;
+  newPassword: string;
 }
 
 interface AuthUser {
@@ -30,14 +40,14 @@ interface AuthResponse {
   user: AuthUser;
 }
 
-interface LoginResponse extends AuthResponse {}
+type LoginResponse = AuthResponse;
 
 export const loginUser = async (data: LoginPayload) => {
   try {
     const response = await client.post<LoginResponse>("/auth/login", data);
     return response.data;
-  } catch (error: any) {
-    if (error.response?.data?.message) {
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response?.data?.message) {
       throw new Error(error.response.data.message);
     }
     throw error;
@@ -47,6 +57,23 @@ export const loginUser = async (data: LoginPayload) => {
 export const registerUser = async (data: RegisterPayload) => {
   const response = await client.post<AuthResponse>("/auth/register", data);
   return response.data;
+};
+
+export const forgotPassword = async (data: ForgotPasswordPayload) => {
+  const response = await client.post<{ success: boolean; message: string }>("/auth/forgot-password", data);
+  return response.data;
+};
+
+export const resetPassword = async (data: ResetPasswordPayload) => {
+  try {
+    const response = await client.post<{ success: boolean; message: string }>("/auth/reset-password", data);
+    return response.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw error;
+  }
 };
 
 export const fetchCurrentUser = async () => {

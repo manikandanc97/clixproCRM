@@ -1,19 +1,41 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+import { checkRateLimit, incrementRateLimit, getClientIp } from "@/lib/rate-limit";
+import { handleApiError } from "@/lib/api-error";
+import { registerSchema } from "@/shared/validations";
+
+const REGISTER_RATE_LIMIT = {
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxRequests: 5, // 5 attempts per hour
+};
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const body = await req.json();
+    const { name, email, password } = registerSchema.parse(body);
 
-    if (!name || !email || !password) {
+    const normalizedEmail = email.toLowerCase().trim();
+    const ip = getClientIp(req);
+    // Rate limit by IP for registration
+    const identifier = `register_${ip}`;
+
+    const rateLimit = checkRateLimit(identifier, REGISTER_RATE_LIMIT);
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
       return NextResponse.json(
-        { success: false, message: "Name, email and password are required" },
-        { status: 400 }
+        { success: false, message: "Too many registration attempts. Please try again later." },
+        { 
+          status: 429,
+          headers: {
+            "Retry-After": retryAfterSeconds.toString(),
+          }
+        }
       );
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    // Increment rate limit for each registration attempt
+    incrementRateLimit(identifier, REGISTER_RATE_LIMIT);
 
     const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail },
@@ -72,11 +94,5 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    console.error("Register API Error:", error);
-    return NextResponse.json(
-      { success: false, message: "Server error", error: error.message },
-      { status: 500 }
-    );
-  }
+  } catch (error) { return handleApiError(error); }
 }

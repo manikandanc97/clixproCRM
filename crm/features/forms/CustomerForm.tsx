@@ -7,8 +7,9 @@ import * as z from "zod";
 import { Form } from "@/shared/ui/form";
 import { FormInput, FormSelect } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
-import { useCreateCustomer } from "@/shared/hooks/use-crm";
+import { useCreateCustomer, useUpdateCustomer } from "@/shared/hooks/use-crm";
 import { Loader2 } from "lucide-react";
+import { CustomerType } from "@/shared/types/customer";
 
 const customerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -21,21 +22,25 @@ const customerSchema = z.object({
 type CustomerFormValues = z.infer<typeof customerSchema>;
 
 interface CustomerFormProps {
+  initialData?: CustomerType;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
-  const createCustomer = useCreateCustomer();
+export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormProps) => {
+  const { mutateAsync: createMutate, isPending: isCreating } = useCreateCustomer();
+  const { mutateAsync: updateMutate, isPending: isUpdating } = useUpdateCustomer();
+
+  const isPending = isCreating || isUpdating;
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
-      name: "",
-      company: "",
-      email: "",
-      status: "ACTIVE",
-      revenue: "",
+      name: initialData?.name || "",
+      company: initialData?.company || "",
+      email: initialData?.email || "",
+      status: (initialData?.status?.toUpperCase() as any) || "ACTIVE",
+      revenue: initialData?.revenueValue?.toString() || "",
     },
   });
 
@@ -45,13 +50,26 @@ export const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
         data.status === "ACTIVE" ? "Active" :
         data.status === "PREMIUM" ? "Premium" : "Inactive";
 
-      await createCustomer.mutateAsync({
-        name: data.name,
-        company: data.company,
-        email: data.email || "",
-        status: mappedStatus,
-        revenue: data.revenue || "",
-      });
+      if (initialData) {
+        await updateMutate({
+          id: initialData.id,
+          data: {
+            name: data.name,
+            company: data.company,
+            email: data.email || "",
+            status: mappedStatus,
+            revenueValue: parseFloat(data.revenue || "0"),
+          }
+        });
+      } else {
+        await createMutate({
+          name: data.name,
+          company: data.company,
+          email: data.email || "",
+          status: mappedStatus,
+          revenueValue: parseFloat(data.revenue || "0"),
+        });
+      }
       onSuccess?.();
     } catch (error) {
       // Error handled by hook
@@ -82,17 +100,17 @@ export const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={createCustomer.isPending}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancel
           </Button>
-          <Button type="submit" disabled={createCustomer.isPending} className="min-w-32">
-            {createCustomer.isPending ? (
+          <Button type="submit" disabled={isPending} className="min-w-32">
+            {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                {initialData ? "Updating..." : "Creating..."}
               </>
             ) : (
-              "Create Customer"
+              initialData ? "Update Customer" : "Create Customer"
             )}
           </Button>
         </div>

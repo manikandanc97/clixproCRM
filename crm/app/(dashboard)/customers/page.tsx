@@ -33,6 +33,7 @@ const CustomersPage = () => {
 
   const searchParams = useSearchParams();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
@@ -46,10 +47,10 @@ const CustomersPage = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (data?.customers && safeCustomers.length === 0) {
+    if (data?.customers) {
       setCustomers(data.customers);
     }
-  }, [data, safeCustomers.length, setCustomers]);
+  }, [data?.customers, setCustomers]);
 
   const filteredCustomers = useMemo(() => {
     return safeCustomers.filter((customer) => {
@@ -118,7 +119,7 @@ const CustomersPage = () => {
         ]}
       />
 
-      <CRMMetricsGrid>
+      <CRMMetricsGrid cols={3}>
         <CRMMetricCard 
           title="Total Customers"
           value={safeCustomers.length}
@@ -176,7 +177,13 @@ const CustomersPage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <CustomersTable customers={filteredCustomers} />
+            <CustomersTable 
+              customers={filteredCustomers} 
+              onEdit={(customer) => {
+                setSelectedCustomer(customer);
+                setIsAddModalOpen(true);
+              }}
+            />
           </motion.div>
         ) : (
           <EmptyState
@@ -192,15 +199,19 @@ const CustomersPage = () => {
       </AnimatePresence>
 
       <FormModal
-        title="Register New Customer"
-        description="Add a new client to your CRM database."
+        title={selectedCustomer ? "Edit Customer" : "Register New Customer"}
+        description={selectedCustomer ? "Update client details." : "Add a new client to your CRM database."}
         isOpen={isAddModalOpen}
-        onOpenChange={setIsAddModalOpen}
+        onOpenChange={(open) => {
+          setIsAddModalOpen(open);
+          if (!open) setSelectedCustomer(null);
+        }}
         size="lg"
       >
         <CustomerForm 
-          onSuccess={() => setIsAddModalOpen(false)} 
-          onCancel={() => setIsAddModalOpen(false)} 
+          initialData={selectedCustomer || undefined}
+          onSuccess={() => { setIsAddModalOpen(false); setSelectedCustomer(null); }} 
+          onCancel={() => { setIsAddModalOpen(false); setSelectedCustomer(null); }} 
         />
       </FormModal>
     </CRMPageContainer>

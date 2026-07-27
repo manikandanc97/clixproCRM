@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { env } from "@/lib/env";
 
 // Paths that do not require authentication
 const publicPaths = [
@@ -58,9 +59,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "default_secret"
-    );
+    const secret = new TextEncoder().encode(env.JWT_SECRET);
     
     // Verify JWT
     const { payload } = await jwtVerify(token, secret);

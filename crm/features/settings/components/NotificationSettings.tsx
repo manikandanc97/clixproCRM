@@ -8,14 +8,14 @@ import { Label } from "@/shared/ui/label";
 import { Switch } from "@/shared/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { CRMCard } from "@/shared/components/crm";
-import { EmptyStateCard, PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { EmptyStateCard, PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
 import { useNotificationSettings } from "@/shared/hooks/use-settings";
 
 const NotificationSettings = () => {
   const { data, isLoading, error, refetch } = useNotificationSettings();
 
   if (isLoading) {
-    return <PageLoadingState label="Loading notification settings..." />;
+    return <ComponentLoadingState label="Loading notification settings..." />;
   }
 
   if (error) {
@@ -40,7 +40,7 @@ const NotificationSettings = () => {
               </div>
               <Label className="font-semibold text-sm text-foreground cursor-pointer">{channel.name}</Label>
             </div>
-            <Switch checked={channel.enabled} />
+            <Switch checked={channel.enabled} disabled />
           </CRMCard>
         ))}
       </div>
@@ -78,7 +78,7 @@ const NotificationSettings = () => {
                         <p className="text-[11px] text-muted-foreground mt-0.5 max-w-sm font-medium">{notification.description ?? "No description provided."}</p>
                       </div>
                     </div>
-                    <Switch checked={notification.enabled} />
+                    <Switch checked={notification.enabled} disabled />
                   </div>
                 ))}
               </TabsContent>
@@ -99,7 +99,7 @@ const NotificationSettings = () => {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="shrink-0">Configure Pulse</Button>
+        <Button variant="outline" size="sm" className="shrink-0" disabled>Configure Pulse</Button>
       </CRMCard>
     </div>
   );

@@ -24,6 +24,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { useTheme } from "next-themes";
 import { useSettings } from "./SettingsContext";
+import { useAuth } from "@/features/auth/components/auth-provider";
+import { PERMISSIONS } from "@/shared/lib/auth/rbac/permissions";
 
 interface SearchSuggestion {
   id: string;
@@ -50,6 +52,7 @@ export function CommandPalette() {
   const router = useRouter();
   const { setTheme, theme } = useTheme();
   const { setAccentColor } = useSettings();
+  const { hasPermission } = useAuth();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -176,25 +179,33 @@ export function CommandPalette() {
                     <LayoutDashboard className="w-4 h-4" />
                     <span>Dashboard Overview</span>
                   </Command.Item>
-                  <Command.Item onSelect={() => runCommand(() => router.push("/leads"))} className="cmd-item">
-                    <TrendingUp className="w-4 h-4" />
-                    <span>Leads & Opportunities</span>
-                  </Command.Item>
-                  <Command.Item onSelect={() => runCommand(() => router.push("/tasks"))} className="cmd-item">
-                    <Calendar className="w-4 h-4" />
-                    <span>Task Manager</span>
-                  </Command.Item>
+                  {hasPermission(PERMISSIONS.LEADS_READ) && (
+                    <Command.Item onSelect={() => runCommand(() => router.push("/leads"))} className="cmd-item">
+                      <TrendingUp className="w-4 h-4" />
+                      <span>Leads & Opportunities</span>
+                    </Command.Item>
+                  )}
+                  {(hasPermission(PERMISSIONS.TASKS_READ) || hasPermission(PERMISSIONS.TASKS_READ_ASSIGNED)) && (
+                    <Command.Item onSelect={() => runCommand(() => router.push("/tasks"))} className="cmd-item">
+                      <Calendar className="w-4 h-4" />
+                      <span>Task Manager</span>
+                    </Command.Item>
+                  )}
                 </Command.Group>
 
                 <Command.Group heading="Quick Actions" className="px-3 py-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-2">
-                  <Command.Item onSelect={() => runCommand(() => router.push("/leads?new=true"))} className="cmd-item text-emerald-600 dark:text-emerald-400">
-                    <Plus className="w-4 h-4" />
-                    <span>Create New Lead</span>
-                  </Command.Item>
-                  <Command.Item onSelect={() => runCommand(() => router.push("/tasks?new=true"))} className="cmd-item text-blue-600 dark:text-blue-400">
-                    <Plus className="w-4 h-4" />
-                    <span>Schedule New Task</span>
-                  </Command.Item>
+                  {hasPermission(PERMISSIONS.LEADS_CREATE) && (
+                    <Command.Item onSelect={() => runCommand(() => router.push("/leads?new=true"))} className="cmd-item text-emerald-600 dark:text-emerald-400">
+                      <Plus className="w-4 h-4" />
+                      <span>Create New Lead</span>
+                    </Command.Item>
+                  )}
+                  {hasPermission(PERMISSIONS.TASKS_CREATE) && (
+                    <Command.Item onSelect={() => runCommand(() => router.push("/tasks?new=true"))} className="cmd-item text-blue-600 dark:text-blue-400">
+                      <Plus className="w-4 h-4" />
+                      <span>Schedule New Task</span>
+                    </Command.Item>
+                  )}
                 </Command.Group>
 
                 <Command.Group heading="Settings & Theme" className="px-3 py-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-2">
@@ -202,10 +213,12 @@ export function CommandPalette() {
                     {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                     <span>Switch to {theme === "dark" ? "Light" : "Dark"} Mode</span>
                   </Command.Item>
-                  <Command.Item onSelect={() => runCommand(() => router.push("/settings"))} className="cmd-item">
-                    <Settings className="w-4 h-4" />
-                    <span>System Settings</span>
-                  </Command.Item>
+                  {hasPermission(PERMISSIONS.SETTINGS_READ) && (
+                    <Command.Item onSelect={() => runCommand(() => router.push("/settings"))} className="cmd-item">
+                      <Settings className="w-4 h-4" />
+                      <span>System Settings</span>
+                    </Command.Item>
+                  )}
                 </Command.Group>
               </Command.List>
 

@@ -149,16 +149,52 @@ export function createLead(data: Partial<LeadType>) {
   return unwrapResponse<LeadType>(client.post("/crm/leads", data));
 }
 
+export function updateLead(id: string, data: Partial<LeadType>) {
+  return unwrapResponse<LeadType>(client.patch(`/crm/leads/${id}`, data));
+}
+
+export function deleteLead(id: string) {
+  return unwrapResponse<{ id: string }>(client.delete(`/crm/leads/${id}`));
+}
+
+export function updatePipelineItem(id: string, data: { status: string }) {
+  return unwrapResponse<any>(client.patch(`/crm/pipeline/${id}`, data));
+}
+
 export function createCustomer(data: Partial<CustomerType>) {
   return unwrapResponse<CustomerType>(client.post("/crm/customers", data));
+}
+
+export function updateCustomer(id: string, data: Partial<CustomerType>) {
+  return unwrapResponse<CustomerType>(client.patch(`/crm/customers/${id}`, data));
+}
+
+export function deleteCustomer(id: string) {
+  return unwrapResponse<{ id: string }>(client.delete(`/crm/customers/${id}`));
 }
 
 export function createTask(data: Partial<TaskType>) {
   return unwrapResponse<TaskType>(client.post("/crm/tasks", data));
 }
 
+export function updateTask(id: string, data: Partial<TaskType>) {
+  return unwrapResponse<TaskType>(client.patch(`/crm/tasks/${id}`, data));
+}
+
+export function deleteTask(id: string) {
+  return unwrapResponse<{ id: string }>(client.delete(`/crm/tasks/${id}`));
+}
+
 export function createQuotation(data: Partial<QuotationType>) {
   return unwrapResponse<QuotationType>(client.post("/crm/quotations", data));
+}
+
+export function updateQuotation(id: string, data: Partial<QuotationType>) {
+  return unwrapResponse<QuotationType>(client.patch(`/crm/quotations/${id}`, data));
+}
+
+export function deleteQuotation(id: string) {
+  return unwrapResponse<{ id: string }>(client.delete(`/crm/quotations/${id}`));
 }
 
 export function createEmployee(data: Partial<EmployeeType>) {

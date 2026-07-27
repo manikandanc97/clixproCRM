@@ -50,6 +50,7 @@ const ProfileSettings = () => {
                 size="icon"
                 variant="outline"
                 className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-lg shadow-sm border-border bg-card text-muted-foreground hover:text-primary transition-all"
+                disabled
               >
                 <Camera className="w-3.5 h-3.5" />
               </Button>
@@ -82,7 +83,7 @@ const ProfileSettings = () => {
           </div>
 
           <div className="shrink-0">
-            <Button variant="outline" size="sm">View Public Profile</Button>
+            <Button variant="outline" size="sm" disabled>View Public Profile</Button>
           </div>
         </div>
       </CRMCard>

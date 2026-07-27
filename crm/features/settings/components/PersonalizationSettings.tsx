@@ -123,7 +123,7 @@ const PersonalizationSettings = () => {
                 {item.active ? (
                   <Badge className="bg-emerald-500/10 text-emerald-600 border-none rounded-md px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest">Active</Badge>
                 ) : (
-                  <Button variant="ghost" size="sm" className="h-7 text-[8px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary">Enable</Button>
+                  <Button variant="ghost" size="sm" className="h-7 text-[8px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary" disabled>Enable</Button>
                 )}
               </div>
             ))}
@@ -139,9 +139,9 @@ const PersonalizationSettings = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1.5 bg-card/50 rounded-md p-1 border border-border/50">
-                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md hover:bg-primary/10 hover:text-primary">-</Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md hover:bg-primary/10 hover:text-primary" disabled>-</Button>
                 <span className="text-[10px] font-bold w-7 text-center">100%</span>
-                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md hover:bg-primary/10 hover:text-primary">+</Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md hover:bg-primary/10 hover:text-primary" disabled>+</Button>
               </div>
             </div>
           </div>
@@ -156,7 +156,7 @@ const PersonalizationSettings = () => {
               <p className="text-muted-foreground max-w-sm text-sm font-medium">
                 Drag and drop custom analytics widgets, heatmaps, and activity pulses to build your perfect command center.
               </p>
-              <Button size="lg" className="px-8 font-bold rounded-lg h-11 text-xs">
+              <Button size="lg" className="px-8 font-bold rounded-lg h-11 text-xs" disabled>
                 Join Waitlist
               </Button>
             </div>

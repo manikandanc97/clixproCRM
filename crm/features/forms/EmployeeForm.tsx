@@ -33,9 +33,16 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
   
   const createMutation = useMutation({
     mutationFn: createEmployee,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      toast.success("Employee created successfully");
+      if (data.temporaryPassword) {
+        toast.success("Employee created!", {
+          description: `Temporary Password: ${data.temporaryPassword} - COPY THIS NOW!`,
+          duration: 15000,
+        });
+      } else {
+        toast.success("Employee created successfully");
+      }
       onSuccess?.();
     },
     onError: (error: Error) => {

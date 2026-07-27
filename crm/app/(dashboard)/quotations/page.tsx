@@ -44,10 +44,10 @@ const QuotationsPage = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (data?.quotations && safeQuotations.length === 0) {
+    if (data?.quotations) {
       setQuotations(data.quotations);
     }
-  }, [data, safeQuotations.length, setQuotations]);
+  }, [data?.quotations, setQuotations]);
 
   const filteredQuotations = useMemo(() => {
     return safeQuotations.filter((quotation) => {

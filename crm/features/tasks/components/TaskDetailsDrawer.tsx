@@ -27,6 +27,8 @@ import { Progress } from "@/shared/ui/progress";
 import { ActivityTimeline } from "@/shared/components/crm";
 import { cn } from "@/shared/lib/utils";
 
+import { useUpdateTask } from "@/shared/hooks/use-crm";
+
 interface TaskDetailsDrawerProps {
   task: TaskType | null;
   isOpen: boolean;
@@ -38,6 +40,8 @@ const TaskDetailsDrawer = ({
   isOpen,
   onClose,
 }: TaskDetailsDrawerProps) => {
+  const { mutate: updateTask } = useUpdateTask();
+
   if (!task) return null;
 
   const collaborators = task.collaborators?.length ?? 0;
@@ -288,6 +292,7 @@ const TaskDetailsDrawer = ({
               <Button
                 className="h-10 w-full min-w-0 px-2 text-xs font-semibold sm:w-auto sm:px-5"
                 disabled={isCompleted}
+                onClick={() => updateTask({ id: task.id, data: { status: "Completed" } })}
               >
                 <span className="truncate">
                   {isCompleted ? "Completed" : "Mark Complete"}

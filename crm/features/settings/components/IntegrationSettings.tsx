@@ -6,7 +6,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { CRMCard } from "@/shared/components/crm";
-import { EmptyStateCard, PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { EmptyStateCard, PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
 import { useIntegrationSettings } from "@/shared/hooks/use-settings";
 
 const IntegrationSettings = () => {
@@ -14,7 +14,7 @@ const IntegrationSettings = () => {
   const { data, isLoading, error, refetch } = useIntegrationSettings();
 
   if (isLoading) {
-    return <PageLoadingState label="Loading integrations..." />;
+    return <ComponentLoadingState label="Loading integrations..." />;
   }
 
   if (error) {
@@ -66,7 +66,7 @@ const IntegrationSettings = () => {
                 </div>
                 <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed font-medium">{integration.description ?? "No description provided."}</p>
               </div>
-              <Button className="w-full rounded-lg h-9 text-[10px] font-bold uppercase tracking-widest" variant={integration.connected ? "outline" : "default"}>
+              <Button className="w-full rounded-lg h-9 text-[10px] font-bold uppercase tracking-widest" variant={integration.connected ? "outline" : "default"} disabled>
                 {integration.connected && <Settings2 className="w-3.5 h-3.5 mr-2" />}
                 {integration.connected ? "Configure" : "Connect Integration"}
               </Button>

@@ -1,8 +1,6 @@
 "use client";
 
-import { Save, Loader2, CheckCircle2, Settings2 } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Settings2 } from "lucide-react";
 import { CRMPageHeader } from "@/shared/components/crm";
 
 interface SettingsHeaderProps {
@@ -49,19 +47,6 @@ const sectionInfo: Record<string, { title: string; description: string }> = {
 };
 
 const SettingsHeader = ({ activeSection }: SettingsHeaderProps) => {
-  const [isSaving, setIsSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    setIsSaving(false);
-    setShowSuccess(true);
-    toast.success("Settings saved", {
-      description: "Your changes have been applied to your workspace.",
-    });
-    setTimeout(() => setShowSuccess(false), 2500);
-  };
 
   const info = sectionInfo[activeSection] || sectionInfo.profile;
 
@@ -71,14 +56,6 @@ const SettingsHeader = ({ activeSection }: SettingsHeaderProps) => {
       subtitle={info.description}
       icon={Settings2}
       badge="Workspace"
-      actions={[
-        {
-          label: isSaving ? "Saving…" : showSuccess ? "Saved!" : "Save Changes",
-          icon: isSaving ? Loader2 : showSuccess ? CheckCircle2 : Save,
-          onClick: handleSave,
-          variant: "default",
-        },
-      ]}
     />
   );
 };

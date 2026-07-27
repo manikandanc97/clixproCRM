@@ -24,10 +24,12 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { DataTable } from "@/shared/components/DataTable";
 import { StatusBadge, StatusVariant } from "@/shared/components/StatusBadge";
 import { useCustomers } from "../hooks/useCustomers";
+import { useDeleteCustomer } from "@/shared/hooks/use-crm";
 import { cn } from "@/shared/lib/utils";
 
 interface CustomersTableProps {
   customers: CustomerType[];
+  onEdit?: (customer: CustomerType) => void;
 }
 
 const statusVariantMap: Record<string, StatusVariant> = {
@@ -38,7 +40,7 @@ const statusVariantMap: Record<string, StatusVariant> = {
   "VIP": "indigo",
 };
 
-export const CustomersTable = ({ customers }: CustomersTableProps) => {
+export const CustomersTable = ({ customers, onEdit }: CustomersTableProps) => {
   const {
     sortedCustomers,
     selectedIds,
@@ -46,6 +48,8 @@ export const CustomersTable = ({ customers }: CustomersTableProps) => {
     toggleSelectAll,
     toggleSelect,
   } = useCustomers(customers);
+
+  const { mutate: deleteCustomer } = useDeleteCustomer();
 
   const columns = [
     {
@@ -136,10 +140,15 @@ export const CustomersTable = ({ customers }: CustomersTableProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem><User className="size-3.5 mr-2" /> View Profile</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit?.(customer)}>
+                <User className="size-3.5 mr-2" /> Edit Customer
+              </DropdownMenuItem>
               <DropdownMenuItem><ExternalLink className="size-3.5 mr-2" /> Open Portal</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-rose-600 focus:text-rose-600">
+              <DropdownMenuItem 
+                className="text-rose-600 focus:text-rose-600"
+                onClick={() => deleteCustomer(customer.id)}
+              >
                 <Trash2 className="size-3.5 mr-2" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>

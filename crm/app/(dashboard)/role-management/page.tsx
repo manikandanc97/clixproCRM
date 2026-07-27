@@ -43,7 +43,7 @@ export default function RoleManagementPage() {
       const res = await fetch("/api/users");
       const data = await res.json();
       if (data.success) {
-        setUsers(data.users);
+        setUsers(Array.isArray(data.users) ? data.users : []);
       } else {
         toast.error("Failed to load users", { description: data.message });
       }
@@ -70,9 +70,9 @@ export default function RoleManagementPage() {
     }
   }, [searchParams]);
 
-  const filteredUsers = users.filter((u) => {
-    const nameStr = u.displayName || u.name || "";
-    const emailStr = u.email || "";
+  const filteredUsers = (users || []).filter((u) => {
+    const nameStr = u?.displayName || u?.name || "";
+    const emailStr = u?.email || "";
     return nameStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
            emailStr.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -102,8 +102,8 @@ export default function RoleManagementPage() {
         ]}
       />
 
-      <CRMMetricsGrid>
-        <MetricCard title="Total Users" value={users.length} icon={UsersIcon} trend="up" delay={0} />
+      <CRMMetricsGrid cols={3}>
+        <MetricCard title="Total Users" value={(users || []).length} icon={UsersIcon} trend="up" delay={0} />
         <MetricCard title="Active Roles" value={5} icon={ShieldCheck} delay={0.1} />
         <MetricCard title="Security Alerts" value={0} icon={ShieldAlert} trend="neutral" delay={0.2} />
       </CRMMetricsGrid>

@@ -5,14 +5,14 @@ import { CheckCircle2, Key, Package } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { CRMCard } from "@/shared/components/crm";
-import { EmptyStateCard, PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { EmptyStateCard, PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
 import { useBillingSettings } from "@/shared/hooks/use-settings";
 
 const BillingSettings = () => {
   const { data, isLoading, error, refetch } = useBillingSettings();
 
   if (isLoading) {
-    return <PageLoadingState label="Loading billing settings..." />;
+    return <ComponentLoadingState label="Loading billing settings..." />;
   }
 
   if (error) {
@@ -35,7 +35,7 @@ const BillingSettings = () => {
               Billing data is loaded from the backend.
             </p>
           </div>
-          <Button variant="outline" className="bg-transparent border-white/25 text-white hover:bg-white/10 rounded-lg px-4 h-9 text-xs font-bold uppercase tracking-widest">
+          <Button variant="outline" className="bg-transparent border-white/25 text-white hover:bg-white/10 rounded-lg px-4 h-9 text-xs font-bold uppercase tracking-widest" disabled>
             <Key className="w-3.5 h-3.5 mr-2" />
             View License
           </Button>

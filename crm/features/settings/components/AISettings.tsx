@@ -8,14 +8,14 @@ import { Label } from "@/shared/ui/label";
 import { Slider } from "@/shared/ui/slider";
 import { Switch } from "@/shared/ui/switch";
 import { CRMCard } from "@/shared/components/crm";
-import { EmptyStateCard, PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { EmptyStateCard, PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
 import { useAiSettings } from "@/shared/hooks/use-settings";
 
 const AISettings = () => {
   const { data, isLoading, error, refetch } = useAiSettings();
 
   if (isLoading) {
-    return <PageLoadingState label="Loading AI settings..." />;
+    return <ComponentLoadingState label="Loading AI settings..." />;
   }
 
   if (error) {
@@ -64,7 +64,7 @@ const AISettings = () => {
                     <h4 className="font-semibold text-xs text-foreground tracking-tight">{feature.label}</h4>
                     <p className="text-[10px] text-muted-foreground font-medium mt-0.5">{feature.description ?? "No description provided."}</p>
                   </div>
-                  <Switch checked={feature.enabled} />
+                  <Switch checked={feature.enabled} disabled />
                 </div>
               ))}
             </div>
@@ -88,7 +88,7 @@ const AISettings = () => {
                     <Label className="font-semibold text-[11px] uppercase tracking-widest text-muted-foreground">{control.label}</Label>
                     {control.badge && <Badge variant="secondary" className="rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">{control.badge}</Badge>}
                   </div>
-                  <Slider value={[control.value]} max={100} step={1} className="py-1" />
+                  <Slider value={[control.value]} max={100} step={1} className="py-1" disabled />
                 </div>
               ))}
             </div>
@@ -109,7 +109,7 @@ const AISettings = () => {
                 <h4 className="font-bold text-sm text-foreground tracking-tight">{module.label}</h4>
                 <p className="text-[11px] text-muted-foreground font-medium mt-0.5">{module.description ?? "No description provided."}</p>
               </div>
-              <Button variant="outline" size="sm" className="w-full mt-auto">Configure</Button>
+              <Button variant="outline" size="sm" className="w-full mt-auto" disabled>Configure</Button>
             </CRMCard>
           ))}
         </div>

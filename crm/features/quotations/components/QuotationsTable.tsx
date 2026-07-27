@@ -37,8 +37,8 @@ import {
   CRMSortIndicator,
 } from "@/shared/components/crm";
 import { cn } from "@/shared/lib/utils";
-import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
+import { useDeleteQuotation } from "@/shared/hooks/use-crm";
 
 interface QuotationsTableProps {
   quotations: QuotationType[];
@@ -90,7 +90,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
   const [selectedQuote, setSelectedQuote] = useState<QuotationType | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
-  const { deleteQuotation } = useCRMStore();
+  const { mutate: deleteQuotationMutation } = useDeleteQuotation();
 
   const sortedQuotations = useMemo(() => {
     if (!sortConfig) return quotations;
@@ -115,10 +115,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
 
   const handleDelete = (e: React.MouseEvent | Event, id: string, quoteId: string) => {
     e.stopPropagation();
-    deleteQuotation(id);
-    toast.error("Quotation Removed", {
-      description: `Quote ${quoteId} has been deleted successfully.`,
-    });
+    deleteQuotationMutation(id);
   };
 
   const handleAction = (action: string, quote: QuotationType) => {

@@ -25,12 +25,16 @@ import {
 } from "@/shared/components/crm";
 import { cn } from "@/shared/lib/utils";
 
+import { useUpdateTask, useDeleteTask } from "@/shared/hooks/use-crm";
+
 interface TasksTableProps {
   tasks: TaskType[];
   onTaskClick: (task: TaskType) => void;
 }
 
 const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
+  const { mutate: updateTask } = useUpdateTask();
+  const { mutate: deleteTask } = useDeleteTask();
   return (
     <CRMDataTable>
       <CRMTableHeader>
@@ -65,6 +69,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
             <CRMTableCell className="px-5">
               <Checkbox
                 checked={task.status === "Completed"} 
+                onCheckedChange={(checked) => updateTask({ id: task.id, data: { status: checked ? "Completed" : "Pending" } })}
                 className="rounded-md border-muted-foreground/20"
               />
             </CRMTableCell>
@@ -173,7 +178,11 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
                       Reassign
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" className="gap-2 rounded-lg py-2 text-xs font-medium">
+                    <DropdownMenuItem 
+                      variant="destructive" 
+                      className="gap-2 rounded-lg py-2 text-xs font-medium"
+                      onClick={() => deleteTask(task.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                       Delete Task
                     </DropdownMenuItem>

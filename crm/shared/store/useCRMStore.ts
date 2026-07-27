@@ -25,25 +25,15 @@ interface CRMState {
 
   // Actions
   setLeads: (leads: LeadType[]) => void;
-  updateLead: (id: string, updates: Partial<LeadType>) => void;
-  deleteLead: (id: string) => void;
   
   setTasks: (tasks: TaskType[]) => void;
-  updateTask: (id: string, updates: Partial<TaskType>) => void;
-  deleteTask: (id: string) => void;
-  toggleTaskCompletion: (id: string) => void;
 
   setPipelineItems: (items: DealType[]) => void;
-  updatePipelineItem: (id: string, updates: Partial<DealType>) => void;
   movePipelineItem: (dealId: string, newStatus: DealType['stage']) => void;
-  deletePipelineItem: (id: string) => void;
 
   setCustomers: (customers: CustomerType[]) => void;
-  deleteCustomer: (id: string) => void;
 
   setQuotations: (quotations: QuotationType[]) => void;
-  updateQuotation: (id: string, updates: Partial<QuotationType>) => void;
-  deleteQuotation: (id: string) => void;
   
   setSidebarCollapsed: (collapsed: boolean) => void;
   setActiveTimeframe: (timeframe: 'today' | 'week' | 'month' | 'year') => void;
@@ -81,51 +71,17 @@ export const useCRMStore = create<CRMState>()(
       fontFamily: 'sans',
 
       setLeads: (leads) => set({ leads }),
-      updateLead: (id, updates) => set((state) => ({
-        leads: state.leads.map((l) => (l.id === id ? { ...l, ...updates } : l))
-      })),
-      deleteLead: (id) => set((state) => ({
-        leads: state.leads.filter((l) => l.id !== id)
-      })),
 
       setTasks: (tasks) => set({ tasks }),
-      updateTask: (id, updates) => set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t))
-      })),
-      deleteTask: (id) => set((state) => ({
-        tasks: state.tasks.filter((t) => t.id !== id)
-      })),
-      toggleTaskCompletion: (id) => set((state) => ({
-        tasks: state.tasks.map((t) => (
-          t.id === id
-            ? { ...t, status: t.status === 'Completed' ? 'Pending' : 'Completed' }
-            : t
-        ))
-      })),
 
       setPipelineItems: (pipelineItems) => set({ pipelineItems }),
-      updatePipelineItem: (id, updates) => set((state) => ({
-        pipelineItems: state.pipelineItems.map((d) => (d.id === id ? { ...d, ...updates } : d))
-      })),
       movePipelineItem: (dealId, newStatus) => set((state) => ({
         pipelineItems: state.pipelineItems.map((d) => (d.id === dealId ? { ...d, stage: newStatus } : d))
       })),
-      deletePipelineItem: (id) => set((state) => ({
-        pipelineItems: state.pipelineItems.filter((d) => d.id !== id)
-      })),
 
       setCustomers: (customers) => set({ customers }),
-      deleteCustomer: (id) => set((state) => ({
-        customers: state.customers.filter((c) => c.id !== id)
-      })),
 
       setQuotations: (quotations) => set({ quotations }),
-      updateQuotation: (id, updates) => set((state) => ({
-        quotations: state.quotations.map((q) => (q.id === id ? { ...q, ...updates } : q))
-      })),
-      deleteQuotation: (id) => set((state) => ({
-        quotations: state.quotations.filter((q) => q.id !== id)
-      })),
 
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       setActiveTimeframe: (timeframe) => set({ activeTimeframe: timeframe }),
@@ -149,43 +105,27 @@ export const useCRMStore = create<CRMState>()(
     }),
     {
       name: 'crm-storage',
-      version: 2,
+      version: 3,
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Partial<CRMState> | undefined;
-        // Wipe any pre-v2 state that may have stored entities as objects instead of arrays
-        if (version < 2) {
+        
+        // Clean up entities from older versions to prevent stale data
+        if (version < 3) {
           return {
             sidebarCollapsed: state?.sidebarCollapsed ?? false,
             activeTimeframe: state?.activeTimeframe ?? 'month',
             accentColor: state?.accentColor ?? 'emerald',
             fontFamily: state?.fontFamily ?? 'sans',
-            leads: [],
-            tasks: [],
-            pipelineItems: [],
-            customers: [],
-            quotations: [],
           };
         }
-        // Ensure all entity fields are arrays even if somehow corrupted
-        return {
-          ...state,
-          leads: Array.isArray(state?.leads) ? state.leads : [],
-          tasks: Array.isArray(state?.tasks) ? state.tasks : [],
-          pipelineItems: Array.isArray(state?.pipelineItems) ? state.pipelineItems : [],
-          customers: Array.isArray(state?.customers) ? state.customers : [],
-          quotations: Array.isArray(state?.quotations) ? state.quotations : [],
-        };
+        
+        return state as Partial<CRMState>;
       },
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
         activeTimeframe: state.activeTimeframe,
         accentColor: state.accentColor,
         fontFamily: state.fontFamily,
-        leads: state.leads,
-        tasks: state.tasks,
-        pipelineItems: state.pipelineItems,
-        customers: state.customers,
-        quotations: state.quotations,
       }),
     }
   )
