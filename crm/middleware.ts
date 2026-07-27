@@ -15,6 +15,8 @@ const publicApiPaths = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/logout",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
 ];
 
 export async function middleware(request: NextRequest) {

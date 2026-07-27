@@ -13,7 +13,7 @@ export async function GET() {
     const serviceMap = {
       method: CrmService.getMeetings
     };
-    const data = await serviceMap.method(session.tenantId);
-    return NextResponse.json({ success: true, data }, { status: 200 });
+    const meetings = await serviceMap.method(session.tenantId);
+    return NextResponse.json({ success: true, meetings }, { status: 200 });
   } catch (error: any) { return handleApiError(error); }
 }

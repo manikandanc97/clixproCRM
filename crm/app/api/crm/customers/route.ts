@@ -10,7 +10,7 @@ export async function GET() {
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     const customers = await CrmService.getCustomers(session.tenantId);
-    return NextResponse.json({ success: true, data: customers }, { status: 200 });
+    return NextResponse.json({ success: true, customers }, { status: 200 });
   } catch (error: any) { return handleApiError(error); }
 }
 

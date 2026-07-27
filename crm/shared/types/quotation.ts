@@ -6,7 +6,7 @@ export interface QuotationType {
   client: string;
   amount: string;
   amountValue: number;
-  status: "Pending" | "Approved" | "Rejected" | "Expired";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
   validTill: string;
   validTillValue: string | null;
   probability?: number;

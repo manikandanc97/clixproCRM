@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { CRMCard } from "@/shared/components/crm/CRMCard";
 import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
-import { CheckSquare, ArrowRight, Clock } from "lucide-react";
+import { CheckSquare, ArrowRight, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useTasks } from "@/shared/hooks/use-crm";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
@@ -11,7 +11,7 @@ import { format, isToday, isTomorrow, parseISO } from "date-fns";
 export default function PendingFollowups() {
   const { data } = useTasks();
   const allTasks = data?.tasks ?? [];
-  const pendingTasks = allTasks.filter(t => t.status !== "Completed").slice(0, 4);
+  const pendingTasks = allTasks.filter(t => t.status !== "COMPLETED").slice(0, 4);
 
   const formatDueDate = (dateStr: string) => {
     try {
@@ -60,17 +60,18 @@ export default function PendingFollowups() {
                 >
                   <div className="mt-0.5">
                     <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                      task.priority === 'High' ? 'border-destructive/50 group-hover:border-destructive' :
-                      task.priority === 'Medium' ? 'border-warning/50 group-hover:border-warning' :
+                      task.priority === 'HIGH' ? 'border-destructive/50 group-hover:border-destructive' :
+                      task.priority === 'MEDIUM' ? 'border-warning/50 group-hover:border-warning' :
                       'border-border group-hover:border-info'
                     }`}>
+                      {task.priority === "HIGH" && <AlertCircle className="w-3 h-3 text-rose-500" />}
                     </div>
                   </div>
                   <div className="flex-1">
                     <h4 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors leading-snug">{task.title}</h4>
                     <div className="flex items-center gap-1.5 mt-1.5 text-xs font-medium text-muted-foreground">
                       <Clock className="w-3.5 h-3.5" />
-                      <span className={task.priority === 'High' ? 'text-destructive' : ''}>{formatDueDate(task.dueDate)}</span>
+                      <span className={`${task.priority === "HIGH" ? "text-rose-500" : task.priority === "MEDIUM" ? "text-amber-500" : ""}`}>{formatDueDate(task.dueDate)}</span>
                     </div>
                   </div>
                   <div className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300">

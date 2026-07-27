@@ -38,15 +38,10 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
 
   const onSubmit = async (data: QuoteFormValues) => {
     try {
-      const mappedStatus = 
-        data.status === "PENDING" ? "Pending" :
-        data.status === "APPROVED" ? "Approved" :
-        data.status === "REJECTED" ? "Rejected" : "Expired";
-
       await createQuote.mutateAsync({
         client: data.client,
         amount: data.amount,
-        status: mappedStatus,
+        status: data.status,
         validTill: data.validTill ? data.validTill.toISOString() : undefined,
       });
       onSuccess?.();

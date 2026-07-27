@@ -94,8 +94,8 @@ const TasksPage = () => {
     });
   }, [safeTasks, searchQuery, statusFilter]);
 
-  const completedCount = safeTasks.filter((t) => t.status === "Completed").length;
-  const inProgressCount = safeTasks.filter((t) => t.status === "In Progress").length;
+  const completedCount = safeTasks.filter((t) => t.status === "COMPLETED").length;
+  const inProgressCount = safeTasks.filter((t) => t.status === "IN_PROGRESS").length;
   const overdueCount = safeTasks.filter((t) => t.isOverdue).length;
 
   const handleNewTask = () => {

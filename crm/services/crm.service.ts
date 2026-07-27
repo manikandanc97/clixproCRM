@@ -28,7 +28,6 @@ export class CrmService {
       data: {
         ...data,
         tenantId,
-        createdBy: userId,
         revenue: data.revenue || 0,
         status: data.status || "ACTIVE",
       },
@@ -216,8 +215,8 @@ export class CrmService {
         description: task.description || "",
         dueDate: formatRelativeDate(task.dueDate, { fallback: "No due date" }),
         dueDateValue: task.dueDate,
-        priority: getStatusLabel(TASK_PRIORITY_LABELS, task.priority),
-        status: getStatusLabel(TASK_STATUS_LABELS, task.status),
+        priority: task.priority,
+        status: task.status,
       })),
     };
   }
@@ -237,24 +236,14 @@ export class CrmService {
   }
 
   static async updateTask(tenantId: string, id: string, data: Partial<{ title: string; description: string; dueDate: string | Date | null; priority: any; status: any }>) {
-    let mappedStatus = data.status;
-    if (data.status === "Pending") mappedStatus = "PENDING";
-    if (data.status === "In Progress") mappedStatus = "IN_PROGRESS";
-    if (data.status === "Completed") mappedStatus = "COMPLETED";
-
-    let mappedPriority = data.priority;
-    if (data.priority === "High") mappedPriority = "HIGH";
-    if (data.priority === "Medium") mappedPriority = "MEDIUM";
-    if (data.priority === "Low") mappedPriority = "LOW";
-
     const task = await prisma.task.update({
       where: { id, tenantId },
       data: {
         ...(data.title && { title: data.title }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.dueDate !== undefined && { dueDate: data.dueDate ? new Date(data.dueDate) : null }),
-        ...(mappedPriority && { priority: mappedPriority }),
-        ...(mappedStatus && { status: mappedStatus }),
+        ...(data.priority && { priority: data.priority }),
+        ...(data.status && { status: data.status }),
       }
     });
     return task;
@@ -602,7 +591,18 @@ export class CrmService {
 
   static async getMeetings(tenantId: string) {
     const tasks = await prisma.task.findMany({ where: { tenantId, dueDate: { not: null } }, take: 5, orderBy: { dueDate: 'asc' } });
-    return tasks.map(t => ({ id: t.id, title: t.title, date: formatDate(t.dueDate!), time: "TBD", type: "Task", url: "" }));
+    return tasks.map(t => ({ 
+      id: t.id, 
+      title: t.title, 
+      date: formatDate(t.dueDate!), 
+      time: "TBD", 
+      location: "Virtual",
+      isOnline: true,
+      status: "scheduled",
+      isToday: false,
+      attendees: [],
+      color: "#2563eb"
+    }));
   }
 
   static async getNotifications(tenantId: string) {

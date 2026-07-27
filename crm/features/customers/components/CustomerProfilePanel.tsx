@@ -93,7 +93,7 @@ const CustomerProfilePanel = ({ customer, isOpen, onClose }: CustomerProfilePane
               </div>
               <div className="bg-muted p-3 rounded-lg border border-border text-center flex items-center justify-center flex-col">
                 <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Status</p>
-                <Badge variant="outline" className={`border-none h-5 px-2 ${customer.status === 'Premium' ? 'badge-warning' : 'badge-success'}`}>
+                <Badge variant="outline" className={`border-none h-5 px-2 ${customer.status === 'PREMIUM' ? 'badge-warning' : 'badge-success'}`}>
                   {customer.status}
                 </Badge>
               </div>

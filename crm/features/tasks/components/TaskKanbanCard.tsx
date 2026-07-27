@@ -82,9 +82,9 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay }: TaskKanbanCardProps
       <div className="flex justify-between items-start mb-3">
         <Badge className={cn(
           "px-2 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-widest border-none",
-          task.priority === 'High' ? 'bg-rose-500/10 text-rose-500' : 
-          task.priority === 'Medium' ? 'bg-blue-500/10 text-blue-500' : 
-          'bg-muted/50 text-muted-foreground'
+          task.priority === "HIGH" ? "bg-rose-500/10 text-rose-500" : 
+          task.priority === "MEDIUM" ? "bg-blue-500/10 text-blue-500" : 
+          "bg-muted/50 text-muted-foreground"
         )}>
           {task.priority}
         </Badge>

@@ -135,7 +135,7 @@ const QuotationsPage = () => {
         />
         <CRMMetricCard 
           title="Pending Approval"
-          value={safeQuotations.filter(q => q.status === "Pending").length}
+          value={safeQuotations.filter(q => q.status === "PENDING").length}
           change="0%"
           trend="up"
           icon={Clock}

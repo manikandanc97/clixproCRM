@@ -29,7 +29,7 @@ interface KanbanViewProps {
 }
 
 export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
-  const statuses: TaskType["status"][] = ["Pending", "In Progress", "Completed"];
+  const statuses: TaskType["status"][] = ["PENDING", "IN_PROGRESS", "COMPLETED"];
   const [activeTask, setActiveTask] = useState<TaskType | null>(null);
   const { mutate: updateTask } = useUpdateTask();
 

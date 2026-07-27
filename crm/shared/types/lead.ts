@@ -5,7 +5,7 @@ export interface LeadType {
   name: string;
   company: string;
   email: string;
-  status: "New" | "Contacted" | "Proposal Sent" | "Won" | "Lost";
+  status: string;
   value: string;
   valueAmount: number;
   followUp: string;

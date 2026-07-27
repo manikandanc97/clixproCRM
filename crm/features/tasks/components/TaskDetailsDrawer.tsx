@@ -45,10 +45,10 @@ const TaskDetailsDrawer = ({
   if (!task) return null;
 
   const collaborators = task.collaborators?.length ?? 0;
-  const isCompleted = task.status === "Completed";
+  const isCompleted = task?.status === "COMPLETED";
   const statusTone = isCompleted
     ? "text-emerald-600 bg-emerald-500/10 border-emerald-500/20"
-    : task.status === "In Progress"
+    : task.status === "IN_PROGRESS"
       ? "text-blue-600 bg-blue-500/10 border-blue-500/20"
       : "text-amber-600 bg-amber-500/10 border-amber-500/20";
 
@@ -292,7 +292,7 @@ const TaskDetailsDrawer = ({
               <Button
                 className="h-10 w-full min-w-0 px-2 text-xs font-semibold sm:w-auto sm:px-5"
                 disabled={isCompleted}
-                onClick={() => updateTask({ id: task.id, data: { status: "Completed" } })}
+                onClick={() => updateTask({ id: task.id, data: { status: "COMPLETED" } })}
               >
                 <span className="truncate">
                   {isCompleted ? "Completed" : "Mark Complete"}

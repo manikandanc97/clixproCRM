@@ -8,8 +8,8 @@ export interface TaskType {
   description: string;
   dueDate: string;
   dueDateValue: string | null;
-  priority: "High" | "Medium" | "Low";
-  status: "Pending" | "In Progress" | "Completed";
+  priority: "HIGH" | "MEDIUM" | "LOW";
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED";
   // New premium fields
   progress: number;
   estimatedTime?: string;

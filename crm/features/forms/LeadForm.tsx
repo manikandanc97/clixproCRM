@@ -42,17 +42,11 @@ export const LeadForm = ({ onSuccess, onCancel }: LeadFormProps) => {
 
   const onSubmit = async (data: LeadFormValues) => {
     try {
-      const mappedStatus = 
-        data.status === "NEW" ? "New" :
-        data.status === "CONTACTED" ? "Contacted" :
-        data.status === "PROPOSAL_SENT" ? "Proposal Sent" :
-        data.status === "WON" ? "Won" : "Lost";
-
       await createLead.mutateAsync({
         name: data.name,
         company: data.company,
         email: data.email,
-        status: mappedStatus,
+        status: data.status,
         value: data.value || "",
         followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
       });

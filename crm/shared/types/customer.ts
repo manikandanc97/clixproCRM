@@ -7,7 +7,7 @@ export interface CustomerType {
   name: string;
   company: string;
   email: string;
-  status: "Premium" | "Active" | "Inactive";
+  status: "PREMIUM" | "ACTIVE" | "INACTIVE";
   revenue: string;
   revenueValue: number;
   lastContact: string;

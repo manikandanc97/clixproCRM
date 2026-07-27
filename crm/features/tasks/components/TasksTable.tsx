@@ -68,8 +68,8 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
           <CRMTableRow key={task.id} className="group h-[92px]">
             <CRMTableCell className="px-5">
               <Checkbox
-                checked={task.status === "Completed"} 
-                onCheckedChange={(checked) => updateTask({ id: task.id, data: { status: checked ? "Completed" : "Pending" } })}
+                checked={task.status === "COMPLETED"} 
+                onCheckedChange={(checked) => updateTask({ id: task.id, data: { status: checked ? "COMPLETED" : "PENDING" } })}
                 className="rounded-md border-muted-foreground/20"
               />
             </CRMTableCell>
@@ -83,7 +83,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
                 <div className="flex items-center gap-2.5">
                   <p className={cn(
                     "line-clamp-1 text-[14px] font-semibold leading-tight tracking-tight text-foreground transition-colors",
-                    task.status === "Completed" && "text-muted-foreground line-through"
+                    task.status === "COMPLETED" && "text-muted-foreground line-through"
                   )}>
                     {task.title}
                   </p>
@@ -105,7 +105,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
               <div className="w-full max-w-[180px] space-y-2">
                 <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
                   <span className="flex items-center gap-1.5">
-                    {task.status === "Completed" ? (
+                    {task.status === "COMPLETED" ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                     ) : (
                       <CircleDashed className="h-3.5 w-3.5 text-primary" />
@@ -117,7 +117,7 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
                 <Progress
                   value={task.progress}
                   className="h-1.5 bg-muted"
-                  indicatorClassName={task.status === "Completed" ? "bg-emerald-500" : "bg-primary"}
+                  indicatorClassName={task.status === "COMPLETED" ? "bg-emerald-500" : "bg-primary"}
                 />
               </div>
             </CRMTableCell>
@@ -125,9 +125,9 @@ const TasksTable = ({ tasks, onTaskClick }: TasksTableProps) => {
             <CRMTableCell className="text-center px-4">
               <span className={cn(
                 "inline-flex min-w-[82px] items-center justify-center rounded-md border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide",
-                task.priority === "High" && "border-rose-500/25 bg-rose-500/10 text-rose-700",
-                task.priority === "Medium" && "border-blue-500/25 bg-blue-500/10 text-blue-700",
-                task.priority === "Low" && "border-emerald-500/25 bg-emerald-500/10 text-emerald-700"
+                task.priority === "HIGH" && "border-rose-500/25 bg-rose-500/10 text-rose-700",
+                task.priority === "MEDIUM" && "border-blue-500/25 bg-blue-500/10 text-blue-700",
+                task.priority === "LOW" && "border-emerald-500/25 bg-emerald-500/10 text-emerald-700"
               )}>
                 {task.priority}
               </span>

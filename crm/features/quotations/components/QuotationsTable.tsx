@@ -229,10 +229,10 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
                 <CRMTableCell>
                   <Badge variant="outline" className={cn(
                     "border-none px-3 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-sm",
-                    quote.status === 'Approved' ? 'bg-success text-success-foreground' : 
-                    quote.status === 'Pending' ? 'bg-warning/20 text-warning' : 
-                    quote.status === 'Expired' ? 'bg-destructive/10 text-destructive' :
-                    'bg-muted text-muted-foreground'
+                    quote.status === "APPROVED" && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                    quote.status === "PENDING" && "bg-amber-500/10 text-amber-600 border-amber-500/20",
+                    quote.status === "EXPIRED" && "bg-rose-500/10 text-rose-600 border-rose-500/20",
+                    !['APPROVED', 'PENDING', 'EXPIRED'].includes(quote.status) && 'bg-muted text-muted-foreground'
                   )}>
                     {quote.status}
                   </Badge>

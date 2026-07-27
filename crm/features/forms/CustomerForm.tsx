@@ -46,10 +46,6 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
 
   const onSubmit = async (data: CustomerFormValues) => {
     try {
-      const mappedStatus = 
-        data.status === "ACTIVE" ? "Active" :
-        data.status === "PREMIUM" ? "Premium" : "Inactive";
-
       if (initialData) {
         await updateMutate({
           id: initialData.id,
@@ -57,7 +53,7 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
             name: data.name,
             company: data.company,
             email: data.email || "",
-            status: mappedStatus,
+            status: data.status,
             revenueValue: parseFloat(data.revenue || "0"),
           }
         });
@@ -66,7 +62,7 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
           name: data.name,
           company: data.company,
           email: data.email || "",
-          status: mappedStatus,
+          status: data.status,
           revenueValue: parseFloat(data.revenue || "0"),
         });
       }

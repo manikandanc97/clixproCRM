@@ -57,8 +57,8 @@ const QuotationPreview = ({ quotation, isOpen, onClose }: QuotationPreviewProps)
                 </SheetTitle>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge className={`border-none px-3 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-wider
-                    ${quotation.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : 
-                      quotation.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 
+                    ${quotation.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 
+                      quotation.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 
                       'bg-slate-200 text-muted-foreground'}`}>
                     {quotation.status}
                   </Badge>

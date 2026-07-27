@@ -131,7 +131,7 @@ const CustomersPage = () => {
         />
         <CRMMetricCard 
           title="VIP Clients"
-          value={safeCustomers.filter(c => c.status === "Premium").length}
+          value={safeCustomers.filter(c => c.status === "PREMIUM").length}
           change="0%"
           trend="up"
           icon={Star}
