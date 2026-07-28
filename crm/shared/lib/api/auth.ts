@@ -8,6 +8,7 @@ interface LoginPayload {
 
 interface RegisterPayload {
   name: string;
+  companyName: string;
   email: string;
   password: string;
 }
@@ -37,7 +38,9 @@ interface AuthUser {
 interface AuthResponse {
   success: boolean;
   message: string;
-  user: AuthUser;
+  data: {
+    user: AuthUser;
+  };
 }
 
 type LoginResponse = AuthResponse;
@@ -78,7 +81,7 @@ export const resetPassword = async (data: ResetPasswordPayload) => {
 
 export const fetchCurrentUser = async () => {
   const response = await client.get<AuthResponse>("/auth/me");
-  return response.data.user;
+  return response.data.data.user;
 };
 
 export const logoutUser = async () => {

@@ -43,9 +43,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
 
       if (role !== undefined) {
+        let finalRoleId: string = role;
+        const roleObj = await tx.role.findFirst({ where: { tenantId, name: role } });
+        if (roleObj) finalRoleId = roleObj.id;
+        
         await tx.tenantUser.update({
           where: { tenantId_userId: { tenantId, userId: targetUserId } },
-          data: { role },
+          data: { roleId: finalRoleId },
         });
       }
       return u;
@@ -78,17 +82,19 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.tenantUser.delete({
+      await tx.tenantUser.update({
         where: { tenantId_userId: { tenantId, userId: targetUserId } },
+        data: { status: "INACTIVE" }
       });
 
       const remainingMemberships = await tx.tenantUser.count({
-        where: { userId: targetUserId },
+        where: { userId: targetUserId, status: "ACTIVE" },
       });
 
       if (remainingMemberships === 0) {
-        await tx.user.delete({
+        await tx.user.update({
           where: { id: targetUserId },
+          data: { status: "INACTIVE", deletedAt: new Date() }
         });
       }
     });

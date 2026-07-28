@@ -1,57 +1,72 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
-import { getRolePermissions } from "@/shared/lib/auth/rbac/permissions";
-import { handleApiError } from "@/lib/api-error";
+import { verifyJWT } from "@/shared/lib/auth/utils";
+import { cookies } from "next/headers";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-    const tenantId = headersList.get("x-tenant-id");
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
+    
+    if (!token) {
+      return NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "Not authenticated" } }, { status: 401 });
+    }
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
+    const payload = await verifyJWT(token);
+    if (!payload) {
+      return NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "Invalid or expired token" } }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
+      where: { id: payload.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        status: true,
         memberships: {
           include: {
-            tenant: true,
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: true
+                  }
+                }
+              }
+            }
           }
         }
       }
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "User not found" } }, { status: 401 });
     }
 
-    const userRole = user.memberships?.find(m => m.tenantId === tenantId)?.role || user.memberships?.[0]?.role || "EMPLOYEE";
-    const userPermissions = getRolePermissions(userRole);
+    // Format permissions and role nicely
+    const membership = user.memberships[0];
+    const roleName = membership?.role?.name || "EMPLOYEE";
+    const permissions = membership?.role?.permissions.map(rp => `${rp.permission.resource}:${rp.permission.action}`) || [];
 
-    return NextResponse.json(
-      {
-        success: true,
+    return NextResponse.json({
+      success: true,
+      data: {
         user: {
           id: user.id,
           name: user.name,
           email: user.email,
           status: user.status,
-          role: userRole,
-          tenantId: tenantId || user.memberships?.[0]?.tenantId,
-          permissions: userPermissions,
-        },
-      },
-      { status: 200 }
-    );
-  } catch (error: any) { return handleApiError(error); }
+          tenantId: payload.tenantId,
+          role: roleName,
+          permissions
+        }
+      }
+    }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({
+      success: false,
+      error: { code: "INTERNAL_SERVER_ERROR", message: "An unexpected error occurred" }
+    }, { status: 500 });
+  }
 }

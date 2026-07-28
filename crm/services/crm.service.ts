@@ -17,16 +17,19 @@ import {
 } from "@/lib/crm-formatters";
 
 export class CrmService {
-  static async getCustomers(tenantId: string, page = 1, limit = 10) {
+  static async getCustomers(tenantId: string, page = 1, limit = 10, search = "") {
     const skip = (page - 1) * limit;
+    const where: Prisma.CustomerWhereInput = { tenantId, deletedAt: null };
+    if (search) where.name = { contains: search, mode: "insensitive" };
+
     const [customers, total] = await Promise.all([
       prisma.customer.findMany({
-        where: { tenantId },
+        where,
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.customer.count({ where: { tenantId } }),
+      prisma.customer.count({ where }),
     ]);
     return {
       customers,
@@ -55,21 +58,26 @@ export class CrmService {
   }
 
   static async deleteCustomer(tenantId: string, id: string) {
-    return prisma.customer.delete({
+    return prisma.customer.update({
       where: { id, tenantId },
+      data: { deletedAt: new Date(), status: "INACTIVE" }
     });
   }
 
-  static async getLeads(tenantId: string, currency = "USD", page = 1, limit = 10) {
+  static async getLeads(tenantId: string, currency = "USD", page = 1, limit = 10, search = "", status?: string) {
     const skip = (page - 1) * limit;
+    const where: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
+    if (search) where.name = { contains: search, mode: "insensitive" };
+    if (status) where.status = status as LeadStatus;
+
     const [leads, total] = await Promise.all([
       prisma.lead.findMany({
-        where: { tenantId },
+        where,
         orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
         skip,
         take: limit,
       }),
-      prisma.lead.count({ where: { tenantId } }),
+      prisma.lead.count({ where }),
     ]);
 
     return {
@@ -121,8 +129,9 @@ export class CrmService {
   }
 
   static async deleteLead(tenantId: string, id: string) {
-    const lead = await prisma.lead.delete({
-      where: { id, tenantId }
+    const lead = await prisma.lead.update({
+      where: { id, tenantId },
+      data: { deletedAt: new Date() }
     });
     return lead;
   }
@@ -186,16 +195,19 @@ export class CrmService {
     };
   }
 
-  static async getTasks(tenantId: string, page = 1, limit = 10) {
+  static async getTasks(tenantId: string, page = 1, limit = 10, search = "") {
     const skip = (page - 1) * limit;
+    const where: Prisma.TaskWhereInput = { tenantId, deletedAt: null };
+    if (search) where.title = { contains: search, mode: "insensitive" };
+
     const [tasks, total] = await Promise.all([
       prisma.task.findMany({
-        where: { tenantId },
+        where,
         orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
         skip,
         take: limit,
       }),
-      prisma.task.count({ where: { tenantId } }),
+      prisma.task.count({ where }),
     ]);
 
     const { currentMonthStart, nextMonthStart, previousMonthStart } = getMonthRanges();
@@ -277,8 +289,9 @@ export class CrmService {
   }
 
   static async deleteTask(tenantId: string, id: string) {
-    const task = await prisma.task.delete({
-      where: { id, tenantId }
+    const task = await prisma.task.update({
+      where: { id, tenantId },
+      data: { deletedAt: new Date() }
     });
     return task;
   }
@@ -312,8 +325,9 @@ export class CrmService {
   }
 
   static async deleteQuotation(tenantId: string, id: string) {
-    const quotation = await prisma.quotation.delete({
-      where: { id, tenantId }
+    const quotation = await prisma.quotation.update({
+      where: { id, tenantId },
+      data: { deletedAt: new Date() }
     });
     return quotation;
   }
@@ -390,16 +404,19 @@ export class CrmService {
     };
   }
 
-  static async getQuotations(tenantId: string, page = 1, limit = 10) {
+  static async getQuotations(tenantId: string, page = 1, limit = 10, search = "") {
     const skip = (page - 1) * limit;
+    const where: Prisma.QuotationWhereInput = { tenantId, deletedAt: null };
+    if (search) where.quoteNumber = { contains: search, mode: "insensitive" };
+
     const [quotations, total] = await Promise.all([
       prisma.quotation.findMany({
-        where: { tenantId },
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
-      prisma.quotation.count({ where: { tenantId } }),
+      prisma.quotation.count({ where }),
     ]);
     const approved = quotations.filter((q) => q.status === "APPROVED");
     const pending = quotations.filter((q) => q.status === "PENDING");
@@ -428,43 +445,57 @@ export class CrmService {
   }
 
   static async getReports(tenantId: string) {
-    const leads = await prisma.lead.findMany({ where: { tenantId } });
-    const wonDeals = leads.filter(l => l.status === "WON");
-    const lostDeals = leads.filter(l => l.status === "LOST");
-    const openDeals = leads.length - wonDeals.length - lostDeals.length;
+    const baseWhere = { tenantId, deletedAt: null };
+    const [totalLeads, wonDeals, lostDeals] = await Promise.all([
+      prisma.lead.count({ where: baseWhere }),
+      prisma.lead.count({ where: { ...baseWhere, status: "WON" } }),
+      prisma.lead.count({ where: { ...baseWhere, status: "LOST" } }),
+    ]);
+    const openDeals = totalLeads - wonDeals - lostDeals;
     
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const currentYear = new Date().getFullYear();
+    const startOfYear = new Date(currentYear, 0, 1);
+    
+    const wonLeadsThisYear = await prisma.lead.findMany({
+      where: { ...baseWhere, status: "WON", updatedAt: { gte: startOfYear } },
+      select: { value: true, updatedAt: true }
+    });
+    
     const revenueChart = months.map(month => ({ name: month, total: 0 }));
-    wonDeals.forEach(lead => {
+    wonLeadsThisYear.forEach(lead => {
       const date = new Date(lead.updatedAt);
-      if (date.getFullYear() === currentYear) {
-        revenueChart[date.getMonth()].total += toNumber(lead.value);
-      }
+      revenueChart[date.getMonth()].total += toNumber(lead.value);
     });
 
+    const [newCount, contactedCount, proposalCount] = await Promise.all([
+      prisma.lead.count({ where: { ...baseWhere, status: "NEW" } }),
+      prisma.lead.count({ where: { ...baseWhere, status: "CONTACTED" } }),
+      prisma.lead.count({ where: { ...baseWhere, status: "PROPOSAL_SENT" } }),
+    ]);
+
     const funnel = [
-      { name: "New", value: leads.filter(l => l.status === "NEW").length },
-      { name: "Contacted", value: leads.filter(l => l.status === "CONTACTED").length },
-      { name: "Proposal Sent", value: leads.filter(l => l.status === "PROPOSAL_SENT").length },
-      { name: "Won", value: wonDeals.length }
+      { name: "New", value: newCount },
+      { name: "Contacted", value: contactedCount },
+      { name: "Proposal Sent", value: proposalCount },
+      { name: "Won", value: wonDeals }
     ];
 
     return {
       stats: [
-        { title: "Total Leads Generated", value: leads.length.toString() },
-        { title: "Won Deals", value: wonDeals.length.toString() },
+        { title: "Total Leads Generated", value: totalLeads.toString() },
+        { title: "Won Deals", value: wonDeals.toString() },
         { title: "Open Deals", value: openDeals.toString() },
       ],
       revenueChart,
-      conversionChart: [{ name: "Won", value: wonDeals.length }, { name: "Lost", value: lostDeals.length }],
+      conversionChart: [{ name: "Won", value: wonDeals }, { name: "Lost", value: lostDeals }],
       performance: [
         {
           id: "perf-1",
           name: "Sales Team",
-          dealsClosed: wonDeals.length,
-          revenue: `$${wonDeals.length * 1000}`,
-          revenueValue: wonDeals.length * 1000,
+          dealsClosed: wonDeals,
+          revenue: `$${wonDeals * 1000}`,
+          revenueValue: wonDeals * 1000,
           conversionRate: "45%",
           trend: "+5%",
           trendPositive: true,
@@ -472,9 +503,9 @@ export class CrmService {
         {
           id: "perf-2",
           name: "Marketing Team",
-          dealsClosed: lostDeals.length,
-          revenue: `$${lostDeals.length * 500}`,
-          revenueValue: lostDeals.length * 500,
+          dealsClosed: lostDeals,
+          revenue: `$${lostDeals * 500}`,
+          revenueValue: lostDeals * 500,
           conversionRate: "20%",
           trend: "-2%",
           trendPositive: false,
@@ -483,34 +514,49 @@ export class CrmService {
       funnel,
       activityHeatmap: [],
       insights: [
-        { id: "insight-1", type: "revenue", title: "Revenue Trend", description: `You have ${wonDeals.length} won deals.` }
+        { id: "insight-1", type: "revenue", title: "Revenue Trend", description: `You have ${wonDeals} won deals.` }
       ],
       revenueTarget: 100000
     };
   }
 
   static async getAnalytics(tenantId: string) {
-    const leads = await prisma.lead.findMany({ where: { tenantId } });
-    const tasks = await prisma.task.count({ where: { tenantId } });
-    const customers = await prisma.customer.count({ where: { tenantId } });
+    const baseWhere = { tenantId, deletedAt: null };
+    const [leadsCount, tasksCount, customersCount] = await Promise.all([
+      prisma.lead.count({ where: baseWhere }),
+      prisma.task.count({ where: baseWhere }),
+      prisma.customer.count({ where: baseWhere }),
+    ]);
+
+    const [newCount, contactedCount, proposalCount, wonCount] = await Promise.all([
+      prisma.lead.count({ where: { ...baseWhere, status: "NEW" } }),
+      prisma.lead.count({ where: { ...baseWhere, status: "CONTACTED" } }),
+      prisma.lead.count({ where: { ...baseWhere, status: "PROPOSAL_SENT" } }),
+      prisma.lead.count({ where: { ...baseWhere, status: "WON" } })
+    ]);
 
     const pipelineStages = [
-      { stage: "New Lead", count: leads.filter(l => l.status === "NEW").length, value: 0 },
-      { stage: "Contacted", count: leads.filter(l => l.status === "CONTACTED").length, value: 0 },
-      { stage: "Proposal Sent", count: leads.filter(l => l.status === "PROPOSAL_SENT").length, value: 0 },
-      { stage: "Won", count: leads.filter(l => l.status === "WON").length, value: 0 }
+      { stage: "New Lead", count: newCount, value: 0 },
+      { stage: "Contacted", count: contactedCount, value: 0 },
+      { stage: "Proposal Sent", count: proposalCount, value: 0 },
+      { stage: "Won", count: wonCount, value: 0 }
     ];
 
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const currentYear = new Date().getFullYear();
+    const startOfYear = new Date(currentYear, 0, 1);
+
+    const leadsThisYear = await prisma.lead.findMany({
+      where: { ...baseWhere, createdAt: { gte: startOfYear } },
+      select: { status: true, createdAt: true, updatedAt: true, value: true }
+    });
+
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const leadsGrowth = months.map(month => ({ name: month, direct: 0, social: 0, referral: 0 }));
     const revenueOverview = months.map(month => ({ name: month, target: 5000, revenue: 0 }));
 
-    leads.forEach(lead => {
+    leadsThisYear.forEach(lead => {
       const date = new Date(lead.createdAt);
-      if (date.getFullYear() === currentYear) {
-        leadsGrowth[date.getMonth()].direct++;
-      }
+      leadsGrowth[date.getMonth()].direct++;
       if (lead.status === "WON") {
         const wonDate = new Date(lead.updatedAt);
         if (wonDate.getFullYear() === currentYear) {
@@ -521,9 +567,9 @@ export class CrmService {
 
     return {
       topStats: [
-        { title: "Total Tasks", value: tasks.toString(), change: "+5%", positive: true, sparklineData: [{value: 10}, {value: 20}] },
-        { title: "Total Leads", value: leads.length.toString(), change: "+12%", positive: true, sparklineData: [{value: 5}, {value: 15}] },
-        { title: "Total Customers", value: customers.toString(), change: "-2%", positive: false, sparklineData: [{value: 20}, {value: 18}] }
+        { title: "Total Tasks", value: tasksCount.toString(), change: "+5%", positive: true, sparklineData: [{value: 10}, {value: 20}] },
+        { title: "Total Leads", value: leadsCount.toString(), change: "+12%", positive: true, sparklineData: [{value: 5}, {value: 15}] },
+        { title: "Total Customers", value: customersCount.toString(), change: "-2%", positive: false, sparklineData: [{value: 20}, {value: 18}] }
       ],
       revenueOverview,
       leadsGrowth,

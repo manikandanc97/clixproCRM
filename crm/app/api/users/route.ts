@@ -21,16 +21,17 @@ export async function GET() {
             status: true,
           },
         },
+        role: true,
       },
     });
 
     const users = memberships.map((m) => ({
       ...m.user,
-      role: m.role,
+      role: m.role?.name || m.roleId,
     }));
 
     return NextResponse.json({ success: true, data: users }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error); }
 }
 
 export async function POST(req: Request) {
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.toLowerCase();
     
-    let newUser;
+    let newUser: { id: string } | undefined;
     try {
       newUser = await prisma.$transaction(async (tx) => {
         let u = await tx.user.findUnique({ where: { email: normalizedEmail } });
@@ -68,17 +69,22 @@ export async function POST(req: Request) {
           }
         }
 
+        let finalRoleId: string = role;
+        const roleObj = await tx.role.findFirst({ where: { tenantId, name: role } });
+        if (roleObj) finalRoleId = roleObj.id;
+
         await tx.tenantUser.create({
           data: {
             tenantId,
             userId: u.id,
-            role,
+            roleId: finalRoleId,
           },
         });
 
         return u;
       });
-    } catch (txError: any) {
+    } catch (err) {
+      const txError = err as Error;
       if (txError.message === "USER_EXISTS_IN_TENANT") {
         return NextResponse.json({ success: false, message: "User is already an employee in this workspace" }, { status: 400 });
       }
@@ -86,5 +92,5 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, message: "User created successfully", user: { id: newUser.id } }, { status: 201 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error); }
 }

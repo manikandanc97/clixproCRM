@@ -11,12 +11,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Role {
-  ADMIN
-  MANAGER
-  SALES
-  EMPLOYEE
-}
+// Deprecated enum Role
 
 enum UserStatus {
   ACTIVE
@@ -58,46 +53,68 @@ enum QuotationStatus {
 }
 
 model Tenant {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  plan      String   @default("free")
+  id   String @id @default(uuid())
+  name String
+  slug String @unique
+  plan String @default("free")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users      TenantUser[]
-  customers  Customer[]
-  leads      Lead[]
-  tasks      Task[]
-  quotations Quotation[]
+  users         TenantUser[]
+  customers     Customer[]
+  leads         Lead[]
+  tasks         Task[]
+  quotations    Quotation[]
+  roles         Role[]
+  products      Product[]
+  invoices      Invoice[]
+  meetings      Meeting[]
+  notifications Notification[]
 }
 
 model User {
-  id               String      @id @default(uuid())
-  name             String
-  email            String      @unique
-  password         String
-  status           UserStatus  @default(ACTIVE)
+  id                  String     @id @default(uuid())
+  name                String
+  email               String     @unique
+  password            String
+  status              UserStatus @default(ACTIVE)
+  emailVerifiedAt     DateTime?
+  failedLoginAttempts Int        @default(0)
+  lockedUntil         DateTime?
+  twoFactorEnabled    Boolean    @default(false)
+  twoFactorSecret     String?
+
   resetToken       String?
   resetTokenExpiry DateTime?
+  deletedAt        DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships TenantUser[]
+  memberships        TenantUser[]
+  sessions           Session[]
+  authAuditLogs      AuthAuditLog[]
+  assignedCustomers  Customer[]     @relation("CustomerAssignedTo")
+  assignedLeads      Lead[]         @relation("LeadAssignedTo")
+  assignedTasks      Task[]         @relation("TaskAssignedTo")
+  assignedQuotations Quotation[]    @relation("QuotationAssignedTo")
 }
 
 model TenantUser {
-  id        String   @id @default(uuid())
-  tenantId  String
-  userId    String
-  role      Role     @default(EMPLOYEE)
+  id       String     @id @default(uuid())
+  tenantId String
+  userId   String
+  roleId   String
+  status   UserStatus @default(ACTIVE)
+  joinedAt DateTime   @default(now())
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, userId])
   @@index([tenantId])
@@ -107,6 +124,7 @@ model TenantUser {
 model Customer {
   id            String         @id @default(uuid())
   tenantId      String
+  assignedToId  String?
   name          String
   company       String
   email         String?
@@ -114,62 +132,214 @@ model Customer {
   revenue       Decimal        @default(0) @db.Decimal(12, 2)
   lastContactAt DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedTo User?       @relation("CustomerAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  quotations Quotation[]
 
   @@index([tenantId, status])
+  @@index([assignedToId])
 }
 
 model Lead {
-  id         String     @id @default(uuid())
-  tenantId   String
-  name       String
-  company    String
-  email      String
-  status     LeadStatus @default(NEW)
-  value      Decimal    @default(0) @db.Decimal(12, 2)
-  followUpAt DateTime?
+  id           String     @id @default(uuid())
+  tenantId     String
+  assignedToId String?
+  name         String
+  company      String
+  email        String
+  status       LeadStatus @default(NEW)
+  value        Decimal    @default(0) @db.Decimal(12, 2)
+  followUpAt   DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedTo User?  @relation("LeadAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, status])
+  @@index([assignedToId])
 }
 
 model Task {
-  id          String       @id @default(uuid())
-  tenantId    String
-  title       String
-  description String?
-  dueDate     DateTime?
-  priority    TaskPriority @default(MEDIUM)
-  status      TaskStatus   @default(PENDING)
+  id           String       @id @default(uuid())
+  tenantId     String
+  assignedToId String?
+  title        String
+  description  String?
+  dueDate      DateTime?
+  priority     TaskPriority @default(MEDIUM)
+  status       TaskStatus   @default(PENDING)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedTo User?  @relation("TaskAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, status])
+  @@index([assignedToId])
 }
 
 model Quotation {
-  id          String          @id @default(uuid())
-  tenantId    String
-  quoteNumber String
-  client      String
-  amount      Decimal         @default(0) @db.Decimal(12, 2)
-  status      QuotationStatus @default(PENDING)
-  validTill   DateTime?
+  id           String          @id @default(uuid())
+  tenantId     String
+  customerId   String?
+  assignedToId String?
+  quoteNumber  String
+  client       String // Kept temporarily for backward compatibility
+  amount       Decimal         @default(0) @db.Decimal(12, 2)
+  status       QuotationStatus @default(PENDING)
+  validTill    DateTime?
 
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  assignedTo User?     @relation("QuotationAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, quoteNumber])
+  @@index([customerId])
+  @@index([assignedToId])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuthAuditLog {
+  id        String  @id @default(uuid())
+  userId    String?
+  tenantId  String?
+  eventType String
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([tenantId])
+}
+
+model Role {
+  id          String  @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  isSystem    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  permissions RolePermission[]
+  users       TenantUser[]
+
+  @@unique([tenantId, name])
+}
+
+model Permission {
+  id       String @id @default(uuid())
+  resource String
+  action   String
+
+  roles RolePermission[]
+
+  @@unique([resource, action])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  sku         String?
+  description String?
+  price       Decimal  @default(0) @db.Decimal(12, 2)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Invoice {
+  id         String    @id @default(uuid())
+  tenantId   String
+  customerId String
+  amount     Decimal   @default(0) @db.Decimal(12, 2)
+  status     String    @default("DRAFT")
+  dueDate    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([customerId])
+}
+
+model Meeting {
+  id        String   @id @default(uuid())
+  tenantId  String
+  title     String
+  startTime DateTime
+  endTime   DateTime
+  location  String?
+  isOnline  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@unique([tenantId, quoteNumber])
+  @@index([tenantId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  type      String   @default("INFO")
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
 }

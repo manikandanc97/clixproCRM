@@ -39,10 +39,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         data: userData,
       });
 
-      if (role) {
+      if (role !== undefined) {
+        let finalRoleId: string = role;
+        const roleObj = await tx.role.findFirst({ where: { tenantId: session.tenantId, name: role } });
+        if (roleObj) finalRoleId = roleObj.id;
+
         await tx.tenantUser.update({
           where: { id: existingUser.id },
-          data: { role },
+          data: { roleId: finalRoleId },
         });
       }
     });

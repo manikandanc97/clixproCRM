@@ -18,6 +18,7 @@ export default function RegisterPage() {
   const router = useRouter();
   // Form state
   const [name, setName] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,6 +42,7 @@ export default function RegisterPage() {
 
       const response = await registerUser({
         name,
+        companyName,
         email,
         password,
       });
@@ -79,6 +81,20 @@ export default function RegisterPage() {
               className="rounded-xl h-11"
               value={name}
               onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
+          {/* Company Name */}
+          <div className="space-y-2">
+            <Label htmlFor="companyName">Company Name</Label>
+
+            <Input
+              id="companyName"
+              type="text"
+              placeholder="Enter your company name"
+              className="rounded-xl h-11"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
             />
           </div>
 

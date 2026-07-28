@@ -12,8 +12,10 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
+    const search = url.searchParams.get("search") || "";
+    const status = url.searchParams.get("status") || "";
 
-    const leads = await CrmService.getLeads(session.tenantId, "USD", page, limit);
+    const leads = await CrmService.getLeads(session.tenantId, "USD", page, limit, search, status);
     return NextResponse.json({ success: true, data: leads }, { status: 200 });
   } catch (error: any) { return handleApiError(error); }
 }

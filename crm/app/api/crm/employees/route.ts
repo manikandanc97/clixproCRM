@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
     const employeesData = await CrmService.getEmployees(session.tenantId, page, limit);
     return NextResponse.json({ success: true, data: employeesData.employees, stats: employeesData.stats, pagination: employeesData.pagination }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error); }
 }
 
 export async function POST(req: Request) {
@@ -33,7 +33,16 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    let tenantUser;
+    let tenantUser: {
+      userId: string;
+      user: {
+        id: string;
+        name: string;
+        email: string;
+        status: string;
+        createdAt: Date;
+      };
+    };
     let generatedPassword: string | null = null;
     
     try {
@@ -60,18 +69,23 @@ export async function POST(req: Request) {
           });
         }
 
+        let finalRoleId: string = role;
+        const roleObj = await tx.role.findFirst({ where: { tenantId: session.tenantId, name: role } });
+        if (roleObj) finalRoleId = roleObj.id;
+
         return await tx.tenantUser.create({
           data: {
             tenantId: session.tenantId,
             userId: user.id,
-            role: role,
+            roleId: finalRoleId,
           },
           include: {
             user: true
           }
         });
       });
-    } catch (txError: any) {
+    } catch (err) {
+      const txError = err as Error;
       if (txError.message === "USER_EXISTS_IN_TENANT") {
         return NextResponse.json({ success: false, message: "User is already an employee in this workspace" }, { status: 400 });
       }
@@ -85,12 +99,12 @@ export async function POST(req: Request) {
       id: tenantUser.userId,
       name: tenantUser.user.name,
       email: tenantUser.user.email,
-      role: tenantUser.role,
+      role: role,
       status: tenantUser.user.status,
       createdAt: tenantUser.user.createdAt.toISOString(),
       ...(generatedPassword ? { temporaryPassword: generatedPassword } : {})
     };
 
     return NextResponse.json({ success: true, data: newEmployee, message: "Employee created successfully" }, { status: 201 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error); }
 }

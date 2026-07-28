@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       const response = await loginUser({ email, password });
       
-      setUser(response.user);
+      setUser(response.data.user);
       setStatus("authenticated");
       
       // Clear cache to ensure fresh data for the new user

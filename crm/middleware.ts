@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
-import { env } from "@/lib/env";
+import { verifyJWT } from "@/shared/lib/auth/utils";
 
-// Paths that do not require authentication
 const publicPaths = [
   "/login",
   "/register",
@@ -22,7 +20,6 @@ const publicApiPaths = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Static assets and internal next paths
   if (
     pathname.startsWith("/_next") ||
     pathname.match(/\.(png|jpg|jpeg|gif|svg|ico)$/) ||
@@ -45,12 +42,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("orbit_token")?.value;
+  const token = request.cookies.get("auth_token")?.value;
 
   if (!token) {
     if (isApiRoute) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
+        { success: false, error: { code: "UNAUTHORIZED", message: "Missing authentication token" } },
         { status: 401 }
       );
     } else {
@@ -61,18 +58,20 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const secret = new TextEncoder().encode(env.JWT_SECRET);
+    const payload = await verifyJWT(token);
     
-    // Verify JWT
-    const { payload } = await jwtVerify(token, secret);
+    if (!payload) {
+      throw new Error("Invalid Token");
+    }
 
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-user-id", payload.id as string);
+    requestHeaders.set("x-user-id", payload.userId as string);
+    
     if (payload.tenantId) {
       requestHeaders.set("x-tenant-id", payload.tenantId as string);
     }
-    if (payload.role) {
-      requestHeaders.set("x-role", payload.role as string);
+    if (payload.roleId) {
+      requestHeaders.set("x-role-id", payload.roleId as string);
     }
 
     return NextResponse.next({
@@ -81,20 +80,17 @@ export async function middleware(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Middleware JWT verification failed:", error);
-    
-    // Clear invalid token cookie on response
     if (isApiRoute) {
       const response = NextResponse.json(
-        { success: false, message: "Unauthorized or Expired Token" },
+        { success: false, error: { code: "UNAUTHORIZED", message: "Unauthorized or Expired Token" } },
         { status: 401 }
       );
-      response.cookies.delete("orbit_token");
+      response.cookies.delete("auth_token");
       return response;
     } else {
       const loginUrl = new URL("/login", request.url);
       const response = NextResponse.redirect(loginUrl);
-      response.cookies.delete("orbit_token");
+      response.cookies.delete("auth_token");
       return response;
     }
   }
@@ -102,12 +98,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
     "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };
