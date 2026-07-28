@@ -12,8 +12,6 @@ import { EmployeesDataType,  EmployeeType } from "@/shared/types/employee";
 import { MeetingsDataType } from "@/shared/types/meeting";
 import {
   HotLeadsDataType,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _TeamPerformanceDataType,
   NotificationsDataType,
   AiInsightsDataType,
 } from "@/shared/types/dashboard-widgets";

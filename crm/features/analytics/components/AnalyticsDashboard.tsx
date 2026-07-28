@@ -15,6 +15,15 @@ import { TopAgents, RecentActivity } from './TopAgents';
 import { motion } from 'framer-motion';
 import { useAnalytics } from '@/shared/hooks/use-analytics';
 
+export interface DashboardStat {
+  title: string;
+  value: string;
+  change?: string;
+  positive?: boolean;
+  color?: "emerald" | "cyan" | "indigo" | "violet" | "orange" | "pink" | "blue" | "purple" | "primary" | "slate";
+  sparklineData?: { value: number }[];
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -55,7 +64,7 @@ export default function AnalyticsDashboard() {
       >
         {/* Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
-          {data?.topStats?.map((stat: unknown, index: number) => (
+          {data?.topStats?.map((stat: DashboardStat, index: number) => (
             <motion.div key={stat.title} variants={itemVariants}>
               <CRMMetricCard
                 title={stat.title}

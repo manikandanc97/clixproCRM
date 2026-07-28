@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form } from "@/shared/ui/form";
@@ -39,12 +39,12 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
       name: initialData?.name || "",
       company: initialData?.company || "",
       email: initialData?.email || "",
-      status: (initialData?.status?.toUpperCase() as unknown) || "ACTIVE",
+      status: (initialData?.status?.toUpperCase() as "ACTIVE" | "PREMIUM" | "INACTIVE") || "ACTIVE",
       revenue: initialData?.revenueValue?.toString() || "",
     },
   });
 
-  const onSubmit = async (data: CustomerFormValues) => {
+  const onSubmit: SubmitHandler<CustomerFormValues> = async (data) => {
     try {
       if (initialData) {
         await updateMutate({

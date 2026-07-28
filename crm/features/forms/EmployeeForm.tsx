@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form } from "@/shared/ui/form";
@@ -29,8 +29,16 @@ const employeeSchema = z.object({
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
 
+interface EmployeeInitialData {
+  id?: string;
+  name?: string;
+  email?: string;
+  role?: "EMPLOYEE" | "ADMIN" | "MANAGER" | "SALES";
+  status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+}
+
 interface EmployeeFormProps {
-  initialData?: unknown;
+  initialData?: EmployeeInitialData;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -59,7 +67,7 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: EmployeeFormValues) => updateEmployee(initialData.id, data),
+    mutationFn: (data: EmployeeFormValues) => updateEmployee(initialData?.id as string, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       toast.success("Employee updated successfully");
@@ -93,7 +101,7 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
     }
   }, [initialData, form]);
 
-  const onSubmit = async (data: EmployeeFormValues) => {
+  const onSubmit: SubmitHandler<EmployeeFormValues> = async (data) => {
     if (isEditing) {
       updateMutation.mutate(data);
     } else {

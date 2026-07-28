@@ -3,13 +3,9 @@
 import { 
   MoreVertical, 
   Mail, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _Phone, 
-  TrendingUp, 
   ExternalLink,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _ShieldCheck,
   User,
+  TrendingUp,
   Trash2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";

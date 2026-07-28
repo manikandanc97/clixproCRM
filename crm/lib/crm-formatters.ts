@@ -67,8 +67,9 @@ export function formatCurrency(value: unknown, currency = "USD"): string {
   }).format(toNumber(value));
 }
 
-export function formatPercentage(value: unknown, digits = 0): string {
-  const safeValue = Number.isFinite(value) ? value : 0;
+export function formatPercentage(value: number | string | null | undefined, digits = 0): string {
+  const numValue = Number(value);
+  const safeValue = Number.isFinite(numValue) ? numValue : 0;
   return `${safeValue.toFixed(digits)}%`;
 }
 
@@ -103,7 +104,7 @@ function startOfDay(date = new Date()) {
 
 
 
-function isWithinRange(date: unknown, rangeStart: Date, rangeEnd: Date) {
+function isWithinRange(date: string | number | Date | null | undefined, rangeStart: Date, rangeEnd: Date) {
   if (!date) return false;
   const time = new Date(date).getTime();
   return time >= rangeStart.getTime() && time < rangeEnd.getTime();
@@ -117,7 +118,7 @@ export function countInRange<T>(items: T[], getDate: (item: T) => Date, rangeSta
 
 
 
-export function formatRelativeDate(date: unknown, options: { fallback?: string } = {}) {
+export function formatRelativeDate(date: string | number | Date | null | undefined, options: { fallback?: string } = {}) {
   const { fallback = "Not available" } = options;
 
   if (!date) return fallback;
@@ -142,7 +143,7 @@ export function formatRelativeDate(date: unknown, options: { fallback?: string }
   return longDateFormatter.format(input);
 }
 
-export function formatDate(date: unknown, fallback = "Not available") {
+export function formatDate(date: string | number | Date | null | undefined, fallback = "Not available") {
   if (!date) return fallback;
   const input = new Date(date);
   if (isNaN(input.getTime())) return fallback;

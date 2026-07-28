@@ -33,7 +33,7 @@ export function handleApiError(error: unknown) {
     );
   }
 
-  if (error instanceof SyntaxError && "body" in (error as unknown) === false) {
+  if (error instanceof SyntaxError && "body" in (error as unknown as Record<string, unknown>) === false) {
     // Basic check for JSON parse errors from req.json()
     return NextResponse.json(
       { success: false, message: "Malformed JSON payload" },

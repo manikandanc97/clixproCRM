@@ -5,9 +5,10 @@ import { FileText, Plus, Download, TrendingUp, Clock, SearchX } from "lucide-rea
 
 import dynamic from "next/dynamic";
 const QuotationsTable = dynamic(() => import("@/features/quotations/components/QuotationsTable"), {
-  loading: () => <div className="h-[400px] bg-muted/20 animate-pulse rounded-xl" />
+  loading: () => <div className="h-[400px] skeleton rounded-xl" />
 });
-import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { PageErrorState } from "@/shared/components/page-states";
+import { QuotationsSkeleton } from "@/features/quotations/components/QuotationsSkeleton";
 import { useQuotations } from "@/shared/hooks/use-crm";
 import { Button } from "@/shared/ui/button";
 import { 
@@ -22,7 +23,7 @@ import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
 const QuoteForm = dynamic(() => import("@/features/forms/QuoteForm").then(mod => ({ default: mod.QuoteForm })), {
-  loading: () => <div className="h-[300px] bg-muted/20 animate-pulse rounded-xl" />
+  loading: () => <div className="h-[300px] skeleton rounded-xl" />
 });
 import { useSearchParams } from "next/navigation";
 
@@ -80,7 +81,7 @@ const QuotationsPage = () => {
   };
 
   if (loading && safeQuotations.length === 0) {
-    return <PageLoadingState label="Loading quotations and approval status..." />;
+    return <QuotationsSkeleton />;
   }
 
   if (error && safeQuotations.length === 0) {

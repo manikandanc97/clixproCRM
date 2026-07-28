@@ -75,8 +75,8 @@ export const ChartContainer = ({
     >
       {(!isReady || loading) ? (
         <div className="absolute inset-0 flex flex-col gap-4 p-4 rounded-xl skeleton overflow-hidden">
-          <div className="h-4 w-1/4 bg-foreground/5 rounded animate-pulse" />
-          <div className="flex-1 w-full rounded-xl bg-foreground/5 animate-pulse" />
+          <div className="h-4 w-1/4 skeleton rounded" />
+          <div className="flex-1 w-full rounded-xl skeleton" />
         </div>
       ) : !hasData ? (
         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/5 rounded-xl border border-dashed border-border/50">

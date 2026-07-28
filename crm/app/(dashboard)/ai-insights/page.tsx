@@ -1,21 +1,12 @@
 "use client";
 
-// import {  } from "react";
 import { 
   Sparkles, 
   TrendingUp, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _Zap, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _Target, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _Users, 
   ArrowRight,
   BrainCircuit,
   MessageSquare,
   BarChart3,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _Calendar,
   Lightbulb
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -30,12 +21,10 @@ import {
 } from "@/shared/components/crm";
 import { Button } from "@/shared/ui/button";
 import { useAiInsights } from "@/shared/hooks/use-dashboard";
-import { PageLoadingState } from "@/shared/components/page-states";
+import { AISkeleton } from "./AISkeleton";
 import { 
   Area, 
   AreaChart, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _ResponsiveContainer, 
   XAxis, 
   YAxis, 
   Tooltip,
@@ -55,6 +44,26 @@ const chartData = [
 
 import { ChartContainer } from "@/shared/components/charts/ChartContainer";
 
+interface AIRecommendation {
+  id: string | number;
+  title: string;
+  description: string;
+  bgColor?: string;
+  color?: string;
+  icon?: React.ElementType;
+  priority?: 'high' | 'medium' | 'low';
+  tag?: string;
+}
+
+interface InsightStat {
+  title: string;
+  value: string;
+  change?: string;
+  positive?: boolean;
+  color?: string;
+  iconName?: string;
+}
+
 export default function AiInsightsPage() {
   const { data: insightsData, isLoading: loading } = useAiInsights();
 
@@ -69,7 +78,7 @@ export default function AiInsightsPage() {
   };
 
   if (loading) {
-    return <PageLoadingState label="Consulting the neural engine..." />;
+    return <AISkeleton />;
   }
 
   return (
@@ -98,10 +107,11 @@ export default function AiInsightsPage() {
 
       {/* AI Stats Grid */}
       <CRMMetricsGrid>
-        {aiStats.map((stat: unknown, i: number) => (
+        {aiStats.map((stat: InsightStat, i: number) => (
           <MetricCard
             key={i}
             {...stat}
+            color={stat.color as "emerald" | "cyan" | "indigo" | "violet" | "orange" | "pink" | "blue" | "purple" | "primary" | "slate" | undefined}
             delay={i * 0.1}
           />
         ))}
@@ -179,8 +189,7 @@ export default function AiInsightsPage() {
             subtitle="AI-generated actions to optimize your sales funnel."
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
-              {recommendations.map((rec: unknown, _i: number) => (
+              {recommendations.map((rec: AIRecommendation) => (
                 <CRMCard 
                   key={rec.id} 
                   className="p-5 flex flex-col justify-between"

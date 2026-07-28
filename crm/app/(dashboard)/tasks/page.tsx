@@ -5,8 +5,6 @@ import {
   CheckSquare,
   Plus,
   Download,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _Clock,
   Target,
   AlertCircle,
   SearchX,
@@ -23,7 +21,8 @@ const KanbanView = dynamic(() => import("@/features/tasks/components/KanbanView"
 const CalendarView = dynamic(() => import("@/features/tasks/components/CalendarView").then(mod => ({ default: mod.CalendarView })));
 const TimelineView = dynamic(() => import("@/features/tasks/components/TimelineView").then(mod => ({ default: mod.TimelineView })));
 const TaskDetailsDrawer = dynamic(() => import("@/features/tasks/components/TaskDetailsDrawer"));
-import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { PageErrorState } from "@/shared/components/page-states";
+import { TasksSkeleton } from "@/features/tasks/components/TasksSkeleton";
 import { useTasks } from "@/shared/hooks/use-crm";
 import { TaskType } from "@/shared/types/task";
 import { Button } from "@/shared/ui/button";
@@ -112,7 +111,7 @@ const TasksPage = () => {
   };
 
   if (loading && safeTasks.length === 0) {
-    return <PageLoadingState label="Loading tasks..." />;
+    return <TasksSkeleton />;
   }
 
   if (error && safeTasks.length === 0) {

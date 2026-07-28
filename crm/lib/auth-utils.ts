@@ -32,7 +32,7 @@ export async function getAuthSession(): Promise<AuthSession | null> {
     ) as AuthSession;
 
     return {
-      userId: decoded.userId || (decoded as unknown).id,
+      userId: decoded.userId || (decoded as { id?: string }).id || "",
       tenantId: decoded.tenantId,
       role: decoded.role,
     };

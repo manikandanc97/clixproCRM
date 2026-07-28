@@ -11,9 +11,9 @@ import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 
 // Dynamic imports for heavy dashboard components
-const SalesChart = dynamic(() => import("@/features/dashboard/components/SalesChart"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
-const RevenueTracker = dynamic(() => import("@/features/dashboard/components/RevenueTracker"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
-const LeadFunnel = dynamic(() => import("@/features/dashboard/components/LeadFunnel"), { ssr: false, loading: () => <div className="h-[350px] animate-pulse bg-muted/50 rounded-xl" /> });
+const SalesChart = dynamic(() => import("@/features/dashboard/components/SalesChart"), { ssr: false, loading: () => <div className="h-[350px] skeleton rounded-xl" /> });
+const RevenueTracker = dynamic(() => import("@/features/dashboard/components/RevenueTracker"), { ssr: false, loading: () => <div className="h-[350px] skeleton rounded-xl" /> });
+const LeadFunnel = dynamic(() => import("@/features/dashboard/components/LeadFunnel"), { ssr: false, loading: () => <div className="h-[350px] skeleton rounded-xl" /> });
 
 // Standard dynamic imports
 const RecentActivities = dynamic(() => import("@/features/dashboard/components/RecentActivities"));

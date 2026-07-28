@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       message: "Registration successful"
     }, { status: 201 });
   } catch (error: unknown) {
-    if (error.message === "Email already in use") {
+    if (error instanceof Error && error.message === "Email already in use") {
       return NextResponse.json({
         success: false,
         error: { code: "CONFLICT", message: error.message }

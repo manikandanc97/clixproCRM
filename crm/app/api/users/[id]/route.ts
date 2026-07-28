@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { requireRole } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { userSchema } from "@/shared/validations";
+import { Prisma } from "@prisma/client";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -25,9 +26,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ success: false, message: "User not found in workspace" }, { status: 404 });
     }
 
-    const updateData: unknown = {};
+    const updateData: Prisma.UserUpdateInput = {};
     if (name !== undefined) updateData.name = name;
-    if (displayName !== undefined) updateData.displayName = displayName;
+    if (displayName !== undefined) (updateData as Record<string, unknown>).displayName = displayName;
     if (status !== undefined) updateData.status = status;
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);

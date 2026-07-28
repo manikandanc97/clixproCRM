@@ -19,10 +19,9 @@ interface EmptyStateProps {
   message: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function PageLoadingState({ _label }: LoadingStateProps) {
+export function PageLoadingState({ label }: LoadingStateProps) {
   return (
-    <div className="flex flex-col space-y-6 w-full animate-pulse p-2">
+    <div className="flex flex-col space-y-6 w-full p-2">
       {/* Header Skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-2">
@@ -60,10 +59,9 @@ export function PageLoadingState({ _label }: LoadingStateProps) {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function ComponentLoadingState({ _label }: LoadingStateProps) {
+export function ComponentLoadingState({ label }: LoadingStateProps) {
   return (
-    <div className="flex flex-col space-y-6 w-full animate-pulse">
+    <div className="flex flex-col space-y-6 w-full">
       <div className="rounded-xl border border-border bg-card p-6 space-y-6 shadow-sm">
         <div className="space-y-2">
           <Skeleton className="h-6 w-[150px]" />

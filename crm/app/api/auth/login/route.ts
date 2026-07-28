@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       message: "Login successful"
     }, { status: 200 });
   } catch (error: unknown) {
-    if (error.message === "Invalid credentials" || error.message.includes("locked")) {
+    if (error instanceof Error && (error.message === "Invalid credentials" || error.message.includes("locked"))) {
       return NextResponse.json({
         success: false,
         error: { code: "UNAUTHORIZED", message: error.message }

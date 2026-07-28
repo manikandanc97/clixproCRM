@@ -95,8 +95,8 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
   const sortedQuotations = useMemo(() => {
     if (!sortConfig) return quotations;
     return [...quotations].sort((a, b) => {
-      let aVal: unknown = a[sortConfig.key] ?? "";
-      let bVal: unknown = b[sortConfig.key] ?? "";
+      let aVal: string | number = (a[sortConfig.key] as string | number) ?? "";
+      let bVal: string | number = (b[sortConfig.key] as string | number) ?? "";
       
       if (sortConfig.key === "amount" as keyof QuotationType) {
         aVal = a.amountValue ?? 0;

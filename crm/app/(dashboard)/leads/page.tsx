@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 const LeadsTable = dynamic(() => import("@/features/leads/components/LeadsTable"), {
-  loading: () => <div className="h-[400px] bg-muted/20 animate-pulse rounded-xl" />
+  loading: () => <div className="h-[400px] skeleton rounded-xl" />
 });
 import { 
   SearchX, 
@@ -18,7 +18,8 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { PageErrorState } from "@/shared/components/page-states";
+import { LeadsSkeleton } from "@/features/leads/components/LeadsSkeleton";
 import { useLeads } from "@/shared/hooks/use-crm";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/shared/ui/badge";
@@ -35,7 +36,7 @@ import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
 const LeadForm = dynamic(() => import("@/features/forms/LeadForm").then(mod => ({ default: mod.LeadForm })), {
-  loading: () => <div className="h-[300px] bg-muted/20 animate-pulse rounded-xl" />
+  loading: () => <div className="h-[300px] skeleton rounded-xl" />
 });
 import { useSearchParams } from "next/navigation";
 
@@ -99,7 +100,7 @@ const LeadsPage = () => {
   };
 
   if (loading && safeLeads.length === 0) {
-    return <PageLoadingState label="Loading intelligent lead records..." />;
+    return <LeadsSkeleton />;
   }
 
   if (error && safeLeads.length === 0) {

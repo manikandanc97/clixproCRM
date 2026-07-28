@@ -13,8 +13,6 @@ import {
   LineChart,
   Pie,
   PieChart,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _ResponsiveContainer,
   Tooltip as RechartsTooltip,
   XAxis,
   YAxis,

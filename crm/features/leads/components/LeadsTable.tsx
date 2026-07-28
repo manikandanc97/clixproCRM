@@ -53,15 +53,12 @@ const priorityColors: Record<string, string> = {
   "Low": "bg-slate-400",
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const LeadsTable = ({ leads, _totalCount }: LeadsTableProps) => {
+const LeadsTable = ({ leads }: LeadsTableProps) => {
   const {
     sortedLeads,
     selectedIds,
     setSelectedIds,
     expandedId,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _sortConfig,
     handleSort,
     toggleSelectAll,
     toggleSelect,

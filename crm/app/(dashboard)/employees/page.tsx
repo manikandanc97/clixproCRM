@@ -7,10 +7,6 @@ import {
   MoreVertical, 
   TrendingUp,
   User,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _Shield,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _UserMinus,
   Edit2,
   Trash2,
   Power
@@ -54,8 +50,8 @@ import {
 import { useEmployees, useToggleEmployeeStatus, useDeleteEmployee } from "@/shared/hooks/use-hrm";
 // import { } from "@/shared/ui/progress";
 import { toast } from "sonner";
-import { PageLoadingState } from "@/shared/components/page-states";
 import { FormModal } from "@/shared/components/form-modal";
+import { EmployeesSkeleton } from "@/features/employees/components/EmployeesSkeleton";
 import { EmployeeForm } from "@/features/forms/EmployeeForm";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
@@ -99,7 +95,7 @@ export default function EmployeesPage() {
   });
 
   if (loading) {
-    return <PageLoadingState label="Loading employee records..." />;
+    return <EmployeesSkeleton />;
   }
 
   const handleAddEmployee = () => {

@@ -6,9 +6,10 @@ import { Users, UserPlus, Download, Star, CreditCard, SearchX } from "lucide-rea
 
 import dynamic from "next/dynamic";
 const CustomersTable = dynamic(() => import("@/features/customers/components/CustomersTable").then(mod => ({ default: mod.CustomersTable })), {
-  loading: () => <div className="h-[400px] bg-muted/20 animate-pulse rounded-xl" />
+  loading: () => <div className="h-[400px] skeleton rounded-xl" />
 });
-import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { PageErrorState } from "@/shared/components/page-states";
+import { CustomersSkeleton } from "@/features/customers/components/CustomersSkeleton";
 import { useCustomers } from "@/shared/hooks/use-crm";
 import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/components/PageHeader";
@@ -23,7 +24,7 @@ import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
 const CustomerForm = dynamic(() => import("@/features/forms/CustomerForm").then(mod => ({ default: mod.CustomerForm })), {
-  loading: () => <div className="h-[300px] bg-muted/20 animate-pulse rounded-xl" />
+  loading: () => <div className="h-[300px] skeleton rounded-xl" />
 });
 import { useSearchParams } from "next/navigation";
 
@@ -88,7 +89,7 @@ const CustomersPage = () => {
   };
 
   if (loading && safeCustomers.length === 0) {
-    return <PageLoadingState label="Initializing relationship intelligence engine..." />;
+    return <CustomersSkeleton />;
   }
 
   if (error && safeCustomers.length === 0) {

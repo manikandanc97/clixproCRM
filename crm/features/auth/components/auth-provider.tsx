@@ -9,8 +9,6 @@ import {
   normalizeRole, 
   type RoleAccess, 
   CRM_ROLES, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _getRoleMenu,
   roleRouteConfig,
   PERMISSIONS,
 } from "@/shared/lib/auth/rbac";

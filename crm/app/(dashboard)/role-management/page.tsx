@@ -24,7 +24,7 @@ import {
   CRMStatusBadge
 } from "@/shared/components/crm";
 import { Button } from "@/shared/ui/button";
-import { PageLoadingState } from "@/shared/components/page-states";
+import { RoleManagementSkeleton } from "./RoleManagementSkeleton";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
@@ -85,7 +85,7 @@ export default function RoleManagementPage() {
   };
 
   if (loading) {
-    return <PageLoadingState label="Loading users and roles..." />;
+    return <RoleManagementSkeleton />;
   }
 
   return (

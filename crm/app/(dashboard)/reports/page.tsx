@@ -9,7 +9,8 @@ const AnalyticsSummary = dynamic(() => import("@/features/reports/components/Ana
 const SalesFunnel = dynamic(() => import("@/features/reports/components/SalesFunnel"));
 const ActivityHeatmap = dynamic(() => import("@/features/reports/components/ActivityHeatmap"));
 const RevenueTarget = dynamic(() => import("@/features/reports/components/RevenueTarget"));
-import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
+import { PageErrorState } from "@/shared/components/page-states";
+import { ReportsSkeleton } from "@/features/reports/components/ReportsSkeleton";
 import { useReports } from "@/shared/hooks/use-crm";
 // import { } from "@/shared/ui/button";
 import { CRMPageHeader, CRMMetricCard, CRMPageContainer, CRMMetricsGrid } from "@/shared/components/crm";
@@ -31,7 +32,7 @@ const ReportsPage = () => {
   };
 
   if (loading && !data) {
-    return <PageLoadingState label="Loading report metrics and chart data..." />;
+    return <ReportsSkeleton />;
   }
 
   if (error && !data) {
