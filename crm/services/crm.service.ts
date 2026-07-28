@@ -18,6 +18,8 @@ import {
 
 export class CrmService {
   static async getCustomers(tenantId: string, page = 1, limit = 10, search = "") {
+    page = Math.max(1, page);
+    limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
     const where: Prisma.CustomerWhereInput = { tenantId, deletedAt: null };
     if (search) where.name = { contains: search, mode: "insensitive" };
@@ -46,6 +48,7 @@ export class CrmService {
         tenantId,
         revenue: data.revenue || 0,
         status: data.status || "ACTIVE",
+        assignedToId: userId,
       } as Prisma.CustomerUncheckedCreateInput,
     });
   }
@@ -65,6 +68,8 @@ export class CrmService {
   }
 
   static async getLeads(tenantId: string, currency = "USD", page = 1, limit = 10, search = "", status?: string) {
+    page = Math.max(1, page);
+    limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
     const where: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
     if (search) where.name = { contains: search, mode: "insensitive" };
@@ -196,6 +201,8 @@ export class CrmService {
   }
 
   static async getTasks(tenantId: string, page = 1, limit = 10, search = "") {
+    page = Math.max(1, page);
+    limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
     const where: Prisma.TaskWhereInput = { tenantId, deletedAt: null };
     if (search) where.title = { contains: search, mode: "insensitive" };
@@ -405,6 +412,8 @@ export class CrmService {
   }
 
   static async getQuotations(tenantId: string, page = 1, limit = 10, search = "") {
+    page = Math.max(1, page);
+    limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
     const where: Prisma.QuotationWhereInput = { tenantId, deletedAt: null };
     if (search) where.quoteNumber = { contains: search, mode: "insensitive" };
@@ -611,6 +620,8 @@ export class CrmService {
   }
 
   static async getEmployees(tenantId: string, page = 1, limit = 10) {
+    page = Math.max(1, page);
+    limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -758,14 +769,14 @@ export class CrmService {
   }
 
   static async getMeetings(tenantId: string) {
-    const tasks = await prisma.task.findMany({ where: { tenantId, dueDate: { not: null } }, take: 5, orderBy: { dueDate: 'asc' } });
-    return tasks.map(t => ({ 
-      id: t.id, 
-      title: t.title, 
-      date: formatDate(t.dueDate!), 
+    const meetings = await prisma.meeting.findMany({ where: { tenantId }, take: 5, orderBy: { startTime: 'asc' } });
+    return meetings.map(m => ({ 
+      id: m.id, 
+      title: m.title, 
+      date: formatDate(m.startTime), 
       time: "TBD", 
-      location: "Virtual",
-      isOnline: true,
+      location: m.location || "Virtual",
+      isOnline: m.isOnline,
       status: "scheduled",
       isToday: false,
       attendees: [],
@@ -774,7 +785,7 @@ export class CrmService {
   }
 
   static async getNotifications(tenantId: string) {
-    const tasks = await prisma.task.findMany({ where: { tenantId, status: "PENDING" }, take: 5, orderBy: { createdAt: 'desc' } });
-    return { notifications: tasks.map(t => ({ id: t.id, title: t.title, description: "Task pending", read: false, time: formatDate(t.createdAt), type: "task" as const })) };
+    const notifications = await prisma.notification.findMany({ where: { tenantId }, take: 5, orderBy: { createdAt: 'desc' } });
+    return { notifications: notifications.map(n => ({ id: n.id, title: n.title, description: n.message, read: n.isRead, time: formatDate(n.createdAt), type: n.type as any })) };
   }
 }

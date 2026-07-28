@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { CrmService } from "@/services/crm.service";
 import { getAuthSession, requireRole } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
-import { leadSchema } from "@/shared/validations";
+import { leadSchema, paginationSchema } from "@/shared/validations";
 
 export async function GET(req: Request) {
   try {
@@ -10,8 +10,10 @@ export async function GET(req: Request) {
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
-    const limit = parseInt(url.searchParams.get("limit") || "10", 10);
+    const { page, limit } = paginationSchema.parse({
+      page: url.searchParams.get("page"),
+      limit: url.searchParams.get("limit"),
+    });
     const search = url.searchParams.get("search") || "";
     const status = url.searchParams.get("status") || "";
 

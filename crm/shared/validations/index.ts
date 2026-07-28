@@ -100,3 +100,9 @@ export const pipelineSchema = z.object({
   color: z.string().optional(),
   order: z.number().optional(),
 }).strict();
+
+export const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).catch(1),
+  limit: z.coerce.number().int().min(1).max(100).catch(10),
+});
+

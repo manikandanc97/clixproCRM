@@ -5,14 +5,16 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { handleApiError } from "@/lib/api-error";
-import { employeeSchema } from "@/shared/validations";
+import { employeeSchema, paginationSchema } from "@/shared/validations";
 
 export async function GET(req: Request) {
   try {
     const session = await requireRole(["ADMIN", "MANAGER"]);
     const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
-    const limit = parseInt(url.searchParams.get("limit") || "10", 10);
+    const { page, limit } = paginationSchema.parse({
+      page: url.searchParams.get("page"),
+      limit: url.searchParams.get("limit"),
+    });
 
     const employeesData = await CrmService.getEmployees(session.tenantId, page, limit);
     return NextResponse.json({ success: true, data: employeesData.employees, stats: employeesData.stats, pagination: employeesData.pagination }, { status: 200 });
@@ -69,9 +71,18 @@ export async function POST(req: Request) {
           });
         }
 
-        let finalRoleId: string = role;
-        const roleObj = await tx.role.findFirst({ where: { tenantId: session.tenantId, name: role } });
-        if (roleObj) finalRoleId = roleObj.id;
+        let finalRoleId: string;
+        let roleObj = await tx.role.findFirst({ where: { tenantId: session.tenantId, name: role } });
+        if (!roleObj) {
+          roleObj = await tx.role.create({
+            data: {
+              name: role,
+              tenantId: session.tenantId,
+              isSystem: true
+            }
+          });
+        }
+        finalRoleId = roleObj.id;
 
         return await tx.tenantUser.create({
           data: {
