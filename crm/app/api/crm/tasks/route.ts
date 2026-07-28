@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
     const tasks = await CrmService.getTasks(session.tenantId, page, limit, search);
     return NextResponse.json({ success: true, data: tasks }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }
 
 export async function POST(req: Request) {
@@ -29,5 +29,5 @@ export async function POST(req: Request) {
     const body = taskSchema.parse(rawBody);
     const task = await CrmService.createTask(session.tenantId, body);
     return NextResponse.json({ success: true, data: task }, { status: 201 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }

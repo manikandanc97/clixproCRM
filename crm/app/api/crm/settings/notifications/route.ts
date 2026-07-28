@@ -9,5 +9,5 @@ export async function GET() {
     
     const data = await CrmService.getNotificationSettings(session.tenantId);
     return NextResponse.json({ success: true, data }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }

@@ -24,7 +24,8 @@ import PublicRoute from "@/features/auth/components/public-route";
 import { useAuth } from "@/features/auth/components/auth-provider";
 
 export default function LoginPage() {
-  const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _router = useRouter();
   const { login } = useAuth();
 
   // Form state

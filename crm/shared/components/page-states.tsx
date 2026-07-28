@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, LoaderCircle, RefreshCw } from "lucide-react";
+import { AlertCircle,  RefreshCw } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 
@@ -19,7 +19,8 @@ interface EmptyStateProps {
   message: string;
 }
 
-export function PageLoadingState({ label }: LoadingStateProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function PageLoadingState({ _label }: LoadingStateProps) {
   return (
     <div className="flex flex-col space-y-6 w-full animate-pulse p-2">
       {/* Header Skeleton */}
@@ -59,7 +60,8 @@ export function PageLoadingState({ label }: LoadingStateProps) {
   );
 }
 
-export function ComponentLoadingState({ label }: LoadingStateProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function ComponentLoadingState({ _label }: LoadingStateProps) {
   return (
     <div className="flex flex-col space-y-6 w-full animate-pulse">
       <div className="rounded-xl border border-border bg-card p-6 space-y-6 shadow-sm">

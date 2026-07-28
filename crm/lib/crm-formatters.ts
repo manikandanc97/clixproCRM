@@ -46,7 +46,7 @@ const longDateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-export function toNumber(value: any): number {
+export function toNumber(value: unknown): number {
   return Number(value || 0);
 }
 
@@ -55,7 +55,7 @@ function getSupportedCurrency(value?: string | null): string {
   return CURRENCY_FORMATS[currency] ? currency : "USD";
 }
 
-export function formatCurrency(value: any, currency = "USD"): string {
+export function formatCurrency(value: unknown, currency = "USD"): string {
   const selectedCurrency = getSupportedCurrency(currency);
   const format = CURRENCY_FORMATS[selectedCurrency];
 
@@ -67,7 +67,7 @@ export function formatCurrency(value: any, currency = "USD"): string {
   }).format(toNumber(value));
 }
 
-export function formatPercentage(value: any, digits = 0): string {
+export function formatPercentage(value: unknown, digits = 0): string {
   const safeValue = Number.isFinite(value) ? value : 0;
   return `${safeValue.toFixed(digits)}%`;
 }
@@ -103,7 +103,7 @@ function startOfDay(date = new Date()) {
 
 
 
-function isWithinRange(date: any, rangeStart: Date, rangeEnd: Date) {
+function isWithinRange(date: unknown, rangeStart: Date, rangeEnd: Date) {
   if (!date) return false;
   const time = new Date(date).getTime();
   return time >= rangeStart.getTime() && time < rangeEnd.getTime();
@@ -117,7 +117,7 @@ export function countInRange<T>(items: T[], getDate: (item: T) => Date, rangeSta
 
 
 
-export function formatRelativeDate(date: any, options: { fallback?: string } = {}) {
+export function formatRelativeDate(date: unknown, options: { fallback?: string } = {}) {
   const { fallback = "Not available" } = options;
 
   if (!date) return fallback;
@@ -142,7 +142,7 @@ export function formatRelativeDate(date: any, options: { fallback?: string } = {
   return longDateFormatter.format(input);
 }
 
-export function formatDate(date: any, fallback = "Not available") {
+export function formatDate(date: unknown, fallback = "Not available") {
   if (!date) return fallback;
   const input = new Date(date);
   if (isNaN(input.getTime())) return fallback;

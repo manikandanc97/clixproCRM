@@ -32,11 +32,12 @@ export async function getAuthSession(): Promise<AuthSession | null> {
     ) as AuthSession;
 
     return {
-      userId: decoded.userId || (decoded as any).id,
+      userId: decoded.userId || (decoded as unknown).id,
       tenantId: decoded.tenantId,
       role: decoded.role,
     };
-  } catch (error) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     return null;
   }
 }

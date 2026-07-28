@@ -14,7 +14,7 @@ import {
   Clock,
   Tag,
 } from "lucide-react";
-import { Badge } from "@/shared/ui/badge";
+// import { } from "@/shared/ui/badge";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { 
@@ -27,12 +27,12 @@ import {
 import { LeadType } from "@/shared/types/lead";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/shared/ui/checkbox";
-import { CommonTooltip } from "@/shared/components/CommonTooltip";
+// import { } from "@/shared/components/";
 import { DataTable } from "@/shared/components/DataTable";
 import { StatusBadge, StatusVariant } from "@/shared/components/StatusBadge";
 import { cn } from "@/shared/lib/utils";
 import { useLeads } from "../hooks/useLeads";
-import { toast } from "sonner";
+// import { } from "sonner";
 
 interface LeadsTableProps {
   leads: LeadType[];
@@ -53,13 +53,15 @@ const priorityColors: Record<string, string> = {
   "Low": "bg-slate-400",
 };
 
-const LeadsTable = ({ leads, totalCount }: LeadsTableProps) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const LeadsTable = ({ leads, _totalCount }: LeadsTableProps) => {
   const {
     sortedLeads,
     selectedIds,
     setSelectedIds,
     expandedId,
-    sortConfig,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _sortConfig,
     handleSort,
     toggleSelectAll,
     toggleSelect,

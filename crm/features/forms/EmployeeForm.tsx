@@ -30,7 +30,7 @@ const employeeSchema = z.object({
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
 
 interface EmployeeFormProps {
-  initialData?: any;
+  initialData?: unknown;
   onSuccess?: () => void;
   onCancel?: () => void;
 }

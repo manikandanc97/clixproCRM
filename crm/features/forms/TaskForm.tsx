@@ -48,7 +48,8 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
         status: data.status,
       });
       onSuccess?.();
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       // Error handled by hook
     }
   };

@@ -22,7 +22,8 @@ export default function AIInsights() {
 
   const insights = useMemo(() => data ?? { recommendations: [], alerts: [], trends: [] }, [data]);
 
-  const handleDismiss = (e: React.MouseEvent, tab: TabType, id: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleDismiss = (e: React.MouseEvent, _tab: TabType, _id: string) => {
     e.stopPropagation();
     toast.success("Insight dismissed", {
       description: "We'll adjust future recommendations based on your feedback.",

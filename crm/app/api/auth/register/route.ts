@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       data,
       message: "Registration successful"
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error.message === "Email already in use") {
       return NextResponse.json({
         success: false,

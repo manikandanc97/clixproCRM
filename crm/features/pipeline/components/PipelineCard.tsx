@@ -12,7 +12,7 @@ import {
   ArrowUpRight,
   Activity
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+// import {  } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
 import { 
   DropdownMenu, 

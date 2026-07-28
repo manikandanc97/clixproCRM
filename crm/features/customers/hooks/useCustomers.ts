@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { CustomerType } from "@/shared/types/customer";
-import { toast } from "sonner";
+// import { } from "sonner";
 
 export function useCustomers(customers: CustomerType[]) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

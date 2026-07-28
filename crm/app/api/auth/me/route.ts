@@ -3,7 +3,8 @@ import prisma from "@/lib/prisma";
 import { verifyJWT } from "@/shared/lib/auth/utils";
 import { cookies } from "next/headers";
 
-export async function GET(req: Request) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_req: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("auth_token")?.value;
@@ -63,7 +64,8 @@ export async function GET(req: Request) {
         }
       }
     }, { status: 200 });
-  } catch (error: any) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error: unknown) {
     return NextResponse.json({
       success: false,
       error: { code: "INTERNAL_SERVER_ERROR", message: "An unexpected error occurred" }

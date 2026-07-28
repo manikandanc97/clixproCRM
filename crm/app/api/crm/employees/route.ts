@@ -71,7 +71,7 @@ export async function POST(req: Request) {
           });
         }
 
-        let finalRoleId: string;
+
         let roleObj = await tx.role.findFirst({ where: { tenantId: session.tenantId, name: role } });
         if (!roleObj) {
           roleObj = await tx.role.create({
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
             }
           });
         }
-        finalRoleId = roleObj.id;
+        const finalRoleId = roleObj.id;
 
         return await tx.tenantUser.create({
           data: {

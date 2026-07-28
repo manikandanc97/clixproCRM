@@ -10,5 +10,5 @@ export async function GET() {
 
     const dashboardData = await CrmService.getDashboardData(session.tenantId);
     return NextResponse.json({ success: true, data: dashboardData }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }

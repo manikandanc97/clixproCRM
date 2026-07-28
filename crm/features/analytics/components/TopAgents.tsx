@@ -4,10 +4,10 @@ import { CRMCard, CRMCardHeader } from '@/shared/components/crm';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar';
 import { Progress } from '@/shared/ui/progress';
 import { CardContent } from '@/shared/ui/card';
-import { Users, Activity, Trophy, Zap, ChevronRight } from 'lucide-react';
+import { Users, Activity,  Zap, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/shared/ui/skeleton';
 
-export const TopAgents = ({ data, loading }: { data?: any[], loading?: boolean }) => (
+export const TopAgents = ({ data, loading }: { data?: unknown[], loading?: boolean }) => (
   <CRMCard className="h-full" noPadding accentSeed="agents">
     <CRMCardHeader 
       title="Top Agents" 
@@ -34,7 +34,7 @@ export const TopAgents = ({ data, loading }: { data?: any[], loading?: boolean }
             </div>
           ))
         ) : (
-          data?.map((agent: any) => (
+          data?.map((agent: unknown) => (
             <div key={agent.id} className="group/agent flex items-center gap-4">
               <Avatar className="h-10 w-10 border-2 border-primary/10 transition-transform group-hover/agent:scale-110">
                 <AvatarFallback className="bg-primary/5 text-primary font-bold text-xs">
@@ -65,7 +65,7 @@ export const TopAgents = ({ data, loading }: { data?: any[], loading?: boolean }
   </CRMCard>
 );
 
-export const RecentActivity = ({ data, loading }: { data?: any[], loading?: boolean }) => (
+export const RecentActivity = ({ data, loading }: { data?: unknown[], loading?: boolean }) => (
   <CRMCard className="h-full" noPadding accentSeed="activity">
     <CRMCardHeader 
       title="Recent Activity" 
@@ -90,7 +90,7 @@ export const RecentActivity = ({ data, loading }: { data?: any[], loading?: bool
             </div>
           ))
         ) : (
-          data?.map((activity: any) => (
+          data?.map((activity: unknown) => (
             <div key={activity.id} className="group/activity relative pl-10">
               <div className="absolute left-0 top-1 h-10 w-10 rounded-full bg-background border-2 border-primary/20 flex items-center justify-center z-10 transition-colors group-hover/activity:border-primary">
                 <div className="h-2 w-2 rounded-full bg-primary" />

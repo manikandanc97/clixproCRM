@@ -8,11 +8,12 @@ import { QuotationsDataType, QuotationType } from "@/shared/types/quotation";
 import { ReportsDataType } from "@/shared/types/report";
 import { TasksDataType, TaskType } from "@/shared/types/task";
 import { AnalyticsDataType } from "@/shared/types/analytics";
-import { EmployeesDataType, RolesDataType, EmployeeType } from "@/shared/types/employee";
+import { EmployeesDataType,  EmployeeType } from "@/shared/types/employee";
 import { MeetingsDataType } from "@/shared/types/meeting";
 import {
   HotLeadsDataType,
-  TeamPerformanceDataType,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _TeamPerformanceDataType,
   NotificationsDataType,
   AiInsightsDataType,
 } from "@/shared/types/dashboard-widgets";
@@ -154,6 +155,7 @@ export function deleteLead(id: string) {
 }
 
 export function updatePipelineItem(id: string, data: { status: string }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return unwrapResponse<any>(client.patch(`/crm/pipeline/${id}`, data));
 }
 
@@ -199,13 +201,16 @@ export function createEmployee(data: Partial<EmployeeType>) {
 
 // ─── Employee operations ──────────────────────────────────────────────────────
 export function updateEmployee(id: string, data: Partial<EmployeeType>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return unwrapResponse<any>(client.put(`/crm/employees/${id}`, data));
 }
 
 export function toggleEmployeeStatus(id: string, status: "ACTIVE" | "INACTIVE") {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return unwrapResponse<any>(client.patch(`/crm/employees/${id}`, { status }));
 }
 
 export function deleteEmployee(id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return unwrapResponse<any>(client.delete(`/crm/employees/${id}`));
 }

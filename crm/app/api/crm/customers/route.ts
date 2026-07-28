@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
     const data = await CrmService.getCustomers(session.tenantId, page, limit, search);
     return NextResponse.json({ success: true, data }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }
 
 export async function POST(req: Request) {
@@ -29,5 +29,5 @@ export async function POST(req: Request) {
     const body = customerSchema.parse(rawBody);
     const customer = await CrmService.createCustomer(session.tenantId, body, session.userId);
     return NextResponse.json({ success: true, data: customer }, { status: 201 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }

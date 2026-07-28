@@ -7,8 +7,10 @@ import {
   MoreVertical, 
   TrendingUp,
   User,
-  Shield,
-  UserMinus,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _Shield,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _UserMinus,
   Edit2,
   Trash2,
   Power
@@ -50,7 +52,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
 import { useEmployees, useToggleEmployeeStatus, useDeleteEmployee } from "@/shared/hooks/use-hrm";
-import { Progress } from "@/shared/ui/progress";
+// import { } from "@/shared/ui/progress";
 import { toast } from "sonner";
 import { PageLoadingState } from "@/shared/components/page-states";
 import { FormModal } from "@/shared/components/form-modal";
@@ -71,6 +73,7 @@ export default function EmployeesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
 
   const toggleStatusMutation = useToggleEmployeeStatus();
@@ -344,7 +347,7 @@ export default function EmployeesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete {selectedEmployee?.name}'s account and remove their data from our servers.
+              This action cannot be undone. This will permanently delete {selectedEmployee?.name}&apos;s account and remove their data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

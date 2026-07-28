@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { LeadType } from "@/shared/types/lead";
-import { useCRMStore } from "@/shared/store/useCRMStore";
+// import { } from "@/shared/store/";
 import { useDeleteLead } from "@/shared/hooks/use-crm";
 import { toast } from "sonner";
 

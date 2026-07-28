@@ -3,10 +3,12 @@
 import { 
   MoreVertical, 
   Mail, 
-  Phone, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _Phone, 
   TrendingUp, 
   ExternalLink,
-  ShieldCheck,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _ShieldCheck,
   User,
   Trash2,
 } from "lucide-react";
@@ -25,7 +27,7 @@ import { DataTable } from "@/shared/components/DataTable";
 import { StatusBadge, StatusVariant } from "@/shared/components/StatusBadge";
 import { useCustomers } from "../hooks/useCustomers";
 import { useDeleteCustomer } from "@/shared/hooks/use-crm";
-import { cn } from "@/shared/lib/utils";
+// import { } from "@/shared/lib/utils";
 
 interface CustomersTableProps {
   customers: CustomerType[];

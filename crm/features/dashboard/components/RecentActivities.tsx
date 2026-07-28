@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Filter, Activity } from "lucide-react";
-import { ActivityType } from "@/shared/types/dashboard";
+// import { } from "@/shared/types/dashboard";
 
 import { CRMCard } from "@/shared/components/crm/CRMCard";
 import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";

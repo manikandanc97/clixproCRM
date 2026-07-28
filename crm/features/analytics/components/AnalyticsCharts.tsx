@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// import {  } from "react";
 import {
   Area,
   AreaChart,
@@ -13,7 +13,8 @@ import {
   LineChart,
   Pie,
   PieChart,
-  ResponsiveContainer,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _ResponsiveContainer,
   Tooltip as RechartsTooltip,
   XAxis,
   YAxis,

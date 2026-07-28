@@ -47,7 +47,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     });
 
     return NextResponse.json({ success: true, message: "Lead converted to customer", data: customer }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleApiError(error);
   }
 }

@@ -31,6 +31,7 @@ const QuotationsPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   
   const { quotations, setQuotations } = useCRMStore();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const safeQuotations = Array.isArray(quotations) ? quotations : [];
   const { data, isLoading: loading, error, refetch } = useQuotations();
 

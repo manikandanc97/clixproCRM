@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
     const leads = await CrmService.getLeads(session.tenantId, "USD", page, limit, search, status);
     return NextResponse.json({ success: true, data: leads }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }
 
 export async function POST(req: Request) {
@@ -30,5 +30,5 @@ export async function POST(req: Request) {
     const body = leadSchema.parse(rawBody);
     const lead = await CrmService.createLead(session.tenantId, body);
     return NextResponse.json({ success: true, data: lead }, { status: 201 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }

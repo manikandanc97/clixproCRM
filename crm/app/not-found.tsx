@@ -11,7 +11,7 @@ export default function NotFound() {
         </div>
         <h1 className="text-xl font-semibold text-foreground">Page not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you are looking for doesn't exist or has been moved.
+          The page you are looking for doesn&apos;t exist or has been moved.
         </p>
         <Button asChild className="mt-6 w-full">
           <Link href="/dashboard">Back to Dashboard</Link>

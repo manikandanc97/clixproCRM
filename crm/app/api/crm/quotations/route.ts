@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
     const quotations = await CrmService.getQuotations(session.tenantId, page, limit, search);
     return NextResponse.json({ success: true, data: quotations }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }
 
 export async function POST(req: Request) {
@@ -29,5 +29,5 @@ export async function POST(req: Request) {
     const body = quoteSchema.parse(rawBody);
     const quotation = await CrmService.createQuotation(session.tenantId, body);
     return NextResponse.json({ success: true, data: quotation }, { status: 201 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }

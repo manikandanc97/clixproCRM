@@ -28,7 +28,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     await prisma.$transaction(async (tx) => {
-      const userData: any = { name, email };
+      const userData: unknown = { name, email };
       
       if (password) {
         userData.password = await bcrypt.hash(password, 10);
@@ -52,7 +52,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     });
 
     return NextResponse.json({ success: true, data: { id } });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -78,7 +78,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
 
     return NextResponse.json({ success: true, data: { id } });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -111,5 +111,5 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     });
 
     return NextResponse.json({ success: true, data: { id } });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }

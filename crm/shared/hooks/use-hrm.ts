@@ -22,7 +22,7 @@ export function useEmployees() {
 export function useUpdateEmployee() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => updateEmployee(id, data),
+    mutationFn: ({ id, data }: { id: string; data: unknown }) => updateEmployee(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
@@ -32,7 +32,7 @@ export function useUpdateEmployee() {
 export function useToggleEmployeeStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "ACTIVE" | "INACTIVE" | "SUSPENDED" }) => toggleEmployeeStatus(id, status as any),
+    mutationFn: ({ id, status }: { id: string; status: "ACTIVE" | "INACTIVE" | "SUSPENDED" }) => toggleEmployeeStatus(id, status as unknown),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
     },

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { CrmService } from "@/services/crm.service";
-import { getAuthSession, requireRole } from "@/lib/auth-utils";
+import {  requireRole } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { quoteSchema } from "@/shared/validations";
 
@@ -15,7 +15,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     
     const quotation = await CrmService.updateQuotation(session.tenantId, id, body);
     return NextResponse.json({ success: true, data: quotation }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }
 
 export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
@@ -27,5 +27,5 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
     
     await CrmService.deleteQuotation(session.tenantId, id);
     return NextResponse.json({ success: true, data: { id } }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }

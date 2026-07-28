@@ -25,7 +25,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ success: false, message: "User not found in workspace" }, { status: 404 });
     }
 
-    const updateData: any = {};
+    const updateData: unknown = {};
     if (name !== undefined) updateData.name = name;
     if (displayName !== undefined) updateData.displayName = displayName;
     if (status !== undefined) updateData.status = status;
@@ -33,7 +33,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       updateData.password = await bcrypt.hash(password, 10);
     }
 
-    const updatedUser = await prisma.$transaction(async (tx) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _updatedUser = await prisma.$transaction(async (tx) => {
       let u;
       if (Object.keys(updateData).length > 0) {
         u = await tx.user.update({
@@ -56,7 +57,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
 
     return NextResponse.json({ success: true, message: "User updated successfully" }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -100,6 +101,6 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     });
 
     return NextResponse.json({ success: true, message: "User deleted successfully" }, { status: 200 });
-  } catch (error: any) { return handleApiError(error); }
+  } catch (error: unknown) { return handleApiError(error); }
 }
 

@@ -95,8 +95,8 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
   const sortedQuotations = useMemo(() => {
     if (!sortConfig) return quotations;
     return [...quotations].sort((a, b) => {
-      let aVal: any = a[sortConfig.key] ?? "";
-      let bVal: any = b[sortConfig.key] ?? "";
+      let aVal: unknown = a[sortConfig.key] ?? "";
+      let bVal: unknown = b[sortConfig.key] ?? "";
       
       if (sortConfig.key === "amount" as keyof QuotationType) {
         aVal = a.amountValue ?? 0;
@@ -119,7 +119,8 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
     });
   };
 
-  const handleDelete = (e: React.MouseEvent | Event, id: string, quoteId: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleDelete = (e: React.MouseEvent | Event, id: string, _quoteId: string) => {
     e.stopPropagation();
     deleteQuotationMutation(id);
   };

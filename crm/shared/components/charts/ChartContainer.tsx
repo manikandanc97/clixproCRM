@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { ResponsiveContainer } from "recharts";
-import { Skeleton } from "@/shared/ui/skeleton";
+// import { } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 
 interface ChartContainerProps {

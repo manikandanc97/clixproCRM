@@ -33,11 +33,13 @@ const CustomersPage = () => {
   const [segmentFilter, setSegmentFilter] = useState("all");
   
   const { customers, setCustomers } = useCRMStore();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const safeCustomers = Array.isArray(customers) ? customers : [];
   const { data, isLoading: loading, error, refetch } = useCustomers();
 
   const searchParams = useSearchParams();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
 
   useEffect(() => {

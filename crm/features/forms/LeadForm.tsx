@@ -51,7 +51,8 @@ export const LeadForm = ({ onSuccess, onCancel }: LeadFormProps) => {
         followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
       });
       onSuccess?.();
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       // Error handled by hook
     }
   };

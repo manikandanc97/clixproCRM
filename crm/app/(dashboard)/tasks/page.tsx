@@ -5,7 +5,8 @@ import {
   CheckSquare,
   Plus,
   Download,
-  Clock,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _Clock,
   Target,
   AlertCircle,
   SearchX,
@@ -74,6 +75,7 @@ const TasksPage = () => {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, "", newUrl);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

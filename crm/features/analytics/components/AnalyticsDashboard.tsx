@@ -3,7 +3,7 @@
 import { CRMPageContainer } from '@/shared/components/crm/CRMPageContainer';
 import { CRMPageHeader } from '@/shared/components/crm/CRMPageHeader';
 import { CRMMetricCard } from '@/shared/components/crm/CRMMetricCard';
-import { PieChart as PieChartIcon, Download, RefreshCw, Calendar, Target, CalendarDays } from 'lucide-react';
+import { PieChart as PieChartIcon, Download, RefreshCw, Calendar} from 'lucide-react';
 import dynamic from "next/dynamic";
 const RevenueOverviewChart = dynamic(() => import('./AnalyticsCharts').then(mod => ({ default: mod.RevenueOverviewChart })));
 const LeadsGrowthChart = dynamic(() => import('./AnalyticsCharts').then(mod => ({ default: mod.LeadsGrowthChart })));
@@ -55,7 +55,7 @@ export default function AnalyticsDashboard() {
       >
         {/* Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
-          {data?.topStats?.map((stat: any, index: number) => (
+          {data?.topStats?.map((stat: unknown, index: number) => (
             <motion.div key={stat.title} variants={itemVariants}>
               <CRMMetricCard
                 title={stat.title}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/shared/ui/badge";
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+// import {  } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Calendar, CheckCircle2, CircleDashed, Clock3, Eye, MoreHorizontal, Play, Trash2, UserPlus } from "lucide-react";
 import {

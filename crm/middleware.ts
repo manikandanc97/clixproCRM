@@ -79,7 +79,8 @@ export async function middleware(request: NextRequest) {
         headers: requestHeaders,
       },
     });
-  } catch (error) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     if (isApiRoute) {
       const response = NextResponse.json(
         { success: false, error: { code: "UNAUTHORIZED", message: "Unauthorized or Expired Token" } },

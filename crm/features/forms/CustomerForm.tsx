@@ -39,7 +39,7 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
       name: initialData?.name || "",
       company: initialData?.company || "",
       email: initialData?.email || "",
-      status: (initialData?.status?.toUpperCase() as any) || "ACTIVE",
+      status: (initialData?.status?.toUpperCase() as unknown) || "ACTIVE",
       revenue: initialData?.revenueValue?.toString() || "",
     },
   });
@@ -67,7 +67,8 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
         });
       }
       onSuccess?.();
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       // Error handled by hook
     }
   };
