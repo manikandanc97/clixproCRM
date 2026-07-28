@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { Lead, Task, Quotation, Prisma, CustomerStatus, LeadStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
 import {
   calculateTrend,
   formatCurrency,
@@ -33,18 +34,20 @@ export class CrmService {
     };
   }
 
-  static async createCustomer(tenantId: string, data: any, userId: string) {
+  static async createCustomer(tenantId: string, data: { name: string; company: string; email?: string; revenue?: number | string; status?: CustomerStatus }, userId: string) {
     return prisma.customer.create({
       data: {
-        ...data,
+        name: data.name,
+        company: data.company,
+        email: data.email,
         tenantId,
         revenue: data.revenue || 0,
         status: data.status || "ACTIVE",
-      },
+      } as Prisma.CustomerUncheckedCreateInput,
     });
   }
 
-  static async updateCustomer(tenantId: string, id: string, data: any) {
+  static async updateCustomer(tenantId: string, id: string, data: Partial<Prisma.CustomerUpdateInput>) {
     return prisma.customer.update({
       where: { id, tenantId },
       data,
@@ -71,7 +74,7 @@ export class CrmService {
 
     return {
       summary: { total: leads.length },
-      leads: leads.map((lead: any) => ({
+      leads: leads.map((lead: Lead) => ({
         id: lead.id,
         name: lead.name,
         company: lead.company,
@@ -87,7 +90,7 @@ export class CrmService {
     };
   }
 
-  static async createLead(tenantId: string, data: any) {
+  static async createLead(tenantId: string, data: { name: string; company: string; email: string; valueAmount?: number; value?: number | string; status?: LeadStatus; followUpAt?: string | Date | null }) {
     const lead = await prisma.lead.create({
       data: {
         tenantId,
@@ -102,7 +105,7 @@ export class CrmService {
     return lead;
   }
 
-  static async updateLead(tenantId: string, id: string, data: Partial<{ name: string; company: string; email: string; value: number | string; status: any; followUpAt: string | Date | null }>) {
+  static async updateLead(tenantId: string, id: string, data: Partial<{ name: string; company: string; email: string; value: number | string; status: LeadStatus; followUpAt: string | Date | null }>) {
     const lead = await prisma.lead.update({
       where: { id, tenantId },
       data: {
@@ -130,13 +133,13 @@ export class CrmService {
       orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
     });
 
-    const openDeals = leads.filter((lead: any) => !["WON", "LOST"].includes(lead.status));
-    const closedDeals = leads.filter((lead: any) => ["WON", "LOST"].includes(lead.status));
-    const wonDeals = leads.filter((lead: any) => lead.status === "WON");
-    const totalValue = openDeals.reduce((total: number, lead: any) => total + toNumber(lead.value), 0);
+    const openDeals = leads.filter((lead: Lead) => !["WON", "LOST"].includes(lead.status));
+    const closedDeals = leads.filter((lead: Lead) => ["WON", "LOST"].includes(lead.status));
+    const wonDeals = leads.filter((lead: Lead) => lead.status === "WON");
+    const totalValue = openDeals.reduce((total: number, lead: Lead) => total + toNumber(lead.value), 0);
     const winRate = closedDeals.length ? (wonDeals.length / closedDeals.length) * 100 : 0;
 
-    const items = leads.map((lead: any) => {
+    const items = leads.map((lead: Lead) => {
       const stageLabel = getStatusLabel(PIPELINE_STAGE_LABELS, lead.status);
       const stageProbabilities: Record<string, number> = {
         "New Lead": 10, "Contacted": 25, "Proposal Sent": 60, "Won": 100, "Lost": 0
@@ -197,10 +200,10 @@ export class CrmService {
 
     const { currentMonthStart, nextMonthStart, previousMonthStart } = getMonthRanges();
     const now = new Date();
-    const completedTasks = tasks.filter((task: any) => task.status === "COMPLETED");
-    const openTasks = tasks.filter((task: any) => task.status !== "COMPLETED");
+    const completedTasks = tasks.filter((task: Task) => task.status === "COMPLETED");
+    const openTasks = tasks.filter((task: Task) => task.status !== "COMPLETED");
     const overdueTasks = tasks.filter(
-      (task: any) => task.dueDate && task.dueDate < now && task.status !== "COMPLETED",
+      (task: Task) => task.dueDate && task.dueDate < now && task.status !== "COMPLETED",
     );
 
     const taskStats = [
@@ -208,31 +211,31 @@ export class CrmService {
         title: "Completed Tasks",
         value: completedTasks.length.toLocaleString("en-US"),
         ...calculateTrend(
-          countInRange(completedTasks, (task: any) => task.updatedAt, currentMonthStart, nextMonthStart),
-          countInRange(completedTasks, (task: any) => task.updatedAt, previousMonthStart, currentMonthStart)
+          countInRange(completedTasks, (task: Task) => task.updatedAt, currentMonthStart, nextMonthStart),
+          countInRange(completedTasks, (task: Task) => task.updatedAt, previousMonthStart, currentMonthStart)
         ),
       },
       {
         title: "Pending Tasks",
         value: openTasks.length.toLocaleString("en-US"),
         ...calculateTrend(
-          countInRange(openTasks, (task: any) => task.createdAt, currentMonthStart, nextMonthStart),
-          countInRange(openTasks, (task: any) => task.createdAt, previousMonthStart, currentMonthStart)
+          countInRange(openTasks, (task: Task) => task.createdAt, currentMonthStart, nextMonthStart),
+          countInRange(openTasks, (task: Task) => task.createdAt, previousMonthStart, currentMonthStart)
         ),
       },
       {
         title: "Overdue Tasks",
         value: overdueTasks.length.toLocaleString("en-US"),
         ...calculateTrend(
-          countInRange(overdueTasks, (task: any) => task.dueDate!, currentMonthStart, nextMonthStart),
-          countInRange(overdueTasks, (task: any) => task.dueDate!, previousMonthStart, currentMonthStart)
+          countInRange(overdueTasks, (task: Task) => task.dueDate!, currentMonthStart, nextMonthStart),
+          countInRange(overdueTasks, (task: Task) => task.dueDate!, previousMonthStart, currentMonthStart)
         ),
       },
     ];
 
     return {
       stats: taskStats,
-      tasks: tasks.map((task: any) => ({
+      tasks: tasks.map((task: Task) => ({
         id: task.id,
         title: task.title,
         description: task.description || "",
@@ -245,7 +248,7 @@ export class CrmService {
     };
   }
 
-  static async createTask(tenantId: string, data: any) {
+  static async createTask(tenantId: string, data: { title: string; description?: string; dueDate?: string | Date | null; priority?: TaskPriority; status?: TaskStatus }) {
     const task = await prisma.task.create({
       data: {
         tenantId,
@@ -259,7 +262,7 @@ export class CrmService {
     return task;
   }
 
-  static async updateTask(tenantId: string, id: string, data: Partial<{ title: string; description: string; dueDate: string | Date | null; priority: any; status: any }>) {
+  static async updateTask(tenantId: string, id: string, data: Partial<{ title: string; description: string; dueDate: string | Date | null; priority: TaskPriority; status: TaskStatus }>) {
     const task = await prisma.task.update({
       where: { id, tenantId },
       data: {
@@ -280,7 +283,7 @@ export class CrmService {
     return task;
   }
 
-  static async createQuotation(tenantId: string, data: any) {
+  static async createQuotation(tenantId: string, data: { quoteNumber?: string; client: string; amount?: number | string; status?: QuotationStatus; validTill?: string | Date | null }) {
     const quotation = await prisma.quotation.create({
       data: {
         tenantId,
@@ -294,7 +297,7 @@ export class CrmService {
     return quotation;
   }
 
-  static async updateQuotation(tenantId: string, id: string, data: Partial<{ client: string; amount: number | string; status: any; validTill: string | Date | null; quoteNumber: string }>) {
+  static async updateQuotation(tenantId: string, id: string, data: Partial<{ client: string; amount: number | string; status: QuotationStatus; validTill: string | Date | null; quoteNumber: string }>) {
     const quotation = await prisma.quotation.update({
       where: { id, tenantId },
       data: {
@@ -598,6 +601,19 @@ export class CrmService {
     };
   }
 
+  static async getRoles(tenantId: string) {
+    return {
+      roles: [
+        { id: "r1", name: "Administrator", key: "ADMIN", membersCount: 2, permissionsCount: 45, description: "Full system access", status: "ACTIVE", createdDate: "2026-01-01T00:00:00.000Z" },
+        { id: "r2", name: "Manager", key: "MANAGER", membersCount: 5, permissionsCount: 30, description: "Department management", status: "ACTIVE", createdDate: "2026-01-15T00:00:00.000Z" }
+      ],
+      stats: [
+        { title: "Total Roles", value: "2", change: "0", positive: true }
+      ],
+      securityLogs: [],
+      permissionModules: []
+    };
+  }
 
 
   static async getWorkspace(tenantId: string) {
@@ -605,7 +621,90 @@ export class CrmService {
     return { name: tenant?.name || "ClixProCRM Workspace" };
   }
 
-  static async getSettings(tenantId: string) { return {}; }
+  static async getSecuritySettings(tenantId: string) {
+    return {
+      activeSessions: [
+        { id: "s1", device: "Chrome on Windows", location: "New York, USA", ip: "192.168.1.1", current: true },
+        { id: "s2", device: "Safari on iPhone", location: "New York, USA", ip: "192.168.1.2", current: false }
+      ],
+      loginHistory: [
+        { id: "l1", event: "Login successful", date: new Date().toISOString(), status: "SUCCESS" },
+        { id: "l2", event: "Failed login attempt", date: new Date(Date.now() - 86400000).toISOString(), status: "FAILED" }
+      ],
+      twoFactorEnabled: false
+    };
+  }
+
+  static async getBillingSettings(tenantId: string) {
+    return {
+      plan: "Pro Plan",
+      status: "Active",
+      modules: [
+        { id: "m1", label: "Advanced Analytics", enabled: true },
+        { id: "m2", label: "Custom Workflows", enabled: true },
+        { id: "m3", label: "API Access", enabled: false }
+      ],
+      licenseDetails: [
+        { id: "l1", label: "License Key", value: "CLIX-PRO-1234-5678" },
+        { id: "l2", label: "Valid Until", value: "2026-12-31" },
+        { id: "l3", label: "Seats Used", value: "5 / 10" }
+      ]
+    };
+  }
+
+  static async getIntegrationSettings(tenantId: string) {
+    return {
+      integrations: [
+        { id: "i1", name: "Google Workspace", description: "Sync contacts and calendar", category: "Productivity", connected: true },
+        { id: "i2", name: "Slack", description: "Receive notifications in channels", category: "Communication", connected: false },
+        { id: "i3", name: "Mailchimp", description: "Sync leads to mailing lists", category: "Marketing", connected: true }
+      ]
+    };
+  }
+
+  static async getAiSettings(tenantId: string) {
+    return {
+      features: [
+        { id: "f1", label: "Smart Reply", description: "AI generated email responses", enabled: true },
+        { id: "f2", label: "Lead Scoring", description: "Predict likelihood to close", enabled: true }
+      ],
+      modules: [
+        { id: "m1", label: "GPT-4 Processing", description: "Advanced text generation", enabled: true },
+        { id: "m2", label: "Custom Data Training", description: "Train on your data", enabled: false }
+      ],
+      controls: [
+        { id: "c1", label: "Creativity Level", value: 70, badge: "Balanced" },
+        { id: "c2", label: "Max Tokens", value: 2000, badge: "Standard" }
+      ]
+    };
+  }
+
+  static async getNotificationSettings(tenantId: string) {
+    return {
+      channels: [
+        { id: "ch1", name: "Email Notifications", enabled: true },
+        { id: "ch2", name: "Push Notifications", enabled: true },
+        { id: "ch3", name: "In-App Alerts", enabled: true }
+      ],
+      categories: [
+        {
+          id: "cat1", title: "Leads & Sales",
+          notifications: [
+            { id: "n1", title: "New Lead Assigned", description: "When a lead is assigned to you", critical: true, enabled: true },
+            { id: "n2", title: "Deal Won", description: "When a deal is marked as won", critical: false, enabled: true }
+          ]
+        },
+        {
+          id: "cat2", title: "Tasks & Meetings",
+          notifications: [
+            { id: "n3", title: "Task Due Soon", description: "24 hours before a task is due", critical: true, enabled: true },
+            { id: "n4", title: "Meeting Reminder", description: "15 minutes before a meeting", critical: true, enabled: true }
+          ]
+        }
+      ],
+      realtimePulseEnabled: true
+    };
+  }
   
   static async getHotLeads(tenantId: string) {
     const leads = await prisma.lead.findMany({ where: { tenantId, status: "NEW" }, take: 5, orderBy: { createdAt: 'desc' } });

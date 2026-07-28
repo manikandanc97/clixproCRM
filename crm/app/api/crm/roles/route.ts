@@ -7,7 +7,12 @@ export async function GET() {
   try {
     const session = await requireRole(["ADMIN", "MANAGER"]);
     
-    const data = await CrmService.getAiSettings(session.tenantId);
+    // Using PascalCase for method name mapping
+            // Type-safe lookup object approach
+    const serviceMap = {
+      method: CrmService.getRoles
+    };
+    const data = await serviceMap.method(session.tenantId);
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: any) { return handleApiError(error); }
 }

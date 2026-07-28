@@ -7,10 +7,7 @@ export async function GET() {
   try {
     const session = await requireRole(["ADMIN", "MANAGER"]);
     
-    // Mark as Coming Soon
-    return NextResponse.json(
-      { success: false, message: "Coming Soon - This feature is currently under development" },
-      { status: 501 }
-    );
+    const data = await CrmService.getIntegrationSettings(session.tenantId);
+    return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: any) { return handleApiError(error); }
 }

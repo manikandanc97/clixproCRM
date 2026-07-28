@@ -187,7 +187,10 @@ const SalesChart = () => {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "var(--color-muted-foreground)", fontSize: 10, fontWeight: 800 }}
-                tickFormatter={(value) => chartType === "revenue" ? `$${value/1000}k` : value}
+                tickFormatter={(value) => {
+                  const num = Number(value) || 0;
+                  return chartType === "revenue" ? `$${num/1000}k` : String(num);
+                }}
               />
               <Tooltip
                 cursor={{
@@ -218,9 +221,9 @@ const SalesChart = () => {
                   letterSpacing: "0.2em",
                 }}
                 formatter={(value) => {
-                  const numericValue = Number(value ?? 0);
+                  const numericValue = Number(value) || 0;
                   return [
-                    chartType === "revenue" ? `$${numericValue.toLocaleString()}` : numericValue,
+                    chartType === "revenue" ? `$${numericValue.toLocaleString()}` : String(numericValue),
                     chartType === "revenue" ? "Revenue" : "Deals"
                   ];
                 }}

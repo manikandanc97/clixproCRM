@@ -14,6 +14,6 @@ export async function GET() {
       method: CrmService.getHotLeads
     };
     const leads = await serviceMap.method(session.tenantId);
-    return NextResponse.json({ success: true, leads }, { status: 200 });
+    return NextResponse.json({ success: true, data: { leads } }, { status: 200 });
   } catch (error: any) { return handleApiError(error); }
 }

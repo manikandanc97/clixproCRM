@@ -21,9 +21,16 @@ export const customerSchema = z.object({
 export const employeeSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character")
+    .optional()
+    .or(z.literal("")),
   role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
-  status: z.enum(["ACTIVE", "INACTIVE"]).optional(), // Employee API might take status
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(), // Employee API might take status
 }).strict();
 
 export const taskSchema = z.object({
@@ -46,9 +53,16 @@ export const userSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   displayName: z.string().optional(),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character")
+    .optional()
+    .or(z.literal("")),
   role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
-  status: z.enum(["ACTIVE", "INACTIVE"]),
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]),
 }).strict();
 
 export const loginSchema = z.object({
@@ -59,7 +73,12 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character"),
 }).strict();
 
 export const forgotPasswordSchema = z.object({
@@ -68,7 +87,12 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1, "Token is required"),
-  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  newPassword: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character"),
 }).strict();
 
 export const pipelineSchema = z.object({

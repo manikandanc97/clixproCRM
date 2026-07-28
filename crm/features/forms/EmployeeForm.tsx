@@ -15,8 +15,16 @@ import { Loader2 } from "lucide-react";
 const employeeSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character")
+    .optional()
+    .or(z.literal("")),
   role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
@@ -69,6 +77,7 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
       email: initialData?.email || "",
       password: "",
       role: initialData?.role || "EMPLOYEE",
+      status: initialData?.status || "ACTIVE",
     },
   });
 
@@ -79,6 +88,7 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
         email: initialData.email || "",
         password: "",
         role: initialData.role || "EMPLOYEE",
+        status: initialData.status || "ACTIVE",
       });
     }
   }, [initialData, form]);
@@ -111,8 +121,18 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
               { label: "Employee", value: "EMPLOYEE" },
             ]} 
           />
-          <FormInput name="password" label="Temporary Password" placeholder="••••••••" />
+          <FormSelect 
+            name="status" 
+            label="Status" 
+            options={[
+              { label: "Active", value: "ACTIVE" },
+              { label: "Inactive", value: "INACTIVE" },
+              { label: "Suspended", value: "SUSPENDED" },
+            ]} 
+          />
         </div>
+        
+        <FormInput name="password" label="Temporary Password" placeholder="••••••••" />
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
