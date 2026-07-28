@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import LeadsTable from "@/features/leads/components/LeadsTable";
+import dynamic from "next/dynamic";
+
+const LeadsTable = dynamic(() => import("@/features/leads/components/LeadsTable"), {
+  loading: () => <div className="h-[400px] bg-muted/20 animate-pulse rounded-xl" />
+});
 import { 
   SearchX, 
   UserPlus, 
@@ -30,7 +34,9 @@ import { useCRMStore } from "@/shared/store/useCRMStore";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
-import { LeadForm } from "@/features/forms/LeadForm";
+const LeadForm = dynamic(() => import("@/features/forms/LeadForm").then(mod => ({ default: mod.LeadForm })), {
+  loading: () => <div className="h-[300px] bg-muted/20 animate-pulse rounded-xl" />
+});
 import { useSearchParams } from "next/navigation";
 
 const LeadsPage = () => {

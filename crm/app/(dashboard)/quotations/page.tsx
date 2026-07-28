@@ -3,7 +3,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { FileText, Plus, Download, TrendingUp, Clock, SearchX } from "lucide-react";
 
-import QuotationsTable from "@/features/quotations/components/QuotationsTable";
+import dynamic from "next/dynamic";
+const QuotationsTable = dynamic(() => import("@/features/quotations/components/QuotationsTable"), {
+  loading: () => <div className="h-[400px] bg-muted/20 animate-pulse rounded-xl" />
+});
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
 import { useQuotations } from "@/shared/hooks/use-crm";
 import { Button } from "@/shared/ui/button";
@@ -18,7 +21,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
-import { QuoteForm } from "@/features/forms/QuoteForm";
+const QuoteForm = dynamic(() => import("@/features/forms/QuoteForm").then(mod => ({ default: mod.QuoteForm })), {
+  loading: () => <div className="h-[300px] bg-muted/20 animate-pulse rounded-xl" />
+});
 import { useSearchParams } from "next/navigation";
 
 const QuotationsPage = () => {

@@ -4,7 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, UserPlus, Download, Star, CreditCard, SearchX } from "lucide-react";
 
-import { CustomersTable } from "@/features/customers/components/CustomersTable";
+import dynamic from "next/dynamic";
+const CustomersTable = dynamic(() => import("@/features/customers/components/CustomersTable").then(mod => ({ default: mod.CustomersTable })), {
+  loading: () => <div className="h-[400px] bg-muted/20 animate-pulse rounded-xl" />
+});
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
 import { useCustomers } from "@/shared/hooks/use-crm";
 import { Button } from "@/shared/ui/button";
@@ -19,7 +22,9 @@ import {
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
-import { CustomerForm } from "@/features/forms/CustomerForm";
+const CustomerForm = dynamic(() => import("@/features/forms/CustomerForm").then(mod => ({ default: mod.CustomerForm })), {
+  loading: () => <div className="h-[300px] bg-muted/20 animate-pulse rounded-xl" />
+});
 import { useSearchParams } from "next/navigation";
 
 const CustomersPage = () => {

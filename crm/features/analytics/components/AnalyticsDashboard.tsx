@@ -4,14 +4,13 @@ import { CRMPageContainer } from '@/shared/components/crm/CRMPageContainer';
 import { CRMPageHeader } from '@/shared/components/crm/CRMPageHeader';
 import { CRMMetricCard } from '@/shared/components/crm/CRMMetricCard';
 import { PieChart as PieChartIcon, Download, RefreshCw, Calendar, Target, CalendarDays } from 'lucide-react';
-import { 
-  RevenueOverviewChart, 
-  LeadsGrowthChart, 
-  PipelineOverviewChart, 
-  CustomerGrowthChart,
-  MonthlyPerformanceChart,
-  ConversionAnalyticsChart
-} from './AnalyticsCharts';
+import dynamic from "next/dynamic";
+const RevenueOverviewChart = dynamic(() => import('./AnalyticsCharts').then(mod => ({ default: mod.RevenueOverviewChart })));
+const LeadsGrowthChart = dynamic(() => import('./AnalyticsCharts').then(mod => ({ default: mod.LeadsGrowthChart })));
+const PipelineOverviewChart = dynamic(() => import('./AnalyticsCharts').then(mod => ({ default: mod.PipelineOverviewChart })));
+const CustomerGrowthChart = dynamic(() => import('./AnalyticsCharts').then(mod => ({ default: mod.CustomerGrowthChart })));
+const MonthlyPerformanceChart = dynamic(() => import('./AnalyticsCharts').then(mod => ({ default: mod.MonthlyPerformanceChart })));
+const ConversionAnalyticsChart = dynamic(() => import('./AnalyticsCharts').then(mod => ({ default: mod.ConversionAnalyticsChart })));
 import { TopAgents, RecentActivity } from './TopAgents';
 import { motion } from 'framer-motion';
 import { useAnalytics } from '@/shared/hooks/use-analytics';

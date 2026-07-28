@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { GitBranch, Plus, Download, TrendingUp, DollarSign, Target } from "lucide-react";
-import PipelineBoard from "@/features/pipeline/components/PipelineBoard";
+import dynamic from "next/dynamic";
+const PipelineBoard = dynamic(() => import("@/features/pipeline/components/PipelineBoard"), {
+  loading: () => <div className="h-[600px] w-full bg-muted/20 animate-pulse rounded-xl" />
+});
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
 import { usePipeline } from "@/shared/hooks/use-crm";
 import { 
@@ -14,7 +17,9 @@ import {
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 import { FormModal } from "@/shared/components/form-modal";
-import { LeadForm } from "@/features/forms/LeadForm";
+const LeadForm = dynamic(() => import("@/features/forms/LeadForm").then(mod => ({ default: mod.LeadForm })), {
+  loading: () => <div className="h-[300px] bg-muted/20 animate-pulse rounded-xl" />
+});
 import { useSearchParams } from "next/navigation";
 
 const PipelinePage = () => {

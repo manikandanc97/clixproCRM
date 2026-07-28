@@ -16,11 +16,12 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import TasksTable from "@/features/tasks/components/TasksTable";
-import { KanbanView } from "@/features/tasks/components/KanbanView";
-import { CalendarView } from "@/features/tasks/components/CalendarView";
-import { TimelineView } from "@/features/tasks/components/TimelineView";
-import TaskDetailsDrawer from "@/features/tasks/components/TaskDetailsDrawer";
+import dynamic from "next/dynamic";
+const TasksTable = dynamic(() => import("@/features/tasks/components/TasksTable"));
+const KanbanView = dynamic(() => import("@/features/tasks/components/KanbanView").then(mod => ({ default: mod.KanbanView })));
+const CalendarView = dynamic(() => import("@/features/tasks/components/CalendarView").then(mod => ({ default: mod.CalendarView })));
+const TimelineView = dynamic(() => import("@/features/tasks/components/TimelineView").then(mod => ({ default: mod.TimelineView })));
+const TaskDetailsDrawer = dynamic(() => import("@/features/tasks/components/TaskDetailsDrawer"));
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
 import { useTasks } from "@/shared/hooks/use-crm";
 import { TaskType } from "@/shared/types/task";
@@ -37,7 +38,7 @@ import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { FormModal } from "@/shared/components/form-modal";
-import { TaskForm } from "@/features/forms/TaskForm";
+const TaskForm = dynamic(() => import("@/features/forms/TaskForm").then(mod => ({ default: mod.TaskForm })));
 import { useSearchParams } from "next/navigation";
 
 const VIEW_MODES = [
@@ -179,7 +180,7 @@ const TasksPage = () => {
         placeholder="Search tasks, assignees..."
       >
         {/* Status filters */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-full">
           {STATUS_FILTERS.map((s) => {
             const key = s.id === "all" ? "all" : s.id;
             const isActive = statusFilter === key;
@@ -197,7 +198,7 @@ const TasksPage = () => {
           })}
         </div>
 
-        <div className="w-px h-6 bg-border/60" />
+        <div className="hidden sm:block w-px h-6 bg-border/60" />
 
         {/* View mode toggles */}
         <div className="crm-segment">

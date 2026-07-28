@@ -66,7 +66,7 @@ const DashboardPage = () => {
         <WelcomeBanner />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {(['today', 'week', 'month', 'year'] as const).map((t) => (
               <Button
                 key={t}
@@ -80,16 +80,16 @@ const DashboardPage = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={handleFilterClick} className="rounded-full h-9 px-4 text-xs font-bold gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <Button variant="outline" size="sm" onClick={handleFilterClick} className="rounded-full h-9 px-3 sm:px-4 text-xs font-bold gap-2">
               <Filter className="w-3.5 h-3.5" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExport} className="rounded-full h-9 px-4 text-xs font-bold gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} className="rounded-full h-9 px-3 sm:px-4 text-xs font-bold gap-2">
               <Download className="w-3.5 h-3.5" />
-              Export PDF
+              <span className="hidden sm:inline">Export PDF</span>
             </Button>
-            <div className="h-4 w-px bg-border mx-1" />
+            <div className="hidden sm:block h-4 w-px bg-border mx-1" />
             <CreateNewMenu />
           </div>
         </div>

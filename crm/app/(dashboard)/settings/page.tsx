@@ -1,17 +1,18 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import SettingsHeader from "@/features/settings/components/SettingsHeader";
-import ProfileSettings from "@/features/settings/components/ProfileSettings";
-import SecuritySettings from "@/features/settings/components/SecuritySettings";
-import NotificationSettings from "@/features/settings/components/NotificationSettings";
-import SettingsSidebar from "@/features/settings/components/SettingsSidebar";
-import WorkspaceSettings from "@/features/settings/components/WorkspaceSettings";
-import TeamSettings from "@/features/settings/components/TeamSettings";
-import BillingSettings from "@/features/settings/components/BillingSettings";
-import IntegrationSettings from "@/features/settings/components/IntegrationSettings";
-import AISettings from "@/features/settings/components/AISettings";
-import PersonalizationSettings from "@/features/settings/components/PersonalizationSettings";
+import dynamic from "next/dynamic";
+const SettingsHeader = dynamic(() => import("@/features/settings/components/SettingsHeader"));
+const ProfileSettings = dynamic(() => import("@/features/settings/components/ProfileSettings"));
+const SecuritySettings = dynamic(() => import("@/features/settings/components/SecuritySettings"));
+const NotificationSettings = dynamic(() => import("@/features/settings/components/NotificationSettings"));
+const SettingsSidebar = dynamic(() => import("@/features/settings/components/SettingsSidebar"));
+const WorkspaceSettings = dynamic(() => import("@/features/settings/components/WorkspaceSettings"));
+const TeamSettings = dynamic(() => import("@/features/settings/components/TeamSettings"));
+const BillingSettings = dynamic(() => import("@/features/settings/components/BillingSettings"));
+const IntegrationSettings = dynamic(() => import("@/features/settings/components/IntegrationSettings"));
+const AISettings = dynamic(() => import("@/features/settings/components/AISettings"));
+const PersonalizationSettings = dynamic(() => import("@/features/settings/components/PersonalizationSettings"));
 import { motion, AnimatePresence } from "framer-motion";
 import { CRMPageContainer } from "@/shared/components/crm";
 

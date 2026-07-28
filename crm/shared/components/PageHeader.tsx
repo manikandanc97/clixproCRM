@@ -71,7 +71,7 @@ export function PageHeader({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2, delay: 0.1 }}
-            className="flex items-center gap-2"
+            className="flex w-full flex-row items-center gap-2 sm:w-auto"
           >
             {actions.map((action, index) => (
               <Button
@@ -79,7 +79,7 @@ export function PageHeader({
                 onClick={action.onClick}
                 variant={action.variant || (index === actions.length - 1 ? "default" : "outline")}
                 disabled={action.loading}
-                className="w-full sm:w-auto h-10 px-5 font-semibold shadow-sm transition-all"
+                className="flex-1 sm:flex-none h-10 px-5 font-semibold shadow-sm transition-all whitespace-nowrap"
               >
                 {action.icon && <action.icon className="mr-2 size-4" />}
                 {action.label}

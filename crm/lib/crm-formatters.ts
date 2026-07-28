@@ -1,11 +1,6 @@
-export const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export const CUSTOMER_STATUS_LABELS: Record<string, string> = {
-  PREMIUM: "Premium",
-  ACTIVE: "Active",
-  INACTIVE: "Inactive",
-};
+
+
 
 export const LEAD_STATUS_LABELS: Record<string, string> = {
   NEW: "New",
@@ -35,14 +30,9 @@ export const TASK_STATUS_LABELS: Record<string, string> = {
   COMPLETED: "Completed",
 };
 
-export const QUOTATION_STATUS_LABELS: Record<string, string> = {
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  REJECTED: "Rejected",
-  EXPIRED: "Expired",
-};
 
-export const CURRENCY_FORMATS: Record<string, { locale: string; currency: string }> = {
+
+const CURRENCY_FORMATS: Record<string, { locale: string; currency: string }> = {
   USD: { locale: "en-US", currency: "USD" },
   INR: { locale: "en-IN", currency: "INR" },
   EUR: { locale: "en-IE", currency: "EUR" },
@@ -60,7 +50,7 @@ export function toNumber(value: any): number {
   return Number(value || 0);
 }
 
-export function getSupportedCurrency(value?: string | null): string {
+function getSupportedCurrency(value?: string | null): string {
   const currency = String(value || "USD").toUpperCase();
   return CURRENCY_FORMATS[currency] ? currency : "USD";
 }
@@ -99,74 +89,33 @@ export function calculateTrend(currentValue: number, previousValue: number) {
   };
 }
 
-export function startOfMonth(date = new Date()) {
+function startOfMonth(date = new Date()) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
-export function addMonths(date: Date, months: number) {
+function addMonths(date: Date, months: number) {
   return new Date(date.getFullYear(), date.getMonth() + months, 1);
 }
 
-export function startOfDay(date = new Date()) {
+function startOfDay(date = new Date()) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-export function addDays(date: Date, days: number) {
-  const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + days);
-  return nextDate;
-}
 
-export function isWithinRange(date: any, rangeStart: Date, rangeEnd: Date) {
+
+function isWithinRange(date: any, rangeStart: Date, rangeEnd: Date) {
   if (!date) return false;
   const time = new Date(date).getTime();
   return time >= rangeStart.getTime() && time < rangeEnd.getTime();
 }
 
-export function getMonthBuckets(monthCount: number) {
-  const currentMonthStart = startOfMonth(new Date());
 
-  return Array.from({ length: monthCount }, (_, index) => {
-    const bucketStart = addMonths(currentMonthStart, index - (monthCount - 1));
-    const bucketEnd = addMonths(bucketStart, 1);
-
-    return {
-      key: `${bucketStart.getFullYear()}-${bucketStart.getMonth()}`,
-      label: MONTH_LABELS[bucketStart.getMonth()],
-      start: bucketStart,
-      end: bucketEnd,
-    };
-  });
-}
-
-export function getDayBuckets(dayCount: number) {
-  const todayStart = startOfDay(new Date());
-
-  return Array.from({ length: dayCount }, (_, index) => {
-    const bucketStart = addDays(todayStart, index - (dayCount - 1));
-    const bucketEnd = addDays(bucketStart, 1);
-
-    return {
-      key: bucketStart.toISOString().slice(0, 10),
-      label: WEEKDAY_LABELS[bucketStart.getDay()],
-      start: bucketStart,
-      end: bucketEnd,
-    };
-  });
-}
 
 export function countInRange<T>(items: T[], getDate: (item: T) => Date, rangeStart: Date, rangeEnd: Date) {
   return items.filter((item) => isWithinRange(getDate(item), rangeStart, rangeEnd)).length;
 }
 
-export function sumInRange<T>(items: T[], getDate: (item: T) => Date, getValue: (item: T) => number, rangeStart: Date, rangeEnd: Date) {
-  return items.reduce((total, item) => {
-    if (!isWithinRange(getDate(item), rangeStart, rangeEnd)) {
-      return total;
-    }
-    return total + toNumber(getValue(item));
-  }, 0);
-}
+
 
 export function formatRelativeDate(date: any, options: { fallback?: string } = {}) {
   const { fallback = "Not available" } = options;

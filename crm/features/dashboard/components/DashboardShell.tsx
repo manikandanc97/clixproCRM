@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "@/features/dashboard/components/sidebar";
 import Topbar from "@/features/dashboard/components/topbar";
 import { useSidebar } from "@/features/dashboard/components/SidebarContext";
 import { motion } from "framer-motion";
 import { MobileBottomNav } from "@/features/dashboard/components/MobileBottomNav";
+import { useMediaQuery } from "@/shared/hooks/use-media-query";
 
 export default function DashboardShell({
   children,
@@ -13,6 +14,12 @@ export default function DashboardShell({
   children: React.ReactNode;
 }) {
   const { isCollapsed } = useSidebar();
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -27,10 +34,10 @@ export default function DashboardShell({
       <motion.div
         initial={false}
         animate={{
-          paddingLeft: isCollapsed ? "80px" : "260px",
+          paddingLeft: mounted && isDesktop ? (isCollapsed ? "80px" : "270px") : "0px",
         }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="flex flex-col flex-1 min-w-0 h-full"
+        className="flex flex-col flex-1 min-w-0 h-full w-full"
       >
         {/* Topbar is sticky because only <main> below scrolls */}
         <div className="shrink-0">

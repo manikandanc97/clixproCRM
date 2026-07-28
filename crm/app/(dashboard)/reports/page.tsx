@@ -1,13 +1,14 @@
 "use client";
 
 import { BarChart3, Download, Calendar, TrendingUp, Users, DollarSign, Target } from "lucide-react";
-import RevenueChart from "@/features/reports/components/RevenueChart";
-import ConversionChart from "@/features/reports/components/ConversionChart";
-import PerformanceTable from "@/features/reports/components/PerformanceTable";
-import AnalyticsSummary from "@/features/reports/components/AnalyticsSummary";
-import SalesFunnel from "@/features/reports/components/SalesFunnel";
-import ActivityHeatmap from "@/features/reports/components/ActivityHeatmap";
-import RevenueTarget from "@/features/reports/components/RevenueTarget";
+import dynamic from "next/dynamic";
+const RevenueChart = dynamic(() => import("@/features/reports/components/RevenueChart"));
+const ConversionChart = dynamic(() => import("@/features/reports/components/ConversionChart"));
+const PerformanceTable = dynamic(() => import("@/features/reports/components/PerformanceTable"));
+const AnalyticsSummary = dynamic(() => import("@/features/reports/components/AnalyticsSummary"));
+const SalesFunnel = dynamic(() => import("@/features/reports/components/SalesFunnel"));
+const ActivityHeatmap = dynamic(() => import("@/features/reports/components/ActivityHeatmap"));
+const RevenueTarget = dynamic(() => import("@/features/reports/components/RevenueTarget"));
 import { PageErrorState, PageLoadingState } from "@/shared/components/page-states";
 import { useReports } from "@/shared/hooks/use-crm";
 import { Button } from "@/shared/ui/button";

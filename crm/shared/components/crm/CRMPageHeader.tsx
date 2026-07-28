@@ -64,7 +64,7 @@ export const CRMPageHeader = ({
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center"
+          className="flex w-full flex-row gap-2 sm:w-auto sm:gap-3 sm:items-center"
         >
           {actions.map((action, index) => {
             const isPrimary = index === actions.length - 1;
@@ -74,7 +74,7 @@ export const CRMPageHeader = ({
                 onClick={action.onClick}
                 variant={action.variant || (isPrimary ? "default" : "outline")}
                 size="default"
-                className="w-full sm:w-auto"
+                className="flex-1 sm:flex-none"
               >
                 {action.icon && <action.icon className="w-4 h-4" />}
                 {action.label}

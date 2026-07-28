@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 // Types & Config
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type MetricColor =
+type MetricColor =
   | "emerald"
   | "cyan"
   | "indigo"
@@ -418,37 +418,4 @@ export const CRMMetricCard = ({
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reusable Wrappers — Scalable, semantic aliases for different use-cases
-// All three share the exact same visual foundation (CRMMetricCard).
-// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * BaseStatCard — Simplest metric display: label + value + optional trend.
- * No sparkline. Ideal for role management, attendance, billing counters.
- */
-export const BaseStatCard = (
-  props: Omit<CRMMetricCardProps, "sparklineData">
-) => <CRMMetricCard {...props} />;
-
-/**
- * AnalyticsCard — Full analytics metric with sparkline trend visualization.
- * Ideal for analytics dashboards, reports, and growth tracking pages.
- */
-export const AnalyticsCard = (props: CRMMetricCardProps) => (
-  <CRMMetricCard {...props} />
-);
-
-/**
- * KPIWidget — Primary top-level KPI metrics for the main dashboard.
- * Renders with a slightly deeper animation and full visual treatment.
- */
-export const KPIWidget = ({
-  delay = 0,
-  ...props
-}: CRMMetricCardProps) => (
-  <CRMMetricCard
-    {...props}
-    delay={delay}
-  />
-);
