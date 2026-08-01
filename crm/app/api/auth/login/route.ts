@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AuthService } from "@/services/auth.service";
+import { AuthService, AuthError } from "@/services/auth.service";
 import { LoginSchema } from "@/shared/validators/auth.validator";
 import { extractClientIp } from "@/shared/lib/auth/utils";
 import { cookies } from "next/headers";
@@ -40,16 +40,30 @@ export async function POST(req: Request) {
       message: "Login successful"
     }, { status: 200 });
   } catch (error: unknown) {
-    if (error instanceof Error && (error.message === "Invalid credentials" || error.message.includes("locked"))) {
+    if (error instanceof AuthError) {
       return NextResponse.json({
         success: false,
         error: { code: "UNAUTHORIZED", message: error.message }
-      }, { status: 401 });
+      }, { status: error.statusCode });
+    }
+    // Provide more specific error messages for database connection issues
+    if (error instanceof Error && error.name.includes('Prisma')) {
+      return NextResponse.json({
+        success: false,
+        error: { code: "DATABASE_ERROR", message: "Database connection failed. Please check your connection and try again." }
+      }, { status: 503 });
     }
     
+    console.error("[LOGIN ERROR]", error);
+    
+    // In development mode, return the actual error message to help with debugging
+    const message = process.env.NODE_ENV === "development" && error instanceof Error 
+      ? error.message 
+      : "An unexpected error occurred";
+
     return NextResponse.json({
       success: false,
-      error: { code: "INTERNAL_SERVER_ERROR", message: "An unexpected error occurred" }
+      error: { code: "INTERNAL_SERVER_ERROR", message }
     }, { status: 500 });
   }
 }

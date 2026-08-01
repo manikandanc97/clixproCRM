@@ -15,7 +15,9 @@ import {
   Download, 
   Users, 
   TrendingUp,
-  ChevronRight
+  ChevronRight,
+  UploadCloud,
+  X
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { PageErrorState } from "@/shared/components/page-states";
@@ -26,7 +28,7 @@ import { Badge } from "@/shared/ui/badge";
 import { 
   CRMPageHeader, 
   CRMMetricCard, 
-  CRMToolbar, 
+  CRMToolbar,
   CRMCard,
   CRMPageContainer,
   CRMMetricsGrid
@@ -38,6 +40,7 @@ import { FormModal } from "@/shared/components/form-modal";
 const LeadForm = dynamic(() => import("@/features/forms/LeadForm").then(mod => ({ default: mod.LeadForm })), {
   loading: () => <div className="h-[300px] skeleton rounded-xl" />
 });
+import { BulkImportModal } from "@/features/leads/components/BulkImportModal";
 import { useSearchParams } from "next/navigation";
 
 const LeadsPage = () => {
@@ -53,6 +56,9 @@ const LeadsPage = () => {
 
   const searchParams = useSearchParams();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [tableHasFilters, setTableHasFilters] = useState(false);
+  const [tableClearFiltersFn, setTableClearFiltersFn] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
@@ -78,7 +84,9 @@ const LeadsPage = () => {
         lead.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.email.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesStatus = statusFilter === "all" || lead.status.toLowerCase() === statusFilter.toLowerCase();
+      const matchesStatus = statusFilter === "all" || 
+        lead.status.toLowerCase() === statusFilter.toLowerCase() ||
+        (statusFilter.toLowerCase() === "new" && lead.status.toLowerCase() === "new lead");
 
       return matchesSearch && matchesStatus;
     });
@@ -97,6 +105,9 @@ const LeadsPage = () => {
   const clearFilters = () => {
     setSearchQuery("");
     setStatusFilter("all");
+    if (tableClearFiltersFn) {
+      tableClearFiltersFn();
+    }
   };
 
   if (loading && safeLeads.length === 0) {
@@ -123,13 +134,19 @@ const LeadsPage = () => {
     : "0%";
 
   return (
-    <CRMPageContainer>
+    <CRMPageContainer className="min-h-full !pb-4 md:!pb-6 space-y-0 gap-4 md:gap-6 flex flex-col">
       <CRMPageHeader 
         title="Leads Management"
         subtitle="Track, qualify, and convert potential opportunities into customers with AI-driven insights."
         icon={Users}
         badge="Lead Intelligence"
         actions={[
+          {
+            label: "Import",
+            icon: UploadCloud,
+            onClick: () => setIsImportModalOpen(true),
+            variant: "outline"
+          },
           {
             label: "Export",
             icon: Download,
@@ -145,70 +162,92 @@ const LeadsPage = () => {
         ]}
       />
 
-      <CRMMetricsGrid cols={3}>
-        <CRMMetricCard 
-          title="Total Leads"
-          value={safeLeads.length}
-          change="0%"
-          trend="up"
-          icon={Users}
-          color="blue"
-          delay={0.1}
-        />
-        <CRMMetricCard 
-          title="New This Month"
-          value={newThisMonth}
-          change="0%"
-          trend="up"
-          icon={UserPlus}
-          color="blue"
-          delay={0.2}
-        />
-        <CRMMetricCard 
-          title="Conversion Rate"
-          value={conversionRate}
-          change="0%"
-          trend="up"
-          icon={TrendingUp}
-          color="indigo"
-          delay={0.3}
-        />
-      </CRMMetricsGrid>
+      <div className="shrink-0">
+        <CRMMetricsGrid cols={3}>
+          <CRMMetricCard 
+            title="Total Leads"
+            value={safeLeads.length}
+            change="0%"
+            trend="up"
+            icon={Users}
+            color="blue"
+            delay={0.1}
+          />
+          <CRMMetricCard 
+            title="New This Month"
+            value={newThisMonth}
+            change="0%"
+            trend="up"
+            icon={UserPlus}
+            color="blue"
+            delay={0.2}
+          />
+          <CRMMetricCard 
+            title="Conversion Rate"
+            value={conversionRate}
+            change="0%"
+            trend="up"
+            icon={TrendingUp}
+            color="indigo"
+            delay={0.3}
+          />
+        </CRMMetricsGrid>
+      </div>
 
-      <CRMToolbar 
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        placeholder="Search leads, companies, or emails..."
-      >
-        <div className="flex items-center gap-2">
-          {["All", "New", "Contacted", "Won"].map((status) => (
-            <Button
-              key={status}
-              variant={statusFilter === status.toLowerCase() ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setStatusFilter(status.toLowerCase())}
-              className="h-8 px-3 text-xs font-semibold"
-            >
-              {status}
-            </Button>
-          ))}
+      <div className="flex-1 flex flex-col gap-4">
+        <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+          <CRMToolbar 
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            placeholder="Search leads, companies, or emails..."
+          >
+            <div className="flex items-center gap-2">
+              {(searchQuery !== "" || statusFilter !== "all" || tableHasFilters) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-8 px-3 text-xs font-semibold text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5 mr-1" />
+                  Clear Filters
+                </Button>
+              )}
+              {["All", "New", "Contacted", "Proposal Sent", "Won", "Lost"].map((status) => (
+                <Button
+                  key={status}
+                  variant={statusFilter === status.toLowerCase() ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setStatusFilter(status.toLowerCase())}
+                  className="h-8 px-3 text-xs font-semibold"
+                >
+                  {status}
+                </Button>
+              ))}
+            </div>
+          </CRMToolbar>
         </div>
-      </CRMToolbar>
 
-      <AnimatePresence mode="wait">
-        {filteredLeads.length > 0 ? (
-          viewMode === "list" ? (
-            <motion.div
-              key="list-view"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <LeadsTable leads={filteredLeads} totalCount={filteredLeads.length} />
-            </motion.div>
-          ) : (
+        <div className="flex-1 min-h-0 flex flex-col">
+          <AnimatePresence mode="wait">
+            {viewMode === "list" ? (
+              <motion.div
+                key="list-view"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 flex flex-col min-h-0"
+              >
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  totalCount={filteredLeads.length} 
+                  onActiveFiltersChange={setTableHasFilters}
+                  onClearFilters={setTableClearFiltersFn}
+                />
+              </motion.div>
+            ) : filteredLeads.length > 0 ? (
             <motion.div 
               key="grid-view"
               initial={{ opacity: 0 }}
@@ -264,7 +303,6 @@ const LeadsPage = () => {
                 </CRMCard>
               ))}
             </motion.div>
-          )
         ) : (
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
@@ -288,6 +326,8 @@ const LeadsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+        </div>
+      </div>
 
       <FormModal
         title="Create New Lead"
@@ -301,6 +341,15 @@ const LeadsPage = () => {
           onCancel={() => setIsAddModalOpen(false)} 
         />
       </FormModal>
+
+      <BulkImportModal 
+        isOpen={isImportModalOpen} 
+        onOpenChange={setIsImportModalOpen}
+        onSuccess={() => {
+          setIsImportModalOpen(false);
+          refetch();
+        }}
+      />
     </CRMPageContainer>
   );
 };

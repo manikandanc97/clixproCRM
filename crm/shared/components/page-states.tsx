@@ -19,7 +19,8 @@ interface EmptyStateProps {
   message: string;
 }
 
-export function PageLoadingState({ label }: LoadingStateProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function PageLoadingState(_props: LoadingStateProps) {
   return (
     <div className="flex flex-col space-y-6 w-full p-2">
       {/* Header Skeleton */}
@@ -59,7 +60,8 @@ export function PageLoadingState({ label }: LoadingStateProps) {
   );
 }
 
-export function ComponentLoadingState({ label }: LoadingStateProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function ComponentLoadingState(_props: LoadingStateProps) {
   return (
     <div className="flex flex-col space-y-6 w-full">
       <div className="rounded-xl border border-border bg-card p-6 space-y-6 shadow-sm">

@@ -1,18 +1,88 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
-import { requireRole } from "@/lib/auth-utils";
+import { requirePermission } from "@/lib/auth-utils";
+import prisma from "@/lib/prisma";
 import { handleApiError } from "@/lib/api-error";
+import { z } from "zod";
+
+const roleSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  color: z.string().optional(),
+  priority: z.number().optional().default(0),
+  permissions: z.array(z.string())
+});
 
 export async function GET() {
   try {
-    const session = await requireRole(["ADMIN", "MANAGER"]);
-    
-    // Using PascalCase for method name mapping
-            // Type-safe lookup object approach
-    const serviceMap = {
-      method: CrmService.getRoles
-    };
-    const data = await serviceMap.method(session.tenantId);
-    return NextResponse.json({ success: true, data }, { status: 200 });
-  } catch (error: unknown) { return handleApiError(error); }
+    const session = await requirePermission("Roles");
+    const roles = await prisma.role.findMany({
+      where: { tenantId: session.tenantId },
+      include: {
+        _count: {
+          select: { users: true, permissions: true }
+        },
+        permissions: true
+      },
+      orderBy: [
+        { isSystem: 'desc' },
+        { priority: 'desc' },
+        { name: 'asc' }
+      ]
+    });
+
+    return NextResponse.json({ success: true, data: roles }, { status: 200 });
+  } catch (error) { return handleApiError(error); }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await requirePermission("Roles");
+    const body = await req.json();
+    const { name, description, color, priority, permissions } = roleSchema.parse(body);
+
+    const existing = await prisma.role.findFirst({
+      where: { tenantId: session.tenantId, name }
+    });
+
+    if (existing) {
+      return NextResponse.json({ success: false, message: "Role name already exists" }, { status: 400 });
+    }
+
+    const role = await prisma.$transaction(async (tx) => {
+      const newRole = await tx.role.create({
+        data: {
+          tenantId: session.tenantId,
+          name,
+          description,
+          color,
+          priority,
+          isSystem: false
+        }
+      });
+
+      if (permissions && permissions.length > 0) {
+        await tx.rolePermission.createMany({
+          data: permissions.map(module => ({
+            roleId: newRole.id,
+            module,
+            hasAccess: true
+          }))
+        });
+      }
+
+      return newRole;
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        tenantId: session.tenantId,
+        userId: session.userId,
+        action: "CREATE_ROLE",
+        module: "Roles",
+        details: { roleName: role.name }
+      }
+    });
+
+    return NextResponse.json({ success: true, data: role, message: "Role created successfully" }, { status: 201 });
+  } catch (error) { return handleApiError(error); }
 }

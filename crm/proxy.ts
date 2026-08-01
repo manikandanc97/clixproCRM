@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyJWT } from "@/shared/lib/auth/utils";
+import { verifyJWT } from "@/shared/lib/auth/jwt";
 
 const publicPaths = [
   "/login",
@@ -15,9 +15,10 @@ const publicApiPaths = [
   "/api/auth/logout",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
+  "/api/auth/me",
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
@@ -52,7 +53,6 @@ export async function middleware(request: NextRequest) {
       );
     } else {
       const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
@@ -72,6 +72,9 @@ export async function middleware(request: NextRequest) {
     }
     if (payload.roleId) {
       requestHeaders.set("x-role-id", payload.roleId as string);
+    }
+    if (payload.role) {
+      requestHeaders.set("x-role", payload.role as string);
     }
 
     return NextResponse.next({

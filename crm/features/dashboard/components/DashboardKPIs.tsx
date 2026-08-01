@@ -10,10 +10,12 @@ import {
 import { useAuth } from "@/features/auth/components/auth-provider";
 import { CRMMetricCard, CRMMetricsGrid } from "@/shared/components/crm";
 import { useDashboardInitializer } from "@/shared/hooks/use-dashboard";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 export default function DashboardKPIs() {
   const { access } = useAuth();
   const { queries } = useDashboardInitializer();
+  const { formatCurrency } = useCurrency();
 
   // Extract query data safely
   const dashboardData = queries.dashboard.data;
@@ -35,7 +37,7 @@ export default function DashboardKPIs() {
       title: "Revenue",
       getValue: () => {
         if (hasError(queries.dashboard)) return "Error";
-        return dashboardRevenue?.value || "$0";
+        return formatCurrency(dashboardRevenue?.valueAmount || 0);
       },
       getChange: () => dashboardRevenue?.change || "+0.0%",
       getTrend: () => {

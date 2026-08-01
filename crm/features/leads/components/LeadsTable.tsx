@@ -4,18 +4,56 @@ import {
   Mail, 
   Phone, 
   MoreVertical, 
-  Sparkles, 
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
   Calendar, 
   User, 
-  ArrowUpRight, 
   X,
   Trash2,
   Share2,
+  SearchX,
   Clock,
   Tag,
+  MessageCircle,
+  Building,
+  CheckCircle2,
+  Edit2,
+  Inbox,
+  ArrowRight,
+  RefreshCw,
+  Globe,
+  Smartphone,
+  Users,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
 } from "lucide-react";
-// import { } from "@/shared/ui/badge";
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { FormModal } from "@/shared/components/form-modal";
+import { LeadForm } from "@/features/forms/LeadForm";
+import { TaskForm } from "@/features/forms/TaskForm";
+import { CustomerForm } from "@/features/forms/CustomerForm";
+import { MeetingForm } from "@/features/forms/MeetingForm";
+import { StageTransitionModal } from "./StageTransitionModal";
+import { ConfirmMoveModal } from "@/features/pipeline/components/ConfirmMoveModal";
+import { WonLostModal, WonLostSubmitData } from "@/features/pipeline/components/WonLostModal";
+import { useUpdatePipelineItem } from "@/shared/hooks/use-crm";
+import { useRouter } from "next/navigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { 
   DropdownMenu, 
@@ -27,16 +65,20 @@ import {
 import { LeadType } from "@/shared/types/lead";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/shared/ui/checkbox";
-// import { } from "@/shared/components/";
 import { DataTable } from "@/shared/components/DataTable";
 import { StatusBadge, StatusVariant } from "@/shared/components/StatusBadge";
 import { cn } from "@/shared/lib/utils";
 import { useLeads } from "../hooks/useLeads";
-// import { } from "sonner";
+import { Badge } from "@/shared/ui/badge";
+import { AddNoteModal } from "./AddNoteModal";
+import { LeadDetailsDrawer } from "./LeadDetailsDrawer";
+import { formatDistanceToNow } from "date-fns";
 
 interface LeadsTableProps {
   leads: LeadType[];
   totalCount: number;
+  onActiveFiltersChange?: (hasFilters: boolean) => void;
+  onClearFilters?: (clearFn: () => void) => void;
 }
 
 const statusVariantMap: Record<string, StatusVariant> = {
@@ -47,24 +89,160 @@ const statusVariantMap: Record<string, StatusVariant> = {
   "Lost": "rose",
 };
 
-const priorityColors: Record<string, string> = {
-  "High": "bg-rose-500",
-  "Medium": "bg-amber-500",
-  "Low": "bg-slate-400",
+const getPriorityColor = (p?: string) => {
+  switch (p) {
+    case "Urgent": return "bg-destructive text-destructive-foreground border-destructive";
+    case "High": return "bg-destructive/10 text-destructive border-destructive/20";
+    case "Medium": return "bg-primary/10 text-primary border-primary/20";
+    case "Low": return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+    default: return "bg-muted text-muted-foreground border-border";
+  }
 };
 
-const LeadsTable = ({ leads }: LeadsTableProps) => {
+// Helper for follow-up date check
+const isOverdue = (dateStr: string | null | undefined) => {
+  if (!dateStr) return false;
+  const date = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date < today;
+};
+
+
+const LeadsTable = ({ 
+  leads, 
+  onActiveFiltersChange, 
+  onClearFilters 
+}: LeadsTableProps) => {
   const {
     sortedLeads,
     selectedIds,
     setSelectedIds,
-    expandedId,
     handleSort,
+    sortConfig,
+    filters,
+    hasActiveFilters,
+    updateFilter,
+    clearFilters,
     toggleSelectAll,
     toggleSelect,
-    toggleExpand,
     handleDelete,
+    handleBulkDelete,
+    isDeletingBulk,
   } = useLeads(leads);
+
+  useEffect(() => {
+    onActiveFiltersChange?.(hasActiveFilters);
+  }, [hasActiveFilters, onActiveFiltersChange]);
+
+  useEffect(() => {
+    if (onClearFilters) {
+      onClearFilters(() => clearFilters);
+    }
+  }, [clearFilters, onClearFilters]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const totalPages = Math.ceil(sortedLeads.length / rowsPerPage);
+  const paginatedLeads = sortedLeads.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  const [editingLead, setEditingLead] = useState<LeadType | null>(null);
+  const [taskLead, setTaskLead] = useState<LeadType | null>(null);
+  const [meetingLead, setMeetingLead] = useState<LeadType | null>(null);
+  const [customerLead, setCustomerLead] = useState<LeadType | null>(null);
+  const [deletingLead, setDeletingLead] = useState<LeadType | null>(null);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [stageTransitionLead, setStageTransitionLead] = useState<LeadType | null>(null);
+  const [addNoteLead, setAddNoteLead] = useState<string | null>(null);
+  const [detailsLeadId, setDetailsLeadId] = useState<string | null>(null);
+  
+  const [confirmMoveModal, setConfirmMoveModal] = useState<{ isOpen: boolean; deal: any; targetStage: string | null; originalStage: string | null }>({ isOpen: false, deal: null, targetStage: null, originalStage: null });
+  const [wonLostModal, setWonLostModal] = useState<{ isOpen: boolean; type: "Won" | "Lost" | null; deal: any; originalStage: string | null }>({ isOpen: false, type: null, deal: null, originalStage: null });
+
+  const { mutate: updatePipelineItem, isPending: isUpdating } = useUpdatePipelineItem();
+  const router = useRouter();
+
+  const handleStageChange = (lead: LeadType, targetStage: string) => {
+    const originalStage = lead.status;
+    const deal = { ...lead, stage: originalStage };
+    
+    if (targetStage === "Lost" || targetStage === "Won") {
+      setWonLostModal({
+        isOpen: true,
+        type: targetStage as "Won" | "Lost",
+        deal: { ...deal, stage: targetStage },
+        originalStage
+      });
+      return;
+    }
+    setConfirmMoveModal({
+      isOpen: true,
+      deal: { ...deal, stage: originalStage },
+      targetStage,
+      originalStage,
+    });
+  };
+
+  const handleConfirmMoveSubmit = () => {
+    if (!confirmMoveModal.deal || !confirmMoveModal.targetStage || !confirmMoveModal.originalStage) return;
+    const { deal, targetStage, originalStage } = confirmMoveModal;
+    const stageToStatus: Record<string, string> = { "New Lead": "NEW", "Contacted": "CONTACTED", "Proposal Sent": "PROPOSAL_SENT", "Won": "WON", "Lost": "LOST" };
+    const status = stageToStatus[targetStage] || "NEW";
+
+    updatePipelineItem({ id: deal.id, data: { status } }, {
+      onSuccess: () => {
+        toast.success(`Deal moved from ${originalStage} to ${targetStage}.`);
+        setConfirmMoveModal(prev => ({ ...prev, isOpen: false }));
+      },
+      onError: () => {
+        toast.error("Unable to update deal.");
+        setConfirmMoveModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const handleWonLostSubmit = (data: WonLostSubmitData) => {
+    if (!wonLostModal.deal || !wonLostModal.type) return;
+    const stageToStatus: Record<string, string> = { "Won": "WON", "Lost": "LOST" };
+    const status = stageToStatus[wonLostModal.type] || "NEW";
+    
+    updatePipelineItem({
+      id: wonLostModal.deal.id,
+      data: {
+        status,
+        ...(wonLostModal.type === "Won" 
+            ? { wonReason: data.reason, wonDate: data.wonDate, actualRevenue: data.actualRevenue, notes: data.notes } 
+            : { lostReason: data.reason, competitor: data.competitor, notes: data.notes })
+      }
+    }, {
+      onSuccess: () => {
+        toast.success(`Deal moved to ${wonLostModal.type}.`);
+        setWonLostModal(prev => ({ ...prev, isOpen: false }));
+      },
+      onError: () => {
+        toast.error("Unable to update deal.");
+        setWonLostModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const handleAction = (e: React.MouseEvent, action: string, leadName: string, lead?: LeadType) => {
+    e.stopPropagation();
+
+    if (action === "Email Draft" && lead?.email) {
+      window.location.href = `mailto:${lead.email}`;
+    } else if (action === "Call Initiated" && lead?.phone) {
+      window.location.href = `tel:${lead.phone}`;
+    }
+
+    toast.success(`${action} Initiated`, {
+      description: `Action applied to ${leadName}`,
+    });
+  };
 
   const columns = [
     {
@@ -81,138 +259,544 @@ const LeadsTable = ({ leads }: LeadsTableProps) => {
           onClick={(e) => e.stopPropagation()}
         />
       ),
-      className: "w-[50px]",
+      className: "w-[40px] pr-0",
     },
     {
       header: (
-        <div 
-          className="flex items-center gap-2 cursor-pointer group"
-          onClick={() => handleSort("name")}
-        >
-          Lead & Intelligence
-        </div>
-      ),
-      cell: (lead: LeadType) => (
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Avatar className="w-9 h-9 rounded-lg border border-border bg-muted flex items-center justify-center font-bold text-xs">
-              <AvatarFallback>{lead.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-            </Avatar>
-            <div className={cn("absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-background", priorityColors[lead.priority])} />
-          </div>
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <p className="font-semibold text-foreground transition-colors text-sm">{lead.name}</p>
-              <div className="flex items-center gap-1 bg-primary/10 px-1.5 py-0.5 rounded text-primary">
-                <Sparkles className="w-2.5 h-2.5" />
-                <span className="text-[10px] font-bold">{lead.score}</span>
-              </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-1 cursor-pointer hover:text-foreground text-muted-foreground transition-colors text-xs font-semibold uppercase tracking-wider group">
+              Lead Information
+              <ChevronDown className={cn("w-3 h-3 transition-opacity", sortConfig?.key === "name" ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-100")} />
             </div>
-            <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">{lead.company}</p>
-          </div>
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-40">
+            <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Sort By</div>
+            {[
+              { label: "A to Z", val: "asc" },
+              { label: "Z to A", val: "desc" }
+            ].map(s => (
+              <DropdownMenuItem key={s.val} onClick={() => handleSort("name", s.val as any)} className="text-xs cursor-pointer">
+                {s.label}
+                {sortConfig?.key === "name" && sortConfig.direction === s.val && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-primary" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
-    },
-    {
-      header: "Status & Activity",
       cell: (lead: LeadType) => (
-        <div className="space-y-1.5">
-          <StatusBadge 
-            status={lead.status} 
-            variant={statusVariantMap[lead.status]} 
-          />
-          <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground">
-            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {lead.lastActivity}</span>
-            <span>•</span>
-            <span className="flex items-center gap-1"><Tag className="w-3 h-3" /> {lead.source}</span>
+        <div className="flex items-center gap-3 py-1 cursor-pointer group" onClick={(e) => { e.stopPropagation(); setDetailsLeadId(lead.id); }}>
+          <Avatar className="w-10 h-10 rounded-full border border-border shadow-sm group-hover:border-primary/50 transition-colors">
+            <AvatarFallback className="bg-primary/5 text-primary font-bold text-xs">
+              {lead.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-foreground text-sm leading-none group-hover:text-primary transition-colors">{lead.name}</p>
+              <span className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md font-medium">
+                {lead.company}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Mail className="w-3 h-3" /> {lead.email}
+              </span>
+            </div>
           </div>
         </div>
       ),
+      className: "w-full min-w-[240px]",
     },
     {
-      header: "Deal Value",
+      header: (
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Stage</div>
+      ),
       cell: (lead: LeadType) => (
-        <div className="space-y-0.5">
-          <p className="text-sm font-bold text-foreground">{lead.value}</p>
-          <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-            <ArrowUpRight className="w-3 h-3" />
-            <span>24% Prob</span>
-          </div>
-        </div>
+        <StatusBadge 
+          status={lead.status} 
+          variant={statusVariantMap[lead.status] || "slate"} 
+        />
       ),
+      className: "w-[130px]",
     },
     {
-      header: "Actions",
+      header: (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-1 cursor-pointer hover:text-foreground text-muted-foreground transition-colors text-xs font-semibold uppercase tracking-wider group">
+              Priority
+              <ChevronDown className={cn("w-3 h-3 transition-opacity", filters.priority !== "All Priorities" ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-100")} />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-40">
+            {["All Priorities", "Low", "Medium", "High", "Urgent"].map(p => (
+              <DropdownMenuItem key={p} onClick={() => updateFilter("priority", p)} className="text-xs cursor-pointer">
+                {p}
+                {filters.priority === p && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-primary" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      cell: (lead: LeadType) => {
+        return (
+          <Badge variant="outline" className={cn("text-[9px] font-bold uppercase tracking-wider px-1.5 py-0 h-4", getPriorityColor(lead.priority))}>
+            {lead.priority || "Low"}
+          </Badge>
+        );
+      },
+      className: "w-[90px]",
+    },
+    {
+      header: (
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Phone</div>
+      ),
+      cell: (lead: LeadType) => (
+        <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+          <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+          {lead.phone || "N/A"}
+        </div>
+      ),
+      className: "w-[130px]",
+    },
+    {
+      header: (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-1 cursor-pointer hover:text-foreground text-muted-foreground transition-colors text-xs font-semibold uppercase tracking-wider group">
+              Deal Value
+              <ChevronDown className={cn("w-3 h-3 transition-opacity", sortConfig?.key === "valueAmount" ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-100")} />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-40">
+            <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Sort By</div>
+            {[
+              { label: "High to Low", val: "desc" },
+              { label: "Low to High", val: "asc" }
+            ].map(s => (
+              <DropdownMenuItem key={s.val} onClick={() => handleSort("valueAmount", s.val as any)} className="text-xs cursor-pointer">
+                {s.label}
+                {sortConfig?.key === "valueAmount" && sortConfig.direction === s.val && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-primary" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      cell: (lead: LeadType) => {
+        const prob = lead.probability || 0;
+        return (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-bold text-foreground">{lead.value}</span>
+            <span className="text-xs font-semibold text-muted-foreground">{prob}%</span>
+          </div>
+        );
+      },
+      className: "w-[100px]",
+    },
+    {
+      header: (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-1 cursor-pointer hover:text-foreground text-muted-foreground transition-colors text-xs font-semibold uppercase tracking-wider group">
+              Activity
+              <ChevronDown className={cn("w-3 h-3 transition-opacity", (filters.activity !== "All Activity" || sortConfig?.key === "activity") ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-100")} />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Sort By</div>
+            {[
+              { label: "Newest Activity", val: "newest" },
+              { label: "Oldest Activity", val: "oldest" },
+              { label: "Upcoming Follow-up", val: "upcoming" },
+              { label: "Overdue First", val: "overdue" },
+            ].map(s => (
+              <DropdownMenuItem key={s.val} onClick={() => handleSort("activity", s.val as any)} className="text-xs cursor-pointer">
+                {s.label}
+                {sortConfig?.key === "activity" && sortConfig.direction === s.val && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-primary" />}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Filter By</div>
+            {["All Activity", "Overdue", "Today", "Tomorrow", "This Week", "No Follow-up Scheduled", "No Activity"].map(f => (
+              <DropdownMenuItem key={f} onClick={() => updateFilter("activity", f)} className="text-xs cursor-pointer">
+                {f}
+                {filters.activity === f && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-primary" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      cell: (lead: LeadType) => {
+        const overdue = isOverdue(lead.followUpAt);
+        const dateStr = lead.updatedAt || lead.createdAt;
+        let formattedDate = "";
+        if (dateStr) {
+          try {
+            formattedDate = new Intl.DateTimeFormat("en-US", {
+              month: "short", day: "numeric", hour: "numeric", minute: "numeric", hour12: true
+            }).format(new Date(dateStr));
+          } catch(e) {}
+        }
+        
+        return (
+          <div className="flex flex-col gap-1.5">
+            {lead.status === "Won" ? (
+              <div className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+              </div>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                <span className={cn("text-xs font-medium", overdue ? "text-rose-600 font-bold" : "text-foreground")}>
+                  {lead.followUp || "No Follow-up Scheduled"}
+                </span>
+                {overdue && (
+                  <span className="text-[10px] text-rose-500 flex items-center gap-1 font-semibold">
+                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    Overdue
+                  </span>
+                )}
+              </div>
+            )}
+            <div className="flex flex-col mt-1">
+              {lead.notes && lead.notes.length > 0 ? (
+                <>
+                  <span className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1">
+                    📝 {lead.notes.length} Note{lead.notes.length !== 1 && 's'}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[160px] leading-tight">
+                    <span className="font-medium">Last Note:</span> {lead.notes[0].message}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground mt-0.5 font-medium">
+                    {formatDistanceToNow(new Date(lead.notes[0].createdAt), { addSuffix: true })}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-[10px] text-muted-foreground font-semibold">Last Activity</span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[160px]">
+                    {lead.lastActivity || formattedDate || "No notes"}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      },
+      className: "hidden lg:table-cell w-[170px]",
+      headerClassName: "hidden lg:table-cell",
+    },
+    {
+      header: (
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">Actions</div>
+      ),
       headerClassName: "text-right",
       cell: (lead: LeadType) => (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          <div className="mr-2 flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary">
-              <Mail className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary">
-              <Phone className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" onClick={(e) => handleAction(e, "Email Draft", lead.name, lead)}>
+            <Mail className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors" onClick={(e) => handleAction(e, "Call Initiated", lead.name, lead)}>
+            <Phone className="w-4 h-4" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-foreground hover:bg-muted ml-1">
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem><User className="w-3.5 h-3.5 mr-2" /> Profile</DropdownMenuItem>
-              <DropdownMenuItem><Calendar className="w-3.5 h-3.5 mr-2" /> Schedule</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56 shadow-lg border-border/50">
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingLead(lead); }} className="gap-2 text-xs cursor-pointer"><Edit2 className="w-3.5 h-3.5" /> Edit Lead</DropdownMenuItem>
+              
+              {lead.status === "Won" && (
+                <>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }} className="gap-2 text-xs text-blue-600 focus:text-blue-700 cursor-pointer">
+                    <User className="w-3.5 h-3.5" /> View Customer
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }} className="gap-2 text-xs text-blue-600 focus:text-blue-700 cursor-pointer">
+                    <Building className="w-3.5 h-3.5" /> Open Customer Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }} className="gap-2 text-xs text-blue-600 focus:text-blue-700 cursor-pointer">
+                    <Tag className="w-3.5 h-3.5" /> View Customer Details
+                  </DropdownMenuItem>
+                </>
+              )}
+
+              {lead.status === "Lost" ? (
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }} className="gap-2 text-xs cursor-pointer"><RefreshCw className="w-3.5 h-3.5" /> Reopen Lead</DropdownMenuItem>
+              ) : lead.status !== "Won" ? (
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }} className="gap-2 text-xs cursor-pointer"><RefreshCw className="w-3.5 h-3.5" /> Move Stage</DropdownMenuItem>
+              ) : null}
+
+              <DropdownMenuSeparator />
+
+              {lead.status !== "Lost" && (
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTaskLead(lead); }} className="gap-2 text-xs cursor-pointer"><CheckCircle2 className="w-3.5 h-3.5" /> Create Task</DropdownMenuItem>
+              )}
+              
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setMeetingLead(lead); }} className="gap-2 text-xs cursor-pointer"><Calendar className="w-3.5 h-3.5" /> Schedule Meeting</DropdownMenuItem>
+              
+              {lead.status !== "Lost" && (
+                <>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Email Draft", lead.name, lead); }} className="gap-2 text-xs cursor-pointer"><Mail className="w-3.5 h-3.5" /> Send Email</DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Call Initiated", lead.name, lead); }} className="gap-2 text-xs cursor-pointer"><Phone className="w-3.5 h-3.5" /> Call</DropdownMenuItem>
+                </>
+              )}
+              
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setAddNoteLead(lead.id); }} className="gap-2 text-xs cursor-pointer"><MessageCircle className="w-3.5 h-3.5" /> Add Note</DropdownMenuItem>
+
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                onClick={() => handleDelete(lead.id, lead.name)}
-                className="text-rose-600 focus:text-rose-600"
+                onClick={(e) => { e.stopPropagation(); setDeletingLead(lead); }}
+                variant="destructive"
+                className="gap-2 text-xs cursor-pointer"
               >
-                <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
+                <Trash2 className="w-3.5 h-3.5" /> Delete Lead
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       ),
-      className: "text-right",
+      className: "text-right w-[110px]",
     },
   ];
 
-  return (
-    <div className="relative">
-      <DataTable 
-        data={sortedLeads}
-        columns={columns}
-        onRowClick={(lead) => toggleExpand(lead.id)}
-        rowClassName={(lead) => expandedId === lead.id ? "bg-muted/30" : ""}
-      />
+  if (leads.length === 0) {
+    return (
+      <div className="w-full min-h-[400px] bg-card rounded-xl border border-dashed border-border flex flex-col items-center justify-center p-8 text-center shadow-sm">
+        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <Inbox className="w-8 h-8 text-primary" />
+        </div>
+        <h3 className="text-lg font-bold text-foreground mb-2">No leads found</h3>
+        <p className="text-sm text-muted-foreground max-w-sm mb-6">
+          Your pipeline is looking a little empty. Add new leads to start tracking your deals and growing your business.
+        </p>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="gap-2">
+            <Share2 className="w-4 h-4" /> Import Leads
+          </Button>
+          <Button className="gap-2 shadow-sm">
+            <User className="w-4 h-4" /> Add Lead
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-      {/* Detail View for Expanded Row */}
-      <AnimatePresence>
-        {expandedId && (
-          <div className="w-full bg-muted/20 border-b border-border">
-            {/* Intelligence detail could be a separate component */}
-            <div className="p-6">
-              <div className="bg-card rounded-xl border border-border p-5 shadow-sm flex flex-col md:flex-row gap-6">
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <h4 className="text-[11px] font-bold text-foreground uppercase tracking-widest">AI Intelligence</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    AI predicts a high conversion probability based on recent engagement and company growth metrics.
-                  </p>
-                </div>
-                <div className="md:w-64">
-                   <Button className="w-full font-bold h-10 text-[10px] uppercase tracking-widest">
-                     Execute Suggestion
-                   </Button>
+  return (
+    <div className="flex-auto flex flex-col min-h-0 relative">
+
+
+      {/* Desktop & Tablet Table View */}
+      <div className="hidden md:flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-auto max-h-[calc(100vh-360px)]">
+        <DataTable 
+          data={paginatedLeads}
+          columns={columns}
+          wrapperClassName="flex-auto overflow-auto relative"
+          rowClassName="h-16 hover:bg-muted/30 transition-colors"
+          emptyMessage={
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <SearchX className="w-8 h-8 text-muted-foreground/30" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-1">No matching leads</h3>
+              <p className="text-muted-foreground text-center max-w-sm text-xs font-medium">
+                We couldn't find any leads matching your current filters.
+              </p>
+            </div>
+          }
+        />
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="grid grid-cols-1 gap-4 md:hidden flex-auto overflow-y-auto pr-1">
+        {paginatedLeads.map((lead) => (
+          <div key={lead.id} className="bg-card rounded-xl border border-border shadow-sm p-4 space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <Checkbox 
+                  checked={selectedIds.includes(lead.id)}
+                  onCheckedChange={() => toggleSelect(lead.id)}
+                />
+                <Avatar className="w-10 h-10 rounded-full border shadow-sm">
+                  <AvatarFallback className="bg-primary/5 text-primary font-bold text-xs">
+                    {lead.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-bold text-sm text-foreground">{lead.name}</p>
+                  <p className="text-xs text-muted-foreground font-medium">{lead.company}</p>
                 </div>
               </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingLead(lead); }}>Edit Lead</DropdownMenuItem>
+                  
+                  {lead.status === "Won" && (
+                    <>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }}>View Customer</DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }}>Open Customer Profile</DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }}>View Customer Details</DropdownMenuItem>
+                    </>
+                  )}
+
+                  {lead.status === "Lost" ? (
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }}>Reopen Lead</DropdownMenuItem>
+                  ) : lead.status !== "Won" ? (
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }}>Move Stage</DropdownMenuItem>
+                  ) : null}
+
+                  <DropdownMenuSeparator />
+
+                  {lead.status !== "Lost" && (
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTaskLead(lead); }}>Create Task</DropdownMenuItem>
+                  )}
+                  
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setMeetingLead(lead); }}>Schedule Meeting</DropdownMenuItem>
+                  
+                  {lead.status !== "Lost" && (
+                    <>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Email Draft", lead.name, lead); }}>Send Email</DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Call Initiated", lead.name, lead); }}>Call</DropdownMenuItem>
+                    </>
+                  )}
+                  
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setAddNoteLead(lead.id); }}>Add Note</DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDeletingLead(lead); }} variant="destructive">Delete Lead</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 bg-muted/30 p-3 rounded-lg border border-border/50">
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Stage</span>
+                <div>
+                  <StatusBadge status={lead.status} variant={statusVariantMap[lead.status] || "slate"} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Value</span>
+                <p className="text-sm font-bold text-foreground">{lead.value}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Priority</span>
+                <div>
+                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", getPriorityColor(lead.priority))}>
+                    {lead.priority || "Low"}
+                  </Badge>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Next Follow-up</span>
+                {lead.status === "Won" ? (
+                  <p className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                  </p>
+                ) : (
+                  <p className={cn("text-xs font-medium", isOverdue(lead.followUpAt) ? "text-rose-600" : "text-foreground")}>
+                    {lead.followUp}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+              <Button variant="outline" size="sm" className="flex-1 gap-2 h-9 text-xs" onClick={(e) => handleAction(e, "Email Draft", lead.name, lead)}>
+                <Mail className="w-3.5 h-3.5" /> Email
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 gap-2 h-9 text-xs" onClick={(e) => handleAction(e, "Call Initiated", lead.name, lead)}>
+                <Phone className="w-3.5 h-3.5" /> Call
+              </Button>
             </div>
           </div>
-        )}
-      </AnimatePresence>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      {sortedLeads.length > 10 && (
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0">
+          <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
+            Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–<span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, sortedLeads.length)}</span> of <span className="font-bold text-foreground">{new Intl.NumberFormat().format(sortedLeads.length)}</span> Leads
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold">
+                    {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[4rem]">
+                  {[10, 25, 50, 100].map(size => (
+                    <DropdownMenuItem key={size} onClick={() => { setRowsPerPage(size); setCurrentPage(1); }} className="font-medium text-sm cursor-pointer hover:bg-muted">
+                      {size}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                aria-label="First page"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              
+              <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
+                Page {currentPage}
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                aria-label="Next page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                aria-label="Last page"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bulk Action Toolbar */}
       <AnimatePresence>
@@ -221,23 +805,31 @@ const LeadsTable = ({ leads }: LeadsTableProps) => {
             initial={{ y: 50, opacity: 0, x: "-50%" }}
             animate={{ y: 0, opacity: 1, x: "-50%" }}
             exit={{ y: 50, opacity: 0, x: "-50%" }}
-            className="fixed bottom-8 left-1/2 z-50"
+            className="fixed bottom-8 left-1/2 z-50 w-[90%] md:w-auto"
           >
-            <div className="bg-foreground text-background rounded-2xl px-6 py-4 shadow-premium flex items-center gap-6 border border-border/10 backdrop-blur-xl">
-               <div className="flex items-center gap-3 pr-6 border-r border-background/20">
-                  <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-xs">
-                    {selectedIds.length}
+            <div className="bg-foreground text-background rounded-2xl px-6 py-4 shadow-premium flex flex-col md:flex-row items-center gap-4 md:gap-6 border border-border/10 backdrop-blur-xl">
+               <div className="flex items-center gap-3 md:pr-6 md:border-r border-background/20 w-full md:w-auto justify-between md:justify-start">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-xs shadow-sm">
+                      {selectedIds.length}
+                    </div>
+                    <span className="text-xs font-bold whitespace-nowrap">Leads Selected</span>
                   </div>
-                  <span className="text-xs font-bold">Leads Selected</span>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="h-8 w-8 p-0 md:hidden text-muted hover:text-background">
+                    <X className="w-4 h-4" />
+                  </Button>
                </div>
-               <div className="flex items-center gap-2">
-                 <Button variant="ghost" size="sm" className="hover:bg-background/10 h-9">
+               <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+                 <Button variant="ghost" size="sm" className="text-background/70 hover:text-background hover:bg-background/10 h-9 whitespace-nowrap" onClick={(e) => handleAction(e, "Bulk Email", `${selectedIds.length} Leads`)}>
                    <Mail className="size-4 mr-2" /> Email
                  </Button>
-                 <Button variant="ghost" size="sm" className="hover:bg-background/10 h-9">
-                   <Share2 className="size-4 mr-2" /> Export
+                 <Button variant="ghost" size="sm" className="text-background/70 hover:text-background hover:bg-background/10 h-9 whitespace-nowrap" onClick={(e) => handleAction(e, "Bulk Update Stage", `${selectedIds.length} Leads`)}>
+                   <Edit2 className="size-4 mr-2" /> Update Stage
                  </Button>
-                 <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="h-9 w-9 p-0">
+                 <Button variant="ghost" size="sm" className="hover:bg-background/10 h-9 whitespace-nowrap text-rose-400 hover:text-rose-300" onClick={() => setIsBulkDeleting(true)}>
+                   <Trash2 className="size-4 mr-2" /> Delete
+                 </Button>
+                 <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="h-9 w-9 p-0 hidden md:flex text-muted hover:text-background">
                    <X className="size-4" />
                  </Button>
                </div>
@@ -245,13 +837,174 @@ const LeadsTable = ({ leads }: LeadsTableProps) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <FormModal
+        title="Edit Lead"
+        description="Update the details of this lead."
+        isOpen={!!editingLead}
+        onOpenChange={(open) => !open && setEditingLead(null)}
+        size="lg"
+      >
+        {editingLead && (
+          <LeadForm 
+            initialData={editingLead}
+            onSuccess={() => setEditingLead(null)} 
+            onCancel={() => setEditingLead(null)} 
+          />
+        )}
+      </FormModal>
+
+      <FormModal
+        title="Create Task"
+        description={`Create a new task for ${taskLead?.name}.`}
+        isOpen={!!taskLead}
+        onOpenChange={(open) => !open && setTaskLead(null)}
+        size="md"
+      >
+        {taskLead && (
+          <TaskForm 
+            onSuccess={() => setTaskLead(null)} 
+            onCancel={() => setTaskLead(null)} 
+          />
+        )}
+      </FormModal>
+
+      <FormModal
+        title="Schedule Meeting"
+        description={`Schedule a meeting with ${meetingLead?.name}.`}
+        isOpen={!!meetingLead}
+        onOpenChange={(open) => !open && setMeetingLead(null)}
+        size="md"
+      >
+        {meetingLead && (
+          <MeetingForm 
+            onSuccess={() => setMeetingLead(null)} 
+            onCancel={() => setMeetingLead(null)} 
+          />
+        )}
+      </FormModal>
+
+      <FormModal
+        title="Convert to Customer"
+        description={`Convert ${customerLead?.name} to a customer.`}
+        isOpen={!!customerLead}
+        onOpenChange={(open) => !open && setCustomerLead(null)}
+        size="lg"
+      >
+        {customerLead && (
+          <CustomerForm 
+            initialData={{
+              id: customerLead.id,
+              name: customerLead.name,
+              company: customerLead.company,
+              email: customerLead.email,
+              status: "ACTIVE",
+              revenueValue: customerLead.valueAmount || 0,
+              createdAt: customerLead.createdAt,
+              updatedAt: customerLead.updatedAt,
+            } as any}
+            onSuccess={() => setCustomerLead(null)} 
+            onCancel={() => setCustomerLead(null)} 
+          />
+        )}
+      </FormModal>
+
+      <StageTransitionModal
+        isOpen={!!stageTransitionLead}
+        onClose={() => setStageTransitionLead(null)}
+        deal={stageTransitionLead ? { ...stageTransitionLead, stage: stageTransitionLead.status } as any : null}
+        onSelectTargetStage={(deal, targetStage) => {
+          setStageTransitionLead(null);
+          setTimeout(() => handleStageChange(stageTransitionLead!, targetStage), 150);
+        }}
+      />
+
+      <ConfirmMoveModal 
+        isOpen={confirmMoveModal.isOpen}
+        deal={confirmMoveModal.deal}
+        targetStage={confirmMoveModal.targetStage}
+        onClose={() => setConfirmMoveModal(prev => ({ ...prev, isOpen: false }))}
+        onSubmit={handleConfirmMoveSubmit}
+        isLoading={isUpdating}
+      />
+
+      <WonLostModal 
+        isOpen={wonLostModal.isOpen}
+        type={wonLostModal.type}
+        deal={wonLostModal.deal}
+        onClose={() => setWonLostModal(prev => ({ ...prev, isOpen: false }))}
+        onSubmit={handleWonLostSubmit}
+        isLoading={isUpdating}
+      />
+
+      <AlertDialog open={!!deletingLead} onOpenChange={(open) => !open && setDeletingLead(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the lead <strong>{deletingLead?.name}</strong>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              variant="destructive" 
+              onClick={() => {
+                if (deletingLead) {
+                  handleDelete(deletingLead.id, deletingLead.name);
+                  setDeletingLead(null);
+                }
+              }}
+            >
+              Delete Lead
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isBulkDeleting} onOpenChange={(open) => !isDeletingBulk && setIsBulkDeleting(open)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.length} Leads?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete {selectedIds.length} selected leads? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingBulk}>Cancel</AlertDialogCancel>
+            <Button 
+              variant="destructive" 
+              onClick={async () => {
+                await handleBulkDelete(selectedIds);
+                setIsBulkDeleting(false);
+              }}
+              disabled={isDeletingBulk}
+            >
+              {isDeletingBulk ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Deleting...
+                </>
+              ) : (
+                "Delete Leads"
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AddNoteModal 
+        isOpen={!!addNoteLead} 
+        onOpenChange={(open) => !open && setAddNoteLead(null)} 
+        leadId={addNoteLead} 
+      />
+      
+      <LeadDetailsDrawer
+        isOpen={!!detailsLeadId}
+        onOpenChange={(open) => !open && setDetailsLeadId(null)}
+        leadId={detailsLeadId}
+      />
     </div>
   );
 };
 
 export default LeadsTable;
-
-
-
-
-

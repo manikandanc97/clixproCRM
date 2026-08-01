@@ -3,6 +3,7 @@
 export interface PipelineMetricType {
   title: string;
   value: string;
+  valueAmount?: number;
 }
 
 export interface PipelineLeadType {
@@ -22,6 +23,13 @@ export interface PipelineLeadType {
   activityCount: number;
   isStuck: boolean;
   aiSummary: string;
+  createdAt?: string;
+  wonReason?: string;
+  wonDate?: string;
+  actualRevenue?: number;
+  lostReason?: string;
+  competitor?: string;
+  notes?: string;
 }
 
 export interface PipelineDataType {

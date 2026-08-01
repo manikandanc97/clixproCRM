@@ -90,6 +90,7 @@ export function useCreateLead() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline"] });
       toast.success("Lead created successfully");
     },
     onError: (error: Error) => {
@@ -105,6 +106,8 @@ export function useUpdateLead() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+      toast.success("Lead updated successfully");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update lead");
@@ -115,13 +118,52 @@ export function useUpdateLead() {
 export function useUpdatePipelineItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { status: string } }) => updatePipelineItem(id, data),
-    onSuccess: () => {
+    mutationFn: ({ id, data }: { id: string; data: Record<string, any> }) => updatePipelineItem(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ["pipeline"] });
+      const previousPipeline = queryClient.getQueryData(["pipeline"]);
+
+      queryClient.setQueryData(["pipeline"], (old: any) => {
+        if (!old || !old.items) return old;
+        
+        let newStage = undefined;
+        if (data.status) {
+          const statusToStage: Record<string, string> = {
+            "NEW": "New Lead",
+            "CONTACTED": "Contacted",
+            "PROPOSAL_SENT": "Proposal Sent",
+            "WON": "Won",
+            "LOST": "Lost"
+          };
+          newStage = statusToStage[data.status];
+        }
+
+        return {
+          ...old,
+          items: old.items.map((item: any) => 
+            item.id === id 
+              ? { ...item, ...data, ...(newStage ? { stage: newStage } : {}) } 
+              : item
+          )
+        };
+      });
+
+      return { previousPipeline };
+    },
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousPipeline) {
+        queryClient.setQueryData(["pipeline"], context.previousPipeline);
+      }
+      toast.error(error.message || "Failed to update pipeline stage");
+    },
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["pipeline"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update pipeline stage");
+    onSuccess: () => {
+      // Toast is handled in the component
     },
   });
 }
@@ -130,13 +172,32 @@ export function useDeleteLead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteLead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ["leads"] });
+      const previousLeads = queryClient.getQueryData(["leads"]);
+
+      queryClient.setQueryData(["leads"], (old: any) => {
+        if (!old || !old.leads) return old;
+        return {
+          ...old,
+          leads: old.leads.filter((lead: any) => lead.id !== id),
+          summary: { ...old.summary, total: Math.max(0, (old.summary?.total || 1) - 1) },
+          pagination: { ...old.pagination, total: Math.max(0, (old.pagination?.total || 1) - 1) }
+        };
+      });
+
+      return { previousLeads };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousLeads) {
+        queryClient.setQueryData(["leads"], context.previousLeads);
+      }
       toast.error(error.message || "Failed to delete lead");
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    }
   });
 }
 
@@ -207,6 +268,7 @@ export function useUpdateTask() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Task updated successfully");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update task");

@@ -134,6 +134,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     await clearSessionToken(); // hits /api/auth/logout
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("has_session");
+    }
     setUser(null);
     setStatus("unauthenticated");
     queryClient.clear(); // Clear all cached data on logout
@@ -142,12 +145,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
+      if (typeof window !== "undefined" && !localStorage.getItem("has_session")) {
+        setStatus("unauthenticated");
+        return;
+      }
       setLoading(true);
       const currentUser = await fetchCurrentUser();
+      if (!currentUser) {
+        if (typeof window !== "undefined") localStorage.removeItem("has_session");
+        setStatus("unauthenticated");
+        return;
+      }
       setUser(currentUser);
       setStatus("authenticated");
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error: unknown) {
+      if (typeof window !== "undefined") localStorage.removeItem("has_session");
       setStatus("unauthenticated");
     } finally {
       setLoading(false);
@@ -170,6 +183,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       const response = await loginUser({ email, password });
       
+      if (typeof window !== "undefined") {
+        localStorage.setItem("has_session", "1");
+      }
       setUser(response.data.user);
       setStatus("authenticated");
       

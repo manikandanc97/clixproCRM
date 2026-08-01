@@ -13,23 +13,27 @@ export class ApiError extends Error {
 }
 
 export function handleApiError(error: unknown) {
+  console.error("API Error encountered:", error);
+  if (error instanceof Error) {
+    console.error("Stack trace:", error.stack);
+  }
   logger.error(error);
 
-  if (error instanceof ZodError) {
+  if (error instanceof ZodError || (error instanceof Error && error.name === "ZodError")) {
     return NextResponse.json(
       { 
         success: false, 
         message: "Validation Error", 
-        errors: error.issues 
+        errors: (error as ZodError).issues 
       },
       { status: 400 }
     );
   }
 
-  if (error instanceof ApiError) {
+  if (error instanceof Error && error.name === "ApiError") {
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: error.statusCode }
+      { status: (error as ApiError).statusCode }
     );
   }
 

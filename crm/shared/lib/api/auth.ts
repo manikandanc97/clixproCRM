@@ -37,9 +37,9 @@ interface AuthUser {
 
 interface AuthResponse {
   success: boolean;
-  message: string;
+  message?: string;
   data: {
-    user: AuthUser;
+    user: AuthUser | null;
   };
 }
 
@@ -79,8 +79,11 @@ export const resetPassword = async (data: ResetPasswordPayload) => {
   }
 };
 
-export const fetchCurrentUser = async () => {
+export const fetchCurrentUser = async (): Promise<AuthUser | null> => {
   const response = await client.get<AuthResponse>("/auth/me");
+  if (!response.data.success) {
+    return null;
+  }
   return response.data.data.user;
 };
 

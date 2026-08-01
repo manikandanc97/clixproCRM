@@ -62,6 +62,7 @@ const legacyRoleMap: Record<string, RoleKey> = {
 export function normalizeRole(role?: string): RoleKey {
   if (!role) return CRM_ROLES.EMPLOYEE;
   
+  role = role.toUpperCase();
   // Try direct match
   if (Object.values(CRM_ROLES).includes(role as RoleKey)) {
     return role as RoleKey;

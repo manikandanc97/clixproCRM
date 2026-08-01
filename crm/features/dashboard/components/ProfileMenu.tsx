@@ -9,7 +9,8 @@ import {
   Palette,
   Check,
   Type,
-  Layout
+  Layout,
+  DollarSign
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,6 +30,7 @@ import { useSettings, AccentColor, FontFamily } from "./SettingsContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/components/auth-provider";
 import { PERMISSIONS } from "@/shared/lib/auth/rbac/permissions";
+import { useCRMStore } from "@/shared/store/useCRMStore";
 
 type ProfileMenuProps = {
   user: { name?: string; email?: string; role?: string; roleName?: string; displayName?: string; avatar?: string; } | null;
@@ -49,11 +51,22 @@ const FONTS: { label: string; value: FontFamily }[] = [
   { label: "Plus Jakarta", value: "jakarta" },
 ];
 
+const CURRENCIES = [
+  { label: "USD ($)", value: "USD" },
+  { label: "INR (₹)", value: "INR" },
+  { label: "EUR (€)", value: "EUR" },
+  { label: "GBP (£)", value: "GBP" },
+  { label: "AED", value: "AED" },
+  { label: "SGD", value: "SGD" },
+  { label: "AUD", value: "AUD" },
+];
+
 export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   const { theme, setTheme } = useTheme();
   const { accentColor, setAccentColor, fontFamily, setFontFamily } = useSettings();
   const router = useRouter();
   const { logout, hasPermission } = useAuth();
+  const { currency, setCurrency } = useCRMStore();
 
   const handleLogout = () => {
     logout();
@@ -175,6 +188,28 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
                   >
                     <span className={`text-sm font-medium font-${item.value}`}>{item.label}</span>
                     {fontFamily === item.value && <Check className="h-4 w-4 text-primary" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+
+          {/* Currency Selector Submenu */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="py-2.5 rounded-xl group">
+              <DollarSign className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <span className="font-semibold text-sm">Currency</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="w-48 rounded-xl p-1.5 shadow-elevated border-border bg-popover/95 backdrop-blur-xl">
+                {CURRENCIES.map((item) => (
+                  <DropdownMenuItem 
+                    key={item.value} 
+                    onClick={() => setCurrency(item.value)}
+                    className="rounded-lg flex items-center justify-between"
+                  >
+                    <span className="text-sm font-medium">{item.label}</span>
+                    {currency === item.value && <Check className="h-4 w-4 text-primary" />}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuSubContent>

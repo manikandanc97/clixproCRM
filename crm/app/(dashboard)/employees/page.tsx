@@ -56,6 +56,8 @@ import { EmployeeForm } from "@/features/forms/EmployeeForm";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
+const getSafeStr = (val: unknown) => (typeof val === 'string' ? val : typeof val === 'object' && val !== null ? (val as Record<string, unknown>).name as string || '' : String(val || ''));
+
 export default function EmployeesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: hrmData, isLoading: loading } = useEmployees();
@@ -88,9 +90,9 @@ export default function EmployeesPage() {
   }, [searchParams]);
 
   const filteredEmployees = employees.filter(emp => {
-    const nameMatch = (emp.name || "").toLowerCase().includes(searchQuery.toLowerCase());
-    const emailMatch = (emp.email || "").toLowerCase().includes(searchQuery.toLowerCase());
-    const roleMatch = (emp.role || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const nameMatch = getSafeStr(emp.name).toLowerCase().includes(searchQuery.toLowerCase());
+    const emailMatch = getSafeStr(emp.email).toLowerCase().includes(searchQuery.toLowerCase());
+    const roleMatch = getSafeStr(emp.role).toLowerCase().includes(searchQuery.toLowerCase());
     return nameMatch || emailMatch || roleMatch;
   });
 
@@ -165,7 +167,7 @@ export default function EmployeesPage() {
                     </div>
                   </CRMTableCell>
                   <CRMTableCell>
-                    <span className="text-sm font-semibold capitalize">{emp.role.toLowerCase()}</span>
+                    <span className="text-sm font-semibold capitalize">{getSafeStr(emp.role).toLowerCase()}</span>
                   </CRMTableCell>
                   <CRMTableCell>
                     <CRMStatusBadge tone={emp.status === 'ACTIVE' ? 'success' : 'warning'}>
@@ -316,7 +318,7 @@ export default function EmployeesPage() {
               </div>
               <div>
                 <label className="text-xs font-bold text-muted-foreground uppercase">Role</label>
-                <div className="font-medium capitalize">{selectedEmployee.role.toLowerCase()}</div>
+                <div className="font-medium capitalize">{getSafeStr(selectedEmployee.role).toLowerCase()}</div>
               </div>
               <div>
                 <label className="text-xs font-bold text-muted-foreground uppercase">Status</label>

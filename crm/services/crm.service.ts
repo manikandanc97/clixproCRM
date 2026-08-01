@@ -19,8 +19,7 @@ export class CrmService {
     page = Math.max(1, page);
     limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
-    // @ts-ignore - Prisma client needs to be regenerated
-    const where: Prisma.CustomerWhereInput = { tenantId, deletedAt: null } as any;
+    const where: Prisma.CustomerWhereInput = { tenantId, deletedAt: null };
     if (search) where.name = { contains: search, mode: "insensitive" };
 
     const [customers, total] = await Promise.all([
@@ -62,8 +61,7 @@ export class CrmService {
   static async deleteCustomer(tenantId: string, id: string) {
     return prisma.customer.update({
       where: { id, tenantId },
-      // @ts-ignore - Prisma client needs to be regenerated
-      data: { deletedAt: new Date(), status: "INACTIVE" }
+      data: { deletedAt: new Date(), status: "INACTIVE" as const }
     });
   }
 
@@ -71,8 +69,7 @@ export class CrmService {
     page = Math.max(1, page);
     limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
-    // @ts-ignore - Prisma client needs to be regenerated
-    const where: Prisma.LeadWhereInput = { tenantId, deletedAt: null } as any;
+    const where: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
     if (search) where.name = { contains: search, mode: "insensitive" };
     if (status) where.status = status as LeadStatus;
 
@@ -86,59 +83,166 @@ export class CrmService {
       prisma.lead.count({ where }),
     ]);
 
+    const emails = leads.map(l => l.email).filter(Boolean);
+    const customers = await prisma.customer.findMany({
+      where: { tenantId, email: { in: emails }, deletedAt: null },
+      select: { id: true, email: true }
+    });
+    const customerMap = new Map(customers.map(c => [c.email, c.id]));
+
     return {
       summary: { total: leads.length },
-      leads: leads.map((lead: Lead) => ({
-        id: lead.id,
-        name: lead.name,
-        company: lead.company,
-        email: lead.email,
-        status: getStatusLabel(LEAD_STATUS_LABELS, lead.status),
-        value: formatCurrency(lead.value, currency),
-        valueAmount: toNumber(lead.value),
-        followUp: formatRelativeDate(lead.followUpAt, { fallback: "Not scheduled" }),
-        followUpAt: lead.followUpAt,
-        createdAt: lead.createdAt,
-      })),
+      leads: leads.map((lead: Lead) => {
+        const customerId = lead.email ? customerMap.get(lead.email) : undefined;
+        return {
+          id: lead.id,
+          name: lead.name,
+          company: lead.company,
+          email: lead.email,
+          status: getStatusLabel(LEAD_STATUS_LABELS, lead.status),
+          value: formatCurrency(lead.value, currency),
+          valueAmount: toNumber(lead.value),
+          followUp: formatRelativeDate(lead.followUpAt, { fallback: "Not scheduled" }),
+          followUpAt: lead.followUpAt,
+          createdAt: lead.createdAt,
+          updatedAt: lead.updatedAt,
+          priority: lead.priority,
+          probability: lead.probability,
+          phone: lead.phone,
+          source: lead.source,
+          customerId,
+          isConverted: !!customerId || lead.status === "WON",
+        };
+      }),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
-  static async createLead(tenantId: string, data: { name: string; company: string; email: string; valueAmount?: number; value?: number | string; status?: LeadStatus; followUpAt?: string | Date | null }) {
+  static async createLead(tenantId: string, data: { name: string; company: string; email: string; phone?: string; valueAmount?: number; value?: number | string; status?: LeadStatus; followUpAt?: string | Date | null; priority?: string; probability?: number }) {
     const lead = await prisma.lead.create({
       data: {
         tenantId,
         name: data.name,
         company: data.company,
         email: data.email,
+        phone: data.phone,
         value: data.valueAmount || data.value || 0,
         status: data.status || "NEW",
         followUpAt: data.followUpAt ? new Date(data.followUpAt) : null,
+        priority: data.priority || "Medium",
+        probability: data.probability || 10,
       }
     });
     return lead;
   }
 
-  static async updateLead(tenantId: string, id: string, data: Partial<{ name: string; company: string; email: string; value: number | string; status: LeadStatus; followUpAt: string | Date | null }>) {
+  static async updateLead(tenantId: string, userId: string, id: string, data: Partial<{ name: string; company: string; email: string; phone: string; value: number | string; valueAmount: number; status: LeadStatus; followUpAt: string | Date | null; priority: string; probability: number; wonReason: string; lostReason: string; competitor: string; actualRevenue: number; wonDate: string; notes: string }>) {
+    // Determine if status is changing to something new for audit logs
+    const existingLead = await prisma.lead.findUnique({
+      where: { id, tenantId },
+      select: { status: true, name: true }
+    });
+
+    const isWon = data.status === "WON";
+
     const lead = await prisma.lead.update({
       where: { id, tenantId },
       data: {
         ...(data.name && { name: data.name }),
         ...(data.company && { company: data.company }),
         ...(data.email && { email: data.email }),
+        ...(data.phone && { phone: data.phone }),
         ...(data.value !== undefined && { value: data.value }),
+        ...(data.valueAmount !== undefined && data.value === undefined && { value: data.valueAmount }),
+        ...(data.actualRevenue !== undefined && { value: data.actualRevenue }),
         ...(data.status && { status: data.status }),
         ...(data.followUpAt && { followUpAt: new Date(data.followUpAt) }),
+        ...(data.priority && { priority: data.priority }),
+        ...(data.probability !== undefined && { probability: data.probability }),
+        ...(isWon && { probability: 100 }),
+        ...(data.wonReason !== undefined && { wonReason: data.wonReason }),
+        ...(data.lostReason !== undefined && { lostReason: data.lostReason }),
+        ...(data.competitor !== undefined && { competitor: data.competitor }),
       }
     });
+
+    if (existingLead && data.status && existingLead.status !== data.status) {
+      // Create Audit Log for status change
+      await prisma.auditLog.create({
+        data: {
+          tenantId,
+          userId,
+          action: "DEAL_MOVED",
+          module: "PIPELINE",
+          details: { leadId: id, from: existingLead.status, to: data.status },
+        }
+      });
+
+      if (isWon) {
+        // Convert Lead to Customer if not exists
+        let customer = null;
+        if (lead.email) {
+          customer = await prisma.customer.findFirst({
+            where: { tenantId, email: lead.email, deletedAt: null }
+          });
+        }
+
+        if (!customer) {
+          customer = await prisma.customer.create({
+            data: {
+              tenantId,
+              name: lead.name,
+              company: lead.company,
+              email: lead.email,
+              assignedToId: lead.assignedToId,
+              revenue: lead.value,
+              status: "ACTIVE"
+            }
+          });
+          
+          await prisma.auditLog.create({
+            data: {
+              tenantId,
+              userId,
+              action: "LEAD_CONVERTED",
+              module: "PIPELINE",
+              details: { leadId: id, customerId: customer.id },
+            }
+          });
+        }
+      } else if (existingLead.status === "WON" && !isWon) {
+        // Find and soft-delete the associated customer
+        if (lead.email) {
+          const customer = await prisma.customer.findFirst({
+            where: { tenantId, email: lead.email, deletedAt: null }
+          });
+          
+          if (customer) {
+            await prisma.customer.update({
+              where: { id: customer.id },
+              data: { deletedAt: new Date() }
+            });
+            
+            await prisma.auditLog.create({
+              data: {
+                tenantId,
+                userId,
+                action: "CUSTOMER_UNCONVERTED",
+                module: "PIPELINE",
+                details: { leadId: id, customerId: customer.id },
+              }
+            });
+          }
+        }
+      }
+    }
+
     return lead;
   }
 
   static async deleteLead(tenantId: string, id: string) {
-    const lead = await prisma.lead.update({
-      where: { id, tenantId },
-      // @ts-ignore - Prisma client needs to be regenerated
-      data: { deletedAt: new Date() }
+    const lead = await prisma.lead.delete({
+      where: { id, tenantId }
     });
     return lead;
   }
@@ -157,10 +261,7 @@ export class CrmService {
 
     const items = leads.map((lead: Lead) => {
       const stageLabel = getStatusLabel(PIPELINE_STAGE_LABELS, lead.status);
-      const stageProbabilities: Record<string, number> = {
-        "New Lead": 10, "Contacted": 25, "Proposal Sent": 60, "Won": 100, "Lost": 0
-      };
-      const probability = stageProbabilities[stageLabel] || 0;
+      const probability = lead.probability;
       
       const daysSinceUpdate = Math.floor((new Date().getTime() - new Date(lead.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
       let temperature = "Warm";
@@ -168,8 +269,7 @@ export class CrmService {
       if (daysSinceUpdate > 7) temperature = "Cold";
       
       const isStuck = daysSinceUpdate > 10 && !["Won", "Lost"].includes(stageLabel);
-      const leadValue = toNumber(lead.value);
-      const priority = leadValue > 10000 ? "High" : (leadValue > 5000 ? "Medium" : "Low");
+      const priority = lead.priority;
       const expectedCloseDate = new Date(lead.createdAt);
       expectedCloseDate.setDate(expectedCloseDate.getDate() + 30);
 
@@ -189,14 +289,15 @@ export class CrmService {
         activityCount: [lead.createdAt, lead.updatedAt, lead.followUpAt].filter(Boolean).length,
         isStuck,
         aiSummary: `Deal with ${lead.company} is progressing well. ${temperature === "Hot" ? "High engagement detected." : "Follow-up recommended."}`,
+        createdAt: lead.createdAt.toISOString(),
       };
     });
 
     return {
       stats: [
-        { title: "Total Value", value: formatCurrency(totalValue, currency) },
-        { title: "Active Deals", value: `${openDeals.length} Deals` },
-        { title: "Win Rate", value: formatPercentage(winRate) },
+        { title: "Total Value", value: formatCurrency(totalValue, currency), valueAmount: totalValue },
+        { title: "Active Deals", value: `${openDeals.length} Deals`, valueAmount: openDeals.length },
+        { title: "Win Rate", value: formatPercentage(winRate), valueAmount: winRate },
       ],
       items,
     };
@@ -206,8 +307,7 @@ export class CrmService {
     page = Math.max(1, page);
     limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
-    // @ts-ignore - Prisma client needs to be regenerated
-    const where: Prisma.TaskWhereInput = { tenantId, deletedAt: null } as any;
+    const where: Prisma.TaskWhereInput = { tenantId, deletedAt: null };
     if (search) where.title = { contains: search, mode: "insensitive" };
 
     const [tasks, total] = await Promise.all([
@@ -301,7 +401,6 @@ export class CrmService {
   static async deleteTask(tenantId: string, id: string) {
     const task = await prisma.task.update({
       where: { id, tenantId },
-      // @ts-ignore - Prisma client needs to be regenerated
       data: { deletedAt: new Date() }
     });
     return task;
@@ -338,7 +437,6 @@ export class CrmService {
   static async deleteQuotation(tenantId: string, id: string) {
     const quotation = await prisma.quotation.update({
       where: { id, tenantId },
-      // @ts-ignore - Prisma client needs to be regenerated
       data: { deletedAt: new Date() }
     });
     return quotation;
@@ -379,14 +477,14 @@ export class CrmService {
       prisma.lead.findMany({ where: { tenantId, status: "WON" }, select: { value: true, updatedAt: true, createdAt: true }, orderBy: { updatedAt: "desc" } }),
     ]);
 
-    const currentRevenue = toNumber(currentRevenueAgg._sum.value);
-    const previousRevenue = toNumber(previousRevenueAgg._sum.value);
+    const currentRevenue = toNumber(currentRevenueAgg._sum.value || 0);
+    const previousRevenue = toNumber(previousRevenueAgg._sum.value || 0);
 
     const dashboardStats = [
-      { title: "Total Leads", value: totalLeads.toLocaleString("en-US"), ...calculateTrend(currentMonthLeads, previousMonthLeads) },
-      { title: "New Customers", value: currentMonthCustomers.toLocaleString("en-US"), ...calculateTrend(currentMonthCustomers, previousMonthCustomers) },
-      { title: "Revenue", value: formatCurrency(currentRevenue, currency), ...calculateTrend(currentRevenue, previousRevenue) },
-      { title: "Pending Tasks", value: totalPendingTasks.toLocaleString("en-US"), ...calculateTrend(currentMonthPendingTasks, previousMonthPendingTasks) },
+      { title: "Total Leads", value: totalLeads.toLocaleString("en-US"), valueAmount: totalLeads, ...calculateTrend(currentMonthLeads, previousMonthLeads) },
+      { title: "New Customers", value: currentMonthCustomers.toLocaleString("en-US"), valueAmount: currentMonthCustomers, ...calculateTrend(currentMonthCustomers, previousMonthCustomers) },
+      { title: "Revenue", value: formatCurrency(currentRevenue, currency), valueAmount: currentRevenue, ...calculateTrend(currentRevenue, previousRevenue) },
+      { title: "Pending Tasks", value: totalPendingTasks.toLocaleString("en-US"), valueAmount: totalPendingTasks, ...calculateTrend(currentMonthPendingTasks, previousMonthPendingTasks) },
     ];
 
     const recentActivities = [
@@ -420,8 +518,7 @@ export class CrmService {
     page = Math.max(1, page);
     limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
-    // @ts-ignore - Prisma client needs to be regenerated
-    const where: Prisma.QuotationWhereInput = { tenantId, deletedAt: null } as any;
+    const where: Prisma.QuotationWhereInput = { tenantId, deletedAt: null };
     if (search) where.quoteNumber = { contains: search, mode: "insensitive" };
 
     const [quotations, total] = await Promise.all([
@@ -460,8 +557,7 @@ export class CrmService {
   }
 
   static async getReports(tenantId: string) {
-    // @ts-ignore - Prisma client needs to be regenerated
-    const baseWhere = { tenantId, deletedAt: null } as any;
+    const baseWhere: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
     const [totalLeads, wonDeals, lostDeals] = await Promise.all([
       prisma.lead.count({ where: baseWhere }),
       prisma.lead.count({ where: { ...baseWhere, status: "WON" } }),
@@ -537,19 +633,20 @@ export class CrmService {
   }
 
   static async getAnalytics(tenantId: string) {
-    // @ts-ignore - Prisma client needs to be regenerated
-    const baseWhere = { tenantId, deletedAt: null } as any;
+    const leadsWhere: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
+    const tasksWhere: Prisma.TaskWhereInput = { tenantId, deletedAt: null };
+    const customersWhere: Prisma.CustomerWhereInput = { tenantId, deletedAt: null };
     const [leadsCount, tasksCount, customersCount] = await Promise.all([
-      prisma.lead.count({ where: baseWhere }),
-      prisma.task.count({ where: baseWhere }),
-      prisma.customer.count({ where: baseWhere }),
+      prisma.lead.count({ where: leadsWhere }),
+      prisma.task.count({ where: tasksWhere }),
+      prisma.customer.count({ where: customersWhere }),
     ]);
 
     const [newCount, contactedCount, proposalCount, wonCount] = await Promise.all([
-      prisma.lead.count({ where: { ...baseWhere, status: "NEW" } }),
-      prisma.lead.count({ where: { ...baseWhere, status: "CONTACTED" } }),
-      prisma.lead.count({ where: { ...baseWhere, status: "PROPOSAL_SENT" } }),
-      prisma.lead.count({ where: { ...baseWhere, status: "WON" } })
+      prisma.lead.count({ where: { ...leadsWhere, status: "NEW" } }),
+      prisma.lead.count({ where: { ...leadsWhere, status: "CONTACTED" } }),
+      prisma.lead.count({ where: { ...leadsWhere, status: "PROPOSAL_SENT" } }),
+      prisma.lead.count({ where: { ...leadsWhere, status: "WON" } })
     ]);
 
     const pipelineStages = [
@@ -563,7 +660,7 @@ export class CrmService {
     const startOfYear = new Date(currentYear, 0, 1);
 
     const leadsThisYear = await prisma.lead.findMany({
-      where: { ...baseWhere, createdAt: { gte: startOfYear } },
+      where: { ...leadsWhere, createdAt: { gte: startOfYear } },
       select: { status: true, createdAt: true, updatedAt: true, value: true }
     });
 
@@ -652,7 +749,7 @@ export class CrmService {
         id: u.id, 
         name: u.name || "Unknown User", 
         email: u.email, 
-        role: u.memberships[0]?.role || "EMPLOYEE", 
+        role: u.memberships[0]?.role?.name || "EMPLOYEE", 
         status: u.status,
         createdAt: u.createdAt.toISOString(),
       })),
@@ -783,9 +880,8 @@ export class CrmService {
   }
 
   static async getMeetings(tenantId: string) {
-    // @ts-ignore - Prisma client needs to be regenerated
     const meetings = await prisma.meeting.findMany({ where: { tenantId }, take: 5, orderBy: { startTime: 'asc' } });
-    return meetings.map((m: any) => ({ 
+    return meetings.map((m) => ({ 
       id: m.id, 
       title: m.title, 
       date: formatDate(m.startTime), 
@@ -800,8 +896,113 @@ export class CrmService {
   }
 
   static async getNotifications(tenantId: string) {
-    // @ts-ignore - Prisma client needs to be regenerated (stop dev server and run `npx prisma generate`)
     const notifications = await prisma.notification.findMany({ where: { tenantId }, take: 5, orderBy: { createdAt: 'desc' } });
-    return { notifications: notifications.map((n: any) => ({ id: n.id, title: n.title, description: n.message, read: n.isRead, time: formatDate(n.createdAt), type: n.type })) };
+    return { notifications: notifications.map((n) => ({ id: n.id, title: n.title, description: n.message, read: n.isRead, time: formatDate(n.createdAt), type: n.type })) };
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async bulkImportLeads(
+    tenantId: string, 
+    userId: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    leadsData: any[], 
+    duplicateStrategy: "skip" | "update" | "create"
+  ) {
+    let imported = 0;
+    let skipped = 0;
+    let failed = 0;
+    const failedRows = [];
+
+    const defaults = {
+      status: "NEW" as LeadStatus,
+      priority: "Medium",
+      probability: 10,
+    };
+
+    for (let i = 0; i < leadsData.length; i++) {
+      const row = leadsData[i];
+      try {
+        if (!row.name || !row.email) {
+          failed++;
+          failedRows.push({ ...row, ErrorReason: "Missing required fields (Name or Email)" });
+          continue;
+        }
+
+        const existing = await prisma.lead.findFirst({
+          where: { tenantId, email: row.email, deletedAt: null }
+        });
+
+        if (existing) {
+          if (duplicateStrategy === "skip") {
+            skipped++;
+            continue;
+          } else if (duplicateStrategy === "update") {
+            await prisma.lead.update({
+              where: { id: existing.id },
+              data: {
+                name: row.name,
+                company: row.company || existing.company,
+                phone: row.phone || existing.phone,
+                value: row.valueAmount !== undefined ? row.valueAmount : (row.value !== undefined ? row.value : existing.value),
+                status: row.status || existing.status,
+                priority: row.priority || existing.priority,
+                probability: row.probability !== undefined ? row.probability : existing.probability,
+                assignedToId: row.assignedToId || existing.assignedToId,
+              }
+            });
+            imported++;
+          } else if (duplicateStrategy === "create") {
+            await prisma.lead.create({
+              data: {
+                tenantId,
+                name: row.name,
+                company: row.company || "Unknown Company",
+                email: row.email,
+                phone: row.phone,
+                value: row.valueAmount !== undefined ? row.valueAmount : (row.value || 0),
+                status: row.status || defaults.status,
+                priority: row.priority || defaults.priority,
+                probability: row.probability !== undefined ? row.probability : defaults.probability,
+                assignedToId: row.assignedToId || null,
+              }
+            });
+            imported++;
+          }
+        } else {
+          await prisma.lead.create({
+            data: {
+              tenantId,
+              name: row.name,
+              company: row.company || "Unknown Company",
+              email: row.email,
+              phone: row.phone,
+              value: row.valueAmount !== undefined ? row.valueAmount : (row.value || 0),
+              status: row.status || defaults.status,
+              priority: row.priority || defaults.priority,
+              probability: row.probability !== undefined ? row.probability : defaults.probability,
+              assignedToId: row.assignedToId || null,
+            }
+          });
+          imported++;
+        }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        failed++;
+        failedRows.push({ ...row, ErrorReason: err.message || "Database error" });
+      }
+    }
+
+    if (imported > 0) {
+      await prisma.auditLog.create({
+        data: {
+          tenantId,
+          userId,
+          action: "BULK_IMPORT_LEADS",
+          module: "PIPELINE",
+          details: { imported, skipped, failed }
+        }
+      });
+    }
+
+    return { imported, skipped, failed, failedRows };
   }
 }

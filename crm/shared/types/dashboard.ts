@@ -4,6 +4,14 @@ import { MetricCardType } from "./common";
 
 export type StatCardType = MetricCardType;
 
+export interface DashboardStatType {
+  title: string;
+  value: string;
+  valueAmount?: number;
+  change: string;
+  positive: boolean;
+}
+
 export interface ActivityType {
   id: string;
   title: string;

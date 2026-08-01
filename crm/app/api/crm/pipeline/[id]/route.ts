@@ -14,7 +14,7 @@ export async function PATCH(
     const rawBody = await request.json();
     const body = leadSchema.partial().parse(rawBody);
     const resolvedParams = await params;
-    const lead = await CrmService.updateLead(session.tenantId, resolvedParams.id, body);
+    const lead = await CrmService.updateLead(session.tenantId, session.userId, resolvedParams.id, body);
     
     return NextResponse.json({ success: true, data: lead }, { status: 200 });
   } catch (error: unknown) { return handleApiError(error); }

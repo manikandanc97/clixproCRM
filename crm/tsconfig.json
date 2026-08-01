@@ -40,7 +40,9 @@
     "middleware/**/*.ts",
     "config/**/*.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "proxy.ts",
+    "middleware.ts"
   ],
   "exclude": ["node_modules"]
 }

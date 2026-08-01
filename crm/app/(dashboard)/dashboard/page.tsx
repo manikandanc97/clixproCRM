@@ -122,7 +122,7 @@ const DashboardPage = () => {
             <UpcomingMeetings />
           </DashboardWidgetWrapper>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8">
             <DashboardWidgetWrapper 
               id="hotLeads" 
               title="Hot Leads"
@@ -133,7 +133,6 @@ const DashboardPage = () => {
             >
               <HotLeads />
             </DashboardWidgetWrapper>
-
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

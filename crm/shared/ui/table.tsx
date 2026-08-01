@@ -4,11 +4,11 @@ import * as React from "react";
 
 import { cn } from "@/shared/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+function Table({ className, wrapperClassName, ...props }: React.ComponentProps<"table"> & { wrapperClassName?: string }) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto rounded-xl border border-border bg-card shadow-card"
+      className={cn("relative w-full overflow-auto rounded-xl border border-border bg-card shadow-card", wrapperClassName)}
     >
       <table
         data-slot="table"

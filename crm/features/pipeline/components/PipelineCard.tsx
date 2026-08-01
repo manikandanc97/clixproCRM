@@ -4,13 +4,10 @@ import { PipelineLeadType } from "@/shared/types/pipeline";
 import { 
   MoreHorizontal, 
   DollarSign, 
-  Flame, 
   Clock, 
   MessageSquare, 
   UserPlus, 
-  Zap,
-  ArrowUpRight,
-  Activity
+  Zap
 } from "lucide-react";
 // import {  } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
@@ -26,14 +23,15 @@ import { motion } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/shared/lib/utils";
-import Image from "next/image";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 interface Props {
   item: PipelineLeadType;
   isOverlay?: boolean;
+  onSelect?: () => void;
 }
 
-const PipelineCard = ({ item, isOverlay }: Props) => {
+const PipelineCard = ({ item, isOverlay, onSelect }: Props) => {
   const {
     attributes,
     listeners,
@@ -42,6 +40,8 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
     transition,
     isDragging
   } = useSortable({ id: item.id, data: { type: 'Card', item } });
+  
+  const { formatCurrency } = useCurrency();
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -56,34 +56,28 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
     }
   };
 
-  const getTempIcon = (t: string) => {
-    switch (t) {
-      case "Hot": return <Flame className="w-3.5 h-3.5 text-orange-500" />;
-      case "Warm": return <Zap className="w-3.5 h-3.5 text-amber-500" />;
-      default: return <Clock className="w-3.5 h-3.5 text-blue-500" />;
-    }
-  };
-
   if (isDragging && !isOverlay) {
     return (
       <div 
         ref={setNodeRef}
         style={style}
-        className="bg-muted/50 rounded-xl border-2 border-dashed border-border h-[200px] w-full"
+        className="bg-muted/50 rounded-xl border-2 border-dashed border-border h-[100px] w-full"
       />
     );
   }
 
   return (
-    <div 
+    <div
       ref={setNodeRef}
       style={style}
+      className={cn(
+        "group relative flex flex-col gap-2 rounded-xl border bg-card p-3 text-card-foreground shadow-sm transition-all duration-200 cursor-pointer",
+        isDragging && "opacity-50 ring-2 ring-primary ring-offset-2 scale-95",
+        isOverlay && "opacity-100 ring-2 ring-primary scale-105 shadow-xl rotate-2 cursor-grabbing",
+        !isDragging && !isOverlay && "hover:shadow-md hover:border-primary/50"
+      )}
       {...attributes}
       {...listeners}
-      className={cn(
-        "group relative bg-card p-5 rounded-xl border border-border shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-grab active:cursor-grabbing",
-        isOverlay && "shadow-elevated ring-2 ring-primary/20 scale-105 opacity-90"
-      )}
     >
       {/* Stuck Alert */}
       {item.isStuck && (
@@ -91,8 +85,8 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
            <TooltipProvider>
              <Tooltip>
                <TooltipTrigger asChild>
-                 <div className="w-6 h-6 rounded-full bg-destructive text-white flex items-center justify-center shadow-lg animate-bounce">
-                   <Clock className="w-3.5 h-3.5" />
+                 <div className="w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center shadow-lg animate-bounce">
+                   <Clock className="w-3 h-3" />
                  </div>
                </TooltipTrigger>
                <TooltipContent>
@@ -103,26 +97,21 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex flex-col gap-1.5">
-          <Badge variant="outline" className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 h-5 w-fit", getPriorityColor(item.priority))}>
-            {item.priority} Priority
-          </Badge>
-          <h3 className="font-bold text-foreground group-hover:text-primary transition-colors leading-tight text-sm">
-            {item.name}
-          </h3>
-        </div>
+      {/* Header: Priority & Options */}
+      <div className="flex justify-between items-center">
+        <Badge variant="outline" className={cn("text-[9px] font-bold uppercase tracking-wider px-1.5 py-0 h-4", getPriorityColor(item.priority || "Low"))}>
+          {item.priority || "Low"}
+        </Badge>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="text-muted-foreground hover:text-foreground transition-colors p-1">
+            <button onPointerDown={(e) => e.stopPropagation()} className="text-muted-foreground hover:text-foreground transition-colors p-1 -mr-1">
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-             <DropdownMenuItem>
-               <MessageSquare className="w-3.5 h-3.5 mr-2" /> Quick Note
+             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSelect?.(); }}>
+               <MessageSquare className="w-3.5 h-3.5 mr-2" /> Edit / Quick Note
              </DropdownMenuItem>
              <DropdownMenuItem>
                <UserPlus className="w-3.5 h-3.5 mr-2" /> Assign Owner
@@ -135,101 +124,35 @@ const PipelineCard = ({ item, isOverlay }: Props) => {
         </DropdownMenu>
       </div>
 
-      <div className="flex items-center gap-2 mb-5">
-        <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden relative">
-           <Image 
-             src={`https://api.dicebear.com/7.x/initials/svg?seed=${item.company}&backgroundColor=f1f5f9&textColor=64748b`} 
-             alt={item.company}
-             fill
-             className="object-cover"
-             unoptimized
-           />
-        </div>
-        <p className="text-[11px] font-bold text-muted-foreground truncate tracking-tight">{item.company}</p>
+      {/* Title & Company */}
+      <div className="flex flex-col gap-0.5 mt-0.5">
+        <h3 className="font-bold text-foreground group-hover:text-primary transition-colors text-sm truncate">
+          {item.name}
+        </h3>
+        {item.company && item.company !== item.name && (
+          <p className="text-xs text-muted-foreground truncate">{item.company}</p>
+        )}
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="flex flex-col gap-1">
-           <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Value</span>
-           <div className="flex items-center gap-1.5 text-sm font-bold text-foreground">
-             <div className="w-5 h-5 rounded-md bg-emerald-500/10 flex items-center justify-center text-success">
-               <DollarSign className="w-3 h-3" />
-             </div>
-             {item.value}
-           </div>
+      {/* Metrics */}
+      <div className="flex items-center justify-between pt-2.5 mt-1 border-t border-border/50">
+        <div className="flex items-center gap-1 text-sm font-bold text-foreground">
+          <span className="text-success"><DollarSign className="w-3.5 h-3.5" /></span>
+          {formatCurrency(item.valueAmount)}
         </div>
-        <div className="flex flex-col gap-1">
-           <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Probability</span>
-           <div className="flex items-center gap-2">
-             <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-               <motion.div 
-                 initial={{ width: 0 }}
-                 animate={{ width: `${item.probability}%` }}
-                 className={cn(
-                   "h-full rounded-full",
-                   item.probability > 70 ? 'bg-success' : item.probability > 30 ? 'bg-primary' : 'bg-muted-foreground'
-                 )}
-               />
-             </div>
-             <span className="text-[10px] font-bold text-foreground">{item.probability}%</span>
-           </div>
-        </div>
-      </div>
-
-      {/* Footer Info */}
-      <div className="flex items-center justify-between pt-4 border-t border-border/50 mt-auto">
-        <div className="flex items-center gap-4">
-        </div>
-
         <div className="flex items-center gap-2">
-           <TooltipProvider>
-             <Tooltip>
-               <TooltipTrigger asChild>
-                 <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted/50 border border-border/50">
-                    <Activity className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-[10px] font-bold text-muted-foreground">{item.activityCount}</span>
-                 </div>
-               </TooltipTrigger>
-               <TooltipContent>
-                 <p className="text-[10px] font-bold">Recent Activities</p>
-               </TooltipContent>
-             </Tooltip>
-           </TooltipProvider>
-
-           <TooltipProvider>
-             <Tooltip>
-               <TooltipTrigger asChild>
-                 <div className={cn(
-                   "w-7 h-7 rounded-lg flex items-center justify-center border shadow-sm",
-                   item.temperature === "Hot" ? "bg-orange-500/10 border-orange-500/20 text-orange-500" : 
-                   item.temperature === "Warm" ? "bg-amber-500/10 border-amber-500/20 text-amber-500" : 
-                   "bg-blue-500/10 border-blue-500/20 text-blue-500"
-                 )}>
-                   {getTempIcon(item.temperature)}
-                 </div>
-               </TooltipTrigger>
-               <TooltipContent>
-                 <p className="text-[10px] font-bold uppercase tracking-wider">{item.temperature} Lead</p>
-               </TooltipContent>
-             </Tooltip>
-           </TooltipProvider>
+          <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${item.probability}%` }}
+              className={cn(
+                "h-full rounded-full",
+                item.probability > 70 ? 'bg-success' : item.probability > 30 ? 'bg-primary' : 'bg-muted-foreground'
+              )}
+            />
+          </div>
+          <span className="text-[10px] font-bold text-muted-foreground">{item.probability}%</span>
         </div>
-      </div>
-
-      {/* Hover Quick Actions Bar */}
-      <div className="absolute inset-x-0 bottom-0 translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto z-30 px-3">
-         <div className="bg-foreground text-background rounded-xl shadow-elevated p-1 flex items-center justify-around ring-4 ring-foreground/5 mt-1">
-            <button className="flex-1 py-1.5 rounded-lg hover:bg-background/10 transition-colors flex items-center justify-center gap-2">
-               <Zap className="w-3.5 h-3.5 text-primary" />
-               <span className="text-[9px] font-bold uppercase tracking-widest">AI Insight</span>
-            </button>
-            <div className="w-px h-4 bg-background/20" />
-            <button className="flex-1 py-1.5 rounded-lg hover:bg-background/10 transition-colors flex items-center justify-center gap-2">
-               <ArrowUpRight className="w-3.5 h-3.5 text-blue-400" />
-               <span className="text-[9px] font-bold uppercase tracking-widest">Details</span>
-            </button>
-         </div>
       </div>
     </div>
   );

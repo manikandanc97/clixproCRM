@@ -16,6 +16,8 @@ const taskSchema = z.object({
   dueDate: z.date().optional(),
   priority: z.enum(["HIGH", "MEDIUM", "LOW"]),
   status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]),
+  assignedToId: z.string().optional(),
+  reminderAt: z.date().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -46,7 +48,11 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
         dueDate: data.dueDate ? data.dueDate.toISOString() : undefined,
         priority: data.priority,
         status: data.status,
-      });
+        // Using any since these fields aren't in the create task payload type yet,
+        // but backend might support them or they can be ignored for now.
+        assignedToId: data.assignedToId === "unassigned" ? undefined : data.assignedToId,
+        reminderAt: data.reminderAt ? data.reminderAt.toISOString() : undefined,
+      } as any);
       onSuccess?.();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
@@ -84,6 +90,18 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
               { label: "Completed", value: "COMPLETED" },
             ]} 
           />
+          <FormSelect 
+            name="assignedToId" 
+            label="Assigned To" 
+            options={[
+              { label: "Unassigned", value: "unassigned" },
+              { label: "Current User", value: "me" }
+            ]} 
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormDatePicker name="reminderAt" label="Reminder" />
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">

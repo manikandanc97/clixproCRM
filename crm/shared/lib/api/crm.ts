@@ -152,7 +152,7 @@ export function deleteLead(id: string) {
   return unwrapResponse<{ id: string }>(client.delete(`/crm/leads/${id}`));
 }
 
-export function updatePipelineItem(id: string, data: { status: string }) {
+export function updatePipelineItem(id: string, data: Record<string, any>) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return unwrapResponse<any>(client.patch(`/crm/pipeline/${id}`, data));
 }

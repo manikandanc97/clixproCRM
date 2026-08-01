@@ -7,13 +7,14 @@ import * as z from "zod";
 import { Form } from "@/shared/ui/form";
 import { FormInput, FormSelect, FormDatePicker } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
-import { useCreateLead } from "@/shared/hooks/use-crm";
+import { useCreateLead, useUpdateLead } from "@/shared/hooks/use-crm";
 import { Loader2 } from "lucide-react";
 
 const leadSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   company: z.string().min(2, "Company must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
   status: z.enum(["NEW", "CONTACTED", "PROPOSAL_SENT", "WON", "LOST"]),
   value: z.string().optional(),
   followUpAt: z.date().optional(),
@@ -22,34 +23,72 @@ const leadSchema = z.object({
 type LeadFormValues = z.infer<typeof leadSchema>;
 
 interface LeadFormProps {
+  initialData?: import("@/shared/types/lead").LeadType;
+  initialStage?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export const LeadForm = ({ onSuccess, onCancel }: LeadFormProps) => {
-  const createLead = useCreateLead();
+export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: LeadFormProps) => {
+  const { mutateAsync: createMutate, isPending: isCreating } = useCreateLead();
+  const { mutateAsync: updateMutate, isPending: isUpdating } = useUpdateLead();
+
+  const isPending = isCreating || isUpdating;
+
+  const stageToStatus: Record<string, string> = {
+    "New Lead": "NEW",
+    "Contacted": "CONTACTED",
+    "Proposal Sent": "PROPOSAL_SENT",
+    "Won": "WON",
+    "Lost": "LOST",
+  };
 
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
     defaultValues: {
-      name: "",
-      company: "",
-      email: "",
-      status: "NEW",
-      value: "",
+      name: initialData?.name || "",
+      company: initialData?.company || "",
+      email: initialData?.email || "",
+      phone: initialData?.phone || "",
+      status: initialData?.status 
+        ? (Object.values(stageToStatus).includes(initialData.status) ? initialData.status as any : "NEW") 
+        : ((initialStage && stageToStatus[initialStage]) ? stageToStatus[initialStage] as LeadFormValues['status'] : "NEW"),
+      value: initialData?.value?.replace(/[^0-9.]/g, '') || "",
+      followUpAt: initialData?.followUpAt ? new Date(initialData.followUpAt) : undefined,
     },
   });
 
   const onSubmit = async (data: LeadFormValues) => {
     try {
-      await createLead.mutateAsync({
-        name: data.name,
-        company: data.company,
-        email: data.email,
-        status: data.status,
-        value: data.value || "",
-        followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
-      });
+      let formattedPhone = data.phone;
+      if (formattedPhone && formattedPhone.trim() !== '' && !formattedPhone.trim().startsWith('+')) {
+        formattedPhone = `+91 ${formattedPhone.trim()}`;
+      }
+
+      if (initialData) {
+        await updateMutate({
+          id: initialData.id,
+          data: {
+            name: data.name,
+            company: data.company,
+            email: data.email,
+            phone: formattedPhone,
+            status: data.status,
+            value: data.value ? data.value.replace(/[^0-9.]/g, '') : "0",
+            followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
+          }
+        });
+      } else {
+        await createMutate({
+          name: data.name,
+          company: data.company,
+          email: data.email,
+          phone: formattedPhone,
+          status: data.status,
+          value: data.value ? data.value.replace(/[^0-9.]/g, '') : "0",
+          followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
+        });
+      }
       onSuccess?.();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
@@ -65,7 +104,10 @@ export const LeadForm = ({ onSuccess, onCancel }: LeadFormProps) => {
           <FormInput name="company" label="Company" placeholder="e.g. Acme Corp" />
         </div>
         
-        <FormInput name="email" label="Email Address" placeholder="john@example.com" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput name="email" label="Email Address" placeholder="john@example.com" />
+          <FormInput name="phone" label="Phone Number" placeholder="+91 98765 43210" />
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormSelect 
@@ -87,17 +129,17 @@ export const LeadForm = ({ onSuccess, onCancel }: LeadFormProps) => {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={createLead.isPending}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancel
           </Button>
-          <Button type="submit" disabled={createLead.isPending} className="min-w-32">
-            {createLead.isPending ? (
+          <Button type="submit" disabled={isPending} className="min-w-32">
+            {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                {initialData ? "Updating..." : "Creating..."}
               </>
             ) : (
-              "Create Lead"
+              initialData ? "Update Lead" : "Create Lead"
             )}
           </Button>
         </div>

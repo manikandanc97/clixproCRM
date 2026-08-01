@@ -7,24 +7,24 @@ import { Badge } from "@/shared/ui/badge";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/shared/lib/utils";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 interface Props {
   title: string;
   items: PipelineLeadType[];
+  onSelectDeal?: (deal: PipelineLeadType) => void;
+  onAddDeal?: (stage: string) => void;
 }
 
-const PipelineColumn = ({ title, items }: Props) => {
+const PipelineColumn = ({ title, items, onSelectDeal, onAddDeal }: Props) => {
   const { setNodeRef, isOver } = useDroppable({
     id: title,
     data: { type: 'Column', title }
   });
 
-  const totalValue = items.reduce((sum, item) => sum + item.valueAmount, 0);
-  const formattedTotal = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0
-  }).format(totalValue);
+  const totalValue = items.reduce((sum, item) => sum + (item.valueAmount || 0), 0);
+  const { formatCurrency } = useCurrency();
+  const formattedTotal = formatCurrency(totalValue);
 
   const getHeaderIconColor = (t: string) => {
     switch (t) {
@@ -54,9 +54,14 @@ const PipelineColumn = ({ title, items }: Props) => {
               {items.length}
             </Badge>
           </div>
-          <button className="text-muted-foreground hover:text-foreground transition-colors">
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => onAddDeal?.(title)} className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Add deal to this stage">
+              <Plus className="w-4 h-4" />
+            </button>
+            <button className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors">
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+          </div>
         </div>
         
         <div className="flex items-center justify-between bg-background/50 rounded-xl p-3 border border-border shadow-sm">
@@ -76,29 +81,27 @@ const PipelineColumn = ({ title, items }: Props) => {
 
       {/* Cards Area */}
       <div className="flex-1 px-3 pt-4 space-y-4 overflow-y-auto kanban-board-scroll pb-6">
-        <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
           {items.length > 0 ? (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-3 min-h-[50px]">
               {items.map((item) => (
-                <PipelineCard key={item.id} item={item} />
+                <PipelineCard key={item.id} item={item} onSelect={() => onSelectDeal?.(item)} />
               ))}
             </div>
           ) : (
-            <div className="h-48 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-border rounded-xl bg-background/20 group hover:border-primary/30 transition-all">
-               <div className="w-10 h-10 rounded-xl bg-background shadow-sm flex items-center justify-center text-muted-foreground group-hover:text-primary transition-all mb-3">
-                  <Target className="w-5 h-5" />
-               </div>
-               <p className="text-[11px] font-bold text-muted-foreground">No deals in this stage</p>
-               <p className="text-[9px] text-muted-foreground/60 mt-1 uppercase tracking-wider">Drag deals here</p>
-            </div>
-          )}
-        </SortableContext>
-        
-        <button className="w-full py-4 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-background/50 transition-all flex items-center justify-center gap-2 group mt-2">
-          <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          <span className="text-sm font-bold tracking-tight">Add New Deal</span>
-        </button>
-      </div>
+             <div className="h-48 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-border rounded-xl bg-background/20 group transition-all">
+                <div className="w-10 h-10 rounded-xl bg-background shadow-sm flex items-center justify-center text-muted-foreground mb-3">
+                   <Target className="w-5 h-5" />
+                </div>
+                <p className="text-[11px] font-bold text-muted-foreground">No deals in this stage</p>
+                <p className="text-[9px] text-muted-foreground/60 mt-1 uppercase tracking-wider mb-4">Drag deals here</p>
+                <button onClick={() => onAddDeal?.(title)} className="px-4 py-2 rounded-lg bg-primary/10 text-primary font-bold text-[11px] hover:bg-primary hover:text-primary-foreground flex items-center gap-2 transition-colors">
+                  <Plus className="w-3 h-3" /> Add Deal
+                </button>
+             </div>
+           )}
+         </SortableContext>
+       </div>
 
       {/* Column Footer Analytics */}
       <div className="px-5 py-3 bg-background/40 border-t border-border flex items-center justify-between">
@@ -106,7 +109,7 @@ const PipelineColumn = ({ title, items }: Props) => {
             <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center text-primary">
                <DollarSign className="w-3 h-3" />
             </div>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Avg: <span className="text-foreground">${items.length ? Math.floor(totalValue/items.length).toLocaleString() : 0}</span></span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Avg: <span className="text-foreground">{formatCurrency(items.length ? Math.floor(totalValue/items.length) : 0)}</span></span>
          </div>
       </div>
     </div>

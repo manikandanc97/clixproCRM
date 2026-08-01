@@ -8,11 +8,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 import AuthLayout from "@/features/auth/components/auth-layout";
-// DemoAccountsSection import removed
-import { getApiErrorMessage } from "@/shared/lib/api/error";
+import { parseApiErrors } from "@/shared/lib/api/error";
 
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -33,6 +32,21 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: "" }));
+    if (generalError) setGeneralError(null);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: "" }));
+    if (generalError) setGeneralError(null);
+  };
 
   /**
    * Handles regular user login
@@ -42,17 +56,27 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
+      setFieldErrors({});
+      setGeneralError(null);
       await login(email, password);
       toast.success("Login successful");
       // Redirect is handled by PublicRoute once auth state is confirmed.
     } catch (error: unknown) {
-      toast.error(getApiErrorMessage(error, "Login failed"));
+      const { fieldErrors, generalError } = parseApiErrors(error, "Login failed");
+      setFieldErrors(fieldErrors);
+      setGeneralError(generalError);
+
+      setTimeout(() => {
+        const firstErrorField = Object.keys(fieldErrors)[0];
+        if (firstErrorField) {
+          const el = document.getElementById(firstErrorField);
+          if (el) el.focus();
+        }
+      }, 0);
     } finally {
       setLoading(false);
     }
   };
-
-  // Demo login removed
 
   return (
     <PublicRoute>
@@ -72,11 +96,14 @@ export default function LoginPage() {
               data-testid="email-input"
               type="email"
               placeholder="name@company.com"
-              className="rounded-xl h-11"
+              className={`rounded-xl h-11 ${fieldErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               required
             />
+            {fieldErrors.email && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.email}</p>
+            )}
           </div>
 
           {/* Password */}
@@ -96,9 +123,9 @@ export default function LoginPage() {
                 data-testid="password-input"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                className="rounded-xl h-11 pr-10"
+                className={`rounded-xl h-11 pr-10 ${fieldErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 required
               />
               <button
@@ -109,6 +136,12 @@ export default function LoginPage() {
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+            {fieldErrors.password && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.password}</p>
+            )}
+            {generalError && !fieldErrors.password && (
+              <p className="text-sm text-red-500 mt-1">{generalError}</p>
+            )}
           </div>
 
           {/* Remember */}
@@ -127,26 +160,13 @@ export default function LoginPage() {
             type="submit"
             data-testid="login-btn"
             disabled={loading}
-            className="bg-emerald-700 hover:bg-emerald-800 rounded-xl w-full h-11"
+            className="bg-emerald-700 hover:bg-emerald-800 rounded-xl w-full h-11 flex items-center justify-center gap-2"
           >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Signing In..." : "Sign In"}
           </Button>
         </form>
-
-        {/* Demo section removed */}
       </AuthLayout>
     </PublicRoute>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

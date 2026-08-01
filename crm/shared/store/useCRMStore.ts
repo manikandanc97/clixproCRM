@@ -22,9 +22,11 @@ interface CRMState {
   // Preferences (Moved from Context for unified management)
   accentColor: string;
   fontFamily: string;
+  currency: string;
 
   // Actions
   setLeads: (leads: LeadType[]) => void;
+  updateLead: (id: string, updates: Partial<LeadType>) => void;
   
   setTasks: (tasks: TaskType[]) => void;
 
@@ -40,6 +42,7 @@ interface CRMState {
   
   setAccentColor: (color: string) => void;
   setFontFamily: (font: string) => void;
+  setCurrency: (currency: string) => void;
 
   addNotification: (notification: Notification) => void;
   clearNotifications: () => void;
@@ -69,8 +72,12 @@ export const useCRMStore = create<CRMState>()(
       activeTimeframe: 'month',
       accentColor: 'emerald',
       fontFamily: 'sans',
+      currency: 'USD',
 
       setLeads: (leads) => set({ leads }),
+      updateLead: (id, updates) => set((state) => ({
+        leads: state.leads.map(lead => lead.id === id ? { ...lead, ...updates } : lead)
+      })),
 
       setTasks: (tasks) => set({ tasks }),
 
@@ -88,6 +95,7 @@ export const useCRMStore = create<CRMState>()(
       
       setAccentColor: (accentColor) => set({ accentColor }),
       setFontFamily: (fontFamily) => set({ fontFamily }),
+      setCurrency: (currency) => set({ currency }),
 
       addNotification: (n) => set((state) => ({ notifications: [n, ...state.notifications] })),
       clearNotifications: () => set({ notifications: [] }),
@@ -116,6 +124,7 @@ export const useCRMStore = create<CRMState>()(
             activeTimeframe: state?.activeTimeframe ?? 'month',
             accentColor: state?.accentColor ?? 'emerald',
             fontFamily: state?.fontFamily ?? 'sans',
+            currency: state?.currency ?? 'USD',
           };
         }
         
@@ -126,6 +135,7 @@ export const useCRMStore = create<CRMState>()(
         activeTimeframe: state.activeTimeframe,
         accentColor: state.accentColor,
         fontFamily: state.fontFamily,
+        currency: state.currency,
       }),
     }
   )

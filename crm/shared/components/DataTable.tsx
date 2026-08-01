@@ -21,8 +21,9 @@ interface DataTableProps<T> {
   }[];
   onRowClick?: (item: T) => void;
   className?: string;
+  wrapperClassName?: string;
   rowClassName?: string | ((item: T) => string);
-  emptyMessage?: string;
+  emptyMessage?: string | React.ReactNode;
 }
 
 export function DataTable<T>({
@@ -30,17 +31,18 @@ export function DataTable<T>({
   columns,
   onRowClick,
   className,
+  wrapperClassName,
   rowClassName,
   emptyMessage = "No data available.",
 }: DataTableProps<T>) {
   return (
-    <Table className={cn("min-w-full", className)}>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent">
+    <Table className={cn("min-w-full", className)} wrapperClassName={wrapperClassName}>
+      <TableHeader className="sticky top-0 z-10 bg-card shadow-sm">
+        <TableRow className="hover:bg-transparent border-b">
           {columns.map((column, index) => (
             <TableHead 
               key={index} 
-              className={cn("bg-muted/5", column.headerClassName)}
+              className={cn("bg-card text-muted-foreground", column.headerClassName, column.className)}
             >
               {column.header}
             </TableHead>

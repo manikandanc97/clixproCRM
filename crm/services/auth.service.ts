@@ -1,6 +1,16 @@
 import prisma from "@/lib/prisma";
 import { RegisterInput, LoginInput } from "@/shared/validators/auth.validator";
-import { hashPassword, verifyPassword, signJWT } from "@/shared/lib/auth/utils";
+import { hashPassword, verifyPassword } from "@/shared/lib/auth/password";
+import { signJWT } from "@/shared/lib/auth/jwt";
+
+export class AuthError extends Error {
+  statusCode: number;
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.name = 'AuthError';
+    this.statusCode = statusCode;
+  }
+}
 
 export class AuthService {
   static async register(data: RegisterInput, reqInfo: { ip?: string; userAgent?: string }) {
@@ -37,11 +47,12 @@ export class AuthService {
         },
       });
 
-      await tx.authAuditLog.create({
+      await tx.auditLog.create({
         data: {
           userId: user.id,
           tenantId: tenant.id,
-          eventType: "REGISTER_SUCCESS",
+          action: "REGISTER_SUCCESS",
+          module: "Authentication",
           ipAddress: reqInfo.ip,
           userAgent: reqInfo.userAgent,
         }
@@ -54,16 +65,31 @@ export class AuthService {
   static async login(data: LoginInput, reqInfo: { ip?: string; userAgent?: string }) {
     const user = await prisma.user.findUnique({ 
       where: { email: data.email },
-      include: { memberships: true }
+      include: { 
+        memberships: {
+          include: {
+            role: {
+              include: {
+                permissions: true
+              }
+            }
+          }
+        } 
+      }
     });
 
     if (!user) {
-      throw new Error("Invalid credentials");
+      throw new AuthError("User not found.", 404);
     }
 
     if (user.lockedUntil && user.lockedUntil > new Date()) {
-      throw new Error("Account is temporarily locked. Please try again later.");
+      throw new AuthError("Account is temporarily locked. Please try again later.", 423);
     }
+
+    if (user.status !== "ACTIVE") {
+      throw new AuthError("Account inactive.", 403);
+    }
+
 
     const isValid = await verifyPassword(data.password, user.password);
     if (!isValid) {
@@ -75,16 +101,17 @@ export class AuthService {
         data: { failedLoginAttempts: attempts, lockedUntil }
       });
 
-      await prisma.authAuditLog.create({
+      await prisma.auditLog.create({
         data: {
           userId: user.id,
-          eventType: "LOGIN_FAILED",
+          action: "LOGIN_FAILED",
+          module: "Authentication",
           ipAddress: reqInfo.ip,
           userAgent: reqInfo.userAgent,
         }
       });
 
-      throw new Error("Invalid credentials");
+      throw new AuthError("Incorrect password.", 401);
     }
 
     if (user.failedLoginAttempts > 0) {
@@ -97,8 +124,11 @@ export class AuthService {
     const membership = user.memberships[0];
     const tenantId = membership?.tenantId || "";
     const roleId = membership?.roleId || "";
+    const roleName = membership?.role?.name || "EMPLOYEE";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const permissions = membership?.role?.permissions?.filter((rp: any) => rp.hasAccess).map((rp: any) => rp.module) || [];
 
-    const jwtPayload = { userId: user.id, tenantId, roleId };
+    const jwtPayload = { userId: user.id, tenantId, roleId, role: roleName };
     const token = await signJWT(jwtPayload);
 
     await prisma.session.create({
@@ -111,17 +141,29 @@ export class AuthService {
       }
     });
 
-    await prisma.authAuditLog.create({
+    await prisma.auditLog.create({
       data: {
         userId: user.id,
         tenantId,
-        eventType: "LOGIN_SUCCESS",
+        action: "LOGIN_SUCCESS",
+        module: "Authentication",
         ipAddress: reqInfo.ip,
         userAgent: reqInfo.userAgent,
       }
     });
 
-    return { user: { id: user.id, name: user.name, email: user.email }, token };
+    return { 
+      user: { 
+        id: user.id, 
+        name: user.name, 
+        email: user.email,
+        status: user.status,
+        tenantId,
+        role: roleName,
+        permissions
+      }, 
+      token 
+    };
   }
 
   static async logout(token: string) {

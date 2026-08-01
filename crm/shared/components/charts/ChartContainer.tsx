@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { ResponsiveContainer } from "recharts";
-// import { } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 
 interface ChartContainerProps {
@@ -34,28 +32,26 @@ export const ChartContainer = ({
   className,
   minHeight
 }: ChartContainerProps) => {
-  const [isReady, setIsReady] = useState(false);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const node = containerRef.current;
+    if (!node) return;
 
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        if (width > 0 && height > 0) {
-          setIsReady(true);
-        }
-      }
+    const updateDimensions = () => {
+      if (!node) return;
+      const { clientWidth, clientHeight } = node;
+      setDimensions({ width: clientWidth, height: clientHeight });
+    };
+
+    const observer = new ResizeObserver(() => {
+      // Use requestAnimationFrame to avoid ResizeObserver loop limit exceeded error
+      window.requestAnimationFrame(updateDimensions);
     });
 
-    observer.observe(containerRef.current);
-
-    // Initial check in case it's already sized
-    const { clientWidth, clientHeight } = containerRef.current;
-    if (clientWidth > 0 && clientHeight > 0) {
-      setIsReady(true);
-    }
+    observer.observe(node);
+    updateDimensions();
 
     return () => {
       observer.disconnect();
@@ -67,10 +63,12 @@ export const ChartContainer = ({
     minHeight: typeof minHeight === 'number' ? `${minHeight}px` : minHeight,
   };
 
+  const isReady = dimensions.width > 0 && dimensions.height > 0;
+
   return (
     <div 
       ref={containerRef}
-      className={cn("w-full min-w-0 relative", className)} 
+      className={cn("w-full h-full min-w-0 relative", className)} 
       style={containerStyle}
     >
       {(!isReady || loading) ? (
@@ -83,9 +81,12 @@ export const ChartContainer = ({
           <p className="text-sm font-medium italic">{emptyMessage}</p>
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height="100%">
-          {children as React.ReactElement}
-        </ResponsiveContainer>
+        <div className="absolute inset-0">
+          {React.isValidElement(children) && React.cloneElement(children as React.ReactElement<{ width?: number; height?: number }>, {
+            width: dimensions.width,
+            height: dimensions.height
+          })}
+        </div>
       )}
     </div>
   );

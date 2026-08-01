@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 import AuthLayout from "@/features/auth/components/auth-layout";
 import { registerUser } from "@/shared/lib/api/auth";
-import { getApiErrorMessage } from "@/shared/lib/api/error";
+import { parseApiErrors } from "@/shared/lib/api/error";
 
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -27,13 +27,24 @@ export default function RegisterPage() {
 
   // Loading
   const [loading, setLoading] = useState(false);
+  
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
+
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) setFieldErrors((prev) => ({ ...prev, [field]: "" }));
+    if (generalError) setGeneralError(null);
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
+    setGeneralError(null);
 
     // Password match check
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      setFieldErrors({ confirmPassword: "Passwords do not match" });
+      setTimeout(() => document.getElementById("confirmPassword")?.focus(), 0);
       return;
     }
 
@@ -54,7 +65,17 @@ export default function RegisterPage() {
     } catch (error: unknown) {
       console.log(error);
 
-      toast.error(getApiErrorMessage(error, "Registration failed"));
+      const { fieldErrors, generalError } = parseApiErrors(error, "Registration failed");
+      setFieldErrors(fieldErrors);
+      setGeneralError(generalError);
+
+      setTimeout(() => {
+        const firstErrorField = Object.keys(fieldErrors)[0];
+        if (firstErrorField) {
+          const el = document.getElementById(firstErrorField);
+          if (el) el.focus();
+        }
+      }, 0);
     } finally {
       setLoading(false);
     }
@@ -78,10 +99,13 @@ export default function RegisterPage() {
               id="name"
               type="text"
               placeholder="Enter your full name"
-              className="rounded-xl h-11"
+              className={`rounded-xl h-11 ${fieldErrors.name ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); clearFieldError("name"); }}
             />
+            {fieldErrors.name && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.name}</p>
+            )}
           </div>
 
           {/* Company Name */}
@@ -92,10 +116,13 @@ export default function RegisterPage() {
               id="companyName"
               type="text"
               placeholder="Enter your company name"
-              className="rounded-xl h-11"
+              className={`rounded-xl h-11 ${fieldErrors.companyName ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
+              onChange={(e) => { setCompanyName(e.target.value); clearFieldError("companyName"); }}
             />
+            {fieldErrors.companyName && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.companyName}</p>
+            )}
           </div>
 
           {/* Email */}
@@ -106,10 +133,13 @@ export default function RegisterPage() {
               id="email"
               type="email"
               placeholder="name@company.com"
-              className="rounded-xl h-11"
+              className={`rounded-xl h-11 ${fieldErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
             />
+            {fieldErrors.email && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.email}</p>
+            )}
           </div>
 
           {/* Password */}
@@ -120,9 +150,9 @@ export default function RegisterPage() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Create password"
-                className="rounded-xl h-11 pr-10"
+                className={`rounded-xl h-11 pr-10 ${fieldErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
               />
               <button
                 type="button"
@@ -132,6 +162,9 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+            {fieldErrors.password && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.password}</p>
+            )}
           </div>
 
           {/* Confirm Password */}
@@ -142,9 +175,9 @@ export default function RegisterPage() {
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm password"
-                className="rounded-xl h-11 pr-10"
+                className={`rounded-xl h-11 pr-10 ${fieldErrors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError("confirmPassword"); }}
               />
               <button
                 type="button"
@@ -154,14 +187,21 @@ export default function RegisterPage() {
                 {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+            {fieldErrors.confirmPassword && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.confirmPassword}</p>
+            )}
+            {generalError && !fieldErrors.confirmPassword && (
+              <p className="text-sm text-red-500 mt-1">{generalError}</p>
+            )}
           </div>
 
           {/* Submit */}
           <Button
             type="submit"
             disabled={loading}
-            className="bg-emerald-700 hover:bg-emerald-800 rounded-xl w-full h-11"
+            className="bg-emerald-700 hover:bg-emerald-800 rounded-xl w-full h-11 flex items-center justify-center gap-2"
           >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Creating Account..." : "Create Account"}
           </Button>
         </form>

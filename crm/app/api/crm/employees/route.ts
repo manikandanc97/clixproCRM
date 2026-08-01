@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     });
 
     const employeesData = await CrmService.getEmployees(session.tenantId, page, limit);
-    return NextResponse.json({ success: true, data: employeesData.employees, stats: employeesData.stats, pagination: employeesData.pagination }, { status: 200 });
+    return NextResponse.json({ success: true, data: { employees: employeesData.employees, stats: employeesData.stats, recentActivities: employeesData.activities, pagination: employeesData.pagination } }, { status: 200 });
   } catch (error) { return handleApiError(error); }
 }
 

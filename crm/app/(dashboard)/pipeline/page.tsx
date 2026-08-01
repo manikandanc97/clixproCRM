@@ -22,6 +22,8 @@ const LeadForm = dynamic(() => import("@/features/forms/LeadForm").then(mod => (
   loading: () => <div className="h-[300px] skeleton rounded-xl" />
 });
 import { useSearchParams } from "next/navigation";
+import { useCurrency } from "@/shared/hooks/use-currency";
+import { PipelineToolbar } from "@/features/pipeline/components/PipelineToolbar";
 
 const PipelinePage = () => {
   const { pipelineItems, setPipelineItems } = useCRMStore();
@@ -30,6 +32,12 @@ const PipelinePage = () => {
 
   const searchParams = useSearchParams();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [preselectedStage, setPreselectedStage] = useState<string | undefined>();
+  const { formatCurrency } = useCurrency();
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortValue, setSortValue] = useState("created_desc");
+  const [filterValue, setFilterValue] = useState("all");
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
@@ -48,7 +56,8 @@ const PipelinePage = () => {
     }
   }, [data?.items, setPipelineItems]);
 
-  const handleAddDeal = () => {
+  const handleAddDeal = (stage?: string | any) => {
+    setPreselectedStage(typeof stage === 'string' ? stage : undefined);
     setIsAddModalOpen(true);
   };
 
@@ -81,6 +90,30 @@ const PipelinePage = () => {
     : 0;
   const stuckDeals = safePipelineItems.filter((item) => item.isStuck).length;
 
+  let filteredItems = [...safePipelineItems];
+  
+  if (searchQuery) {
+    filteredItems = filteredItems.filter(item => 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.company.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+  
+  if (filterValue === "hot") {
+    filteredItems = filteredItems.filter(item => item.temperature === "Hot");
+  } else if (filterValue === "stuck") {
+    filteredItems = filteredItems.filter(item => item.isStuck);
+  }
+  
+  if (sortValue === "value_desc") {
+    filteredItems.sort((a, b) => (b.valueAmount || 0) - (a.valueAmount || 0));
+  } else if (sortValue === "prob_desc") {
+    filteredItems.sort((a, b) => (b.probability || 0) - (a.probability || 0));
+  } else {
+    // default created_desc
+    filteredItems.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }
+
   return (
     <CRMPageContainer className="pb-6">
       <CRMPageHeader 
@@ -107,7 +140,7 @@ const PipelinePage = () => {
       <CRMMetricsGrid cols={3} className="gap-4">
         <CRMMetricCard 
           title="Pipeline Value"
-          value={totalValue.toLocaleString()}
+          value={formatCurrency(totalValue)}
           change="0%"
           trend="up"
           icon={DollarSign}
@@ -134,7 +167,13 @@ const PipelinePage = () => {
         />
       </CRMMetricsGrid>
 
-      <PipelineBoard items={safePipelineItems} />
+      <PipelineToolbar 
+        onSearch={setSearchQuery}
+        onSort={setSortValue}
+        onFilter={setFilterValue}
+      />
+
+      <PipelineBoard items={filteredItems} onAddDeal={handleAddDeal} />
 
       <FormModal
         title="Add New Opportunity"
@@ -144,6 +183,7 @@ const PipelinePage = () => {
         size="lg"
       >
         <LeadForm 
+          initialStage={preselectedStage}
           onSuccess={() => setIsAddModalOpen(false)} 
           onCancel={() => setIsAddModalOpen(false)} 
         />
