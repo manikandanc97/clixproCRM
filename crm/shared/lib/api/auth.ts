@@ -4,6 +4,7 @@ import client from "./client";
 interface LoginPayload {
   email: string;
   password: string;
+  staySignedIn?: boolean;
 }
 
 interface RegisterPayload {

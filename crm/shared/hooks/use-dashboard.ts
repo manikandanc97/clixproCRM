@@ -10,7 +10,8 @@ import {
   fetchLeadsData,
   fetchTasksData,
   fetchPipelineData,
-  fetchCustomersData
+  fetchCustomersData,
+  fetchRevenueGrowth
 } from "@/shared/lib/api/crm";
 import { useAuth } from "@/features/auth/components/auth-provider";
 
@@ -19,11 +20,22 @@ export function useDashboardData() {
   return useQuery({
     queryKey: ["dashboardData", token],
     queryFn: fetchDashboardData,
-    enabled: isHydrated && isAuthenticated ,
-    refetchInterval: 5 * 60 * 1000, // 5 minutes
-    staleTime: 60 * 1000, // 1 minute
+    enabled: isHydrated && isAuthenticated,
+    refetchInterval: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000, // 30 seconds
     retry: 1,
     refetchOnWindowFocus: false,
+  });
+}
+
+export function useRevenueGrowth(filter: string = "Year") {
+  const { isAuthenticated, isHydrated, token } = useAuth();
+  return useQuery({
+    queryKey: ["revenueGrowth", filter, token],
+    queryFn: () => fetchRevenueGrowth(filter),
+    enabled: isHydrated && isAuthenticated,
+    refetchInterval: 60 * 1000,
+    staleTime: 60 * 1000,
   });
 }
 

@@ -127,8 +127,20 @@ export default function AIInsights() {
                 className="space-y-3 overflow-hidden"
               >
                 {insights[activeTab].length > 0 ? (
-                  insights[activeTab].map((item) => {
+                  insights[activeTab].map((item: any, index: number) => {
                     const Icon = getIcon(activeTab);
+                    
+                    const confidence = Math.max(75, 98 - (index * 7)); 
+                    const priority = index === 0 ? "HIGH" : index === 1 ? "MEDIUM" : "LOW";
+                    const pColors = {
+                      HIGH: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+                      MEDIUM: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                      LOW: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                    };
+
+                    const itemBgColor = item.bgColor || "bg-primary/10";
+                    const itemColor = item.color || "text-primary";
+
                     return (
                       <motion.div
                         key={item.id}
@@ -137,25 +149,57 @@ export default function AIInsights() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         onClick={() => handleCardClick(item.title)}
-                        className="group relative bg-white/[0.03] border border-white/5 p-3.5 rounded-lg transition-all cursor-pointer overflow-hidden backdrop-blur-sm"
+                        className="group relative bg-white/[0.03] border border-white/5 p-4 rounded-xl transition-all cursor-pointer overflow-hidden backdrop-blur-sm hover:bg-white/[0.05] hover:border-white/10 flex flex-col gap-3"
                       >
                         <div className="flex items-start gap-3.5">
-                          <div className={`p-2.5 ${item.bgColor} rounded-lg ${item.color} shrink-0 transition-transform`}>
-                            <Icon className="w-3.5 h-3.5" />
+                          <div className={`p-2.5 ${itemBgColor} rounded-lg ${itemColor} shrink-0 transition-transform group-hover:scale-110`}>
+                            <Icon className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-[11px] mb-1 text-white tracking-tight line-clamp-1">
-                              {item.title}
-                            </h4>
-                            <p className="text-white/50 text-[10px] leading-relaxed line-clamp-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <h4 className="font-bold text-[12px] text-white tracking-tight line-clamp-1">
+                                {item.title}
+                              </h4>
+                              <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${pColors[priority]}`}>
+                                {priority}
+                              </span>
+                            </div>
+                            <p className="text-white/60 text-[11px] leading-relaxed line-clamp-2 pr-4">
                               {item.description}
                             </p>
                           </div>
                           <button
                             onClick={(e) => handleDismiss(e, activeTab, item.id)}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded transition-all text-white/30"
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded transition-all text-white/30 absolute top-3 right-3"
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-1 pt-3 border-t border-white/5">
+                          <div className="flex items-center gap-2">
+                            <div className="relative w-6 h-6 flex items-center justify-center bg-white/5 rounded-full border border-white/10">
+                              <svg className="w-full h-full transform -rotate-90 absolute inset-0">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" className="text-white/5" />
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" 
+                                  strokeDasharray={`${(confidence / 100) * 62.83} 62.83`}
+                                  className="text-primary transition-all duration-1000" 
+                                />
+                              </svg>
+                              <span className="text-[7px] font-black text-white relative z-10">{confidence}%</span>
+                            </div>
+                            <span className="text-[9px] font-medium text-white/50 uppercase tracking-widest">Confidence</span>
+                          </div>
+                          
+                          <button 
+                            className="flex items-center gap-1.5 text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCardClick(item.title);
+                            }}
+                          >
+                            Take Action
+                            <ArrowRight className="w-3 h-3" />
                           </button>
                         </div>
                       </motion.div>
@@ -184,15 +228,3 @@ export default function AIInsights() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

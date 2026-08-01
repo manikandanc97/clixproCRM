@@ -7,6 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
 import { useAuth } from "@/features/auth/components/auth-provider";
+import { CRM_ROLES } from "@/shared/lib/auth/rbac/roles";
 
 interface DashboardWidgetWrapperProps {
   id: string;
@@ -38,10 +39,10 @@ export function DashboardWidgetWrapper({
   className = "w-full h-full",
   delay = 0,
 }: DashboardWidgetWrapperProps) {
-  const { access } = useAuth();
+  const { access, user } = useAuth();
   
-  // RBAC Check: If user doesn't have permission for this widget, don't render it at all.
-  const hasAccess = access.dashboardWidgets.includes(id);
+  // RBAC Check: Admin bypasses all checks. If not admin, verify widget access.
+  const hasAccess = user?.role === CRM_ROLES.ADMIN || access.dashboardWidgets.includes(id);
   
   if (!hasAccess) {
     console.warn(`[Dashboard] Access denied for widget: ${id}`);

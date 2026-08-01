@@ -105,7 +105,7 @@ const CustomersPage = () => {
   const monthlyRevenue = safeCustomers.reduce((sum, customer) => sum + (customer.revenueValue ?? 0), 0);
 
   return (
-    <CRMPageContainer>
+    <CRMPageContainer className="min-h-full !pb-4 md:!pb-6 space-y-0 gap-4 md:gap-6 flex flex-col">
       <PageHeader 
         title="Customers"
         subtitle="Manage your client relationships and monitor account health with AI-powered analytics."
@@ -127,64 +127,71 @@ const CustomersPage = () => {
         ]}
       />
 
-      <CRMMetricsGrid cols={3}>
-        <CRMMetricCard 
-          title="Total Customers"
-          value={safeCustomers.length}
-          change="0%"
-          trend="up"
-          icon={Users}
-          color="blue"
-          delay={0.1}
-        />
-        <CRMMetricCard 
-          title="VIP Clients"
-          value={safeCustomers.filter(c => c.status === "PREMIUM").length}
-          change="0%"
-          trend="up"
-          icon={Star}
-          color="pink"
-          delay={0.2}
-        />
-        <CRMMetricCard 
-          title="Monthly Revenue"
-          value={monthlyRevenue.toLocaleString("en-US")}
-          change="0%"
-          trend="up"
-          icon={CreditCard}
-          color="emerald"
-          delay={0.3}
-        />
-      </CRMMetricsGrid>
+      <div className="shrink-0">
+        <CRMMetricsGrid cols={3}>
+          <CRMMetricCard 
+            title="Total Customers"
+            value={safeCustomers.length}
+            change="0%"
+            trend="up"
+            icon={Users}
+            color="blue"
+            delay={0.1}
+          />
+          <CRMMetricCard 
+            title="VIP Clients"
+            value={safeCustomers.filter(c => c.status === "PREMIUM").length}
+            change="0%"
+            trend="up"
+            icon={Star}
+            color="pink"
+            delay={0.2}
+          />
+          <CRMMetricCard 
+            title="Monthly Revenue"
+            value={monthlyRevenue.toLocaleString("en-US")}
+            change="0%"
+            trend="up"
+            icon={CreditCard}
+            color="emerald"
+            delay={0.3}
+          />
+        </CRMMetricsGrid>
+      </div>
 
-      <CRMToolbar 
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        placeholder="Search customers, companies..."
-      >
-        <div className="flex items-center gap-2">
-          {["All", "Active", "Premium"].map((status) => (
-            <Button
-              key={status}
-              variant={statusFilter === status.toLowerCase() ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setStatusFilter(status.toLowerCase())}
-              className="h-8 px-3 text-xs font-semibold"
-            >
-              {status}
-            </Button>
-          ))}
-        </div>
-      </CRMToolbar>
-
-      <AnimatePresence mode="wait">
-        {filteredCustomers.length > 0 ? (
-          <motion.div
-            key="table"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+      <div className="flex-1 flex flex-col gap-4">
+        <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+          <CRMToolbar 
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            placeholder="Search customers, companies..."
           >
+            <div className="flex items-center gap-2">
+              {["All", "Active", "Premium"].map((status) => (
+                <Button
+                  key={status}
+                  variant={statusFilter === status.toLowerCase() ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setStatusFilter(status.toLowerCase())}
+                  className="h-8 px-3 text-xs font-semibold"
+                >
+                  {status}
+                </Button>
+              ))}
+            </div>
+          </CRMToolbar>
+        </div>
+
+        <div className="flex-1 min-h-0 flex flex-col">
+          <AnimatePresence mode="wait">
+            {filteredCustomers.length > 0 ? (
+              <motion.div
+                key="table"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 flex flex-col min-h-0"
+              >
             <CustomersTable 
               customers={filteredCustomers} 
               onEdit={(customer) => {
@@ -201,10 +208,12 @@ const CustomersPage = () => {
             action={{
               label: "Clear All Filters",
               onClick: () => { setSearchQuery(""); setStatusFilter("all"); setSegmentFilter("all"); }
-            }}
-          />
-        )}
-      </AnimatePresence>
+                }}
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
 
       <FormModal
         title={selectedCustomer ? "Edit Customer" : "Register New Customer"}

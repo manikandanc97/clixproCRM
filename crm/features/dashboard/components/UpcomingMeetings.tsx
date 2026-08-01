@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CRMCard } from "@/shared/components/crm/CRMCard";
+import { CRMCard, EmptyState } from "@/shared/components/crm";
 import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import {
   Calendar,
@@ -67,7 +67,7 @@ export default function UpcomingMeetings() {
         animate={false}
         accentSeed="Upcoming Meetings"
         noPadding
-        className="bg-gradient-to-br from-card to-background/50"
+        className="bg-gradient-to-br from-card to-background/50 h-[420px] flex flex-col"
       >
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-4">
@@ -77,7 +77,7 @@ export default function UpcomingMeetings() {
             <div>
               <CardTitle>Upcoming Meetings</CardTitle>
               <p className="text-muted-foreground text-sm font-medium">
-                You have {meetings.filter((m) => m.isToday).length} meetings
+                You have {data?.meetings?.filter((m) => m.isToday).length || 0} meetings
                 scheduled for today
               </p>
             </div>
@@ -90,50 +90,20 @@ export default function UpcomingMeetings() {
             >
               View Calendar
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-xl hover:bg-muted h-10 w-10"
-                >
-                  <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-xl p-2">
-                <DropdownMenuItem onClick={handleSchedule} className="rounded-xl gap-2 font-semibold">
-                  <Plus className="w-4 h-4" /> Schedule New
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleViewCalendar} className="rounded-xl gap-2 font-semibold">
-                  <Calendar className="w-4 h-4" /> Go to Full Calendar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </CardHeader>
 
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 flex-1 flex flex-col">
           {!hasMeetings ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4 border border-dashed border-border">
-                <Calendar className="w-8 h-8 text-muted-foreground/30" />
-              </div>
-              <h4 className="font-bold text-foreground text-lg">
-                No upcoming meetings
-              </h4>
-              <p className="text-muted-foreground text-sm max-w-[240px] mt-1">
-                Your schedule is clear. Use this time to focus on your leads!
-              </p>
-              <Button 
-                onClick={handleSchedule}
-                className="mt-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 shadow-lg shadow-primary/20"
-              >
-                Schedule Meeting
-              </Button>
-            </div>
+            <EmptyState 
+              icon={Calendar}
+              title="No Upcoming Meetings"
+              description="You're all caught up for today.\nNo meetings are scheduled."
+              primaryAction={{ label: "Schedule Meeting", onClick: handleSchedule }}
+            />
           ) : (
-            <div className="flex flex-col gap-3 max-h-[480px] overflow-y-auto custom-scrollbar">
-              {meetings.map((meeting, index) => (
+            <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar">
+              {meetings.slice(0, 3).map((meeting, index) => (
                 <motion.div
                   key={meeting.id}
                   initial={{ opacity: 0, y: 10 }}

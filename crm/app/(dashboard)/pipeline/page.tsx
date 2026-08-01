@@ -115,7 +115,7 @@ const PipelinePage = () => {
   }
 
   return (
-    <CRMPageContainer className="pb-6">
+    <CRMPageContainer className="min-h-full !pb-4 md:!pb-6 space-y-0 gap-4 md:gap-6 flex flex-col">
       <CRMPageHeader 
         title="Sales Pipeline"
         subtitle="Visualize your sales funnel, manage deal stages, and forecast revenue with real-time accuracy."
@@ -137,43 +137,51 @@ const PipelinePage = () => {
         ]}
       />
 
-      <CRMMetricsGrid cols={3} className="gap-4">
-        <CRMMetricCard 
-          title="Pipeline Value"
-          value={formatCurrency(totalValue)}
-          change="0%"
-          trend="up"
-          icon={DollarSign}
-          color="purple"
-          delay={0.1}
-        />
-        <CRMMetricCard 
-          title="Avg. Probability"
-          value={`${averageProbability}%`}
-          change="0%"
-          trend="up"
-          icon={Target}
-          color="blue"
-          delay={0.2}
-        />
-        <CRMMetricCard 
-          title="Stuck Deals"
-          value={stuckDeals}
-          change="0%"
-          trend={stuckDeals > 0 ? "down" : "up"}
-          icon={TrendingUp}
-          color="blue"
-          delay={0.3}
-        />
-      </CRMMetricsGrid>
+      <div className="shrink-0">
+        <CRMMetricsGrid cols={3} className="gap-4">
+          <CRMMetricCard 
+            title="Pipeline Value"
+            value={formatCurrency(totalValue)}
+            change="0%"
+            trend="up"
+            icon={DollarSign}
+            color="purple"
+            delay={0.1}
+          />
+          <CRMMetricCard 
+            title="Avg. Probability"
+            value={`${averageProbability}%`}
+            change="0%"
+            trend="up"
+            icon={Target}
+            color="blue"
+            delay={0.2}
+          />
+          <CRMMetricCard 
+            title="Stuck Deals"
+            value={stuckDeals}
+            change="0%"
+            trend={stuckDeals > 0 ? "down" : "up"}
+            icon={TrendingUp}
+            color="blue"
+            delay={0.3}
+          />
+        </CRMMetricsGrid>
+      </div>
 
-      <PipelineToolbar 
-        onSearch={setSearchQuery}
-        onSort={setSortValue}
-        onFilter={setFilterValue}
-      />
+      <div className="flex-1 flex flex-col gap-4">
+        <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+          <PipelineToolbar 
+            onSearch={setSearchQuery}
+            onSort={setSortValue}
+            onFilter={setFilterValue}
+          />
+        </div>
 
-      <PipelineBoard items={filteredItems} onAddDeal={handleAddDeal} />
+        <div className="flex-1 min-h-0 flex flex-col">
+          <PipelineBoard items={filteredItems} onAddDeal={handleAddDeal} />
+        </div>
+      </div>
 
       <FormModal
         title="Add New Opportunity"

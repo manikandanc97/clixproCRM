@@ -49,7 +49,7 @@ export default function RevenueTracker() {
             <Target className="w-5 h-5" />
           </div>
           <div>
-            <CardTitle className="text-base font-bold">Revenue Target</CardTitle>
+            <CardTitle>Revenue Target</CardTitle>
             <div className="flex items-center gap-1 mt-0.5">
               <TrendingUp className={`w-3.5 h-3.5 ${revenueStat?.positive ? 'text-emerald-500' : 'text-rose-500'}`} />
               <span className={`text-xs font-bold ${revenueStat?.positive ? 'text-emerald-500' : 'text-rose-500'}`}>

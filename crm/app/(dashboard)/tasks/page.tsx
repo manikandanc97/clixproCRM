@@ -121,7 +121,7 @@ const TasksPage = () => {
   }
 
   return (
-    <CRMPageContainer>
+    <CRMPageContainer className="min-h-full !pb-4 md:!pb-6 space-y-0 gap-4 md:gap-6 flex flex-col">
       {/* Page Header */}
       <CRMPageHeader
         title="Tasks"
@@ -135,51 +135,55 @@ const TasksPage = () => {
       />
 
       {/* Metric Cards */}
-      <CRMMetricsGrid>
-        <CRMMetricCard
-          title="Total Tasks"
-          value={safeTasks.length}
-          change="0%"
-          trend="up"
-          icon={CheckSquare}
-          color="blue"
-          delay={0.05}
-        />
-        <CRMMetricCard
-          title="Completed"
-          value={completedCount}
-          change="0%"
-          trend="up"
-          icon={CheckCircle2}
-          color="emerald"
-          delay={0.1}
-        />
-        <CRMMetricCard
-          title="In Progress"
-          value={inProgressCount}
-          change="0%"
-          trend="up"
-          icon={Target}
-          color="orange"
-          delay={0.15}
-        />
-        <CRMMetricCard
-          title="Overdue"
-          value={overdueCount}
-          change="0%"
-          trend={overdueCount > 0 ? "down" : "up"}
-          icon={AlertCircle}
-          color="pink"
-          delay={0.2}
-        />
-      </CRMMetricsGrid>
+      <div className="shrink-0">
+        <CRMMetricsGrid>
+          <CRMMetricCard
+            title="Total Tasks"
+            value={safeTasks.length}
+            change="0%"
+            trend="up"
+            icon={CheckSquare}
+            color="blue"
+            delay={0.05}
+          />
+          <CRMMetricCard
+            title="Completed"
+            value={completedCount}
+            change="0%"
+            trend="up"
+            icon={CheckCircle2}
+            color="emerald"
+            delay={0.1}
+          />
+          <CRMMetricCard
+            title="In Progress"
+            value={inProgressCount}
+            change="0%"
+            trend="up"
+            icon={Target}
+            color="orange"
+            delay={0.15}
+          />
+          <CRMMetricCard
+            title="Overdue"
+            value={overdueCount}
+            change="0%"
+            trend={overdueCount > 0 ? "down" : "up"}
+            icon={AlertCircle}
+            color="pink"
+            delay={0.2}
+          />
+        </CRMMetricsGrid>
+      </div>
 
-      {/* Toolbar */}
-      <CRMToolbar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        placeholder="Search tasks, assignees..."
-      >
+      <div className="flex-1 flex flex-col gap-4">
+        {/* Toolbar */}
+        <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+          <CRMToolbar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            placeholder="Search tasks, assignees..."
+          >
         {/* Status filters */}
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-full">
           {STATUS_FILTERS.map((s) => {
@@ -220,17 +224,20 @@ const TasksPage = () => {
           ))}
         </div>
       </CRMToolbar>
+      </div>
 
       {/* Main content */}
-      <AnimatePresence mode="wait">
-        {filteredTasks.length > 0 ? (
-          <motion.div
-            key={viewMode}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
+      <div className="flex-1 min-h-0 flex flex-col">
+        <AnimatePresence mode="wait">
+          {filteredTasks.length > 0 ? (
+            <motion.div
+              key={viewMode}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1 flex flex-col min-h-0"
+            >
             {viewMode === "list" && (
               <TasksTable tasks={filteredTasks} onTaskClick={setSelectedTask} />
             )}
@@ -267,6 +274,8 @@ const TasksPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
+      </div>
 
       <TaskDetailsDrawer
         task={selectedTask}

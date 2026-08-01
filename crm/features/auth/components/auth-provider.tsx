@@ -45,7 +45,7 @@ type AuthContextState = {
   isAuthenticated: boolean;
   isInitializing: boolean;
   isHydrated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, staySignedIn?: boolean) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
@@ -54,7 +54,7 @@ type AuthContextState = {
 const AuthContext = createContext<AuthContextState | null>(null);
 
 const WIDGETS_BY_ROLE: Record<string, string[]> = {
-  [CRM_ROLES.ADMIN]: ["salesChart", "upcomingMeetings", "hotLeads", "teamPerformance", "leadFunnel", "revenueTracker", "recentActivities", "pendingFollowups", "aiInsights", "calendarWidget"],
+  [CRM_ROLES.ADMIN]: ["revenue", "newLeads", "activeDeals", "winRate", "salesChart", "upcomingMeetings", "hotLeads", "teamPerformance", "leadFunnel", "revenueTracker", "recentActivities", "pendingFollowups", "aiInsights", "calendarWidget"],
   [CRM_ROLES.MANAGER]: ["salesChart", "upcomingMeetings", "hotLeads", "teamPerformance", "leadFunnel", "recentActivities", "pendingFollowups", "calendarWidget"],
   [CRM_ROLES.SALES]: ["salesChart", "upcomingMeetings", "hotLeads", "leadFunnel", "recentActivities", "pendingFollowups", "calendarWidget"],
   [CRM_ROLES.SUPPORT]: ["upcomingMeetings", "recentActivities", "pendingFollowups", "calendarWidget"],
@@ -178,10 +178,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("auth:expired", handleAuthExpired);
   }, [logout]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, staySignedIn?: boolean) => {
     try {
       setLoading(true);
-      const response = await loginUser({ email, password });
+      const response = await loginUser({ email, password, staySignedIn });
       
       if (typeof window !== "undefined") {
         localStorage.setItem("has_session", "1");

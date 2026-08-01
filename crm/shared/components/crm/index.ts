@@ -15,6 +15,7 @@ export * from "./CRMSortIndicator";
 export * from "./CRMCardHeader";
 export * from "./ActivityTimeline";
 export * from "./PermissionToggle";
+export * from "./EmptyState";
 
 
 

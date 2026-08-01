@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 const meetingSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
-  date: z.date({ required_error: "Date is required" }),
+  date: z.date(),
   time: z.string().min(1, "Time is required"),
   duration: z.string().min(1, "Duration is required"),
   location: z.string().optional(),

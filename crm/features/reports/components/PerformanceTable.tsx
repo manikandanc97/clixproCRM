@@ -3,7 +3,14 @@
 import { useState, useMemo } from "react";
 import { Badge } from "@/shared/ui/badge";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
-import { TrendingDown, TrendingUp, Trophy, ArrowUpRight } from "lucide-react";
+import { TrendingDown, TrendingUp, Trophy, ArrowUpRight, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Button } from "@/shared/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 import { PerformanceType } from "@/shared/types/report";
 import { Progress } from "@/shared/ui/progress";
 import { 
@@ -50,12 +57,23 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
     });
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const totalPages = Math.ceil(sortedPerformance.length / rowsPerPage);
+  const paginatedPerformance = sortedPerformance.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
   return (
-    <CRMDataTable>
-      <CRMTableHeader>
+    <div className="flex-auto flex flex-col min-h-0 relative">
+      <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-auto max-h-[calc(100vh-360px)]">
+    <CRMDataTable containerClassName="border-0 shadow-none rounded-none flex-auto h-full overflow-auto" className="w-full">
+      <CRMTableHeader className="sticky top-0 z-10 bg-card shadow-sm">
         <CRMTableRow>
           <CRMTableHeaderCell 
-            className="cursor-pointer group select-none"
+            className="cursor-pointer group select-none bg-card"
             onClick={() => handleSort("name")}
           >
             <div className="flex items-center gap-2">
@@ -70,21 +88,21 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
               Deals Closed <CRMSortIndicator active={sortConfig?.key === "dealsClosed"} direction={sortConfig?.direction} />
             </div>
           </CRMTableHeaderCell>
-          <CRMTableHeaderCell>Revenue Target</CRMTableHeaderCell>
+            <CRMTableHeaderCell className="bg-card">Revenue Target</CRMTableHeaderCell>
           <CRMTableHeaderCell 
-            className="cursor-pointer group select-none"
+            className="cursor-pointer group select-none bg-card"
             onClick={() => handleSort("conversionRate")}
           >
             <div className="flex items-center gap-2">
               Conversion <CRMSortIndicator active={sortConfig?.key === "conversionRate"} direction={sortConfig?.direction} />
             </div>
           </CRMTableHeaderCell>
-          <CRMTableHeaderCell className="text-right">Trend</CRMTableHeaderCell>
+          <CRMTableHeaderCell className="text-right bg-card">Trend</CRMTableHeaderCell>
         </CRMTableRow>
       </CRMTableHeader>
 
       <CRMTableBody>
-        {sortedPerformance.map((item, idx) => (
+        {paginatedPerformance.map((item, idx) => (
           <CRMTableRow key={item.id}>
             <CRMTableCell>
               <div className="flex items-center gap-4">
@@ -149,6 +167,78 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
         ))}
       </CRMTableBody>
     </CRMDataTable>
+      </div>
+
+      {sortedPerformance.length > 10 && (
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0">
+          <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
+            Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–<span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, sortedPerformance.length)}</span> of <span className="font-bold text-foreground">{new Intl.NumberFormat().format(sortedPerformance.length)}</span> Performers
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold">
+                    {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[4rem]">
+                  {[10, 25, 50, 100].map(size => (
+                    <DropdownMenuItem key={size} onClick={() => { setRowsPerPage(size); setCurrentPage(1); }} className="font-medium text-sm cursor-pointer hover:bg-muted">
+                      {size}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
+                Page {currentPage}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -35,7 +35,7 @@ export function AddNoteModal({ isOpen, onOpenChange, leadId }: AddNoteModalProps
     if (!lead) return;
 
     const newNote: NoteType = {
-      id: `note-${Date.now()}`,
+      id: `note-${new Date().getTime()}`,
       leadId,
       userId: "user-1", // mock user
       createdBy: "Current User", // mock user

@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
     const result = await CrmService.bulkImportLeads(
       session.tenantId,
-      session.id,
+      session.userId,
       leads,
       duplicateStrategy
     );

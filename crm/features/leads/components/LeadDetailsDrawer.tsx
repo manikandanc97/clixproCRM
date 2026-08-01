@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/shared/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Button } from "@/shared/ui/button";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
@@ -63,29 +63,24 @@ export function LeadDetailsDrawer({ isOpen, onOpenChange, leadId }: LeadDetailsD
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:w-[500px] sm:max-w-[500px] h-full flex flex-col border-l border-border bg-background shadow-2xl p-0">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px] h-[90vh] sm:h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
         
-        <SheetHeader className="px-6 py-5 border-b border-border flex items-center justify-between flex-row bg-muted/20">
-          <div className="flex items-center gap-3">
+        <DialogHeader className="px-6 py-5 border-b border-border flex flex-col items-start bg-muted/20 m-0">
+          <div className="flex items-center gap-3 w-full pr-6">
             <Avatar className="w-10 h-10 border shadow-sm">
               <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
                 {lead.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col text-left">
-              <SheetTitle className="text-base font-bold m-0">{lead.name}</SheetTitle>
+              <DialogTitle className="text-base font-bold m-0">{lead.name}</DialogTitle>
               <span className="text-xs text-muted-foreground font-medium">{lead.company}</span>
             </div>
           </div>
-          <SheetClose asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground mt-0 absolute right-4 top-4">
-              <X className="w-4 h-4" />
-            </Button>
-          </SheetClose>
-        </SheetHeader>
+        </DialogHeader>
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
             <div className="px-6 pt-2 border-b border-border bg-background sticky top-0 z-10">
               <TabsList className="w-full flex justify-start bg-transparent p-0 rounded-none h-auto gap-4 overflow-x-auto border-none no-scrollbar">
@@ -227,7 +222,7 @@ export function LeadDetailsDrawer({ isOpen, onOpenChange, leadId }: LeadDetailsD
             </ScrollArea>
           </Tabs>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

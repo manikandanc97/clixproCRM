@@ -170,7 +170,7 @@ const LeadsPage = () => {
             change="0%"
             trend="up"
             icon={Users}
-            color="blue"
+            color="indigo"
             delay={0.1}
           />
           <CRMMetricCard 
@@ -179,7 +179,7 @@ const LeadsPage = () => {
             change="0%"
             trend="up"
             icon={UserPlus}
-            color="blue"
+            color="emerald"
             delay={0.2}
           />
           <CRMMetricCard 
@@ -188,7 +188,7 @@ const LeadsPage = () => {
             change="0%"
             trend="up"
             icon={TrendingUp}
-            color="indigo"
+            color="orange"
             delay={0.3}
           />
         </CRMMetricsGrid>

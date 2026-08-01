@@ -99,7 +99,7 @@ const QuotationsPage = () => {
     : 0;
 
   return (
-    <CRMPageContainer>
+    <CRMPageContainer className="min-h-full !pb-4 md:!pb-6 space-y-0 gap-4 md:gap-6 flex flex-col">
       <CRMPageHeader 
         title="Quotations"
         subtitle="Generate and manage sales quotes with real-time tracking and AI-driven conversion probability."
@@ -121,64 +121,71 @@ const QuotationsPage = () => {
         ]}
       />
 
-      <CRMMetricsGrid cols={3} className="gap-4">
-        <CRMMetricCard 
-          title="Total Quotes"
-          value={safeQuotations.length}
-          change="0%"
-          trend="up"
-          icon={FileText}
-          color="indigo"
-          delay={0.1}
-        />
-        <CRMMetricCard 
-          title="Avg. Deal Size"
-          value={averageDealSize.toLocaleString("en-US")}
-          change="0%"
-          trend="up"
-          icon={TrendingUp}
-          color="emerald"
-          delay={0.2}
-        />
-        <CRMMetricCard 
-          title="Pending Approval"
-          value={safeQuotations.filter(q => q.status === "PENDING").length}
-          change="0%"
-          trend="up"
-          icon={Clock}
-          color="orange"
-          delay={0.3}
-        />
-      </CRMMetricsGrid>
+      <div className="shrink-0">
+        <CRMMetricsGrid cols={3} className="gap-4">
+          <CRMMetricCard 
+            title="Total Quotes"
+            value={safeQuotations.length}
+            change="0%"
+            trend="up"
+            icon={FileText}
+            color="indigo"
+            delay={0.1}
+          />
+          <CRMMetricCard 
+            title="Avg. Deal Size"
+            value={averageDealSize.toLocaleString("en-US")}
+            change="0%"
+            trend="up"
+            icon={TrendingUp}
+            color="emerald"
+            delay={0.2}
+          />
+          <CRMMetricCard 
+            title="Pending Approval"
+            value={safeQuotations.filter(q => q.status === "PENDING").length}
+            change="0%"
+            trend="up"
+            icon={Clock}
+            color="orange"
+            delay={0.3}
+          />
+        </CRMMetricsGrid>
+      </div>
 
-      <CRMToolbar 
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        placeholder="Search quotes, clients..."
-      >
-        <div className="flex items-center gap-2">
-          {["All", "Pending", "Approved", "Expired"].map((status) => (
-            <Button
-              key={status}
-              variant={statusFilter === status.toLowerCase() ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setStatusFilter(status.toLowerCase())}
-              className="h-9 px-3 text-xs font-semibold"
-            >
-              {status}
-            </Button>
-          ))}
-        </div>
-      </CRMToolbar>
-
-      <AnimatePresence mode="wait">
-        {filteredQuotations.length > 0 ? (
-          <motion.div
-            key="table"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+      <div className="flex-1 flex flex-col gap-4">
+        <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+          <CRMToolbar 
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            placeholder="Search quotes, clients..."
           >
+            <div className="flex items-center gap-2">
+              {["All", "Pending", "Approved", "Expired"].map((status) => (
+                <Button
+                  key={status}
+                  variant={statusFilter === status.toLowerCase() ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setStatusFilter(status.toLowerCase())}
+                  className="h-9 px-3 text-xs font-semibold"
+                >
+                  {status}
+                </Button>
+              ))}
+            </div>
+          </CRMToolbar>
+        </div>
+
+        <div className="flex-1 min-h-0 flex flex-col">
+          <AnimatePresence mode="wait">
+            {filteredQuotations.length > 0 ? (
+              <motion.div
+                key="table"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 flex flex-col min-h-0"
+              >
             <QuotationsTable quotations={filteredQuotations} />
           </motion.div>
         ) : (
@@ -204,6 +211,8 @@ const QuotationsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+        </div>
+      </div>
 
       <FormModal
         title="Create Sales Quotation"

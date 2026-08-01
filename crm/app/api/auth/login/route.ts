@@ -26,13 +26,24 @@ export async function POST(req: Request) {
     const data = await AuthService.login(result.data, { ip, userAgent });
 
     const cookieStore = await cookies();
-    cookieStore.set("auth_token", data.token, {
+    const cookieOptions: {
+      httpOnly: boolean;
+      secure: boolean;
+      sameSite: "lax" | "strict" | "none";
+      path: string;
+      maxAge?: number;
+    } = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60, // 1 day
+      sameSite: "lax",
       path: "/",
-    });
+    };
+
+    if (result.data.staySignedIn) {
+      cookieOptions.maxAge = 30 * 24 * 60 * 60; // 30 days
+    }
+
+    cookieStore.set("auth_token", data.token, cookieOptions);
 
     return NextResponse.json({
       success: true,

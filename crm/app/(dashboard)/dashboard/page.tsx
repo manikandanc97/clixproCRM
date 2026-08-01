@@ -37,8 +37,6 @@ const DashboardPage = () => {
     activeTimeframe, setActiveTimeframe 
   } = useCRMStore();
 
-  // Progressive loading: Only show full skeleton during INITIAL auth hydration.
-  // Individual widgets will handle their own loading states via DashboardWidgetWrapper.
   if (isAuthInitializing) {
     return <DashboardSkeleton />;
   }
@@ -47,11 +45,6 @@ const DashboardPage = () => {
     toast.success("Preparing PDF export...", {
       description: "Your dashboard report will be ready in a moment.",
     });
-    setTimeout(() => {
-      toast.success("Export complete!", {
-        description: "Dashboard_Report_May_2026.pdf has been downloaded.",
-      });
-    }, 2000);
   };
 
   const handleFilterClick = () => {
@@ -62,9 +55,11 @@ const DashboardPage = () => {
 
   return (
     <CRMPageContainer>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
+        {/* Row 1: Hero Banner */}
         <WelcomeBanner />
 
+        {/* Action Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
             {(['today', 'week', 'month', 'year'] as const).map((t) => (
@@ -93,73 +88,92 @@ const DashboardPage = () => {
             <CreateNewMenu />
           </div>
         </div>
-      </div>
 
-      <DashboardKPIs />
+        {/* Row 2: KPI Grid */}
+        <DashboardKPIs />
 
-      <DashboardWidgetWrapper 
-        id="salesChart" 
-        title="Sales Chart"
-        isLoading={queries.dashboard.isLoading}
-        isError={queries.dashboard.isError}
-        onRetry={() => queries.dashboard.refetch()}
-        delay={0.5}
-        className="w-full"
-      >
-        <SalesChart />
-      </DashboardWidgetWrapper>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        <div className="lg:col-span-2 xl:col-span-3 flex flex-col gap-8">
-          <DashboardWidgetWrapper 
-            id="upcomingMeetings" 
-            title="Upcoming Meetings"
-            isLoading={queries.meetings.isLoading}
-            isError={queries.meetings.isError}
-            onRetry={() => queries.meetings.refetch()}
-            delay={0.6}
-          >
-            <UpcomingMeetings />
-          </DashboardWidgetWrapper>
-
-          <div className="grid grid-cols-1 gap-8">
+        {/* Row 3: Primary Analytics (Sales Chart + Revenue Target) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
             <DashboardWidgetWrapper 
-              id="hotLeads" 
-              title="Hot Leads"
-              isLoading={queries.hotLeads.isLoading}
-              isError={queries.hotLeads.isError}
-              onRetry={() => queries.hotLeads.refetch()}
-              delay={0.7}
+              id="salesChart" 
+              title="Sales Chart"
+              isLoading={queries.dashboard.isLoading}
+              isError={queries.dashboard.isError}
+              onRetry={() => queries.dashboard.refetch()}
+              delay={0.5}
+              className="h-full"
             >
-              <HotLeads />
+              <SalesChart />
             </DashboardWidgetWrapper>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <DashboardWidgetWrapper 
-              id="leadFunnel" 
-              title="Lead Funnel"
-              isLoading={queries.analytics.isLoading}
-              isError={queries.analytics.isError}
-              onRetry={() => queries.analytics.refetch()}
-              delay={0.9}
-            >
-              <LeadFunnel />
-            </DashboardWidgetWrapper>
-
+          <div className="lg:col-span-1">
             <DashboardWidgetWrapper 
               id="revenueTracker" 
               title="Revenue Tracker"
               isLoading={queries.analytics.isLoading}
               isError={queries.analytics.isError}
               onRetry={() => queries.analytics.refetch()}
-              delay={1.0}
+              delay={0.6}
+              className="h-full"
             >
               <RevenueTracker />
             </DashboardWidgetWrapper>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Row 4 & 5: Operational Layout */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          <div className="xl:col-span-3 flex flex-col gap-6">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <DashboardWidgetWrapper 
+                id="upcomingMeetings" 
+                title="Upcoming Meetings"
+                isLoading={queries.meetings.isLoading}
+                isError={queries.meetings.isError}
+                onRetry={() => queries.meetings.refetch()}
+                delay={0.7}
+              >
+                <UpcomingMeetings />
+              </DashboardWidgetWrapper>
+
+              <DashboardWidgetWrapper 
+                id="pendingFollowups" 
+                title="Pending Tasks"
+                isLoading={queries.tasks.isLoading}
+                isError={queries.tasks.isError}
+                onRetry={() => queries.tasks.refetch()}
+                delay={0.8}
+              >
+                <PendingFollowups />
+              </DashboardWidgetWrapper>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DashboardWidgetWrapper 
+                id="hotLeads" 
+                title="Hot Leads"
+                isLoading={queries.hotLeads.isLoading}
+                isError={queries.hotLeads.isError}
+                onRetry={() => queries.hotLeads.refetch()}
+                delay={0.9}
+              >
+                <HotLeads />
+              </DashboardWidgetWrapper>
+
+              <DashboardWidgetWrapper 
+                id="leadFunnel" 
+                title="Lead Funnel"
+                isLoading={queries.analytics.isLoading}
+                isError={queries.analytics.isError}
+                onRetry={() => queries.analytics.refetch()}
+                delay={1.0}
+              >
+                <LeadFunnel />
+              </DashboardWidgetWrapper>
+            </div>
+
             <DashboardWidgetWrapper 
               id="recentActivities" 
               title="Recent Activities"
@@ -171,39 +185,31 @@ const DashboardPage = () => {
               <RecentActivities />
             </DashboardWidgetWrapper>
 
+          </div>
+
+          {/* Right Sidebar (Sticky) */}
+          <div className="flex flex-col gap-6 w-full xl:sticky xl:top-24 self-start">
             <DashboardWidgetWrapper 
-              id="pendingFollowups" 
-              title="Pending Tasks"
-              isLoading={queries.tasks.isLoading}
-              isError={queries.tasks.isError}
-              onRetry={() => queries.tasks.refetch()}
+              id="aiInsights" 
+              title="AI Insights"
+              isLoading={queries.aiInsights.isLoading}
+              isError={queries.aiInsights.isError}
+              onRetry={() => queries.aiInsights.refetch()}
               delay={1.2}
             >
-              <PendingFollowups />
+              <AIInsights />
+            </DashboardWidgetWrapper>
+
+            <DashboardWidgetWrapper 
+              id="calendarWidget" 
+              title="Calendar"
+              delay={1.3}
+            >
+              <CalendarWidget />
             </DashboardWidgetWrapper>
           </div>
         </div>
 
-        <div className="flex flex-col gap-8 self-start w-full lg:sticky lg:top-24">
-          <DashboardWidgetWrapper 
-            id="aiInsights" 
-            title="AI Insights"
-            isLoading={queries.aiInsights.isLoading}
-            isError={queries.aiInsights.isError}
-            onRetry={() => queries.aiInsights.refetch()}
-            delay={1.3}
-          >
-            <AIInsights />
-          </DashboardWidgetWrapper>
-
-          <DashboardWidgetWrapper 
-            id="calendarWidget" 
-            title="Calendar"
-            delay={1.4}
-          >
-            <CalendarWidget />
-          </DashboardWidgetWrapper>
-        </div>
       </div>
     </CRMPageContainer>
   );

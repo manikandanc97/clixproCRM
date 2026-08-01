@@ -32,6 +32,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [staySignedIn, setStaySignedIn] = useState(false);
   
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -58,7 +59,7 @@ export default function LoginPage() {
       setLoading(true);
       setFieldErrors({});
       setGeneralError(null);
-      await login(email, password);
+      await login(email, password, staySignedIn);
       toast.success("Login successful");
       // Redirect is handled by PublicRoute once auth state is confirmed.
     } catch (error: unknown) {
@@ -146,7 +147,12 @@ export default function LoginPage() {
 
           {/* Remember */}
           <div className="flex items-center space-x-2">
-            <Checkbox id="remember" />
+            <Checkbox 
+              id="remember" 
+              checked={staySignedIn}
+              onCheckedChange={(checked) => setStaySignedIn(checked === true)}
+              disabled={loading}
+            />
             <Label
               htmlFor="remember"
               className="font-normal text-muted-foreground text-sm"

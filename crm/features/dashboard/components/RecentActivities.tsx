@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Filter, Activity } from "lucide-react";
 // import { } from "@/shared/types/dashboard";
 
-import { CRMCard } from "@/shared/components/crm/CRMCard";
+import { CRMCard, EmptyState } from "@/shared/components/crm";
 import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -95,15 +95,17 @@ const RecentActivities = () => {
                   onClick={handleActivityClick}
                 />
               ))
-
             ) : (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-20 text-muted-foreground/30"
+                className="h-full min-h-[300px] flex flex-col"
               >
-                <Filter className="w-10 h-10 mb-4 opacity-10" />
-                <p className="text-[10px] font-black uppercase tracking-[0.2em]">No {filter} activities</p>
+                <EmptyState 
+                  icon={Filter}
+                  title={`No ${filter} activities`}
+                  description="Check back later for updates or try a different filter."
+                />
               </motion.div>
             )}
           </AnimatePresence>

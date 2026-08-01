@@ -52,6 +52,7 @@ model User {
   assignedQuotations  Quotation[]  @relation("QuotationAssignedTo")
   sessions            Session[]
   assignedTasks       Task[]       @relation("TaskAssignedTo")
+  assignedMeetings    Meeting[]    @relation("MeetingAssignedTo")
   memberships         TenantUser[]
 }
 
@@ -121,6 +122,7 @@ model Lead {
   phone        String?
   assignedTo   User?      @relation("LeadAssignedTo", fields: [assignedToId], references: [id])
   tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  meetings     Meeting[]
 
   @@index([tenantId, status])
   @@index([assignedToId])
@@ -289,18 +291,28 @@ model Invoice {
 }
 
 model Meeting {
-  id        String   @id @default(uuid())
-  tenantId  String
-  title     String
-  startTime DateTime
-  endTime   DateTime
-  location  String?
-  isOnline  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id            String    @id @default(uuid())
+  tenantId      String
+  title         String
+  startTime     DateTime
+  endTime       DateTime
+  location      String?
+  isOnline      Boolean   @default(false)
+  type          EventType @default(MEETING)
+  description   String?
+  isAllDay      Boolean   @default(false)
+  assignedToId  String?
+  relatedLeadId String?
+  status        String    @default("SCHEDULED")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedTo    User?     @relation("MeetingAssignedTo", fields: [assignedToId], references: [id])
+  relatedLead   Lead?     @relation(fields: [relatedLeadId], references: [id])
 
   @@index([tenantId])
+  @@index([assignedToId])
+  @@index([relatedLeadId])
 }
 
 model Notification {
@@ -355,4 +367,13 @@ enum QuotationStatus {
   APPROVED
   REJECTED
   EXPIRED
+}
+
+enum EventType {
+  MEETING
+  CALL
+  HOLIDAY
+  BIRTHDAY
+  LEAVE
+  FOLLOW_UP
 }

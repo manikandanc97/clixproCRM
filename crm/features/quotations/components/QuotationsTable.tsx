@@ -15,6 +15,11 @@ import {
   Eye, 
   Copy,
   Clock,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -131,10 +136,20 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
     });
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const totalPages = Math.ceil(sortedQuotations.length / rowsPerPage);
+  const paginatedQuotations = sortedQuotations.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
   return (
-    <>
-      <CRMDataTable>
-        <CRMTableHeader>
+    <div className="flex-auto flex flex-col min-h-0 relative">
+      <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-auto max-h-[calc(100vh-360px)]">
+      <CRMDataTable containerClassName="border-0 shadow-none rounded-none flex-auto h-full overflow-auto" className="w-full">
+        <CRMTableHeader className="sticky top-0 z-10 bg-card shadow-sm">
           <CRMTableRow>
             <CRMTableHeaderCell 
               className="hidden sm:table-cell cursor-pointer group select-none"
@@ -145,7 +160,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
               </div>
             </CRMTableHeaderCell>
             <CRMTableHeaderCell 
-              className="cursor-pointer group select-none"
+              className="cursor-pointer group select-none bg-card"
               onClick={() => handleSort("client")}
             >
               <div className="flex items-center gap-2">
@@ -160,22 +175,22 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
                 Deal Size <CRMSortIndicator active={sortConfig?.key === "amount"} direction={sortConfig?.direction} />
               </div>
             </CRMTableHeaderCell>
-            <CRMTableHeaderCell className="hidden lg:table-cell">Intelligence</CRMTableHeaderCell>
+            <CRMTableHeaderCell className="hidden lg:table-cell bg-card">Intelligence</CRMTableHeaderCell>
             <CRMTableHeaderCell 
-              className="cursor-pointer group select-none"
+              className="cursor-pointer group select-none bg-card"
               onClick={() => handleSort("status")}
             >
               <div className="flex items-center gap-2">
                 Status <CRMSortIndicator active={sortConfig?.key === "status"} direction={sortConfig?.direction} />
               </div>
             </CRMTableHeaderCell>
-            <CRMTableHeaderCell className="text-right">Actions</CRMTableHeaderCell>
+            <CRMTableHeaderCell className="text-right bg-card">Actions</CRMTableHeaderCell>
           </CRMTableRow>
         </CRMTableHeader>
 
         <CRMTableBody>
           <AnimatePresence mode="popLayout">
-            {sortedQuotations.map((quote) => (
+            {paginatedQuotations.map((quote) => (
               <CRMTableRow
                 key={quote.id}
                 onClick={() => setSelectedQuote(quote)}
@@ -277,13 +292,84 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
           </AnimatePresence>
         </CRMTableBody>
       </CRMDataTable>
+      </div>
+
+      {sortedQuotations.length > 10 && (
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0">
+          <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
+            Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–<span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, sortedQuotations.length)}</span> of <span className="font-bold text-foreground">{new Intl.NumberFormat().format(sortedQuotations.length)}</span> Quotes
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold">
+                    {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[4rem]">
+                  {[10, 25, 50, 100].map(size => (
+                    <DropdownMenuItem key={size} onClick={() => { setRowsPerPage(size); setCurrentPage(1); }} className="font-medium text-sm cursor-pointer hover:bg-muted">
+                      {size}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
+                Page {currentPage}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <QuotationPreview 
         quotation={selectedQuote}
         isOpen={!!selectedQuote}
         onClose={() => setSelectedQuote(null)}
       />
-    </>
+    </div>
   );
 };
 

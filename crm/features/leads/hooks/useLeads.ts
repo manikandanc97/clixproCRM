@@ -128,7 +128,7 @@ export function useLeads(leads: LeadType[]) {
     return result;
   }, [leads, sortConfig, filters]);
 
-  const handleSort = (key: SortConfig["key"], direction?: SortConfig["direction"]) => {
+  const handleSort = (key: NonNullable<SortConfig>["key"], direction?: NonNullable<SortConfig>["direction"]) => {
     if (direction) {
       setSortConfig({ key: key as any, direction });
       return;

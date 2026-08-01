@@ -109,7 +109,7 @@ export class CrmService {
           priority: lead.priority,
           probability: lead.probability,
           phone: lead.phone,
-          source: lead.source,
+          source: (lead as any).source || 'Direct',
           customerId,
           isConverted: !!customerId || lead.status === "WON",
         };
@@ -257,7 +257,41 @@ export class CrmService {
     const closedDeals = leads.filter((lead: Lead) => ["WON", "LOST"].includes(lead.status));
     const wonDeals = leads.filter((lead: Lead) => lead.status === "WON");
     const totalValue = openDeals.reduce((total: number, lead: Lead) => total + toNumber(lead.value), 0);
-    const winRate = closedDeals.length ? (wonDeals.length / closedDeals.length) * 100 : 0;
+    const winRate = leads.length ? (wonDeals.length / leads.length) * 100 : 0;
+
+    // Calculate 7-day sparkline and trend data for Active Deals and Win Rate
+    const sparklineActiveDeals = [];
+    const sparklineWinRate = [];
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+
+    for (let i = 6; i >= 0; i--) {
+      const dStart = new Date(todayStart);
+      dStart.setDate(dStart.getDate() - i);
+      const dEnd = new Date(dStart);
+      dEnd.setDate(dEnd.getDate() + 1);
+
+      // Approximation for Active Deals at the end of the day
+      const activeDealsOnDay = leads.filter(l => l.createdAt < dEnd && (!["WON", "LOST"].includes(l.status) || l.updatedAt >= dEnd)).length;
+      
+      // Cumulative Conversion Rate up to the end of the day
+      const leadsUpToDay = leads.filter(l => l.createdAt < dEnd);
+      const wonDealsOnDay = leadsUpToDay.filter(l => l.status === "WON");
+      const winRateOnDay = leadsUpToDay.length ? (wonDealsOnDay.length / leadsUpToDay.length) * 100 : 0;
+
+      sparklineActiveDeals.push({ value: activeDealsOnDay });
+      sparklineWinRate.push({ value: Math.round(winRateOnDay) });
+    }
+
+    // Previous week baseline for trends
+    const sevenDaysAgo = new Date(todayStart);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    const previousOpenDeals = leads.filter(l => l.createdAt < sevenDaysAgo && (!["WON", "LOST"].includes(l.status) || l.updatedAt >= sevenDaysAgo)).length;
+    const previousClosedDeals = leads.filter(l => ["WON", "LOST"].includes(l.status) && l.updatedAt < sevenDaysAgo);
+    const previousWonDeals = previousClosedDeals.filter(l => l.status === "WON");
+    const previousLeads = leads.filter(l => l.createdAt < sevenDaysAgo);
+    const previousWinRate = previousLeads.length ? (previousWonDeals.length / previousLeads.length) * 100 : 0;
 
     const items = leads.map((lead: Lead) => {
       const stageLabel = getStatusLabel(PIPELINE_STAGE_LABELS, lead.status);
@@ -296,8 +330,8 @@ export class CrmService {
     return {
       stats: [
         { title: "Total Value", value: formatCurrency(totalValue, currency), valueAmount: totalValue },
-        { title: "Active Deals", value: `${openDeals.length} Deals`, valueAmount: openDeals.length },
-        { title: "Win Rate", value: formatPercentage(winRate), valueAmount: winRate },
+        { title: "Active Deals", value: `${openDeals.length} Deals`, valueAmount: openDeals.length, sparklineData: sparklineActiveDeals, ...calculateTrend(openDeals.length, previousOpenDeals) },
+        { title: "Win Rate", value: formatPercentage(winRate), valueAmount: winRate, sparklineData: sparklineWinRate, ...calculateTrend(winRate, previousWinRate) },
       ],
       items,
     };
@@ -444,6 +478,24 @@ export class CrmService {
 
   static async getDashboardData(tenantId: string, currency = "USD") {
     const { currentMonthStart, nextMonthStart, previousMonthStart } = getMonthRanges();
+    
+    const now = new Date();
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    
+    const sevenDaysAgo = new Date(todayStart);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // 7 days including today
+
+    const startOfCurrentWeek = new Date(now);
+    startOfCurrentWeek.setDate(now.getDate() - now.getDay());
+    startOfCurrentWeek.setHours(0, 0, 0, 0);
+    
+    const startOfPreviousWeek = new Date(startOfCurrentWeek);
+    startOfPreviousWeek.setDate(startOfPreviousWeek.getDate() - 7);
 
     const [
       totalLeads,
@@ -460,6 +512,13 @@ export class CrmService {
       recentQuotations,
       recentCompletedTasks,
       monthlySalesData,
+      liveTrafficToday,
+      liveTrafficYesterday,
+      activeUsersCurrent,
+      activeUsersPrevious,
+      currentWeekLeads,
+      previousWeekLeads,
+      currentWeekLeadsData,
     ] = await Promise.all([
       prisma.lead.count({ where: { tenantId } }),
       prisma.lead.count({ where: { tenantId, createdAt: { gte: currentMonthStart, lt: nextMonthStart } } }),
@@ -475,15 +534,42 @@ export class CrmService {
       prisma.quotation.findMany({ where: { tenantId }, select: { id: true, client: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 5 }),
       prisma.task.findMany({ where: { tenantId, status: "COMPLETED" }, select: { id: true, title: true, updatedAt: true }, orderBy: { updatedAt: "desc" }, take: 5 }),
       prisma.lead.findMany({ where: { tenantId, status: "WON" }, select: { value: true, updatedAt: true, createdAt: true }, orderBy: { updatedAt: "desc" } }),
+      // Live traffic (Sessions updated today)
+      prisma.session.count({ where: { updatedAt: { gte: todayStart } } }),
+      prisma.session.count({ where: { updatedAt: { gte: yesterdayStart, lt: todayStart } } }),
+      // Active users (Sessions updated in last 15 mins)
+      prisma.session.count({ where: { updatedAt: { gte: fifteenMinutesAgo } } }),
+      prisma.session.count({ where: { updatedAt: { gte: thirtyMinutesAgo, lt: fifteenMinutesAgo } } }),
+      // Weekly growth (Leads this week vs last week)
+      prisma.lead.count({ where: { tenantId, createdAt: { gte: startOfCurrentWeek } } }),
+      prisma.lead.count({ where: { tenantId, createdAt: { gte: startOfPreviousWeek, lt: startOfCurrentWeek } } }),
+      // For Sparkline (Leads last 7 days)
+      prisma.lead.findMany({ where: { tenantId, createdAt: { gte: sevenDaysAgo } }, select: { createdAt: true } }),
     ]);
 
     const currentRevenue = toNumber(currentRevenueAgg._sum.value || 0);
     const previousRevenue = toNumber(previousRevenueAgg._sum.value || 0);
 
+    // Calculate Sparkline Data
+    const sparklineRevenue = [];
+    const sparklineLeads = [];
+    for (let i = 6; i >= 0; i--) {
+      const dStart = new Date(todayStart);
+      dStart.setDate(dStart.getDate() - i);
+      const dEnd = new Date(dStart);
+      dEnd.setDate(dEnd.getDate() + 1);
+      
+      const dayLeads = currentWeekLeadsData.filter(l => l.createdAt >= dStart && l.createdAt < dEnd).length;
+      const dayRevenue = monthlySalesData.filter(l => l.updatedAt >= dStart && l.updatedAt < dEnd).reduce((sum, l) => sum + toNumber(l.value), 0);
+      
+      sparklineLeads.push({ value: dayLeads });
+      sparklineRevenue.push({ value: dayRevenue });
+    }
+
     const dashboardStats = [
-      { title: "Total Leads", value: totalLeads.toLocaleString("en-US"), valueAmount: totalLeads, ...calculateTrend(currentMonthLeads, previousMonthLeads) },
+      { title: "Total Leads", value: totalLeads.toLocaleString("en-US"), valueAmount: totalLeads, sparklineData: sparklineLeads, ...calculateTrend(currentMonthLeads, previousMonthLeads) },
       { title: "New Customers", value: currentMonthCustomers.toLocaleString("en-US"), valueAmount: currentMonthCustomers, ...calculateTrend(currentMonthCustomers, previousMonthCustomers) },
-      { title: "Revenue", value: formatCurrency(currentRevenue, currency), valueAmount: currentRevenue, ...calculateTrend(currentRevenue, previousRevenue) },
+      { title: "Revenue", value: formatCurrency(currentRevenue, currency), valueAmount: currentRevenue, sparklineData: sparklineRevenue, ...calculateTrend(currentRevenue, previousRevenue) },
       { title: "Pending Tasks", value: totalPendingTasks.toLocaleString("en-US"), valueAmount: totalPendingTasks, ...calculateTrend(currentMonthPendingTasks, previousMonthPendingTasks) },
     ];
 
@@ -507,10 +593,27 @@ export class CrmService {
       }
     });
 
+    const weeklyGrowth = previousWeekLeads > 0 
+      ? ((currentWeekLeads - previousWeekLeads) / previousWeekLeads) * 100 
+      : (currentWeekLeads > 0 ? 100 : 0);
+      
+    const liveTrafficGrowth = liveTrafficYesterday > 0
+      ? ((liveTrafficToday - liveTrafficYesterday) / liveTrafficYesterday) * 100
+      : (liveTrafficToday > 0 ? 100 : 0);
+      
+    const activeUsersGrowth = activeUsersPrevious > 0
+      ? ((activeUsersCurrent - activeUsersPrevious) / activeUsersPrevious) * 100
+      : (activeUsersCurrent > 0 ? 100 : 0);
+
     return {
       stats: dashboardStats,
       recentActivities,
       salesChartData,
+      activeUsers: activeUsersCurrent,
+      liveTraffic: liveTrafficToday,
+      weeklyGrowth: Math.round(weeklyGrowth * 10) / 10,
+      liveTrafficGrowth: Math.round(liveTrafficGrowth * 10) / 10,
+      activeUsersGrowth: Math.round(activeUsersGrowth * 10) / 10,
     };
   }
 
@@ -695,8 +798,190 @@ export class CrmService {
         averageRate: "25",
         qualified: "50",
         won: "12",
-        target: "30"
+        lost: "25"
+      },
+      campaignPerformance: []
+    };
+  }
+
+  static async getRevenueGrowthData(tenantId: string, filter: string = "Year") {
+    const now = new Date();
+    let startDate = new Date();
+    let endDate = new Date();
+    let previousStartDate = new Date();
+    let previousEndDate = new Date();
+    let groupBy: "day" | "month" = "month";
+
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    switch (filter) {
+      case "Today":
+        previousStartDate.setDate(now.getDate() - 1);
+        previousEndDate = new Date(previousStartDate);
+        previousStartDate.setHours(0, 0, 0, 0);
+        previousEndDate.setHours(23, 59, 59, 999);
+        groupBy = "day";
+        break;
+      case "Last 7 Days":
+        startDate.setDate(now.getDate() - 6);
+        previousEndDate = new Date(startDate);
+        previousEndDate.setMilliseconds(-1);
+        previousStartDate = new Date(previousEndDate);
+        previousStartDate.setDate(previousStartDate.getDate() - 6);
+        previousStartDate.setHours(0, 0, 0, 0);
+        groupBy = "day";
+        break;
+      case "Last 30 Days":
+        startDate.setDate(now.getDate() - 29);
+        previousEndDate = new Date(startDate);
+        previousEndDate.setMilliseconds(-1);
+        previousStartDate = new Date(previousEndDate);
+        previousStartDate.setDate(previousStartDate.getDate() - 29);
+        previousStartDate.setHours(0, 0, 0, 0);
+        groupBy = "day";
+        break;
+      case "This Month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        previousStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        previousEndDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        groupBy = "day";
+        break;
+      case "Last Month":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        previousStartDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        previousEndDate = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59, 999);
+        groupBy = "day";
+        break;
+      case "Quarter":
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+        previousStartDate = new Date(now.getFullYear(), (currentQuarter - 1) * 3, 1);
+        previousEndDate = new Date(now.getFullYear(), currentQuarter * 3, 0, 23, 59, 59, 999);
+        groupBy = "month";
+        break;
+      case "Year":
+      default:
+        startDate = new Date(now.getFullYear(), 0, 1);
+        previousStartDate = new Date(now.getFullYear() - 1, 0, 1);
+        previousEndDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
+        groupBy = "month";
+        break;
+    }
+
+    const [
+      currentWonLeads,
+      previousWonLeads,
+      currentTotalLeads,
+      previousTotalLeads
+    ] = await Promise.all([
+      prisma.lead.findMany({
+        where: { tenantId, status: "WON", updatedAt: { gte: startDate, lte: endDate } },
+        select: { value: true, updatedAt: true }
+      }),
+      prisma.lead.findMany({
+        where: { tenantId, status: "WON", updatedAt: { gte: previousStartDate, lte: previousEndDate } },
+        select: { value: true }
+      }),
+      prisma.lead.count({
+        where: { tenantId, createdAt: { gte: startDate, lte: endDate } }
+      }),
+      prisma.lead.count({
+        where: { tenantId, createdAt: { gte: previousStartDate, lte: previousEndDate } }
+      })
+    ]);
+
+    const currentRevenue = currentWonLeads.reduce((sum, lead) => sum + toNumber(lead.value), 0);
+    const previousRevenue = previousWonLeads.reduce((sum, lead) => sum + toNumber(lead.value), 0);
+    const currentDeals = currentWonLeads.length;
+    const previousDeals = previousWonLeads.length;
+
+    const revenueGrowth = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : (currentRevenue > 0 ? 100 : 0);
+    const dealsGrowth = previousDeals > 0 ? ((currentDeals - previousDeals) / previousDeals) * 100 : (currentDeals > 0 ? 100 : 0);
+
+    const averageDealSize = currentDeals > 0 ? currentRevenue / currentDeals : 0;
+    const previousAvgDealSize = previousDeals > 0 ? previousRevenue / previousDeals : 0;
+    const avgDealSizeGrowth = previousAvgDealSize > 0 ? ((averageDealSize - previousAvgDealSize) / previousAvgDealSize) * 100 : (averageDealSize > 0 ? 100 : 0);
+
+    const conversionRate = currentTotalLeads > 0 ? (currentDeals / currentTotalLeads) * 100 : 0;
+    const previousConversionRate = previousTotalLeads > 0 ? (previousDeals / previousTotalLeads) * 100 : 0;
+    const conversionRateGrowth = previousConversionRate > 0 ? ((conversionRate - previousConversionRate) / previousConversionRate) * 100 : (conversionRate > 0 ? 100 : 0);
+
+    // Chart Data
+    let chartData: { name: string; value: number; deals: number }[] = [];
+
+    if (groupBy === "month") {
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      chartData = months.map(month => ({ name: month, value: 0, deals: 0 }));
+      
+      currentWonLeads.forEach(lead => {
+        const monthIndex = new Date(lead.updatedAt).getMonth();
+        chartData[monthIndex].value += toNumber(lead.value);
+        chartData[monthIndex].deals += 1;
+      });
+      
+      // If Quarter, only return relevant 3 months
+      if (filter === "Quarter") {
+        const currentQuarter = Math.floor(startDate.getMonth() / 3);
+        chartData = chartData.slice(currentQuarter * 3, currentQuarter * 3 + 3);
       }
+    } else {
+      // Group by day
+      const days = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const dayMap = new Map();
+      
+      for (let i = 0; i <= days; i++) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + i);
+        const name = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        dayMap.set(d.toDateString(), { name, value: 0, deals: 0 });
+      }
+
+      currentWonLeads.forEach(lead => {
+        const d = new Date(lead.updatedAt).toDateString();
+        if (dayMap.has(d)) {
+          const entry = dayMap.get(d);
+          entry.value += toNumber(lead.value);
+          entry.deals += 1;
+        }
+      });
+
+      chartData = Array.from(dayMap.values());
+    }
+
+    // Calculate chart-specific statistics
+    let highestRevenue = 0;
+    let bestPerformingMonth = "N/A";
+    let totalChartRevenue = 0;
+    
+    chartData.forEach(dataPoint => {
+      totalChartRevenue += dataPoint.value;
+      if (dataPoint.value > highestRevenue) {
+        highestRevenue = dataPoint.value;
+        bestPerformingMonth = dataPoint.name;
+      }
+    });
+
+    const averageMonthlyRevenue = chartData.length > 0 ? totalChartRevenue / chartData.length : 0;
+
+    return {
+      monthlyRevenue: chartData,
+      currentRevenue,
+      previousRevenue,
+      growth: Math.round(revenueGrowth * 10) / 10,
+      monthlyDeals: chartData.map(d => ({ name: d.name, deals: d.deals })),
+      dealsGrowth: Math.round(dealsGrowth * 10) / 10,
+      currentDeals,
+      previousDeals,
+      averageDealSize,
+      avgDealSizeGrowth: Math.round(avgDealSizeGrowth * 10) / 10,
+      conversionRate: Math.round(conversionRate * 10) / 10,
+      conversionRateGrowth: Math.round(conversionRateGrowth * 10) / 10,
+      
+      highestRevenue,
+      averageMonthlyRevenue,
+      bestPerformingMonth,
     };
   }
 

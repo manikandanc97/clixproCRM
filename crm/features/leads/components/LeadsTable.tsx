@@ -330,7 +330,7 @@ const LeadsTable = ({
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-40">
-            {["All Priorities", "Low", "Medium", "High", "Urgent"].map(p => (
+            {["All Priorities", "Low", "Medium", "High"].map(p => (
               <DropdownMenuItem key={p} onClick={() => updateFilter("priority", p)} className="text-xs cursor-pointer">
                 {p}
                 {filters.priority === p && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-primary" />}
@@ -542,8 +542,6 @@ const LeadsTable = ({
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Call Initiated", lead.name, lead); }} className="gap-2 text-xs cursor-pointer"><Phone className="w-3.5 h-3.5" /> Call</DropdownMenuItem>
                 </>
               )}
-              
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setAddNoteLead(lead.id); }} className="gap-2 text-xs cursor-pointer"><MessageCircle className="w-3.5 h-3.5" /> Add Note</DropdownMenuItem>
 
               <DropdownMenuSeparator />
               <DropdownMenuItem 
@@ -601,7 +599,7 @@ const LeadsTable = ({
               </div>
               <h3 className="text-lg font-bold text-foreground mb-1">No matching leads</h3>
               <p className="text-muted-foreground text-center max-w-sm text-xs font-medium">
-                We couldn't find any leads matching your current filters.
+                We couldn&apos;t find any leads matching your current filters.
               </p>
             </div>
           }
@@ -665,8 +663,6 @@ const LeadsTable = ({
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Call Initiated", lead.name, lead); }}>Call</DropdownMenuItem>
                     </>
                   )}
-                  
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setAddNoteLead(lead.id); }}>Add Note</DropdownMenuItem>
 
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDeletingLead(lead); }} variant="destructive">Delete Lead</DropdownMenuItem>

@@ -62,6 +62,10 @@ export async function fetchDashboardData() {
   return normalizeDashboardData(await unwrapResponse<DashboardDataType>(client.get("/crm/dashboard")));
 }
 
+export function fetchRevenueGrowth(filter: string = "Year") {
+  return unwrapResponse<any>(client.get(`/crm/dashboard/revenue-growth?filter=${encodeURIComponent(filter)}`));
+}
+
 export function fetchCustomersData() {
   return unwrapResponse<CustomersDataType>(client.get("/crm/customers"));
 }

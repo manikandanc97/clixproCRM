@@ -27,15 +27,9 @@ export interface DashboardDataType {
   stats: StatCardType[];
   recentActivities: ActivityType[];
   salesChartData: SalesChartPointType[];
+  activeUsers?: number;
+  liveTraffic?: number;
+  weeklyGrowth?: number;
+  liveTrafficGrowth?: number;
+  activeUsersGrowth?: number;
 }
-
-
-
-
-
-
-
-
-
-
-

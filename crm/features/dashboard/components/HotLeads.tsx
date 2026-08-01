@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CRMCard } from "@/shared/components/crm/CRMCard";
+import { CRMCard, EmptyState } from "@/shared/components/crm";
 import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Flame, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
@@ -23,13 +23,13 @@ export default function HotLeads() {
           </div>
           <Button variant="ghost" className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">View All</Button>
         </CardHeader>
-        <CardContent className="pt-0 flex-1">
+        <CardContent className="pt-0 flex-1 flex flex-col">
           {leads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <Flame className="w-8 h-8 text-muted-foreground/30 mb-3" />
-              <p className="text-sm font-semibold text-muted-foreground">No hot leads right now</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Add active leads to see them here</p>
-            </div>
+            <EmptyState 
+              icon={Flame}
+              title="No Hot Leads"
+              description="Add active leads and interact with them to see them here."
+            />
           ) : (
             <div className="space-y-5">
               {leads.map((lead, index) => (
