@@ -1,13 +1,17 @@
 "use client";
 
 import React from "react";
-import { format, parseISO, isSameDay } from "date-fns";
-import { X, Clock, MapPin, User, FileText, Video, Trash2, Pencil, CheckCircle2 } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { Clock, MapPin, User, FileText, Video, Trash2, Pencil, CheckCircle2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/shared/ui/dialog";
 
-interface EventDrawerProps {
+interface EventModalProps {
   event: any | null;
   onClose: () => void;
   onEdit: (event: any) => void;
@@ -38,62 +42,37 @@ function DetailRow({ icon: Icon, label, value }: { icon: any; label: string; val
   );
 }
 
-export function EventDrawer({ event, onClose, onEdit, onDelete }: EventDrawerProps) {
+export function EventModal({ event, onClose, onEdit, onDelete }: EventModalProps) {
   const typeConf = event ? (TYPE_CONFIG[event.type] ?? TYPE_CONFIG.MEETING) : null;
 
   return (
-    <AnimatePresence>
-      {event && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/25 dark:bg-black/50 z-40 backdrop-blur-sm"
-            onClick={onClose}
-          />
-
-          {/* Drawer */}
-          <motion.div
-            key="drawer"
-            initial={{ x: "100%", opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0 }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-y-0 right-0 w-full max-w-md bg-card border-l border-border/60 shadow-2xl z-50 flex flex-col"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-muted/30">
-              <span className={cn(
-                "inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
-                typeConf?.bg, typeConf?.text, typeConf?.border
-              )}>
-                {typeConf?.label}
-              </span>
-              <div className="flex items-center gap-1">
+    <Dialog open={!!event} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden" showCloseButton={true}>
+        {event && (
+          <>
+            {/* Header Area */}
+            <div className="flex flex-col gap-4 px-6 py-5 bg-muted/20 border-b border-border/50">
+              <div className="flex items-center justify-between gap-4 pr-6">
+                <span className={cn(
+                  "inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
+                  typeConf?.bg, typeConf?.text, typeConf?.border
+                )}>
+                  {typeConf?.label}
+                </span>
+                
                 {event.source === "meeting" && (
-                  <>
+                  <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon-xs" onClick={() => onEdit(event)} className="h-8 w-8 text-muted-foreground hover:text-foreground">
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon-xs" onClick={() => onDelete(event.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
-                  </>
+                  </div>
                 )}
-                <Button variant="ghost" size="icon-xs" onClick={onClose} className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-              {/* Title */}
               <div>
-                <h2 className="text-xl font-bold text-foreground leading-tight">{event.title}</h2>
+                <DialogTitle className="text-xl font-bold leading-tight">{event.title}</DialogTitle>
                 <div className="flex items-center gap-1.5 mt-2 text-sm text-muted-foreground">
                   <Clock className="w-3.5 h-3.5" />
                   <span>
@@ -103,9 +82,12 @@ export function EventDrawer({ event, onClose, onEdit, onDelete }: EventDrawerPro
                   </span>
                 </div>
               </div>
+            </div>
 
+            {/* Content Area */}
+            <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto">
               {/* Details grid */}
-              <div className="space-y-4 pt-2 border-t border-border/50">
+              <div className="space-y-4">
                 {event.location && (
                   <DetailRow
                     icon={event.isOnline ? Video : MapPin}
@@ -157,16 +139,16 @@ export function EventDrawer({ event, onClose, onEdit, onDelete }: EventDrawerPro
                 </div>
               )}
             </div>
-
+            
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-border/60 bg-muted/20">
-              <Button variant="outline" className="w-full" onClick={onClose}>
+            <div className="px-6 py-4 border-t border-border/50 bg-muted/10 flex justify-end">
+              <Button variant="outline" onClick={onClose}>
                 Close
               </Button>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

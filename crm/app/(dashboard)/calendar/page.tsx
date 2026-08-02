@@ -6,7 +6,7 @@ import { CalendarDays, Users, Phone, CheckSquare } from "lucide-react";
 import { CalendarHeader } from "@/features/calendar/components/CalendarHeader";
 import { CalendarSidebar } from "@/features/calendar/components/CalendarSidebar";
 import { CalendarGrid } from "@/features/calendar/components/CalendarGrid";
-import { EventDrawer } from "@/features/calendar/components/EventDrawer";
+import { EventModal } from "@/features/calendar/components/EventModal";
 import { CRMMetricCard, CRMMetricsGrid, CRMPageContainer } from "@/shared/components/crm";
 import { toast } from "sonner";
 import { CalendarSkeleton } from "@/features/calendar/components/CalendarSkeleton";
@@ -173,7 +173,7 @@ export default function CalendarPage() {
             />
           </div>
         </div>
-      <EventDrawer
+      <EventModal
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
         onEdit={() => toast.info("Event edit coming soon!")}
