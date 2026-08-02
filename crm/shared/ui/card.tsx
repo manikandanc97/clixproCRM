@@ -20,14 +20,14 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card relative flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-card transition-all duration-200",
+        "group/card relative flex flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-card transition-all duration-200",
         hover &&
           "hover:border-primary/20 hover:shadow-[var(--crm-card-hover-shadow)]",
         glass && "glass dark:glass-dark backdrop-blur-premium",
         elevated && "shadow-elevated hover:shadow-glow",
         size === "sm" ? "p-0 gap-2" : "p-0 gap-3",
         className,
-        "rounded-xl",
+        "rounded-lg",
       )}
       {...props}
     />

@@ -30,12 +30,12 @@ export function EmptyState({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
-        "flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card/50 p-12 text-center shadow-sm",
+        "flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card/50 p-12 text-center shadow-sm",
         className
       )}
     >
       {Icon && (
-        <div className="flex size-16 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground mb-6">
+        <div className="flex size-16 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground mb-6">
           <Icon className="size-8" />
         </div>
       )}

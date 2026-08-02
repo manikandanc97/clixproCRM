@@ -33,12 +33,12 @@ export default function Topbar() {
   }, [pathname]);
 
   return (
-    <header className="z-40 flex justify-between items-center topbar-blur px-4 sm:px-6 lg:px-10 border-border border-b h-22 transition-all shadow-sm gap-2 sm:gap-4">
+    <header className="sticky top-0 z-40 flex justify-between items-center bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur-md px-4 sm:px-8 border-b border-border h-[72px] transition-all shadow-[0_1px_2px_0_rgba(0,0,0,0.02)] gap-4">
       {/* Mobile Sidebar Trigger & Search */}
-      <div className="flex flex-1 items-center gap-2 sm:gap-4 max-w-full md:max-w-md lg:max-w-lg">
+      <div className="flex flex-1 items-center gap-4 max-w-full md:max-w-[450px]">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden shrink-0">
+            <Button variant="ghost" size="icon" className="md:hidden shrink-0 w-10 h-10 rounded-full">
               <Menu className="w-5 h-5" />
               <span className="sr-only">Toggle menu</span>
             </Button>
@@ -55,52 +55,36 @@ export default function Topbar() {
             const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true });
             document.dispatchEvent(event);
           }}
-          className="w-full flex flex-1 items-center justify-center sm:justify-between bg-muted/50 hover:bg-muted border border-transparent hover:border-border px-3 sm:px-5 h-10 sm:h-12 rounded-xl transition-all duration-300 group shadow-sm outline-none"
+          className="w-full flex flex-1 items-center justify-between bg-muted/30 hover:bg-muted/50 border border-border/50 hover:border-border px-4 h-[46px] rounded-xl transition-all duration-200 group shadow-[0_1px_2px_rgba(0,0,0,0.03)] outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary"
         >
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Search className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-            <span className="text-muted-foreground text-sm font-semibold tracking-tight hidden sm:inline truncate">Search leads, customers...</span>
+          <div className="flex items-center gap-3">
+            <Search className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" strokeWidth={1.5} />
+            <span className="text-muted-foreground text-[15px] font-medium tracking-tight hidden sm:inline truncate">Search leads, customers...</span>
           </div>
-          <kbd className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-black text-muted-foreground bg-background rounded-lg shadow-sm border border-border">
+          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-muted-foreground bg-background/50 rounded-md shadow-sm border border-border/50 backdrop-blur-sm">
             <Command className="w-3 h-3" /> K
           </kbd>
         </button>
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-4 md:gap-5">
+      <div className="flex items-center gap-5">
         <CreateNewMenu />
 
-        <div className="hidden sm:block bg-border mx-2 w-px h-8" />
-
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-4">
           <NotificationPanel />
 
-          <button className="hidden sm:block hover:bg-muted p-3 rounded-xl transition-all group outline-none">
-            <HelpCircle className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" />
+          <button className="hidden sm:flex items-center justify-center w-10 h-10 hover:bg-muted rounded-full transition-all duration-200 group outline-none focus-visible:ring-1 focus-visible:ring-primary">
+            <HelpCircle className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" strokeWidth={1.5} />
           </button>
 
-          <button className="hidden sm:block hover:bg-muted p-3 rounded-xl transition-all group outline-none">
-            <Grid3X3 className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" />
+          <button className="hidden sm:flex items-center justify-center w-10 h-10 hover:bg-muted rounded-full transition-all duration-200 group outline-none focus-visible:ring-1 focus-visible:ring-primary">
+            <Grid3X3 className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" strokeWidth={1.5} />
           </button>
         </div>
-
-        <div className="hidden sm:block bg-border mx-2 w-px h-8" />
 
         <ProfileMenu user={user} initials={initials} />
       </div>
     </header>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

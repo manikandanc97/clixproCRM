@@ -322,7 +322,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
     const hasRequired = mapping["name"] && mapping["email"];
     
     return (
-      <div className="bg-background p-5 rounded-2xl border border-border shadow-sm flex flex-col gap-4">
+      <div className="bg-background p-5 rounded-xl border border-border shadow-sm flex flex-col gap-4">
         <div className="flex justify-between items-center mb-1 pb-3 border-b border-border/50">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-muted-foreground" />
@@ -417,9 +417,9 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
                 <div className="w-full max-w-2xl relative">
                   <div 
                     onClick={() => document.getElementById('file-upload')?.click()}
-                    className="relative flex flex-col items-center justify-center border-2 border-dashed border-primary/30 rounded-[2rem] bg-card hover:bg-primary/5 hover:border-primary/50 transition-all duration-300 p-16 text-center cursor-pointer group"
+                    className="relative flex flex-col items-center justify-center border-2 border-dashed border-primary/30 rounded-xl bg-card hover:bg-primary/5 hover:border-primary/50 transition-all duration-300 p-16 text-center cursor-pointer group"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     
                     <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300 relative z-10">
                       <UploadCloud className="w-10 h-10 text-primary" />
@@ -464,7 +464,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
             {/* Step 2: Map Columns */}
             {step === 2 && (
               <motion.div key="step2" variants={slideVariants} initial="hidden" animate="visible" exit="exit" className="flex flex-col h-full overflow-hidden">
-                <div className="bg-muted/10 p-6 rounded-3xl border border-border/50 flex flex-col h-full shadow-sm relative overflow-hidden">
+                <div className="bg-muted/10 p-6 rounded-xl border border-border/50 flex flex-col h-full shadow-sm relative overflow-hidden">
                   
                   {isOfficialTemplate ? (
                     // Official Template View
@@ -518,7 +518,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
 
                       <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
                         {/* Mapping Table Area */}
-                        <div className="flex-1 flex flex-col min-h-0 bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+                        <div className="flex-1 flex flex-col min-h-0 bg-card border border-border rounded-xl shadow-sm overflow-hidden">
                           {(() => {
                             const unmappedBasic = getUnmappedFields(CRM_FIELDS.filter(f => !f.advanced));
                             const unmappedAdvanced = getUnmappedFields(CRM_FIELDS.filter(f => f.advanced));
@@ -646,7 +646,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
                         {/* Preview Panel Area */}
                         <div className="w-full md:w-72 flex-shrink-0 flex flex-col gap-4">
                            {renderPreviewCard()}
-                           <div className="bg-muted/20 p-5 rounded-2xl border border-border shadow-sm">
+                           <div className="bg-muted/20 p-5 rounded-xl border border-border shadow-sm">
                               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Import Summary</h4>
                               <div className="space-y-3 text-sm">
                                 <div className="flex justify-between items-center">
@@ -690,7 +690,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
             {/* Step 3: Validate */}
             {step === 3 && (
               <motion.div key="step3" variants={slideVariants} initial="hidden" animate="visible" exit="exit" className="flex flex-col h-full overflow-hidden">
-                <div className="bg-muted/10 p-6 rounded-3xl border border-border/50 flex flex-col h-full shadow-sm">
+                <div className="bg-muted/10 p-6 rounded-xl border border-border/50 flex flex-col h-full shadow-sm">
                   <div className="flex justify-between items-center mb-6 flex-shrink-0">
                     <div>
                       <h3 className="text-xl font-bold flex items-center gap-2 text-foreground">
@@ -702,7 +702,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4 mb-6 flex-shrink-0">
-                    <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                    <div className="p-5 rounded-xl border border-border bg-card flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                       <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500 group-hover:w-2 transition-all"></div>
                       <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 ml-3 shadow-inner">
                         <CheckCircle2 className="w-6 h-6" />
@@ -713,7 +713,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
                       </div>
                     </div>
                     
-                    <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                    <div className="p-5 rounded-xl border border-border bg-card flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                       <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-destructive group-hover:w-2 transition-all"></div>
                       <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center text-destructive ml-3 shadow-inner">
                         <AlertCircle className="w-6 h-6" />
@@ -726,7 +726,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
                   </div>
 
                   {validationResults.invalid.length > 0 && (
-                    <div className="flex-1 overflow-auto rounded-2xl border border-destructive/20 bg-card mb-6 shadow-sm">
+                    <div className="flex-1 overflow-auto rounded-xl border border-destructive/20 bg-card mb-6 shadow-sm">
                       <table className="w-full text-sm text-left">
                         <thead className="bg-destructive/5 sticky top-0 border-b border-destructive/10 backdrop-blur-md">
                           <tr>
@@ -752,7 +752,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
                     </div>
                   )}
 
-                  <div className="bg-card p-6 rounded-2xl border border-border shadow-sm mb-4 flex-shrink-0">
+                  <div className="bg-card p-6 rounded-xl border border-border shadow-sm mb-4 flex-shrink-0">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Duplicate Handling Strategy</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
@@ -821,7 +821,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
             {/* Step 5: Summary */}
             {step === 5 && summary && (
               <motion.div key="step5" variants={slideVariants} initial="hidden" animate="visible" exit="exit" className="flex flex-col h-full items-center justify-center py-10">
-                <div className="w-full max-w-2xl bg-card rounded-[2rem] border border-border shadow-2xl p-12 relative overflow-hidden">
+                <div className="w-full max-w-2xl bg-card rounded-xl border border-border shadow-2xl p-12 relative overflow-hidden">
                   
                   {/* Decorative Background */}
                   <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-emerald-500/10 to-transparent"></div>
@@ -836,15 +836,15 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
                   </div>
                   
                   <div className="grid grid-cols-3 gap-4 mb-10 relative z-10">
-                    <div className="p-6 rounded-2xl bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/20 text-center shadow-sm">
+                    <div className="p-6 rounded-xl bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/20 text-center shadow-sm">
                       <h4 className="text-4xl font-black text-emerald-600 mb-2">{summary.imported}</h4>
                       <p className="text-[11px] font-bold text-emerald-700/70 uppercase tracking-wider">Imported</p>
                     </div>
-                    <div className="p-6 rounded-2xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20 text-center shadow-sm">
+                    <div className="p-6 rounded-xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20 text-center shadow-sm">
                       <h4 className="text-4xl font-black text-amber-600 mb-2">{summary.skipped}</h4>
                       <p className="text-[11px] font-bold text-amber-700/70 uppercase tracking-wider">Skipped</p>
                     </div>
-                    <div className="p-6 rounded-2xl bg-destructive/5 border border-destructive/20 text-center shadow-sm">
+                    <div className="p-6 rounded-xl bg-destructive/5 border border-destructive/20 text-center shadow-sm">
                       <h4 className="text-4xl font-black text-destructive mb-2">{summary.failed}</h4>
                       <p className="text-[11px] font-bold text-destructive/70 uppercase tracking-wider">Failed</p>
                     </div>

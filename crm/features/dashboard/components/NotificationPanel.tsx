@@ -57,10 +57,10 @@ export default function NotificationPanel() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative hover:bg-muted p-3 rounded-xl transition-all group outline-none">
-          <Bell className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" />
+        <button className="relative flex items-center justify-center w-10 h-10 hover:bg-muted rounded-full transition-all duration-200 group outline-none focus-visible:ring-1 focus-visible:ring-primary">
+          <Bell className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" strokeWidth={1.5} />
           {unreadCount > 0 && (
-            <span className="top-2.5 right-2.5 absolute flex h-2.5 w-2.5">
+            <span className="top-2 right-2 absolute flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive/40 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-destructive border-2 border-background"></span>
             </span>

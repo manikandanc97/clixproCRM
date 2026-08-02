@@ -33,7 +33,7 @@ export default function AuthLoadingScreen() {
         >
           {/* Glow */}
           <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150" />
-          <div className="relative flex items-center justify-center bg-gradient-to-br from-primary to-emerald-600 shadow-2xl shadow-primary/30 border border-white/20 rounded-2xl w-20 h-20 font-black text-white text-3xl">
+          <div className="relative flex items-center justify-center bg-gradient-to-br from-primary to-emerald-600 shadow-2xl shadow-primary/30 border border-white/20 rounded-xl w-20 h-20 font-black text-white text-3xl">
             CR
           </div>
         </motion.div>

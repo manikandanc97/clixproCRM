@@ -26,8 +26,8 @@ export default function PendingFollowups() {
 
   return (
     <div className="w-full">
-      <CRMCard animate={false} accentSeed="Pending Tasks" className="border-none shadow-premium bg-gradient-to-br from-card to-background/50 h-[420px] flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <CRMCard animate={false} accentSeed="Pending Tasks" noPadding className="border-none shadow-premium bg-gradient-to-br from-card to-background/50 h-[420px] flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-info/10 text-info rounded-xl">
               <div className="relative">

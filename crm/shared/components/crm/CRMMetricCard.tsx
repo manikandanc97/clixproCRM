@@ -238,7 +238,7 @@ export const CRMMetricCard = ({
         "border border-border/70 border-l-4",
         t.border,
         // ── Rounded corners matching CRM design system ──
-        "rounded-2xl",
+        "rounded-xl",
         // ── Breathing layout ──
         "p-6 flex flex-col justify-between h-full",
         // ── Soft ambient card shadow ──

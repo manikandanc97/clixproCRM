@@ -225,7 +225,7 @@ export default function AiInsightsPage() {
               
               {/* AI Assistant Widget Card */}
               <CRMCard className="p-5 bg-indigo-500/[0.03] border-indigo-500/20 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="p-3 bg-indigo-500 rounded-2xl shadow-lg shadow-indigo-500/20">
+                <div className="p-3 bg-indigo-500 rounded-xl shadow-lg shadow-indigo-500/20">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div>

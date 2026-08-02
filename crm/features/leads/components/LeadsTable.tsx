@@ -803,7 +803,7 @@ const LeadsTable = ({
             exit={{ y: 50, opacity: 0, x: "-50%" }}
             className="fixed bottom-8 left-1/2 z-50 w-[90%] md:w-auto"
           >
-            <div className="bg-foreground text-background rounded-2xl px-6 py-4 shadow-premium flex flex-col md:flex-row items-center gap-4 md:gap-6 border border-border/10 backdrop-blur-xl">
+            <div className="bg-foreground text-background rounded-xl px-6 py-4 shadow-premium flex flex-col md:flex-row items-center gap-4 md:gap-6 border border-border/10 backdrop-blur-xl">
                <div className="flex items-center gap-3 md:pr-6 md:border-r border-background/20 w-full md:w-auto justify-between md:justify-start">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-xs shadow-sm">

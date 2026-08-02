@@ -73,7 +73,7 @@ export function DashboardWidgetWrapper({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="flex flex-col items-center justify-center p-8 rounded-2xl border border-destructive/20 bg-destructive/5 text-center h-full min-h-[200px]"
+            className="flex flex-col items-center justify-center p-8 rounded-xl border border-destructive/20 bg-destructive/5 text-center h-full min-h-[200px]"
           >
             <AlertCircle className="w-8 h-8 text-destructive mb-3 opacity-50" />
             <h4 className="text-sm font-bold text-foreground mb-1">{title} Failed</h4>

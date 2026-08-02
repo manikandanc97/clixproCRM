@@ -48,9 +48,9 @@ export default function CreateNewMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2.5 bg-primary text-primary-foreground px-4 sm:px-6 rounded-xl h-12 font-bold text-xs uppercase tracking-widest transition-all shadow-elevated shadow-primary/20 outline-none">
-          <Plus className="w-4 h-4" />
-          <span className="hidden lg:block">Create New</span>
+        <button className="flex items-center gap-2 bg-primary bg-gradient-to-b from-white/15 to-transparent text-primary-foreground px-5 h-[46px] rounded-md font-medium text-sm transition-all duration-200 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 active:shadow-md outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+          <Plus className="w-5 h-5" strokeWidth={2} />
+          <span className="hidden lg:block tracking-wide">Create New</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 rounded-xl p-2 shadow-elevated border-border bg-popover/95 backdrop-blur-xl" align="end" sideOffset={8}>

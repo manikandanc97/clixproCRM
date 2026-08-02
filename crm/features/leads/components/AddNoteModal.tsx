@@ -65,7 +65,7 @@ export function AddNoteModal({ isOpen, onOpenChange, leadId }: AddNoteModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] bg-background border border-border shadow-2xl rounded-2xl overflow-hidden p-0">
+      <DialogContent className="sm:max-w-[500px] bg-background border border-border shadow-2xl rounded-xl overflow-hidden p-0">
         <div className="px-6 py-4 border-b border-border bg-muted/30">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">Add Internal Note</DialogTitle>

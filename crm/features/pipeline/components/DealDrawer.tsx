@@ -88,7 +88,7 @@ export function DealDrawer({ item, isOpen, onClose, onStageChange }: DealDrawerP
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-[500px] p-0 flex flex-col max-h-[90vh] bg-background border-border overflow-hidden rounded-2xl">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-[500px] p-0 flex flex-col max-h-[90vh] bg-background border-border overflow-hidden rounded-xl">
         <DialogHeader className="p-6 pb-4 border-b border-border">
           <DialogTitle className="text-xl font-bold tracking-tight">Deal Details</DialogTitle>
           <div className="flex gap-2 mt-3">

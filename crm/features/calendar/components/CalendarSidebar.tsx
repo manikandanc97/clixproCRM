@@ -123,7 +123,7 @@ export function CalendarSidebar({ currentDate, onDateSelect, filters, onFilterCh
       initial={{ opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className="hidden lg:flex w-[300px] xl:w-[320px] flex-shrink-0 flex-col bg-card rounded-2xl shadow-sm border border-border/50 p-6 space-y-6 overflow-y-auto"
+      className="hidden lg:flex w-[300px] xl:w-[320px] flex-shrink-0 flex-col bg-card rounded-xl shadow-sm border border-border/50 p-6 space-y-6 overflow-y-auto"
     >
       {/* Mini Calendar */}
       <div>

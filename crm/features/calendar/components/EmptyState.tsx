@@ -17,7 +17,7 @@ export function EmptyState({ onNewEvent }: EmptyStateProps) {
       transition={{ duration: 0.3 }}
       className="crm-empty-state"
     >
-      <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/15 flex items-center justify-center mb-5">
+      <div className="w-16 h-16 rounded-xl bg-primary/10 border border-primary/15 flex items-center justify-center mb-5">
         <CalendarDays className="w-8 h-8 text-primary" />
       </div>
       <h3 className="text-lg font-bold text-foreground mb-2">No Events Scheduled</h3>

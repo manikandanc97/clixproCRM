@@ -210,7 +210,7 @@ export function CalendarGrid({ events, currentDate, view, onEventClick, onViewCh
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-card rounded-2xl shadow-sm border border-border/50 p-4 lg:p-6">
+    <div className="h-full flex flex-col overflow-hidden bg-card rounded-xl shadow-sm border border-border/50 p-4 lg:p-6">
       {view === "month" && renderMonthView()}
       {view === "agenda" && renderAgendaView()}
       {(view === "week" || view === "day") && (

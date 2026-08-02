@@ -26,7 +26,7 @@ export default function WelcomeBanner() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-[1.5rem] bg-slate-950 p-6 md:p-8 shadow-xl border border-white/5"
+      className="relative overflow-hidden rounded-xl bg-slate-950 p-6 md:p-8 shadow-xl border border-white/5"
     >
       {/* Background Gradients */}
       <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-emerald-500/10 to-transparent pointer-events-none" />

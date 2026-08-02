@@ -136,7 +136,7 @@ export default function DashboardKPIs() {
   // Handle empty state gracefully if no metrics are allowed for the role
   if (accessibleKpis.length === 0) {
     return (
-      <div className="py-10 text-center border border-dashed border-border rounded-2xl bg-card">
+      <div className="py-10 text-center border border-dashed border-border rounded-xl bg-card">
         <p className="text-sm text-muted-foreground font-medium">No dashboard metrics authorized for your account role.</p>
       </div>
     );

@@ -120,7 +120,7 @@ export default function AnalyticsDashboard() {
           </motion.div>
           <motion.div variants={itemVariants} className="lg:col-span-2">
              <div className="h-full bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/10 p-8 flex flex-col justify-center items-center text-center">
-                <div className="p-4 bg-primary/10 rounded-2xl mb-4">
+                <div className="p-4 bg-primary/10 rounded-xl mb-4">
                    <PieChartIcon className="w-12 h-12 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-2">Automated Insights</h3>

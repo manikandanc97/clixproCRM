@@ -236,7 +236,7 @@ const SalesChart = () => {
                     const value = chartType === "revenue" ? data.value : data.deals;
                     
                     return (
-                      <div className="bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl rounded-2xl p-4 min-w-[160px]">
+                      <div className="bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl rounded-xl p-4 min-w-[160px]">
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
                           {label}
                         </p>

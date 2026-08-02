@@ -70,7 +70,7 @@ export default function LeadFunnel({ loading: externalLoading }: { loading?: boo
         animate={false}
         accentSeed="Lead Funnel"
         noPadding
-        className="h-full flex flex-col bg-card min-w-0 rounded-2xl shadow-sm border border-border/50"
+        className="h-full flex flex-col bg-card min-w-0 rounded-xl shadow-sm border border-border/50"
       >
         <div className="flex flex-row items-start justify-between p-6 pb-2 min-w-0">
           <div className="flex items-start gap-4 min-w-0">

@@ -110,7 +110,7 @@ export default function UpcomingMeetings() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
                   onClick={() => handleMeetingClick(meeting.title)}
-                  className={`group relative flex flex-col sm:flex-row items-center sm:items-center gap-4 p-4 rounded-[1.25rem] border transition-all duration-500 cursor-pointer overflow-hidden
+                  className={`group relative flex flex-col sm:flex-row items-center sm:items-center gap-4 p-4 rounded-xl border transition-all duration-500 cursor-pointer overflow-hidden
                     ${
                       meeting.isToday
                         ? "bg-gradient-to-br from-card to-info/5 border-info/20 shadow-premium-sm hover:shadow-premium hover:border-info/40"

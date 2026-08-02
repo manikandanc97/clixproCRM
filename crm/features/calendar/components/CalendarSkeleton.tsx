@@ -78,7 +78,7 @@ export function CalendarSkeleton() {
       {/* ── MAIN: Sidebar + Grid SKELETON ── */}
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
         {/* Sidebar */}
-        <div className="hidden lg:flex w-[300px] xl:w-[320px] flex-shrink-0 flex-col bg-card rounded-2xl shadow-sm border border-border/50 p-6 space-y-6">
+        <div className="hidden lg:flex w-[300px] xl:w-[320px] flex-shrink-0 flex-col bg-card rounded-xl shadow-sm border border-border/50 p-6 space-y-6">
           <Skeleton className="w-full h-56 rounded-xl" />
           <div className="space-y-4">
             <Skeleton className="h-3 w-24" />
@@ -95,7 +95,7 @@ export function CalendarSkeleton() {
         </div>
 
         {/* Calendar Grid */}
-        <div className="flex-1 min-w-0 w-full h-[800px] bg-card rounded-2xl shadow-sm border border-border/50 p-4 lg:p-6 flex flex-col">
+        <div className="flex-1 min-w-0 w-full h-[800px] bg-card rounded-xl shadow-sm border border-border/50 p-4 lg:p-6 flex flex-col">
           <div className="grid grid-cols-7 gap-2 mb-4 border-b border-border/30 pb-4">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <Skeleton key={i} className="h-4 w-8 mx-auto" />

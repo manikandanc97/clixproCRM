@@ -5,7 +5,7 @@ import { Slot } from "radix-ui";
 import { cn } from "@/shared/lib/utils";
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all duration-150 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.99] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all duration-150 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.99] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -33,9 +33,9 @@ const buttonVariants = cva(
         sm: "h-9 px-3 text-xs",
         lg: "h-11 px-5 text-sm",
         xs: "h-8 px-3 text-[10px] font-bold uppercase tracking-wider",
-        icon: "size-10 rounded-lg",
-        "icon-sm": "size-9 rounded-lg",
-        "icon-xs": "size-8 rounded-lg",
+        icon: "size-10 rounded-md",
+        "icon-sm": "size-9 rounded-md",
+        "icon-xs": "size-8 rounded-md",
       },
     },
     defaultVariants: {
@@ -57,7 +57,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         data-slot="button"
-        className={cn(buttonVariants({ variant, size, className }), "rounded-lg")}
+        className={cn(buttonVariants({ variant, size, className }), "rounded-md")}
         ref={ref}
         {...props}
       />
