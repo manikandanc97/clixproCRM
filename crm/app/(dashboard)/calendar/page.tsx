@@ -7,8 +7,9 @@ import { CalendarHeader } from "@/features/calendar/components/CalendarHeader";
 import { CalendarSidebar } from "@/features/calendar/components/CalendarSidebar";
 import { CalendarGrid } from "@/features/calendar/components/CalendarGrid";
 import { EventDrawer } from "@/features/calendar/components/EventDrawer";
-import { CRMMetricCard, CRMMetricsGrid } from "@/shared/components/crm";
+import { CRMMetricCard, CRMMetricsGrid, CRMPageContainer } from "@/shared/components/crm";
 import { toast } from "sonner";
+import { CalendarSkeleton } from "@/features/calendar/components/CalendarSkeleton";
 
 type ViewType = "month" | "week" | "day" | "agenda";
 
@@ -90,89 +91,94 @@ export default function CalendarPage() {
     }
   };
 
+  if (loading && events.length === 0) {
+    return <CalendarSkeleton />;
+  }
+
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-background">
-
+    <CRMPageContainer className="min-h-full bg-background/50">
       {/* ── HEADER ── */}
-      <CalendarHeader
-        currentDate={currentDate}
-        view={view}
-        onViewChange={setView}
-        onDateChange={setCurrentDate}
-        onNewEvent={() => toast.info("Event creation coming soon!")}
-      />
+        <CalendarHeader
+          currentDate={currentDate}
+          view={view}
+          onViewChange={setView}
+          onDateChange={setCurrentDate}
+          onNewEvent={() => toast.info("Event creation coming soon!")}
+        />
 
-      {/* ── METRIC CARDS ── */}
-      <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pt-4 pb-3 border-b border-border/50">
-        <CRMMetricsGrid className="gap-3 md:gap-4">
+        {/* ── METRIC CARDS ── */}
+        <div>
+          <CRMMetricsGrid className="gap-3 md:gap-4">
           <CRMMetricCard
             title="Today's Meetings"
-            value={loading ? "—" : summary.meetings}
+            value={summary.meetings}
+            loading={loading}
+            hideBottomSkeletons={true}
             icon={Users}
             color="emerald"
             trend="neutral"
             delay={0}
-            className="!p-4"
           />
           <CRMMetricCard
             title="Calls Today"
-            value={loading ? "—" : summary.calls}
+            value={summary.calls}
+            loading={loading}
+            hideBottomSkeletons={true}
             icon={Phone}
             color="orange"
             trend="neutral"
             delay={0.05}
-            className="!p-4"
           />
           <CRMMetricCard
             title="Tasks Due"
-            value={loading ? "—" : summary.tasks}
+            value={summary.tasks}
+            loading={loading}
+            hideBottomSkeletons={true}
             icon={CheckSquare}
             color="indigo"
             trend="neutral"
             delay={0.1}
-            className="!p-4"
           />
           <CRMMetricCard
             title="Total Events"
-            value={loading ? "—" : summary.total}
+            value={summary.total}
+            loading={loading}
+            hideBottomSkeletons={true}
             icon={CalendarDays}
             color="violet"
             trend="neutral"
             delay={0.15}
-            className="!p-4"
           />
         </CRMMetricsGrid>
-      </div>
-
-      {/* ── MAIN: Sidebar + Grid ── */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
-        <CalendarSidebar
-          currentDate={currentDate}
-          onDateSelect={setCurrentDate}
-          filters={filters}
-          onFilterChange={(key, val) => setFilters(prev => ({ ...prev, [key]: val }))}
-          summary={summary}
-        />
-
-        <div className="flex-1 overflow-hidden min-h-0 relative">
-          <CalendarGrid
-            events={filteredEvents}
-            currentDate={currentDate}
-            view={view}
-            onEventClick={setSelectedEvent}
-            onViewChange={(v) => setView(v)}
-            onNewEvent={() => toast.info("Event creation coming soon!")}
-          />
         </div>
-      </div>
 
-      {/* ── EVENT DRAWER ── */}
+        {/* ── MAIN: Sidebar + Grid ── */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+          <CalendarSidebar
+            currentDate={currentDate}
+            onDateSelect={setCurrentDate}
+            filters={filters}
+            onFilterChange={(key, val) => setFilters(prev => ({ ...prev, [key]: val }))}
+            summary={summary}
+          />
+
+          <div className="flex-1 min-w-0 w-full">
+            <CalendarGrid
+              events={filteredEvents}
+              currentDate={currentDate}
+              view={view}
+              onEventClick={setSelectedEvent}
+              onViewChange={(v) => setView(v)}
+              onNewEvent={() => toast.info("Event creation coming soon!")}
+            />
+          </div>
+        </div>
       <EventDrawer
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
         onEdit={() => toast.info("Event edit coming soon!")}
         onDelete={handleDelete}
       />
-    </div>
+    </CRMPageContainer>
   );
 }

@@ -123,31 +123,31 @@ export function CalendarSidebar({ currentDate, onDateSelect, filters, onFilterCh
       initial={{ opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className="hidden lg:flex w-64 flex-shrink-0 flex-col border-r border-border/60 bg-card overflow-y-auto"
+      className="hidden lg:flex w-[300px] xl:w-[320px] flex-shrink-0 flex-col bg-card rounded-2xl shadow-sm border border-border/50 p-6 space-y-6 overflow-y-auto"
     >
       {/* Mini Calendar */}
-      <div className="p-4 border-b border-border/40">
+      <div>
         <MiniCalendar selected={currentDate} onSelect={onDateSelect} />
       </div>
 
-      <div className="flex-1 p-4 space-y-6 overflow-y-auto">
+      <div className="space-y-6">
         {/* Today's Summary */}
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-3">
             Today's Overview
           </p>
-          <div className="space-y-2">
+          <div className="space-y-4">
             {[
               { icon: Users, label: "Meetings", value: summary.meetings, bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-400", iconBg: "bg-emerald-100 dark:bg-emerald-900/30", iconText: "text-emerald-600 dark:text-emerald-400" },
               { icon: Phone, label: "Calls", value: summary.calls, bg: "bg-orange-50 dark:bg-orange-950/30", text: "text-orange-700 dark:text-orange-400", iconBg: "bg-orange-100 dark:bg-orange-900/30", iconText: "text-orange-600 dark:text-orange-400" },
               { icon: CheckSquare, label: "Tasks Due", value: summary.tasks, bg: "bg-indigo-50 dark:bg-indigo-950/30", text: "text-indigo-700 dark:text-indigo-400", iconBg: "bg-indigo-100 dark:bg-indigo-900/30", iconText: "text-indigo-600 dark:text-indigo-400" },
             ].map(({ icon: Icon, label, value, bg, text, iconBg, iconText }) => (
-              <div key={label} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 border border-transparent", bg)}>
-                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0", iconBg)}>
-                  <Icon className={cn("w-3.5 h-3.5", iconText)} />
+              <div key={label} className={cn("flex items-center gap-3 rounded-xl px-3 py-2 border border-transparent", bg)}>
+                <div className={cn("w-6 h-6 rounded flex items-center justify-center flex-shrink-0", iconBg)}>
+                  <Icon className={cn("w-3 h-3", iconText)} />
                 </div>
-                <span className="text-xs font-medium text-muted-foreground flex-1">{label}</span>
-                <span className={cn("text-base font-bold tabular-nums", text)}>{value}</span>
+                <span className="text-[11px] font-medium text-muted-foreground flex-1">{label}</span>
+                <span className={cn("text-sm font-bold tabular-nums", text)}>{value}</span>
               </div>
             ))}
           </div>
@@ -158,7 +158,7 @@ export function CalendarSidebar({ currentDate, onDateSelect, filters, onFilterCh
           <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-3">
             My Calendars
           </p>
-          <div className="space-y-1">
+          <div className="space-y-4">
             {filterConfig.map(({ key, label, dot }) => (
               <button
                 key={key}

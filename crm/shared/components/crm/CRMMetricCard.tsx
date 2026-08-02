@@ -198,6 +198,8 @@ export interface CRMMetricCardProps {
   comparisonText?: string;
   /** Additional classes for the card root */
   className?: string;
+  /** Hide the bottom skeletons (change, comparison, sparkline) during loading state */
+  hideBottomSkeletons?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -217,6 +219,7 @@ export const CRMMetricCard = ({
   loading = false,
   comparisonText,
   className,
+  hideBottomSkeletons = false,
 }: CRMMetricCardProps) => {
   const t = COLOR_TOKENS[color] ?? COLOR_TOKENS.indigo;
   const isUp = trend === "up";
@@ -301,7 +304,7 @@ export const CRMMetricCard = ({
       <div className="flex items-end justify-between gap-4 mt-auto min-w-0">
         {/* Trend badge + comparison text */}
         <div className="flex items-center gap-2 shrink-0">
-          {loading ? (
+          {loading && !hideBottomSkeletons ? (
             <Skeleton className="h-5 w-16 rounded-full" />
           ) : (
             change && (
@@ -338,7 +341,7 @@ export const CRMMetricCard = ({
         </div>
 
         {/* Sparkline chart */}
-        {(sparklineData || loading) && (
+        {(sparklineData || (loading && !hideBottomSkeletons)) && (
           <div className="h-10 w-24 -mr-1 -mb-1 min-h-[40px] min-w-0 shrink-0">
             <ChartContainer
               height="100%"

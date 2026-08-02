@@ -77,15 +77,15 @@ export function CalendarGrid({ events, currentDate, view, onEventClick, onViewCh
                   <div
                     key={di}
                     className={cn(
-                      "border-r border-border/30 last:border-r-0 p-1.5 overflow-hidden transition-colors",
-                      !inMonth ? "bg-muted/20" : isToday ? "bg-primary/5" : "bg-card hover:bg-muted/30"
+                      "border-r border-border/30 last:border-r-0 p-3 overflow-hidden transition-all duration-200",
+                      !inMonth ? "bg-muted/20 opacity-60" : isToday ? "bg-primary/5 ring-1 ring-inset ring-primary/20" : "bg-card hover:bg-muted/40"
                     )}
                   >
                     {/* Date number */}
-                    <div className="flex justify-end mb-1">
+                    <div className="flex justify-end mb-2">
                       <span className={cn(
-                        "w-6 h-6 text-[11px] flex items-center justify-center rounded-full font-semibold",
-                        isToday ? "bg-primary text-primary-foreground" : inMonth ? "text-foreground" : "text-muted-foreground/30"
+                        "w-6 h-6 text-[11px] flex items-center justify-center rounded-full font-semibold transition-colors",
+                        isToday ? "bg-primary text-primary-foreground shadow-sm" : inMonth ? "text-foreground" : "text-muted-foreground/50"
                       )}>
                         {format(day, "d")}
                       </span>
@@ -97,8 +97,8 @@ export function CalendarGrid({ events, currentDate, view, onEventClick, onViewCh
                           key={ev.id}
                           onClick={() => onEventClick(ev)}
                           className={cn(
-                            "w-full text-left text-[10px] font-semibold px-1.5 py-0.5 rounded truncate border",
-                            "transition-all hover:opacity-75 hover:scale-[1.01] active:scale-100",
+                            "w-full text-left text-[10px] font-semibold px-2 py-1 rounded-lg truncate border",
+                            "transition-all hover:opacity-80 hover:scale-[1.02] active:scale-100",
                             CHIP[ev.type] ?? CHIP.MEETING
                           )}
                         >
@@ -210,7 +210,7 @@ export function CalendarGrid({ events, currentDate, view, onEventClick, onViewCh
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-background">
+    <div className="h-full flex flex-col overflow-hidden bg-card rounded-2xl shadow-sm border border-border/50 p-4 lg:p-6">
       {view === "month" && renderMonthView()}
       {view === "agenda" && renderAgendaView()}
       {(view === "week" || view === "day") && (

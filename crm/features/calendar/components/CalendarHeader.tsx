@@ -42,7 +42,7 @@ export function CalendarHeader({ currentDate, view, onViewChange, onDateChange, 
     <motion.div
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-shrink-0 flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-3 border-b border-border/60 bg-card"
+      className="flex flex-col md:flex-row md:items-center justify-between gap-4"
     >
       {/* Left: icon + title + nav */}
       <div className="flex items-center gap-3 min-w-0">
