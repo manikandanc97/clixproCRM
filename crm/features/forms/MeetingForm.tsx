@@ -7,6 +7,8 @@ import * as z from "zod";
 import { Form } from "@/shared/ui/form";
 import { FormInput, FormSelect, FormDatePicker, FormTextarea } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
+import { FormSubmitButton } from "@/shared/components/form-submit-button";
+import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateMeeting } from "@/shared/hooks/use-crm";
@@ -39,6 +41,8 @@ export const MeetingForm = ({ onSuccess, onCancel, defaultLeadId, defaultTaskId 
     },
   });
 
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues);
+
   const onSubmit = (data: MeetingFormValues) => {
     // Combine date and time into a single Date object for startTime
     const [hours, minutesAndPeriod] = data.time.split(":");
@@ -65,6 +69,7 @@ export const MeetingForm = ({ onSuccess, onCancel, defaultLeadId, defaultTaskId 
       taskId: defaultTaskId,
     }, {
       onSuccess: () => {
+        resetDirty(form.getValues());
         onSuccess?.();
       }
     });
@@ -86,16 +91,13 @@ export const MeetingForm = ({ onSuccess, onCancel, defaultLeadId, defaultTaskId 
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isPending} className="min-w-32">
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Scheduling...
-              </>
-            ) : (
-              "Schedule Meeting"
-            )}
-          </Button>
+          <FormSubmitButton
+            isDirty={isDirty}
+            isPending={isPending}
+            loadingText="Scheduling..."
+          >
+            Schedule Meeting
+          </FormSubmitButton>
         </div>
       </form>
     </Form>

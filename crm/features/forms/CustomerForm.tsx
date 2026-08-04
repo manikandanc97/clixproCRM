@@ -7,6 +7,8 @@ import * as z from "zod";
 import { Form } from "@/shared/ui/form";
 import { FormInput, FormSelect } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
+import { FormSubmitButton } from "@/shared/components/form-submit-button";
+import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useCreateCustomer, useUpdateCustomer } from "@/shared/hooks/use-crm";
 import { Loader2 } from "lucide-react";
 import { CustomerType } from "@/shared/types/customer";
@@ -46,6 +48,8 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
     },
   });
 
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues);
+
   const onSubmit: SubmitHandler<CustomerFormValues> = async (data) => {
     try {
       if (initialData) {
@@ -68,6 +72,7 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
           revenueValue: parseFloat(data.revenue || "0"),
         });
       }
+      resetDirty(form.getValues());
       onSuccess?.();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
@@ -102,16 +107,13 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isPending} className="min-w-32">
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {initialData ? "Updating..." : "Creating..."}
-              </>
-            ) : (
-              initialData ? "Update Customer" : "Create Customer"
-            )}
-          </Button>
+          <FormSubmitButton
+            isDirty={isDirty}
+            isPending={isPending}
+            loadingText={initialData ? "Updating..." : "Creating..."}
+          >
+            {initialData ? "Update Customer" : "Create Customer"}
+          </FormSubmitButton>
         </div>
       </form>
     </Form>

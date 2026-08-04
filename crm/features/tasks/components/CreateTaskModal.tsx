@@ -16,6 +16,9 @@ import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
+import { FormSubmitButton } from "@/shared/components/form-submit-button";
+import { UnsavedWarning } from "@/shared/components/unsaved-warning";
+import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useCreateTask, useEmployees, useLeads, useCustomers, useQuotations } from "@/shared/hooks/use-crm";
 import { useAuth } from "@/features/auth/components/auth-provider";
 import {
@@ -95,6 +98,8 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   const [recordSearch, setRecordSearch] = useState("");
   const [recordDropdownOpen, setRecordDropdownOpen] = useState(false);
 
+  const [showWarning, setShowWarning] = useState(false);
+
   const defaultDueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
   const form = useForm<TaskFormValues>({
@@ -107,6 +112,14 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
       dueDate: defaultDueDate,
       checklist: [],
     },
+  });
+
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues, {
+    externalOriginalValues: {
+      attachments: [],
+      relatedRecord: null
+    },
+    externalValues: { attachments, relatedRecord }
   });
 
   const { fields: checklistFields, append: appendChecklist, remove: removeChecklist } = useFieldArray({
@@ -191,6 +204,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
         attachments: attachments.map((a) => ({ ...a, fileType: "application/octet-stream", fileUrl: "" })),
       } as any);
       resetForm();
+      resetDirty();
       onSuccess?.();
       onClose();
     } catch (_) {
@@ -208,8 +222,20 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     quotation: { label: "Quote", color: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10" },
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open && isDirty) {
+      setShowWarning(true);
+      return;
+    }
+    if (!open) {
+      resetForm();
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { resetForm(); onClose(); } }}>
+    <>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[520px] bg-background border border-border shadow-2xl rounded-xl overflow-hidden p-0 flex flex-col max-h-[90vh]">
         {/* ── HEADER ── */}
         <div className="px-6 py-4 border-b border-border bg-muted/30 shrink-0">
@@ -603,32 +629,33 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => { resetForm(); onClose(); }}
+                  onClick={() => handleOpenChange(false)}
                   disabled={createTask.isPending}
                   className="h-9 px-4 text-xs font-semibold"
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
+                <FormSubmitButton
+                  isDirty={isDirty}
+                  isPending={createTask.isPending}
                   size="sm"
-                  disabled={createTask.isPending}
                   className="h-9 px-6 text-xs font-bold rounded-lg shadow-sm min-w-28"
+                  loadingText="Creating..."
                 >
-                  {createTask.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 size-3.5 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    "Create Task"
-                  )}
-                </Button>
+                  Create Task
+                </FormSubmitButton>
               </div>
             </div>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
+    <UnsavedWarning 
+      open={showWarning} 
+      onOpenChange={setShowWarning} 
+      onConfirm={() => { setShowWarning(false); resetForm(); onClose(); }} 
+      onCancel={() => setShowWarning(false)} 
+    />
+    </>
   );
 };

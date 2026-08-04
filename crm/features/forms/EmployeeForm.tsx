@@ -7,6 +7,8 @@ import * as z from "zod";
 import { Form } from "@/shared/ui/form";
 import { FormInput, FormSelect } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
+import { FormSubmitButton } from "@/shared/components/form-submit-button";
+import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createEmployee, updateEmployee } from "@/shared/lib/api/crm";
 import { toast } from "sonner";
@@ -59,6 +61,7 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
       } else {
         toast.success("Employee created successfully");
       }
+      resetDirty(form.getValues());
       onSuccess?.();
     },
     onError: (error: Error) => {
@@ -71,6 +74,7 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       toast.success("Employee updated successfully");
+      resetDirty(form.getValues());
       onSuccess?.();
     },
     onError: (error: Error) => {
@@ -88,6 +92,8 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
       status: initialData?.status || "ACTIVE",
     },
   });
+
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues);
 
   useEffect(() => {
     if (initialData) {
@@ -146,16 +152,13 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isPending} className="min-w-32 font-bold">
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isEditing ? "Updating..." : "Onboarding..."}
-              </>
-            ) : (
-              isEditing ? "Update Employee" : "Create Employee"
-            )}
-          </Button>
+          <FormSubmitButton
+            isDirty={isDirty}
+            isPending={isPending}
+            loadingText={isEditing ? "Updating..." : "Onboarding..."}
+          >
+            {isEditing ? "Update Employee" : "Create Employee"}
+          </FormSubmitButton>
         </div>
       </form>
     </Form>

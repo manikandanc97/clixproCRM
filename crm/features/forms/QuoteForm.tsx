@@ -7,6 +7,8 @@ import * as z from "zod";
 import { Form } from "@/shared/ui/form";
 import { FormInput, FormSelect, FormDatePicker } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
+import { FormSubmitButton } from "@/shared/components/form-submit-button";
+import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useCreateQuotation } from "@/shared/hooks/use-crm";
 import { Loader2 } from "lucide-react";
 import { useCurrency } from "@/shared/hooks/use-currency";
@@ -38,6 +40,8 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
     },
   });
 
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues);
+
   const onSubmit = async (data: QuoteFormValues) => {
     try {
       await createQuote.mutateAsync({
@@ -46,6 +50,7 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
         status: data.status,
         validTill: data.validTill ? data.validTill.toISOString() : undefined,
       });
+      resetDirty(form.getValues());
       onSuccess?.();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
@@ -80,16 +85,13 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
           <Button type="button" variant="outline" onClick={onCancel} disabled={createQuote.isPending}>
             Cancel
           </Button>
-          <Button type="submit" disabled={createQuote.isPending} className="min-w-32">
-            {createQuote.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              "Generate Quote"
-            )}
-          </Button>
+          <FormSubmitButton
+            isDirty={isDirty}
+            isPending={createQuote.isPending}
+            loadingText="Generating..."
+          >
+            Generate Quote
+          </FormSubmitButton>
         </div>
       </form>
     </Form>

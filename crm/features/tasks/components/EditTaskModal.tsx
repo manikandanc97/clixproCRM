@@ -16,6 +16,9 @@ import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
+import { FormSubmitButton } from "@/shared/components/form-submit-button";
+import { UnsavedWarning } from "@/shared/components/unsaved-warning";
+import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useUpdateTask, useEmployees, useLeads, useCustomers, useQuotations } from "@/shared/hooks/use-crm";
 import { useAuth } from "@/features/auth/components/auth-provider";
 import { TaskType } from "@/shared/types/task";
@@ -97,6 +100,8 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
   const [recordSearch, setRecordSearch] = useState("");
   const [recordDropdownOpen, setRecordDropdownOpen] = useState(false);
 
+  const [showWarning, setShowWarning] = useState(false);
+
   const defaultDueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
   const form = useForm<TaskFormValues>({
@@ -109,6 +114,20 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
       dueDate: defaultDueDate,
       checklist: [],
     },
+  });
+
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues, {
+    externalOriginalValues: {
+      attachments: task?.attachments || [],
+      relatedRecord: (() => {
+        if (!task) return null;
+        if (task.relatedLead) return { type: "lead", id: task.relatedLead.id, label: task.relatedLead.name, sub: task.relatedLead.company || "" };
+        if (task.relatedCustomer) return { type: "customer", id: task.relatedCustomer.id, label: task.relatedCustomer.name, sub: task.relatedCustomer.company || "" };
+        if (task.relatedQuotation) return { type: "quotation", id: task.relatedQuotation.id, label: `#${task.relatedQuotation.quoteNumber}`, sub: (task.relatedQuotation as any).client };
+        return null;
+      })()
+    },
+    externalValues: { attachments, relatedRecord }
   });
 
   React.useEffect(() => {
@@ -222,6 +241,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
       { id: task.id, data: payload },
       {
         onSuccess: () => {
+          resetDirty();
           onSuccess?.();
           resetForm();
           onClose();
@@ -240,8 +260,20 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
     quotation: { label: "Quote", color: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10" },
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open && isDirty) {
+      setShowWarning(true);
+      return;
+    }
+    if (!open) {
+      resetForm();
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { resetForm(); onClose(); } }}>
+    <>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[520px] bg-background border border-border shadow-2xl rounded-xl overflow-hidden p-0 flex flex-col max-h-[90vh]">
         {/* ── HEADER ── */}
         <div className="px-6 py-4 border-b border-border bg-muted/30 shrink-0">
@@ -637,25 +669,32 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => { resetForm(); onClose(); }}
+                  onClick={() => handleOpenChange(false)}
                   disabled={isPending}
                   className="h-9 px-4 text-xs font-semibold"
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isPending}
+                <FormSubmitButton
+                  isDirty={isDirty}
+                  isPending={isPending}
                   className="h-10 px-5 gap-2 font-semibold shadow-sm w-full sm:w-auto"
                 >
                   {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckSquare className="w-4 h-4" />}
                   Save Changes
-                </Button>
+                </FormSubmitButton>
               </div>
             </div>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
+    <UnsavedWarning 
+      open={showWarning} 
+      onOpenChange={setShowWarning} 
+      onConfirm={() => { setShowWarning(false); resetForm(); onClose(); }} 
+      onCancel={() => setShowWarning(false)} 
+    />
+    </>
   );
 };

@@ -98,6 +98,10 @@ const TasksPage = () => {
   useEffect(() => {
     if (data?.tasks) {
       setTasks(data.tasks);
+      setSelectedTask((prev) => {
+        if (!prev) return null;
+        return data.tasks.find((t: TaskType) => t.id === prev.id) || prev;
+      });
     }
   }, [data?.tasks, setTasks]);
 

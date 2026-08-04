@@ -7,6 +7,8 @@ import * as z from "zod";
 import { Form } from "@/shared/ui/form";
 import { FormInput, FormSelect, FormDatePicker, FormTextarea } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
+import { FormSubmitButton } from "@/shared/components/form-submit-button";
+import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useCreateTask } from "@/shared/hooks/use-crm";
 import { Loader2 } from "lucide-react";
 
@@ -40,6 +42,8 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
     },
   });
 
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues);
+
   const onSubmit = async (data: TaskFormValues) => {
     try {
       await createTask.mutateAsync({
@@ -53,6 +57,7 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
         assignedToId: data.assignedToId === "unassigned" ? undefined : data.assignedToId,
         reminderAt: data.reminderAt ? data.reminderAt.toISOString() : undefined,
       } as any);
+      resetDirty(form.getValues());
       onSuccess?.();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
@@ -108,16 +113,13 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
           <Button type="button" variant="outline" onClick={onCancel} disabled={createTask.isPending}>
             Cancel
           </Button>
-          <Button type="submit" disabled={createTask.isPending} className="min-w-32">
-            {createTask.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Task"
-            )}
-          </Button>
+          <FormSubmitButton
+            isDirty={isDirty}
+            isPending={createTask.isPending}
+            loadingText="Creating..."
+          >
+            Create Task
+          </FormSubmitButton>
         </div>
       </form>
     </Form>

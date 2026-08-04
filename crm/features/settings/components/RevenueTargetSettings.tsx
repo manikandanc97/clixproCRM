@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { Target, Plus, MoreVertical, Copy, Archive, Check, Trash2, Pencil, Calendar, Building, Calculator, Bell, Info, Settings } from "lucide-react";
 import client from "@/shared/lib/api/client";
 import { useCurrency } from "@/shared/hooks/use-currency";
+import { useDirtyState } from "@/shared/hooks/use-dirty-form";
+import { UnsavedWarning } from "@/shared/components/unsaved-warning";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/shared/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import { Badge } from "@/shared/ui/badge";
@@ -35,6 +37,7 @@ export default function RevenueTargetSettings() {
   const queryClient = useQueryClient();
   const { formatCurrency, currencyCode } = useCurrency();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -48,10 +51,14 @@ export default function RevenueTargetSettings() {
   };
 
   const [formData, setFormData] = useState(defaultFormState);
+  const [originalFormData, setOriginalFormData] = useState(defaultFormState);
 
   React.useEffect(() => {
     setFormData(prev => ({ ...prev, currency: currencyCode }));
+    setOriginalFormData(prev => ({ ...prev, currency: currencyCode }));
   }, [currencyCode]);
+
+  const { isDirty } = useDirtyState(formData, originalFormData);
 
   const { data: targets, isLoading } = useQuery({
     queryKey: ["revenue-targets"],
@@ -102,14 +109,16 @@ export default function RevenueTargetSettings() {
   });
 
   const handleEdit = (target: any) => {
-    setFormData({
+    const editState = {
       name: target.name || `${target.periodType} TARGET`,
       periodType: target.periodType,
       value: target.value.toString(),
       currency: target.currency,
       startDate: new Date(target.startDate).toISOString().split("T")[0],
       endDate: new Date(target.endDate).toISOString().split("T")[0],
-    });
+    };
+    setFormData(editState);
+    setOriginalFormData(editState);
     setEditingId(target.id);
     setIsFormOpen(true);
   };
@@ -119,7 +128,18 @@ export default function RevenueTargetSettings() {
     setTimeout(() => {
       setEditingId(null);
       setFormData({ ...defaultFormState, currency: currencyCode });
+      setOriginalFormData({ ...defaultFormState, currency: currencyCode });
     }, 300); // Wait for drawer animation
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && isDirty) {
+      setShowWarning(true);
+      return;
+    }
+    if (!open) {
+      closeForm();
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -160,6 +180,7 @@ export default function RevenueTargetSettings() {
             onClick={() => {
               setEditingId(null);
               setFormData({ ...defaultFormState, currency: currencyCode });
+              setOriginalFormData({ ...defaultFormState, currency: currencyCode });
               setIsFormOpen(true);
             }} 
           >
@@ -333,7 +354,7 @@ export default function RevenueTargetSettings() {
         )}
       </CardContent>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={isFormOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="w-full sm:max-w-2xl p-0 flex flex-col bg-background max-h-[90vh] overflow-hidden gap-0">
           <DialogHeader className="p-6 border-b shrink-0">
             <DialogTitle className="text-xl">{editingId ? "Edit Revenue Target" : "Create New Target"}</DialogTitle>
@@ -441,14 +462,20 @@ export default function RevenueTargetSettings() {
           
           <DialogFooter className="m-0 p-6 bg-background border-t shrink-0">
             <div className="flex gap-3 w-full justify-end">
-              <Button type="button" variant="outline" onClick={closeForm}>Cancel</Button>
-              <Button type="submit" form="target-form" disabled={createTarget.isPending || updateTarget.isPending} className="px-8">
+              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
+              <Button type="submit" form="target-form" disabled={!isDirty || createTarget.isPending || updateTarget.isPending} className="px-8">
                 {createTarget.isPending || updateTarget.isPending ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <UnsavedWarning 
+        open={showWarning} 
+        onOpenChange={setShowWarning} 
+        onConfirm={() => { setShowWarning(false); closeForm(); }} 
+        onCancel={() => setShowWarning(false)} 
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>

@@ -7,6 +7,8 @@ import * as z from "zod";
 import { Form } from "@/shared/ui/form";
 import { FormInput, FormSelect, FormDatePicker } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
+import { FormSubmitButton } from "@/shared/components/form-submit-button";
+import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useCreateLead, useUpdateLead } from "@/shared/hooks/use-crm";
 import { Loader2 } from "lucide-react";
 import { useCurrency } from "@/shared/hooks/use-currency";
@@ -64,6 +66,8 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
     },
   });
 
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues);
+
   const onSubmit = async (data: LeadFormValues) => {
     try {
       let formattedPhone = data.phone;
@@ -97,6 +101,7 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
           followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
         });
       }
+      resetDirty(form.getValues());
       onSuccess?.();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
@@ -149,16 +154,13 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isPending} className="min-w-32">
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {initialData ? "Updating..." : "Creating..."}
-              </>
-            ) : (
-              initialData ? "Update Lead" : "Create Lead"
-            )}
-          </Button>
+          <FormSubmitButton
+            isDirty={isDirty}
+            isPending={isPending}
+            loadingText={initialData ? "Updating..." : "Creating..."}
+          >
+            {initialData ? "Update Lead" : "Create Lead"}
+          </FormSubmitButton>
         </div>
       </form>
     </Form>

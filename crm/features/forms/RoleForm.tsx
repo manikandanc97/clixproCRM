@@ -7,6 +7,8 @@ import * as z from "zod";
 import { Form } from "@/shared/ui/form";
 import { FormInput, FormTextarea } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
+import { FormSubmitButton } from "@/shared/components/form-submit-button";
+import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { toast } from "sonner";
 import { Shield } from "lucide-react";
 
@@ -31,12 +33,15 @@ export const RoleForm = ({ onSuccess, onCancel }: RoleFormProps) => {
     },
   });
 
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues);
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onSubmit = async (_data: RoleFormValues) => {
     // In a real app, this would be a mutation
     toast.promise(new Promise(resolve => setTimeout(resolve, 1500)), {
       loading: "Creating custom security role...",
       success: () => {
+        resetDirty(form.getValues());
         onSuccess?.();
         return "Role created and registered in security engine.";
       },
@@ -73,9 +78,13 @@ export const RoleForm = ({ onSuccess, onCancel }: RoleFormProps) => {
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" className="min-w-32 font-bold">
+          <FormSubmitButton
+            isDirty={isDirty}
+            isPending={false} // Adjust if you add actual mutation loading state
+            className="min-w-32 font-bold"
+          >
             Create Role
-          </Button>
+          </FormSubmitButton>
         </div>
       </form>
     </Form>
