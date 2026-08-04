@@ -27,6 +27,10 @@ model Tenant {
   roles         Role[]
   tasks         Task[]
   users         TenantUser[]
+  revenueTargets RevenueTarget[]
+  notes          Note[]
+  timelineEvents TimelineEvent[]
+  attachments    Attachment[]
 }
 
 model User {
@@ -49,11 +53,16 @@ model User {
   auditLogsActed      AuditLog[]   @relation("AuditLogActor")
   assignedCustomers   Customer[]   @relation("CustomerAssignedTo")
   assignedLeads       Lead[]       @relation("LeadAssignedTo")
+  createdLeads        Lead[]       @relation("LeadCreatedBy")
+  updatedLeads        Lead[]       @relation("LeadUpdatedBy")
   assignedQuotations  Quotation[]  @relation("QuotationAssignedTo")
   sessions            Session[]
   assignedTasks       Task[]       @relation("TaskAssignedTo")
   assignedMeetings    Meeting[]    @relation("MeetingAssignedTo")
   memberships         TenantUser[]
+  notes               Note[]       @relation("NoteAuthor")
+  timelineEvents      TimelineEvent[] @relation("TimelineEventActor")
+  attachments         Attachment[] @relation("AttachmentUploader")
 }
 
 model TenantUser {
@@ -96,36 +105,51 @@ model Customer {
   assignedTo    User?          @relation("CustomerAssignedTo", fields: [assignedToId], references: [id])
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   quotations    Quotation[]
+  leadId        String?
+  leads         Lead[]         @relation("LeadCustomer")
 
   @@index([tenantId, status])
   @@index([assignedToId])
 }
 
 model Lead {
-  id           String     @id @default(uuid())
-  tenantId     String
-  assignedToId String?
-  name         String
-  company      String
-  email        String
-  status       LeadStatus @default(NEW)
-  value        Decimal    @default(0) @db.Decimal(12, 2)
-  followUpAt   DateTime?
-  deletedAt    DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  competitor   String?
-  lostReason   String?
-  priority     String     @default("Medium")
-  probability  Int        @default(10)
-  wonReason    String?
-  phone        String?
-  assignedTo   User?      @relation("LeadAssignedTo", fields: [assignedToId], references: [id])
-  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  meetings     Meeting[]
+  id                String       @id @default(uuid())
+  tenantId          String
+  name              String
+  company           String
+  email             String
+  phone             String?
+  source            String       @default("Direct")
+  stage             LeadStage    @default(NEW)
+  priority          LeadPriority @default(MEDIUM)
+  assignedToId      String?
+  value             Decimal      @default(0) @db.Decimal(12, 2)
+  expectedCloseDate DateTime?
+  tags              String[]
+  lastActivityAt    DateTime     @default(now())
+  createdById       String?
+  updatedById       String?
+  isConverted       Boolean      @default(false)
+  convertedAt       DateTime?
+  customerId        String?
+  deletedAt         DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
-  @@index([tenantId, status])
+  customer          Customer?    @relation("LeadCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  assignedTo        User?        @relation("LeadAssignedTo", fields: [assignedToId], references: [id])
+  createdBy         User?        @relation("LeadCreatedBy", fields: [createdById], references: [id])
+  updatedBy         User?        @relation("LeadUpdatedBy", fields: [updatedById], references: [id])
+  tenant            Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  meetings          Meeting[]
+  notes             Note[]
+  timelineEvents    TimelineEvent[]
+  attachments       Attachment[]
+
+  @@index([tenantId, stage])
   @@index([assignedToId])
+  @@index([customerId])
 }
 
 model Task {
@@ -296,23 +320,27 @@ model Meeting {
   title         String
   startTime     DateTime
   endTime       DateTime
+  duration      Int       @default(30)
   location      String?
   isOnline      Boolean   @default(false)
   type          EventType @default(MEETING)
   description   String?
   isAllDay      Boolean   @default(false)
   assignedToId  String?
-  relatedLeadId String?
+  leadId        String?
   status        String    @default("SCHEDULED")
+  reminderAt    DateTime?
+  participants  Json?
+  meetingNotes  String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assignedTo    User?     @relation("MeetingAssignedTo", fields: [assignedToId], references: [id])
-  relatedLead   Lead?     @relation(fields: [relatedLeadId], references: [id])
+  lead          Lead?     @relation(fields: [leadId], references: [id])
 
   @@index([tenantId])
   @@index([assignedToId])
-  @@index([relatedLeadId])
+  @@index([leadId])
 }
 
 model Notification {
@@ -342,12 +370,19 @@ enum CustomerStatus {
   INACTIVE
 }
 
-enum LeadStatus {
+enum LeadStage {
   NEW
   CONTACTED
   PROPOSAL_SENT
   WON
   LOST
+}
+
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
 enum TaskPriority {
@@ -376,4 +411,85 @@ enum EventType {
   BIRTHDAY
   LEAVE
   FOLLOW_UP
+}
+
+model RevenueTarget {
+  id               String       @id @default(uuid())
+  tenantId         String
+  periodType       TargetPeriod @default(MONTHLY)
+  value            Decimal      @default(0) @db.Decimal(12, 2)
+  currency         String       @default("USD")
+  startDate        DateTime
+  endDate          DateTime
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, isActive])
+}
+
+enum TargetPeriod {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  tenantId  String
+  leadId    String
+  userId    String
+  message   String
+  isPinned  Boolean  @default(false)
+  isInternal Boolean @default(true)
+  mentions  Json?
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user      User     @relation("NoteAuthor", fields: [userId], references: [id])
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([leadId])
+  @@index([userId])
+}
+
+model TimelineEvent {
+  id          String   @id @default(uuid())
+  tenantId    String
+  leadId      String
+  userId      String?
+  action      String
+  description String?
+  createdAt   DateTime @default(now())
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user        User?    @relation("TimelineEventActor", fields: [userId], references: [id])
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([leadId])
+}
+
+model Attachment {
+  id          String   @id @default(uuid())
+  tenantId    String
+  leadId      String
+  userId      String
+  fileName    String
+  fileUrl     String
+  fileSize    Int
+  fileType    String
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user        User     @relation("AttachmentUploader", fields: [userId], references: [id])
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([leadId])
 }

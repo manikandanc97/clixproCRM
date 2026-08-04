@@ -10,6 +10,7 @@ import { Button } from "@/shared/ui/button";
 import { useCreateCustomer, useUpdateCustomer } from "@/shared/hooks/use-crm";
 import { Loader2 } from "lucide-react";
 import { CustomerType } from "@/shared/types/customer";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 const customerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -30,6 +31,7 @@ interface CustomerFormProps {
 export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormProps) => {
   const { mutateAsync: createMutate, isPending: isCreating } = useCreateCustomer();
   const { mutateAsync: updateMutate, isPending: isUpdating } = useUpdateCustomer();
+  const { currencySymbol } = useCurrency();
 
   const isPending = isCreating || isUpdating;
 
@@ -93,7 +95,7 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
               { label: "Inactive", value: "INACTIVE" },
             ]} 
           />
-          <FormInput name="revenue" label="Annual Revenue ($)" placeholder="50000" />
+          <FormInput name="revenue" label={`Annual Revenue (${currencySymbol})`} placeholder="50000" />
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">

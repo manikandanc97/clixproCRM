@@ -2,6 +2,8 @@
 
 
 
+import { useCRMStore } from "@/shared/store/useCRMStore";
+
 export const LEAD_STATUS_LABELS: Record<string, string> = {
   NEW: "New",
   CONTACTED: "Contacted",
@@ -55,8 +57,9 @@ function getSupportedCurrency(value?: string | null): string {
   return CURRENCY_FORMATS[currency] ? currency : "USD";
 }
 
-export function formatCurrency(value: unknown, currency = "USD"): string {
-  const selectedCurrency = getSupportedCurrency(currency);
+export function formatCurrency(value: unknown, currency?: string): string {
+  const globalCurrency = useCRMStore.getState().currency || "USD";
+  const selectedCurrency = getSupportedCurrency(currency || globalCurrency);
   const format = CURRENCY_FORMATS[selectedCurrency];
 
   return new Intl.NumberFormat(format.locale, {

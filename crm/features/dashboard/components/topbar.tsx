@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { HelpCircle, Grid3X3, Command, Search, Menu } from "lucide-react";
+import { HelpCircle, Command, Search, Menu } from "lucide-react";
 import { useAuth } from "@/features/auth/components/auth-provider";
 import ProfileMenu from "./ProfileMenu";
 import NotificationPanel from "./NotificationPanel";
@@ -10,6 +10,8 @@ import CreateNewMenu from "./CreateNewMenu";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/shared/ui/sheet";
 import { SidebarContent } from "./sidebar";
 import { Button } from "@/shared/ui/button";
+import GlobalSearch from "./GlobalSearch";
+import CurrencySwitcher from "./CurrencySwitcher";
 
 function getInitials(name?: string) {
   if (!name) return "CR";
@@ -49,38 +51,16 @@ export default function Topbar() {
           </SheetContent>
         </Sheet>
 
-        {/* Search / Command Palette Trigger */}
-        <button 
-          onClick={() => {
-            const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true });
-            document.dispatchEvent(event);
-          }}
-          className="w-full flex flex-1 items-center justify-between bg-muted/30 hover:bg-muted/50 border border-border/50 hover:border-border px-4 h-[46px] rounded-xl transition-all duration-200 group shadow-[0_1px_2px_rgba(0,0,0,0.03)] outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary"
-        >
-          <div className="flex items-center gap-3">
-            <Search className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" strokeWidth={1.5} />
-            <span className="text-muted-foreground text-[15px] font-medium tracking-tight hidden sm:inline truncate">Search leads, customers...</span>
-          </div>
-          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-muted-foreground bg-background/50 rounded-md shadow-sm border border-border/50 backdrop-blur-sm">
-            <Command className="w-3 h-3" /> K
-          </kbd>
-        </button>
+        <GlobalSearch />
       </div>
 
       {/* Right */}
       <div className="flex items-center gap-5">
         <CreateNewMenu />
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <CurrencySwitcher />
           <NotificationPanel />
-
-          <button className="hidden sm:flex items-center justify-center w-10 h-10 hover:bg-muted rounded-full transition-all duration-200 group outline-none focus-visible:ring-1 focus-visible:ring-primary">
-            <HelpCircle className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" strokeWidth={1.5} />
-          </button>
-
-          <button className="hidden sm:flex items-center justify-center w-10 h-10 hover:bg-muted rounded-full transition-all duration-200 group outline-none focus-visible:ring-1 focus-visible:ring-primary">
-            <Grid3X3 className="w-5 h-5 text-muted-foreground transition-colors group-hover:text-foreground" strokeWidth={1.5} />
-          </button>
         </div>
 
         <ProfileMenu user={user} initials={initials} />

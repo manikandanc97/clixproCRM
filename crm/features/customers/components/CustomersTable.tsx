@@ -37,11 +37,9 @@ interface CustomersTableProps {
 }
 
 const statusVariantMap: Record<string, StatusVariant> = {
-  "Active": "emerald",
-  "Inactive": "neutral",
-  "At Risk": "amber",
-  "Churned": "rose",
-  "VIP": "indigo",
+  "ACTIVE": "emerald",
+  "PREMIUM": "indigo",
+  "INACTIVE": "neutral",
 };
 
 export const CustomersTable = ({ customers, onEdit }: CustomersTableProps) => {
@@ -104,30 +102,41 @@ export const CustomersTable = ({ customers, onEdit }: CustomersTableProps) => {
       ),
     },
     {
-      header: "LTV",
-      cell: (customer: CustomerType) => (
-        <div className="flex flex-col">
-          <span className="text-sm font-bold text-foreground">{customer.ltv}</span>
-          <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 uppercase">
-            <TrendingUp className="size-3" />
-            +14%
+      header: "Revenue (LTV)",
+      cell: (customer: CustomerType) => {
+        const revenueNum = typeof customer.revenueValue === "number" ? customer.revenueValue : (parseFloat(String(customer.revenue || "0")) || 0);
+        const formatted = revenueNum >= 1_00_000
+          ? `₹${(revenueNum / 1_00_000).toFixed(1)}L`
+          : revenueNum >= 1000
+          ? `₹${(revenueNum / 1000).toFixed(1)}K`
+          : `₹${revenueNum.toLocaleString("en-IN")}`;
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-foreground">{revenueNum > 0 ? formatted : <span className="text-muted-foreground text-xs">—</span>}</span>
+            {revenueNum > 0 && (
+              <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 uppercase">
+                <TrendingUp className="size-3" /> Lifetime Value
+              </div>
+            )}
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
-      header: "Trust Score",
-      cell: (customer: CustomerType) => (
-        <div className="flex items-center gap-2">
-          <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-            <div 
-              className="h-full bg-primary" 
-              style={{ width: `${customer.healthScore}%` }} 
-            />
+      header: "Account Health",
+      cell: (customer: CustomerType) => {
+        const statusScore: Record<string, number> = { "PREMIUM": 90, "ACTIVE": 65, "INACTIVE": 25 };
+        const score = customer.healthScore ?? statusScore[customer.status] ?? 50;
+        const color = score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-rose-500";
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className={`h-full ${color}`} style={{ width: `${score}%` }} />
+            </div>
+            <span className="text-[10px] font-bold text-muted-foreground">{score}%</span>
           </div>
-          <span className="text-[10px] font-bold text-muted-foreground">{customer.healthScore}%</span>
-        </div>
-      ),
+        );
+      },
     },
     {
       header: "Actions",

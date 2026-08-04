@@ -25,7 +25,7 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
     const params = await context.params;
     const { id } = params;
     
-    await CrmService.deleteLead(session.tenantId, id);
+    await CrmService.deleteLead(session.tenantId, session.userId, id);
     return NextResponse.json({ success: true, data: { id } }, { status: 200 });
   } catch (error: unknown) { return handleApiError(error); }
 }

@@ -26,16 +26,17 @@ import WelcomeBanner from "@/features/dashboard/components/WelcomeBanner";
 import { DashboardWidgetWrapper } from "@/features/dashboard/components/DashboardWidgetWrapper";
 import CreateNewMenu from "@/features/dashboard/components/CreateNewMenu";
 import DashboardKPIs from "@/features/dashboard/components/DashboardKPIs";
+import DashboardFilterMenu from "@/features/dashboard/components/DashboardFilterMenu";
 
 const DashboardPage = () => {
   const { 
-    queries, 
-    isAuthInitializing,
-  } = useDashboardInitializer();
-
-  const { 
     activeTimeframe, setActiveTimeframe 
   } = useCRMStore();
+
+  const { 
+    queries, 
+    isAuthInitializing,
+  } = useDashboardInitializer(activeTimeframe);
 
   if (isAuthInitializing) {
     return <DashboardSkeleton />;
@@ -43,14 +44,11 @@ const DashboardPage = () => {
 
   const handleExport = () => {
     toast.success("Preparing PDF export...", {
-      description: "Your dashboard report will be ready in a moment.",
+      description: "Opening print dialog for dashboard...",
     });
-  };
-
-  const handleFilterClick = () => {
-    toast.info("Global filters opened", {
-      description: "You can now filter the entire dashboard by region or agent.",
-    });
+    setTimeout(() => {
+      window.print();
+    }, 500);
   };
 
   return (
@@ -76,11 +74,8 @@ const DashboardPage = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <Button variant="outline" size="sm" onClick={handleFilterClick} className="rounded-full h-9 px-3 sm:px-4 text-xs font-bold gap-2">
-              <Filter className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Filters</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleExport} className="rounded-full h-9 px-3 sm:px-4 text-xs font-bold gap-2">
+            <DashboardFilterMenu />
+            <Button variant="outline" size="sm" onClick={handleExport} className="rounded-full h-9 px-3 sm:px-4 text-xs font-bold gap-2 print:hidden">
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Export PDF</span>
             </Button>

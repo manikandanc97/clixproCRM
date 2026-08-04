@@ -3,11 +3,6 @@ import { useCRMStore } from "@/shared/store/useCRMStore";
 const CURRENCY_FORMATS: Record<string, { locale: string; currency: string }> = {
   USD: { locale: "en-US", currency: "USD" },
   INR: { locale: "en-IN", currency: "INR" },
-  EUR: { locale: "en-IE", currency: "EUR" },
-  GBP: { locale: "en-GB", currency: "GBP" },
-  AED: { locale: "en-AE", currency: "AED" },
-  SGD: { locale: "en-SG", currency: "SGD" },
-  AUD: { locale: "en-AU", currency: "AUD" },
 };
 
 function getSupportedCurrency(value?: string | null): string {
@@ -31,5 +26,8 @@ export function useCurrency() {
     }).format(numValue);
   };
 
-  return { currency, formatCurrency };
+  const currencySymbol = currency === "INR" ? "₹" : "$";
+  const currencyCode = currency;
+
+  return { currency, formatCurrency, currencySymbol, currencyCode };
 }

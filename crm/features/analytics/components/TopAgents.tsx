@@ -7,6 +7,7 @@ import { CardContent } from '@/shared/ui/card';
 import { Users, Activity, MoreVertical, Zap } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from '@/shared/ui/skeleton';
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 export interface AgentStat {
   id: string | number;
@@ -17,7 +18,9 @@ export interface AgentStat {
   performance?: number;
 }
 
-export const TopAgents = ({ data, loading }: { data?: AgentStat[], loading?: boolean }) => (
+export const TopAgents = ({ data, loading }: { data?: AgentStat[], loading?: boolean }) => {
+  const { formatCurrency } = useCurrency();
+  return (
   <CRMCard className="h-full" noPadding accentSeed="agents">
     <CRMCardHeader 
       title="Top Performers" 
@@ -60,7 +63,7 @@ export const TopAgents = ({ data, loading }: { data?: AgentStat[], loading?: boo
                      <Zap className="w-3 h-3 text-amber-500" />
                      {agent.deals} Deals Closed
                   </span>
-                  <span className="font-bold text-foreground">{agent.revenue}</span>
+                  <span className="font-bold text-foreground">{typeof agent.revenue === 'number' || !isNaN(Number(agent.revenue)) ? formatCurrency(Number(agent.revenue)) : agent.revenue}</span>
                 </div>
                 <Progress value={agent.performance} className="h-1.5" />
               </div>
@@ -70,7 +73,8 @@ export const TopAgents = ({ data, loading }: { data?: AgentStat[], loading?: boo
       </div>
     </CardContent>
   </CRMCard>
-);
+  );
+};
 
 interface ActivityItem {
   id: string | number;

@@ -10,7 +10,8 @@ import {
   Check,
   Type,
   Layout,
-  DollarSign
+  DollarSign,
+  IndianRupee
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -54,11 +55,6 @@ const FONTS: { label: string; value: FontFamily }[] = [
 const CURRENCIES = [
   { label: "USD ($)", value: "USD" },
   { label: "INR (₹)", value: "INR" },
-  { label: "EUR (€)", value: "EUR" },
-  { label: "GBP (£)", value: "GBP" },
-  { label: "AED", value: "AED" },
-  { label: "SGD", value: "SGD" },
-  { label: "AUD", value: "AUD" },
 ];
 
 export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
@@ -67,6 +63,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   const router = useRouter();
   const { logout, hasPermission } = useAuth();
   const { currency, setCurrency } = useCRMStore();
+  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
 
   const handleLogout = () => {
     logout();
@@ -76,19 +73,13 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-3 bg-background hover:bg-muted/30 p-1.5 pr-4 h-[52px] rounded-xl transition-all duration-200 hover:-translate-y-0.5 group border border-border/50 hover:border-border shadow-sm hover:shadow-md outline-none focus-visible:ring-1 focus-visible:ring-primary">
+        <button className="flex items-center gap-3 bg-background hover:bg-muted/30 p-1.5 h-[52px] rounded-xl transition-all duration-200 hover:-translate-y-0.5 group border border-transparent outline-none focus-visible:ring-1 focus-visible:ring-primary">
           <div className="relative shrink-0">
             <div className="flex justify-center items-center bg-gradient-to-br from-primary to-emerald-600 rounded-full w-[38px] h-[38px] font-bold text-sm text-primary-foreground shadow-sm border border-white/20">
               {initials}
             </div>
             {/* Online Indicator */}
             <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background ring-1 ring-black/5 dark:ring-white/10" />
-          </div>
-          <div className="hidden lg:flex flex-col items-start justify-center min-w-[90px]">
-            <p className="font-medium text-foreground text-[14px] leading-none tracking-tight mb-1.5 truncate max-w-[120px]">{user?.displayName || user?.name || "Account"}</p>
-            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-[10px] font-semibold leading-none tracking-wide">
-              {user?.roleName || user?.role || "Admin"}
-            </span>
           </div>
         </button>
       </DropdownMenuTrigger>
@@ -107,6 +98,10 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
           <DropdownMenuItem onClick={() => router.push("/settings?section=profile")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
             <User className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className="font-semibold text-sm">My Profile</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/settings?section=account")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
+            <Layout className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="font-semibold text-sm">My Account</span>
           </DropdownMenuItem>
           {hasPermission(PERMISSIONS.SETTINGS_READ) && (
             <DropdownMenuItem onClick={() => router.push("/settings?section=workspace")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
@@ -203,7 +198,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
           {/* Currency Selector Submenu */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="py-2.5 rounded-xl group">
-              <DollarSign className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <CurrencyIcon className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               <span className="font-semibold text-sm">Currency</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -231,6 +226,11 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
             <span className="font-semibold text-sm">Settings</span>
           </DropdownMenuItem>
         )}
+        
+        <DropdownMenuItem onClick={() => router.push("/settings?section=security")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
+          <Settings className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          <span className="font-semibold text-sm">Change Password</span>
+        </DropdownMenuItem>
 
         <DropdownMenuItem onClick={handleLogout} variant="destructive" className="cursor-pointer py-2.5 rounded-xl group">
           <LogOut className="mr-3 h-4 w-4 transition-colors" />

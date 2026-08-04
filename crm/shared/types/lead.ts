@@ -28,6 +28,8 @@ export interface LeadType {
   customerId?: string;
   isConverted?: boolean;
   notes?: NoteType[];
+  notesCount?: number;
+  upcomingMeeting?: any;
 }
 
 export interface NoteType {
@@ -52,13 +54,34 @@ export interface LeadsDataType {
   leads: LeadType[];
 }
 
+export interface TimelineEventType {
+  id: string;
+  leadId: string;
+  userId?: string;
+  action: string;
+  description?: string;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
 
-
-
-
-
-
-
-
-
-
+export interface AttachmentType {
+  id: string;
+  leadId: string;
+  userId: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  fileType: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}

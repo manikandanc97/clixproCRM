@@ -7,8 +7,10 @@ import { CheckSquare, ArrowRight, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useTasks } from "@/shared/hooks/use-crm";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
+import { useRouter } from "next/navigation";
 
 export default function PendingFollowups() {
+  const router = useRouter();
   const { data } = useTasks();
   const allTasks = data?.tasks ?? [];
   const pendingTasks = allTasks.filter(t => t.status !== "COMPLETED").slice(0, 4);
@@ -39,7 +41,7 @@ export default function PendingFollowups() {
             </div>
             <CardTitle>Pending Tasks</CardTitle>
           </div>
-          <Button variant="ghost" className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">View All</Button>
+          <Button variant="ghost" onClick={() => router.push("/tasks")} className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">View All</Button>
         </CardHeader>
         <CardContent className="pt-0 flex-1 flex flex-col">
           <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
@@ -84,7 +86,7 @@ export default function PendingFollowups() {
                   ))}
                 </div>
                 
-                <Button variant="outline" className="w-full mt-auto rounded-xl border-border bg-transparent hover:bg-muted text-muted-foreground font-bold text-[11px] uppercase tracking-wider">
+                <Button variant="outline" onClick={() => router.push("/tasks")} className="w-full mt-auto rounded-xl border-border bg-transparent hover:bg-muted text-muted-foreground font-bold text-[11px] uppercase tracking-wider">
                   + Add New Task
                 </Button>
               </>

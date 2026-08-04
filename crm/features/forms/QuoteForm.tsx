@@ -9,6 +9,7 @@ import { FormInput, FormSelect, FormDatePicker } from "@/shared/components/form-
 import { Button } from "@/shared/ui/button";
 import { useCreateQuotation } from "@/shared/hooks/use-crm";
 import { Loader2 } from "lucide-react";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 const quoteSchema = z.object({
   client: z.string().min(2, "Client name is required"),
@@ -26,6 +27,7 @@ interface QuoteFormProps {
 
 export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
   const createQuote = useCreateQuotation();
+  const { currencySymbol } = useCurrency();
 
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema),
@@ -57,7 +59,7 @@ export const QuoteForm = ({ onSuccess, onCancel }: QuoteFormProps) => {
         <FormInput name="client" label="Client/Company Name" placeholder="e.g. Nexus Inc" />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput name="amount" label="Quote Amount ($)" placeholder="1250.00" />
+          <FormInput name="amount" label={`Quote Amount (${currencySymbol})`} placeholder="1250.00" />
           <FormSelect 
             name="status" 
             label="Initial Status" 

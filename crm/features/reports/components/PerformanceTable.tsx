@@ -23,6 +23,7 @@ import {
   CRMSortIndicator,
 } from "@/shared/components/crm";
 import { cn } from "@/shared/lib/utils";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 interface PerformanceTableProps {
   performance: PerformanceType[];
@@ -35,6 +36,7 @@ type SortConfig = {
 
 const PerformanceTable = ({ performance }: PerformanceTableProps) => {
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+  const { formatCurrency } = useCurrency();
 
   const sortedPerformance = useMemo(() => {
     if (!sortConfig) return performance;
@@ -135,7 +137,7 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
             <CRMTableCell>
               <div className="w-48 space-y-2">
                 <div className="flex justify-between text-[11px] font-bold">
-                  <span className="text-foreground">{item.revenue}</span>
+                  <span className="text-foreground">{formatCurrency(item.revenueValue)}</span>
                   <span className="text-muted-foreground">85% of Goal</span>
                 </div>
                 <Progress value={85} className="h-1.5" />

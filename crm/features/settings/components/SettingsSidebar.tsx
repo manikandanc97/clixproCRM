@@ -14,6 +14,7 @@ import {
   Sparkles,
   ChevronRight,
   ShieldHalf,
+  Target,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { CRMCard } from "@/shared/components/crm";
@@ -38,6 +39,7 @@ const categories = [
     items: [
       { id: "workspace", label: "General", icon: Building2 },
       { id: "team", label: "Team", icon: Users },
+      { id: "targets", label: "Revenue Targets", icon: Target },
       { id: "billing", label: "Software License", icon: Package },
       { id: "integrations", label: "Integrations", icon: Blocks },
       { id: "ai", label: "AI Settings", icon: Sparkles },

@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { Lead, Task,  Prisma, CustomerStatus, LeadStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
+import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
 import {
   calculateTrend,
   formatCurrency,
@@ -15,7 +15,157 @@ import {
 } from "@/lib/crm-formatters";
 
 export class CrmService {
+  static async ensureDatabaseColumns() {
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "isConverted" BOOLEAN DEFAULT false;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "convertedAt" TIMESTAMP(3);`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "customerId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "leadId" TEXT;`);
+    } catch (_e) {
+      // Ignore if columns already exist
+    }
+  }
+
+  static async cleanupCustomerAnomalies(tenantId: string) {
+    try {
+      await this.ensureDatabaseColumns();
+
+      return await prisma.$transaction(async (tx) => {
+      // 1. Fetch all non-deleted WON leads
+      const wonLeads = await tx.lead.findMany({
+        where: { tenantId, stage: "WON", deletedAt: null }
+      });
+
+      // 2. Fetch all non-deleted customers
+      const allCustomers = await tx.customer.findMany({
+        where: { tenantId, deletedAt: null }
+      });
+
+      // Find duplicate customers (e.g. identical email or identical name+company)
+      const seenKeys = new Map<string, string>();
+      const duplicateIds: string[] = [];
+
+      for (const cust of allCustomers) {
+        const key = (cust.email && cust.email.trim() !== "") 
+          ? `email:${cust.email.trim().toLowerCase()}`
+          : `name:${cust.name.trim().toLowerCase()}|company:${cust.company.trim().toLowerCase()}`;
+
+        if (seenKeys.has(key)) {
+          duplicateIds.push(cust.id);
+        } else {
+          seenKeys.set(key, cust.id);
+        }
+      }
+
+      if (duplicateIds.length > 0) {
+        await tx.customer.updateMany({
+          where: { id: { in: duplicateIds } },
+          data: { deletedAt: new Date(), status: "INACTIVE" }
+        });
+      }
+
+      // 3. For each WON lead, ensure exactly ONE customer exists
+      for (const lead of wonLeads) {
+        let customer = null;
+        if (lead.customerId) {
+          customer = await tx.customer.findFirst({
+            where: { id: lead.customerId, tenantId, deletedAt: null }
+          });
+        }
+        if (!customer && lead.email && lead.email.trim() !== "") {
+          customer = await tx.customer.findFirst({
+            where: { tenantId, email: lead.email.trim(), deletedAt: null }
+          });
+        }
+        if (!customer) {
+          customer = await tx.customer.findFirst({
+            where: { tenantId, name: lead.name.trim(), company: lead.company.trim(), deletedAt: null }
+          });
+        }
+
+        if (!customer) {
+          customer = await tx.customer.create({
+            data: {
+              tenantId,
+              name: lead.name,
+              company: lead.company,
+              email: lead.email || null,
+              revenue: lead.value,
+              status: "ACTIVE",
+              assignedToId: lead.assignedToId,
+              leadId: lead.id
+            }
+          });
+        } else {
+          customer = await tx.customer.update({
+            where: { id: customer.id },
+            data: {
+              name: lead.name,
+              company: lead.company,
+              email: lead.email || customer.email,
+              revenue: lead.value,
+              status: "ACTIVE",
+              assignedToId: lead.assignedToId || customer.assignedToId,
+              leadId: lead.id,
+              deletedAt: null
+            }
+          });
+        }
+
+        // Update lead conversion state
+        await tx.lead.update({
+          where: { id: lead.id },
+          data: {
+            isConverted: true,
+            convertedAt: lead.convertedAt || new Date(),
+            customerId: customer.id
+          }
+        });
+      }
+
+      // 4. Clean up any customers that do NOT have an active WON lead
+      const currentWonLeads = await tx.lead.findMany({
+        where: { tenantId, stage: "WON", deletedAt: null },
+        select: { id: true, customerId: true }
+      });
+      const validCustomerIds = new Set(currentWonLeads.map(l => l.customerId).filter(Boolean));
+
+      // Reset non-WON leads
+      const nonWonLeads = await tx.lead.findMany({
+        where: { tenantId, stage: { not: "WON" }, deletedAt: null }
+      });
+
+      for (const nonWonLead of nonWonLeads) {
+        if (nonWonLead.isConverted || nonWonLead.customerId) {
+          if (nonWonLead.customerId && !validCustomerIds.has(nonWonLead.customerId)) {
+            await tx.customer.updateMany({
+              where: { id: nonWonLead.customerId, deletedAt: null },
+              data: { deletedAt: new Date(), status: "INACTIVE" }
+            });
+          }
+          await tx.lead.update({
+            where: { id: nonWonLead.id },
+            data: {
+              isConverted: false,
+              convertedAt: null,
+              customerId: null
+            }
+          });
+        }
+      }
+    }, { timeout: 20000, maxWait: 10000 });
+    } catch (error) {
+      console.error("Cleanup anomalies non-fatal error:", error);
+    }
+  }
+
+  static async syncWonLeadsToCustomers(tenantId: string) {
+    return await this.cleanupCustomerAnomalies(tenantId);
+  }
+
   static async getCustomers(tenantId: string, page = 1, limit = 10, search = "") {
+    await this.cleanupCustomerAnomalies(tenantId);
+
     page = Math.max(1, page);
     limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
@@ -65,13 +215,25 @@ export class CrmService {
     });
   }
 
-  static async getLeads(tenantId: string, currency = "USD", page = 1, limit = 10, search = "", status?: string) {
+  static async logTimeline(tenantId: string, leadId: string, action: string, description: string | null = null, userId?: string) {
+    return prisma.timelineEvent.create({
+      data: {
+        tenantId,
+        leadId,
+        action,
+        description,
+        userId
+      }
+    });
+  }
+
+  static async getLeads(tenantId: string, currency = "USD", page = 1, limit = 10, search = "", stage?: string) {
     page = Math.max(1, page);
     limit = Math.max(1, Math.min(limit, 100));
     const skip = (page - 1) * limit;
     const where: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
     if (search) where.name = { contains: search, mode: "insensitive" };
-    if (status) where.status = status as LeadStatus;
+    if (stage) where.stage = stage as any;
 
     const [leads, total] = await Promise.all([
       prisma.lead.findMany({
@@ -79,6 +241,18 @@ export class CrmService {
         orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
         skip,
         take: limit,
+        select: {
+          id: true, name: true, company: true, email: true, phone: true, source: true,
+          stage: true, priority: true, assignedToId: true, value: true, expectedCloseDate: true,
+          tags: true, isConverted: true, convertedAt: true, customerId: true, lastActivityAt: true, createdAt: true, updatedAt: true,
+          _count: { select: { notes: true, meetings: true } },
+          meetings: {
+            where: { startTime: { gte: new Date() } },
+            orderBy: { startTime: "asc" },
+            take: 1,
+            select: { startTime: true, title: true }
+          }
+        }
       }),
       prisma.lead.count({ where }),
     ]);
@@ -91,171 +265,354 @@ export class CrmService {
     const customerMap = new Map(customers.map(c => [c.email, c.id]));
 
     return {
-      summary: { total: leads.length },
-      leads: leads.map((lead: Lead) => {
+      summary: { total },
+      leads: leads.map((lead: any) => {
         const customerId = lead.email ? customerMap.get(lead.email) : undefined;
         return {
           id: lead.id,
           name: lead.name,
           company: lead.company,
           email: lead.email,
-          status: getStatusLabel(LEAD_STATUS_LABELS, lead.status),
+          phone: lead.phone,
+          source: lead.source,
+          stage: lead.stage,
+          status: getStatusLabel(LEAD_STATUS_LABELS, lead.stage),
+          priority: lead.priority,
           value: formatCurrency(lead.value, currency),
           valueAmount: toNumber(lead.value),
-          followUp: formatRelativeDate(lead.followUpAt, { fallback: "Not scheduled" }),
-          followUpAt: lead.followUpAt,
+          expectedCloseDate: lead.expectedCloseDate,
+          tags: lead.tags,
+          lastActivityAt: lead.lastActivityAt,
           createdAt: lead.createdAt,
           updatedAt: lead.updatedAt,
-          priority: lead.priority,
-          probability: lead.probability,
-          phone: lead.phone,
-          source: (lead as any).source || 'Direct',
           customerId,
-          isConverted: !!customerId || lead.status === "WON",
+          isConverted: !!customerId || lead.stage === "WON",
+          notesCount: lead._count?.notes || 0,
+          meetingsCount: lead._count?.meetings || 0,
+          upcomingMeeting: lead.meetings && lead.meetings.length > 0 ? lead.meetings[0] : null,
         };
       }),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
-  static async createLead(tenantId: string, data: { name: string; company: string; email: string; phone?: string; valueAmount?: number; value?: number | string; status?: LeadStatus; followUpAt?: string | Date | null; priority?: string; probability?: number }) {
-    const lead = await prisma.lead.create({
-      data: {
-        tenantId,
-        name: data.name,
-        company: data.company,
-        email: data.email,
-        phone: data.phone,
-        value: data.valueAmount || data.value || 0,
-        status: data.status || "NEW",
-        followUpAt: data.followUpAt ? new Date(data.followUpAt) : null,
-        priority: data.priority || "Medium",
-        probability: data.probability || 10,
-      }
-    });
-    return lead;
-  }
+  static async createLead(tenantId: string, userId: string, data: any) {
+    return await prisma.$transaction(async (tx) => {
+      const isWon = data.stage === "WON";
 
-  static async updateLead(tenantId: string, userId: string, id: string, data: Partial<{ name: string; company: string; email: string; phone: string; value: number | string; valueAmount: number; status: LeadStatus; followUpAt: string | Date | null; priority: string; probability: number; wonReason: string; lostReason: string; competitor: string; actualRevenue: number; wonDate: string; notes: string }>) {
-    // Determine if status is changing to something new for audit logs
-    const existingLead = await prisma.lead.findUnique({
-      where: { id, tenantId },
-      select: { status: true, name: true }
-    });
-
-    const isWon = data.status === "WON";
-
-    const lead = await prisma.lead.update({
-      where: { id, tenantId },
-      data: {
-        ...(data.name && { name: data.name }),
-        ...(data.company && { company: data.company }),
-        ...(data.email && { email: data.email }),
-        ...(data.phone && { phone: data.phone }),
-        ...(data.value !== undefined && { value: data.value }),
-        ...(data.valueAmount !== undefined && data.value === undefined && { value: data.valueAmount }),
-        ...(data.actualRevenue !== undefined && { value: data.actualRevenue }),
-        ...(data.status && { status: data.status }),
-        ...(data.followUpAt && { followUpAt: new Date(data.followUpAt) }),
-        ...(data.priority && { priority: data.priority }),
-        ...(data.probability !== undefined && { probability: data.probability }),
-        ...(isWon && { probability: 100 }),
-        ...(data.wonReason !== undefined && { wonReason: data.wonReason }),
-        ...(data.lostReason !== undefined && { lostReason: data.lostReason }),
-        ...(data.competitor !== undefined && { competitor: data.competitor }),
-      }
-    });
-
-    if (existingLead && data.status && existingLead.status !== data.status) {
-      // Create Audit Log for status change
-      await prisma.auditLog.create({
+      const lead = await tx.lead.create({
         data: {
           tenantId,
-          userId,
-          action: "DEAL_MOVED",
-          module: "PIPELINE",
-          details: { leadId: id, from: existingLead.status, to: data.status },
+          name: data.name,
+          company: data.company,
+          email: data.email,
+          phone: data.phone,
+          source: data.source || "Direct",
+          stage: data.stage || "NEW",
+          priority: data.priority || "MEDIUM",
+          value: data.valueAmount || data.value || 0,
+          expectedCloseDate: data.expectedCloseDate ? new Date(data.expectedCloseDate) : null,
+          tags: data.tags || [],
+          assignedToId: data.assignedToId || userId,
+          createdById: userId,
+          isConverted: isWon,
+          convertedAt: isWon ? new Date() : null,
+        }
+      });
+      
+      await tx.timelineEvent.create({
+        data: {
+          tenantId,
+          leadId: lead.id,
+          action: "Lead Created",
+          description: `Created lead for ${data.company}`,
+          userId
         }
       });
 
       if (isWon) {
-        // Convert Lead to Customer if not exists
+        const customer = await tx.customer.create({
+          data: {
+            tenantId,
+            name: lead.name,
+            company: lead.company,
+            email: lead.email || null,
+            revenue: lead.value,
+            status: "ACTIVE",
+            assignedToId: lead.assignedToId,
+            leadId: lead.id
+          }
+        });
+
+        const updatedLead = await tx.lead.update({
+          where: { id: lead.id },
+          data: {
+            isConverted: true,
+            convertedAt: new Date(),
+            customerId: customer.id
+          }
+        });
+
+        await tx.timelineEvent.create({
+          data: {
+            tenantId,
+            leadId: lead.id,
+            action: "Lead Converted to Customer",
+            description: `Lead converted to customer (${customer.name})`,
+            userId
+          }
+        });
+
+        return updatedLead;
+      }
+
+      return lead;
+    });
+  }
+
+  static async updateLead(tenantId: string, userId: string, id: string, data: any) {
+    return await prisma.$transaction(async (tx) => {
+      const existingLead = await tx.lead.findUnique({
+        where: { id, tenantId },
+        select: { id: true, stage: true, name: true, company: true, email: true, phone: true, assignedToId: true, customerId: true, isConverted: true }
+      });
+      if (!existingLead) throw new Error("Lead not found");
+
+      const targetStage = data.stage || existingLead.stage;
+      const isWon = targetStage === "WON";
+      const wasWon = existingLead.stage === "WON";
+      const stageChanged = data.stage && existingLead.stage !== data.stage;
+
+      const lead = await tx.lead.update({
+        where: { id, tenantId },
+        data: {
+          ...(data.name && { name: data.name }),
+          ...(data.company && { company: data.company }),
+          ...(data.email && { email: data.email }),
+          ...(data.phone !== undefined && { phone: data.phone }),
+          ...(data.source && { source: data.source }),
+          ...(data.value !== undefined && { value: data.value }),
+          ...(data.valueAmount !== undefined && data.value === undefined && { value: data.valueAmount }),
+          ...(data.stage && { stage: data.stage }),
+          ...(data.priority && { priority: data.priority }),
+          ...(data.expectedCloseDate !== undefined && { expectedCloseDate: data.expectedCloseDate ? new Date(data.expectedCloseDate) : null }),
+          ...(data.tags && { tags: data.tags }),
+          ...(data.assignedToId && { assignedToId: data.assignedToId }),
+          updatedById: userId,
+          lastActivityAt: new Date()
+        }
+      });
+
+      if (stageChanged) {
+        await tx.timelineEvent.create({
+          data: {
+            tenantId,
+            leadId: id,
+            action: "Stage Changed",
+            description: `Moved from ${existingLead.stage} to ${data.stage}`,
+            userId
+          }
+        });
+      }
+
+      // Transition to WON
+      if (isWon) {
         let customer = null;
-        if (lead.email) {
-          customer = await prisma.customer.findFirst({
-            where: { tenantId, email: lead.email, deletedAt: null }
+        const cid = lead.customerId || existingLead.customerId;
+        if (cid) {
+          customer = await tx.customer.findFirst({ where: { id: cid, tenantId, deletedAt: null } });
+        }
+        if (!customer && lead.email && lead.email.trim() !== "") {
+          customer = await tx.customer.findFirst({
+            where: { tenantId, email: lead.email.trim(), deletedAt: null }
+          });
+        }
+        if (!customer) {
+          customer = await tx.customer.findFirst({
+            where: { tenantId, name: lead.name.trim(), company: lead.company.trim(), deletedAt: null }
           });
         }
 
         if (!customer) {
-          customer = await prisma.customer.create({
+          customer = await tx.customer.create({
             data: {
               tenantId,
               name: lead.name,
               company: lead.company,
-              email: lead.email,
-              assignedToId: lead.assignedToId,
+              email: lead.email || null,
               revenue: lead.value,
-              status: "ACTIVE"
+              status: "ACTIVE",
+              assignedToId: lead.assignedToId,
+              leadId: lead.id
             }
           });
-          
-          await prisma.auditLog.create({
+        } else {
+          customer = await tx.customer.update({
+            where: { id: customer.id },
             data: {
-              tenantId,
-              userId,
-              action: "LEAD_CONVERTED",
-              module: "PIPELINE",
-              details: { leadId: id, customerId: customer.id },
+              name: lead.name,
+              company: lead.company,
+              email: lead.email || customer.email,
+              revenue: lead.value,
+              status: "ACTIVE",
+              assignedToId: lead.assignedToId || customer.assignedToId,
+              leadId: lead.id,
+              deletedAt: null
             }
           });
         }
-      } else if (existingLead.status === "WON" && !isWon) {
-        // Find and soft-delete the associated customer
-        if (lead.email) {
-          const customer = await prisma.customer.findFirst({
-            where: { tenantId, email: lead.email, deletedAt: null }
+
+        const updatedLead = await tx.lead.update({
+          where: { id: lead.id },
+          data: {
+            isConverted: true,
+            convertedAt: lead.convertedAt || new Date(),
+            customerId: customer.id
+          }
+        });
+
+        if (stageChanged) {
+          await tx.timelineEvent.create({
+            data: {
+              tenantId,
+              leadId: id,
+              action: "Lead Converted to Customer",
+              description: `Lead converted to customer (${customer.name})`,
+              userId
+            }
           });
-          
-          if (customer) {
-            await prisma.customer.update({
-              where: { id: customer.id },
-              data: { deletedAt: new Date() }
-            });
-            
-            await prisma.auditLog.create({
+
+          if (userId) {
+            await tx.notification.create({
               data: {
                 tenantId,
                 userId,
-                action: "CUSTOMER_UNCONVERTED",
-                module: "PIPELINE",
-                details: { leadId: id, customerId: customer.id },
+                type: "DEAL_WON",
+                title: "Deal Won & Customer Created!",
+                message: `Lead ${lead.name} (${lead.company}) was marked as Won and converted to a Customer.`,
+                isRead: false
               }
-            });
+            }).catch(() => {});
           }
         }
-      }
-    }
 
-    return lead;
+        return updatedLead;
+
+      // Transition FROM WON to non-WON (New Lead, Contacted, Proposal Sent, Lost)
+      } else if (wasWon && !isWon) {
+        const cid = existingLead.customerId || lead.customerId;
+        let customer = cid ? await tx.customer.findFirst({ where: { id: cid, tenantId, deletedAt: null } }) : null;
+        if (!customer && existingLead.email) {
+          customer = await tx.customer.findFirst({
+            where: { tenantId, email: existingLead.email, deletedAt: null }
+          });
+        }
+        if (!customer) {
+          customer = await tx.customer.findFirst({
+            where: { tenantId, name: existingLead.name, company: existingLead.company, deletedAt: null }
+          });
+        }
+
+        if (customer) {
+          await tx.customer.update({
+            where: { id: customer.id },
+            data: { deletedAt: new Date(), status: "INACTIVE" }
+          });
+        }
+
+        const updatedLead = await tx.lead.update({
+          where: { id: lead.id },
+          data: {
+            isConverted: false,
+            convertedAt: null,
+            customerId: null
+          }
+        });
+
+        if (stageChanged) {
+          await tx.timelineEvent.create({
+            data: {
+              tenantId,
+              leadId: id,
+              action: "Lead Demoted from Won",
+              description: `Moved from Won to ${data.stage}. Customer record removed.`,
+              userId
+            }
+          });
+        }
+
+        return updatedLead;
+      }
+
+      return lead;
+    });
   }
 
-  static async deleteLead(tenantId: string, id: string) {
-    const lead = await prisma.lead.delete({
-      where: { id, tenantId }
+  static async deleteLead(tenantId: string, userId: string, id: string) {
+    return await prisma.$transaction(async (tx) => {
+      const existing = await tx.lead.findUnique({
+        where: { id, tenantId },
+        select: { id: true, stage: true, customerId: true, email: true, name: true, company: true }
+      });
+      if (!existing) throw new Error("Lead not found");
+
+      const lead = await tx.lead.update({
+        where: { id, tenantId },
+        data: {
+          deletedAt: new Date(),
+          isConverted: false,
+          convertedAt: null,
+          customerId: null,
+          updatedById: userId,
+          lastActivityAt: new Date()
+        }
+      });
+
+      await tx.timelineEvent.create({
+        data: {
+          tenantId,
+          leadId: id,
+          action: "Lead Deleted",
+          description: `Lead was softly deleted`,
+          userId
+        }
+      });
+
+      if (existing.stage === "WON" || existing.customerId) {
+        const custId = existing.customerId;
+        let customer = custId ? await tx.customer.findFirst({ where: { id: custId, tenantId, deletedAt: null } }) : null;
+        if (!customer && existing.email) {
+          customer = await tx.customer.findFirst({
+            where: { tenantId, email: existing.email, deletedAt: null }
+          });
+        }
+        if (!customer) {
+          customer = await tx.customer.findFirst({
+            where: { tenantId, name: existing.name, company: existing.company, deletedAt: null }
+          });
+        }
+
+        if (customer) {
+          await tx.customer.update({
+            where: { id: customer.id },
+            data: { deletedAt: new Date(), status: "INACTIVE" }
+          });
+        }
+      }
+
+      return lead;
     });
-    return lead;
   }
 
   static async getPipeline(tenantId: string, currency = "USD") {
     const leads = await prisma.lead.findMany({
       where: { tenantId },
-      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+      orderBy: [{ stage: "asc" }, { updatedAt: "desc" }],
     });
 
-    const openDeals = leads.filter((lead: Lead) => !["WON", "LOST"].includes(lead.status));
-    const closedDeals = leads.filter((lead: Lead) => ["WON", "LOST"].includes(lead.status));
-    const wonDeals = leads.filter((lead: Lead) => lead.status === "WON");
+    const openDeals = leads.filter((lead: Lead) => !["WON", "LOST"].includes(lead.stage));
+    const closedDeals = leads.filter((lead: Lead) => ["WON", "LOST"].includes(lead.stage));
+    const wonDeals = leads.filter((lead: Lead) => lead.stage === "WON");
     const totalValue = openDeals.reduce((total: number, lead: Lead) => total + toNumber(lead.value), 0);
     const winRate = leads.length ? (wonDeals.length / leads.length) * 100 : 0;
 
@@ -273,11 +630,11 @@ export class CrmService {
       dEnd.setDate(dEnd.getDate() + 1);
 
       // Approximation for Active Deals at the end of the day
-      const activeDealsOnDay = leads.filter(l => l.createdAt < dEnd && (!["WON", "LOST"].includes(l.status) || l.updatedAt >= dEnd)).length;
+      const activeDealsOnDay = leads.filter(l => l.createdAt < dEnd && (!["WON", "LOST"].includes(l.stage) || l.updatedAt >= dEnd)).length;
       
       // Cumulative Conversion Rate up to the end of the day
       const leadsUpToDay = leads.filter(l => l.createdAt < dEnd);
-      const wonDealsOnDay = leadsUpToDay.filter(l => l.status === "WON");
+      const wonDealsOnDay = leadsUpToDay.filter(l => l.stage === "WON");
       const winRateOnDay = leadsUpToDay.length ? (wonDealsOnDay.length / leadsUpToDay.length) * 100 : 0;
 
       sparklineActiveDeals.push({ value: activeDealsOnDay });
@@ -287,15 +644,15 @@ export class CrmService {
     // Previous week baseline for trends
     const sevenDaysAgo = new Date(todayStart);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-    const previousOpenDeals = leads.filter(l => l.createdAt < sevenDaysAgo && (!["WON", "LOST"].includes(l.status) || l.updatedAt >= sevenDaysAgo)).length;
-    const previousClosedDeals = leads.filter(l => ["WON", "LOST"].includes(l.status) && l.updatedAt < sevenDaysAgo);
-    const previousWonDeals = previousClosedDeals.filter(l => l.status === "WON");
+    const previousOpenDeals = leads.filter(l => l.createdAt < sevenDaysAgo && (!["WON", "LOST"].includes(l.stage) || l.updatedAt >= sevenDaysAgo)).length;
+    const previousClosedDeals = leads.filter(l => ["WON", "LOST"].includes(l.stage) && l.updatedAt < sevenDaysAgo);
+    const previousWonDeals = previousClosedDeals.filter(l => l.stage === "WON");
     const previousLeads = leads.filter(l => l.createdAt < sevenDaysAgo);
     const previousWinRate = previousLeads.length ? (previousWonDeals.length / previousLeads.length) * 100 : 0;
 
     const items = leads.map((lead: Lead) => {
-      const stageLabel = getStatusLabel(PIPELINE_STAGE_LABELS, lead.status);
-      const probability = lead.probability;
+      const stageLabel = getStatusLabel(PIPELINE_STAGE_LABELS, lead.stage);
+      const probability = 10;
       
       const daysSinceUpdate = Math.floor((new Date().getTime() - new Date(lead.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
       let temperature = "Warm";
@@ -313,14 +670,14 @@ export class CrmService {
         company: lead.company,
         value: formatCurrency(lead.value, currency),
         valueAmount: toNumber(lead.value),
-        followUp: formatRelativeDate(lead.followUpAt, { fallback: "Not scheduled" }),
-        followUpAt: lead.followUpAt,
+        followUp: formatRelativeDate(lead.expectedCloseDate, { fallback: "Not scheduled" }),
+        followUpAt: lead.expectedCloseDate,
         stage: stageLabel,
         priority,
         probability,
         temperature,
         expectedCloseDate: formatDate(expectedCloseDate),
-        activityCount: [lead.createdAt, lead.updatedAt, lead.followUpAt].filter(Boolean).length,
+        activityCount: [lead.createdAt, lead.updatedAt, lead.expectedCloseDate].filter(Boolean).length,
         isStuck,
         aiSummary: `Deal with ${lead.company} is progressing well. ${temperature === "Hot" ? "High engagement detected." : "Follow-up recommended."}`,
         createdAt: lead.createdAt.toISOString(),
@@ -476,10 +833,39 @@ export class CrmService {
     return quotation;
   }
 
-  static async getDashboardData(tenantId: string, currency = "USD") {
-    const { currentMonthStart, nextMonthStart, previousMonthStart } = getMonthRanges();
-    
+  static async getDashboardData(tenantId: string, currency = "USD", timeframe = "month") {
+    try {
+      this.cleanupCustomerAnomalies(tenantId).catch(() => {});
+    } catch (_e) {}
+
     const now = new Date();
+    let currentStart = new Date(now);
+    let nextStart = new Date(now);
+    let previousStart = new Date(now);
+    
+    if (timeframe === "today") {
+      currentStart.setHours(0, 0, 0, 0);
+      previousStart = new Date(currentStart);
+      previousStart.setDate(previousStart.getDate() - 1);
+      nextStart = new Date(currentStart);
+      nextStart.setDate(nextStart.getDate() + 1);
+    } else if (timeframe === "week") {
+      currentStart.setDate(currentStart.getDate() - currentStart.getDay());
+      currentStart.setHours(0, 0, 0, 0);
+      previousStart = new Date(currentStart);
+      previousStart.setDate(previousStart.getDate() - 7);
+      nextStart = new Date(currentStart);
+      nextStart.setDate(nextStart.getDate() + 7);
+    } else if (timeframe === "year") {
+      currentStart = new Date(now.getFullYear(), 0, 1);
+      previousStart = new Date(now.getFullYear() - 1, 0, 1);
+      nextStart = new Date(now.getFullYear() + 1, 0, 1);
+    } else {
+      const ranges = getMonthRanges();
+      currentStart = ranges.currentMonthStart;
+      previousStart = ranges.previousMonthStart;
+      nextStart = ranges.nextMonthStart;
+    }
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
     const todayStart = new Date(now);
@@ -488,7 +874,7 @@ export class CrmService {
     yesterdayStart.setDate(yesterdayStart.getDate() - 1);
     
     const sevenDaysAgo = new Date(todayStart);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // 7 days including today
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
     const startOfCurrentWeek = new Date(now);
     startOfCurrentWeek.setDate(now.getDate() - now.getDay());
@@ -497,58 +883,51 @@ export class CrmService {
     const startOfPreviousWeek = new Date(startOfCurrentWeek);
     startOfPreviousWeek.setDate(startOfPreviousWeek.getDate() - 7);
 
-    const [
-      totalLeads,
-      currentMonthLeads,
-      previousMonthLeads,
-      currentMonthCustomers,
-      previousMonthCustomers,
-      currentRevenueAgg,
-      previousRevenueAgg,
-      totalPendingTasks,
-      currentMonthPendingTasks,
-      previousMonthPendingTasks,
-      recentLeads,
-      recentQuotations,
-      recentCompletedTasks,
-      monthlySalesData,
-      liveTrafficToday,
-      liveTrafficYesterday,
-      activeUsersCurrent,
-      activeUsersPrevious,
-      currentWeekLeads,
-      previousWeekLeads,
-      currentWeekLeadsData,
-    ] = await Promise.all([
-      prisma.lead.count({ where: { tenantId } }),
-      prisma.lead.count({ where: { tenantId, createdAt: { gte: currentMonthStart, lt: nextMonthStart } } }),
-      prisma.lead.count({ where: { tenantId, createdAt: { gte: previousMonthStart, lt: currentMonthStart } } }),
-      prisma.customer.count({ where: { tenantId, createdAt: { gte: currentMonthStart, lt: nextMonthStart } } }),
-      prisma.customer.count({ where: { tenantId, createdAt: { gte: previousMonthStart, lt: currentMonthStart } } }),
-      prisma.lead.aggregate({ _sum: { value: true }, where: { tenantId, status: "WON", updatedAt: { gte: currentMonthStart, lt: nextMonthStart } } }),
-      prisma.lead.aggregate({ _sum: { value: true }, where: { tenantId, status: "WON", updatedAt: { gte: previousMonthStart, lt: currentMonthStart } } }),
-      prisma.task.count({ where: { tenantId, status: { not: "COMPLETED" } } }),
-      prisma.task.count({ where: { tenantId, status: { not: "COMPLETED" }, createdAt: { gte: currentMonthStart, lt: nextMonthStart } } }),
-      prisma.task.count({ where: { tenantId, status: { not: "COMPLETED" }, createdAt: { gte: previousMonthStart, lt: currentMonthStart } } }),
-      prisma.lead.findMany({ where: { tenantId }, select: { id: true, name: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 5 }),
-      prisma.quotation.findMany({ where: { tenantId }, select: { id: true, client: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 5 }),
-      prisma.task.findMany({ where: { tenantId, status: "COMPLETED" }, select: { id: true, title: true, updatedAt: true }, orderBy: { updatedAt: "desc" }, take: 5 }),
-      prisma.lead.findMany({ where: { tenantId, status: "WON" }, select: { value: true, updatedAt: true, createdAt: true }, orderBy: { updatedAt: "desc" } }),
-      // Live traffic (Sessions updated today)
-      prisma.session.count({ where: { updatedAt: { gte: todayStart } } }),
-      prisma.session.count({ where: { updatedAt: { gte: yesterdayStart, lt: todayStart } } }),
-      // Active users (Sessions updated in last 15 mins)
-      prisma.session.count({ where: { updatedAt: { gte: fifteenMinutesAgo } } }),
-      prisma.session.count({ where: { updatedAt: { gte: thirtyMinutesAgo, lt: fifteenMinutesAgo } } }),
-      // Weekly growth (Leads this week vs last week)
-      prisma.lead.count({ where: { tenantId, createdAt: { gte: startOfCurrentWeek } } }),
-      prisma.lead.count({ where: { tenantId, createdAt: { gte: startOfPreviousWeek, lt: startOfCurrentWeek } } }),
-      // For Sparkline (Leads last 7 days)
-      prisma.lead.findMany({ where: { tenantId, createdAt: { gte: sevenDaysAgo } }, select: { createdAt: true } }),
+    // Fetch entity datasets in 5 clean queries instead of 21 concurrent roundtrips
+    const [allLeads, allCustomers, allTasks, recentQuotations, sessions] = await Promise.all([
+      prisma.lead.findMany({
+        where: { tenantId, deletedAt: null },
+        select: { id: true, name: true, stage: true, value: true, createdAt: true, updatedAt: true },
+        orderBy: { createdAt: "desc" }
+      }),
+      prisma.customer.findMany({
+        where: { tenantId, deletedAt: null },
+        select: { id: true, createdAt: true }
+      }),
+      prisma.task.findMany({
+        where: { tenantId, deletedAt: null },
+        select: { id: true, title: true, status: true, createdAt: true, updatedAt: true }
+      }),
+      prisma.quotation.findMany({
+        where: { tenantId, deletedAt: null },
+        select: { id: true, client: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 5
+      }),
+      prisma.session.findMany({
+        select: { updatedAt: true }
+      })
     ]);
 
-    const currentRevenue = toNumber(currentRevenueAgg._sum.value || 0);
-    const previousRevenue = toNumber(previousRevenueAgg._sum.value || 0);
+    const totalLeads = allLeads.length;
+    const currentMonthLeads = allLeads.filter(l => l.createdAt >= currentStart && l.createdAt < nextStart).length;
+    const previousMonthLeads = allLeads.filter(l => l.createdAt >= previousStart && l.createdAt < currentStart).length;
+
+    const currentMonthCustomers = allCustomers.filter(c => c.createdAt >= currentStart && c.createdAt < nextStart).length;
+    const previousMonthCustomers = allCustomers.filter(c => c.createdAt >= previousStart && c.createdAt < currentStart).length;
+
+    const wonLeads = allLeads.filter(l => l.stage === "WON");
+    const currentRevenue = wonLeads.filter(l => l.updatedAt >= currentStart && l.updatedAt < nextStart).reduce((sum, l) => sum + toNumber(l.value), 0);
+    const previousRevenue = wonLeads.filter(l => l.updatedAt >= previousStart && l.updatedAt < currentStart).reduce((sum, l) => sum + toNumber(l.value), 0);
+
+    const pendingTasks = allTasks.filter(t => t.status !== "COMPLETED");
+    const totalPendingTasks = pendingTasks.length;
+    const currentMonthPendingTasks = pendingTasks.filter(t => t.createdAt >= currentStart && t.createdAt < nextStart).length;
+    const previousMonthPendingTasks = pendingTasks.filter(t => t.createdAt >= previousStart && t.createdAt < currentStart).length;
+
+    const recentLeads = allLeads.slice(0, 5);
+    const recentCompletedTasks = allTasks.filter(t => t.status === "COMPLETED").sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 5);
+    const currentWeekLeadsData = allLeads.filter(l => l.createdAt >= sevenDaysAgo);
 
     // Calculate Sparkline Data
     const sparklineRevenue = [];
@@ -560,7 +939,7 @@ export class CrmService {
       dEnd.setDate(dEnd.getDate() + 1);
       
       const dayLeads = currentWeekLeadsData.filter(l => l.createdAt >= dStart && l.createdAt < dEnd).length;
-      const dayRevenue = monthlySalesData.filter(l => l.updatedAt >= dStart && l.updatedAt < dEnd).reduce((sum, l) => sum + toNumber(l.value), 0);
+      const dayRevenue = wonLeads.filter(l => l.updatedAt >= dStart && l.updatedAt < dEnd).reduce((sum, l) => sum + toNumber(l.value), 0);
       
       sparklineLeads.push({ value: dayLeads });
       sparklineRevenue.push({ value: dayRevenue });
@@ -585,13 +964,21 @@ export class CrmService {
     const currentYear = new Date().getFullYear();
     const salesChartData = months.map(month => ({ name: month, total: 0 }));
 
-    monthlySalesData.forEach(lead => {
+    wonLeads.forEach(lead => {
       const date = new Date(lead.updatedAt);
       if (date.getFullYear() === currentYear) {
         const monthIndex = date.getMonth();
         salesChartData[monthIndex].total += toNumber(lead.value);
       }
     });
+
+    const currentWeekLeads = allLeads.filter(l => l.createdAt >= startOfCurrentWeek).length;
+    const previousWeekLeads = allLeads.filter(l => l.createdAt >= startOfPreviousWeek && l.createdAt < startOfCurrentWeek).length;
+
+    const liveTrafficToday = sessions.filter(s => s.updatedAt >= todayStart).length;
+    const liveTrafficYesterday = sessions.filter(s => s.updatedAt >= yesterdayStart && s.updatedAt < todayStart).length;
+    const activeUsersCurrent = sessions.filter(s => s.updatedAt >= fifteenMinutesAgo).length;
+    const activeUsersPrevious = sessions.filter(s => s.updatedAt >= thirtyMinutesAgo && s.updatedAt < fifteenMinutesAgo).length;
 
     const weeklyGrowth = previousWeekLeads > 0 
       ? ((currentWeekLeads - previousWeekLeads) / previousWeekLeads) * 100 
@@ -663,8 +1050,8 @@ export class CrmService {
     const baseWhere: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
     const [totalLeads, wonDeals, lostDeals] = await Promise.all([
       prisma.lead.count({ where: baseWhere }),
-      prisma.lead.count({ where: { ...baseWhere, status: "WON" } }),
-      prisma.lead.count({ where: { ...baseWhere, status: "LOST" } }),
+      prisma.lead.count({ where: { ...baseWhere, stage: "WON" } }),
+      prisma.lead.count({ where: { ...baseWhere, stage: "LOST" } }),
     ]);
     const openDeals = totalLeads - wonDeals - lostDeals;
     
@@ -673,7 +1060,7 @@ export class CrmService {
     const startOfYear = new Date(currentYear, 0, 1);
     
     const wonLeadsThisYear = await prisma.lead.findMany({
-      where: { ...baseWhere, status: "WON", updatedAt: { gte: startOfYear } },
+      where: { ...baseWhere, stage: "WON", updatedAt: { gte: startOfYear } },
       select: { value: true, updatedAt: true }
     });
     
@@ -684,9 +1071,9 @@ export class CrmService {
     });
 
     const [newCount, contactedCount, proposalCount] = await Promise.all([
-      prisma.lead.count({ where: { ...baseWhere, status: "NEW" } }),
-      prisma.lead.count({ where: { ...baseWhere, status: "CONTACTED" } }),
-      prisma.lead.count({ where: { ...baseWhere, status: "PROPOSAL_SENT" } }),
+      prisma.lead.count({ where: { ...baseWhere, stage: "NEW" } }),
+      prisma.lead.count({ where: { ...baseWhere, stage: "CONTACTED" } }),
+      prisma.lead.count({ where: { ...baseWhere, stage: "PROPOSAL_SENT" } }),
     ]);
 
     const funnel = [
@@ -735,10 +1122,32 @@ export class CrmService {
     };
   }
 
-  static async getAnalytics(tenantId: string) {
+  static async getAnalytics(tenantId: string, filter?: string) {
     const leadsWhere: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
     const tasksWhere: Prisma.TaskWhereInput = { tenantId, deletedAt: null };
     const customersWhere: Prisma.CustomerWhereInput = { tenantId, deletedAt: null };
+
+    if (filter) {
+      const now = new Date();
+      const startDate = new Date();
+      startDate.setHours(0, 0, 0, 0);
+
+      switch (filter) {
+        case "Today":
+          break;
+        case "Last 7 Days":
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case "This Month":
+          startDate.setDate(1);
+          break;
+      }
+
+      leadsWhere.createdAt = { gte: startDate };
+      tasksWhere.createdAt = { gte: startDate };
+      customersWhere.createdAt = { gte: startDate };
+    }
+
     const [leadsCount, tasksCount, customersCount] = await Promise.all([
       prisma.lead.count({ where: leadsWhere }),
       prisma.task.count({ where: tasksWhere }),
@@ -746,10 +1155,10 @@ export class CrmService {
     ]);
 
     const [newCount, contactedCount, proposalCount, wonCount] = await Promise.all([
-      prisma.lead.count({ where: { ...leadsWhere, status: "NEW" } }),
-      prisma.lead.count({ where: { ...leadsWhere, status: "CONTACTED" } }),
-      prisma.lead.count({ where: { ...leadsWhere, status: "PROPOSAL_SENT" } }),
-      prisma.lead.count({ where: { ...leadsWhere, status: "WON" } })
+      prisma.lead.count({ where: { ...leadsWhere, stage: "NEW" } }),
+      prisma.lead.count({ where: { ...leadsWhere, stage: "CONTACTED" } }),
+      prisma.lead.count({ where: { ...leadsWhere, stage: "PROPOSAL_SENT" } }),
+      prisma.lead.count({ where: { ...leadsWhere, stage: "WON" } })
     ]);
 
     const pipelineStages = [
@@ -764,7 +1173,7 @@ export class CrmService {
 
     const leadsThisYear = await prisma.lead.findMany({
       where: { ...leadsWhere, createdAt: { gte: startOfYear } },
-      select: { status: true, createdAt: true, updatedAt: true, value: true }
+      select: { stage: true, createdAt: true, updatedAt: true, value: true }
     });
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -774,7 +1183,7 @@ export class CrmService {
     leadsThisYear.forEach(lead => {
       const date = new Date(lead.createdAt);
       leadsGrowth[date.getMonth()].direct++;
-      if (lead.status === "WON") {
+      if (lead.stage === "WON") {
         const wonDate = new Date(lead.updatedAt);
         if (wonDate.getFullYear() === currentYear) {
           revenueOverview[wonDate.getMonth()].revenue += toNumber(lead.value);
@@ -877,11 +1286,11 @@ export class CrmService {
       previousTotalLeads
     ] = await Promise.all([
       prisma.lead.findMany({
-        where: { tenantId, status: "WON", updatedAt: { gte: startDate, lte: endDate } },
+        where: { tenantId, stage: "WON", updatedAt: { gte: startDate, lte: endDate } },
         select: { value: true, updatedAt: true }
       }),
       prisma.lead.findMany({
-        where: { tenantId, status: "WON", updatedAt: { gte: previousStartDate, lte: previousEndDate } },
+        where: { tenantId, stage: "WON", updatedAt: { gte: previousStartDate, lte: previousEndDate } },
         select: { value: true }
       }),
       prisma.lead.count({
@@ -986,7 +1395,7 @@ export class CrmService {
   }
 
   static async getAiInsights(tenantId: string) {
-    const leads = await prisma.lead.findMany({ where: { tenantId, status: "NEW" }, take: 3, orderBy: { createdAt: 'desc' } });
+    const leads = await prisma.lead.findMany({ where: { tenantId, stage: "NEW" }, take: 3, orderBy: { createdAt: 'desc' } });
     const tasks = await prisma.task.findMany({ where: { tenantId, status: "PENDING", dueDate: { lt: new Date() } }, take: 2 });
     
     const recommendations = [
@@ -1160,7 +1569,7 @@ export class CrmService {
   }
   
   static async getHotLeads(tenantId: string) {
-    const leads = await prisma.lead.findMany({ where: { tenantId, status: "NEW" }, take: 5, orderBy: { createdAt: 'desc' } });
+    const leads = await prisma.lead.findMany({ where: { tenantId, stage: "NEW" }, take: 5, orderBy: { createdAt: 'desc' } });
     return leads.map(l => ({ id: l.id, name: l.name, company: l.company, score: 90, value: formatCurrency(toNumber(l.value), "USD") }));
   }
 
@@ -1182,7 +1591,7 @@ export class CrmService {
 
   static async getNotifications(tenantId: string) {
     const notifications = await prisma.notification.findMany({ where: { tenantId }, take: 5, orderBy: { createdAt: 'desc' } });
-    return { notifications: notifications.map((n) => ({ id: n.id, title: n.title, description: n.message, read: n.isRead, time: formatDate(n.createdAt), type: n.type })) };
+    return { notifications: notifications.map((n) => ({ id: n.id, title: n.title, description: n.message, read: n.isRead, time: n.createdAt ? n.createdAt.toISOString() : new Date().toISOString(), type: n.type })) };
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async bulkImportLeads(
@@ -1198,9 +1607,8 @@ export class CrmService {
     const failedRows = [];
 
     const defaults = {
-      status: "NEW" as LeadStatus,
-      priority: "Medium",
-      probability: 10,
+      stage: "NEW" as LeadStage,
+      priority: "MEDIUM" as LeadPriority,
     };
 
     for (let i = 0; i < leadsData.length; i++) {
@@ -1228,9 +1636,8 @@ export class CrmService {
                 company: row.company || existing.company,
                 phone: row.phone || existing.phone,
                 value: row.valueAmount !== undefined ? row.valueAmount : (row.value !== undefined ? row.value : existing.value),
-                status: row.status || existing.status,
+                stage: row.stage || existing.stage,
                 priority: row.priority || existing.priority,
-                probability: row.probability !== undefined ? row.probability : existing.probability,
                 assignedToId: row.assignedToId || existing.assignedToId,
               }
             });
@@ -1244,9 +1651,8 @@ export class CrmService {
                 email: row.email,
                 phone: row.phone,
                 value: row.valueAmount !== undefined ? row.valueAmount : (row.value || 0),
-                status: row.status || defaults.status,
+                stage: row.stage || defaults.stage,
                 priority: row.priority || defaults.priority,
-                probability: row.probability !== undefined ? row.probability : defaults.probability,
                 assignedToId: row.assignedToId || null,
               }
             });
@@ -1261,9 +1667,8 @@ export class CrmService {
               email: row.email,
               phone: row.phone,
               value: row.valueAmount !== undefined ? row.valueAmount : (row.value || 0),
-              status: row.status || defaults.status,
+              stage: row.stage || defaults.stage,
               priority: row.priority || defaults.priority,
-              probability: row.probability !== undefined ? row.probability : defaults.probability,
               assignedToId: row.assignedToId || null,
             }
           });
@@ -1289,5 +1694,270 @@ export class CrmService {
     }
 
     return { imported, skipped, failed, failedRows };
+  }
+
+  // --- Revenue Targets ---
+  static async getRevenueTargets(tenantId: string) {
+    return prisma.revenueTarget.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  static async createRevenueTarget(tenantId: string, data: any) {
+    const isActive = data.isActive !== undefined ? data.isActive : true;
+    if (isActive) {
+      await prisma.revenueTarget.updateMany({
+        where: { tenantId, isActive: true },
+        data: { isActive: false },
+      });
+    }
+
+    return prisma.revenueTarget.create({
+      data: {
+        tenantId,
+        periodType: data.periodType || "MONTHLY",
+        value: data.value || 0,
+        currency: data.currency || "USD",
+        startDate: new Date(data.startDate),
+        endDate: new Date(data.endDate),
+        isActive: isActive,
+      },
+    });
+  }
+
+  static async updateRevenueTarget(tenantId: string, id: string, data: any) {
+    if (data.isActive) {
+      await prisma.revenueTarget.updateMany({
+        where: { tenantId, isActive: true, id: { not: id } },
+        data: { isActive: false },
+      });
+    }
+
+    return prisma.revenueTarget.update({
+      where: { id, tenantId },
+      data: {
+        ...(data.periodType && { periodType: data.periodType }),
+        ...(data.value !== undefined && { value: data.value }),
+        ...(data.currency && { currency: data.currency }),
+        ...(data.startDate && { startDate: new Date(data.startDate) }),
+        ...(data.endDate && { endDate: new Date(data.endDate) }),
+        ...(data.isActive !== undefined && { isActive: data.isActive }),
+      },
+    });
+  }
+
+  static async deleteRevenueTarget(tenantId: string, id: string) {
+    return prisma.revenueTarget.delete({
+      where: { id, tenantId },
+    });
+  }
+
+  static async getRevenueTargetAnalytics(tenantId: string, filters: any = {}) {
+    // Determine the active target based on filters or default
+    const targets = await prisma.revenueTarget.findMany({
+      where: { tenantId, isActive: true },
+    });
+
+    let activeTarget = targets.length > 0 ? targets[0] : null;
+
+    if (!activeTarget) {
+      return { hasTarget: false, currentRevenue: 0, targetValue: 0, achievementPercentage: 0, trend: null };
+    }
+
+    const now = new Date();
+    // Default to target dates if no timeframe provided, otherwise we'd parse timeframe
+    // For simplicity, we'll use the target's configured dates for "current period"
+    // Or if a specific filter like "this-month" is applied, we override the period.
+    let start = new Date(activeTarget.startDate);
+    let end = new Date(activeTarget.endDate);
+    let prevStart = new Date(start);
+    let prevEnd = new Date(end);
+    
+    // Simple previous period calculation (e.g. subtract month if monthly)
+    if (activeTarget.periodType === "MONTHLY") {
+      prevStart.setMonth(prevStart.getMonth() - 1);
+      prevEnd.setMonth(prevEnd.getMonth() - 1);
+    } else if (activeTarget.periodType === "QUARTERLY") {
+      prevStart.setMonth(prevStart.getMonth() - 3);
+      prevEnd.setMonth(prevEnd.getMonth() - 3);
+    } else if (activeTarget.periodType === "YEARLY") {
+      prevStart.setFullYear(prevStart.getFullYear() - 1);
+      prevEnd.setFullYear(prevEnd.getFullYear() - 1);
+    }
+
+    const leadWhere: Prisma.LeadWhereInput = {
+      tenantId,
+      stage: "WON",
+      deletedAt: null,
+    };
+
+    if (filters.employee && filters.employee !== "all" && filters.employee !== "me") {
+      leadWhere.assignedToId = filters.employee;
+    }
+
+    const currentRevenueAgg = await prisma.lead.aggregate({
+      _sum: { value: true },
+      where: {
+        ...leadWhere,
+        updatedAt: { gte: start, lte: end },
+      },
+    });
+
+    const previousRevenueAgg = await prisma.lead.aggregate({
+      _sum: { value: true },
+      where: {
+        ...leadWhere,
+        updatedAt: { gte: prevStart, lte: prevEnd },
+      },
+    });
+
+    const currentRevenue = toNumber(currentRevenueAgg._sum.value || 0);
+    const previousRevenue = toNumber(previousRevenueAgg._sum.value || 0);
+    const targetValue = toNumber(activeTarget.value);
+
+    let achievementPercentage = 0;
+    if (targetValue > 0) {
+      achievementPercentage = Math.round((currentRevenue / targetValue) * 100);
+    }
+
+    let trend = 0;
+    let trendDirection = "neutral";
+    if (previousRevenue > 0) {
+      trend = Math.round(((currentRevenue - previousRevenue) / previousRevenue) * 100 * 10) / 10;
+      if (trend > 0) trendDirection = "up";
+      if (trend < 0) trendDirection = "down";
+    } else if (currentRevenue > 0) {
+      trend = 100;
+      trendDirection = "up";
+    }
+
+    return {
+      hasTarget: true,
+      target: activeTarget,
+      currentRevenue,
+      previousRevenue,
+      targetValue,
+      achievementPercentage,
+      trend: {
+        value: Math.abs(trend),
+        direction: trendDirection,
+        label: `${Math.abs(trend)}% vs last period`,
+      },
+    };
+  }
+
+  // ─── LEAD NOTES ────────────────────────────────────────────────────────────
+  static async getLeadNotes(tenantId: string, leadId: string) {
+    return prisma.note.findMany({
+      where: { tenantId, leadId },
+      include: {
+        user: { select: { name: true, email: true, id: true } }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  static async createLeadNote(tenantId: string, leadId: string, userId: string, data: { message: string, isPinned?: boolean, mentions?: any }) {
+    return prisma.note.create({
+      data: {
+        tenantId,
+        leadId,
+        userId,
+        message: data.message,
+        isPinned: data.isPinned || false,
+        mentions: data.mentions || null
+      },
+      include: {
+        user: { select: { name: true, email: true, id: true } }
+      }
+    });
+  }
+
+  static async updateLeadNote(tenantId: string, noteId: string, data: { message?: string, isPinned?: boolean }) {
+    return prisma.note.update({
+      where: { id: noteId, tenantId },
+      data,
+      include: {
+        user: { select: { name: true, email: true, id: true } }
+      }
+    });
+  }
+
+  static async deleteLeadNote(tenantId: string, noteId: string) {
+    return prisma.note.delete({
+      where: { id: noteId, tenantId }
+    });
+  }
+
+  // ─── LEAD TIMELINE ──────────────────────────────────────────────────────────
+  static async getLeadTimeline(tenantId: string, leadId: string) {
+    return prisma.timelineEvent.findMany({
+      where: { tenantId, leadId },
+      include: {
+        user: { select: { name: true, email: true, id: true } }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  static async createTimelineEvent(tenantId: string, leadId: string, action: string, description?: string, userId?: string) {
+    return prisma.timelineEvent.create({
+      data: {
+        tenantId,
+        leadId,
+        userId,
+        action,
+        description
+      },
+      include: {
+        user: { select: { name: true, email: true, id: true } }
+      }
+    });
+  }
+
+  // ─── LEAD ATTACHMENTS ───────────────────────────────────────────────────────
+  static async getLeadAttachments(tenantId: string, leadId: string) {
+    return prisma.attachment.findMany({
+      where: { tenantId, leadId },
+      include: {
+        user: { select: { name: true, email: true, id: true } }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  static async createLeadAttachment(tenantId: string, leadId: string, userId: string, data: { fileName: string, fileUrl: string, fileSize: number, fileType: string }) {
+    return prisma.attachment.create({
+      data: {
+        tenantId,
+        leadId,
+        userId,
+        fileName: data.fileName,
+        fileUrl: data.fileUrl,
+        fileSize: data.fileSize,
+        fileType: data.fileType
+      },
+      include: {
+        user: { select: { name: true, email: true, id: true } }
+      }
+    });
+  }
+
+  static async deleteLeadAttachment(tenantId: string, attachmentId: string) {
+    return prisma.attachment.delete({
+      where: { id: attachmentId, tenantId }
+    });
+  }
+
+  // ─── LEAD MEETINGS ──────────────────────────────────────────────────────────
+  static async getLeadMeetings(tenantId: string, leadId: string) {
+    return prisma.meeting.findMany({
+      where: { tenantId, leadId },
+      include: {
+        assignedTo: { select: { name: true, email: true, id: true } }
+      },
+      orderBy: { startTime: "desc" }
+    });
   }
 }

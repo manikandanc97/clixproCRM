@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { GitBranch, Plus, Download, TrendingUp, DollarSign, Target } from "lucide-react";
+import { GitBranch, Plus, Download, TrendingUp, DollarSign, IndianRupee, Target } from "lucide-react";
 import dynamic from "next/dynamic";
 const PipelineBoard = dynamic(() => import("@/features/pipeline/components/PipelineBoard"), {
   loading: () => <div className="h-[600px] w-full skeleton rounded-xl" />
@@ -33,7 +33,8 @@ const PipelinePage = () => {
   const searchParams = useSearchParams();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [preselectedStage, setPreselectedStage] = useState<string | undefined>();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
+  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
   
   const [searchQuery, setSearchQuery] = useState("");
   const [sortValue, setSortValue] = useState("created_desc");
@@ -144,7 +145,7 @@ const PipelinePage = () => {
             value={formatCurrency(totalValue)}
             change="0%"
             trend="up"
-            icon={DollarSign}
+            icon={CurrencyIcon}
             color="purple"
             delay={0.1}
           />

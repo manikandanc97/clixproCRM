@@ -15,9 +15,9 @@ export async function GET(req: Request) {
       limit: url.searchParams.get("limit"),
     });
     const search = url.searchParams.get("search") || "";
-    const status = url.searchParams.get("status") || "";
+    const stage = url.searchParams.get("stage") || url.searchParams.get("status") || "";
 
-    const leads = await CrmService.getLeads(session.tenantId, "USD", page, limit, search, status);
+    const leads = await CrmService.getLeads(session.tenantId, "USD", page, limit, search, stage);
     return NextResponse.json({ success: true, data: leads }, { status: 200 });
   } catch (error: unknown) { return handleApiError(error); }
 }
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
     const rawBody = await req.json();
     const body = leadSchema.parse(rawBody);
-    const lead = await CrmService.createLead(session.tenantId, body);
+    const lead = await CrmService.createLead(session.tenantId, session.userId, body);
     return NextResponse.json({ success: true, data: lead }, { status: 201 });
   } catch (error: unknown) { return handleApiError(error); }
 }

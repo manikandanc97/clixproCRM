@@ -5,7 +5,21 @@ import {
   ChevronRight,
   ChevronsUpDown,
   Building2,
+  LifeBuoy,
+  Book,
+  MessageCircleQuestion,
+  Headphones,
+  Keyboard,
+  Info
 } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -43,10 +57,10 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
       )}
 
       {/* Workspace Selector */}
-      <div className={`pt-6 pb-4 transition-all duration-300 ${collapsedState ? "px-3" : "px-5"}`}>
-        <div className={`flex items-center ${collapsedState ? "justify-center" : "justify-between p-2 rounded-xl hover:bg-sidebar-accent/50 cursor-pointer border border-transparent transition-all group/ws"}`}>
-          <div className="flex items-center gap-2.5">
-            <div className="flex shrink-0 justify-center items-center bg-sidebar-primary/10 text-sidebar-primary rounded-lg w-8 h-8 border border-sidebar-primary/20">
+      <div className={`pt-6 pb-2 transition-all duration-300 ${collapsedState ? "px-3" : "px-4"}`}>
+        <div className={`flex items-center ${collapsedState ? "justify-center" : "justify-between p-2 rounded-xl hover:bg-sidebar-accent/50 cursor-pointer border border-transparent hover:border-sidebar-border/50 shadow-sm hover:shadow-md transition-all group/ws bg-background/50 dark:bg-muted/10 backdrop-blur-sm"}`}>
+          <div className="flex items-center gap-3">
+            <div className="flex shrink-0 justify-center items-center bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground rounded-lg w-9 h-9 border border-white/10 shadow-sm">
               <Building2 className="w-4 h-4" />
             </div>
             
@@ -58,17 +72,22 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
                   exit={{ opacity: 0, x: -10 }}
                   className="overflow-hidden whitespace-nowrap"
                 >
-                  <h1 className="text-sidebar-foreground font-semibold text-[13px] tracking-tight leading-tight">
-                    Workspace
+                  <h1 className="text-sidebar-foreground font-bold text-sm tracking-tight leading-tight truncate max-w-[130px] capitalize">
+                    {user?.displayName || user?.name || "Clixpro"}
                   </h1>
-                  <p className="text-sidebar-foreground/50 text-[11px] font-medium mt-0.5">
-                    {roleName}
-                  </p>
+                  <div className="flex items-center mt-0.5 gap-1.5">
+                    <span className="bg-primary/20 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                      {roleName}
+                    </span>
+                    <span className="text-sidebar-foreground/50 text-[11px] font-medium truncate max-w-[80px]">
+                      Workspace
+                    </span>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-          {!collapsedState && <ChevronsUpDown className="w-3.5 h-3.5 text-sidebar-foreground/40 group-hover/ws:text-sidebar-foreground transition-colors" />}
+          {!collapsedState && <ChevronsUpDown className="w-3.5 h-3.5 text-sidebar-foreground/40 group-hover/ws:text-sidebar-foreground transition-colors shrink-0" />}
         </div>
       </div>
 
@@ -177,6 +196,62 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
           ))}
         </div>
       </TooltipProvider>
+
+      {/* Help Center Item at Bottom */}
+      <div className="mt-auto p-3 border-t border-sidebar-border bg-sidebar shrink-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            {collapsedState ? (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-300 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/40 outline-none">
+                      <LifeBuoy className="w-5 h-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={12} className="bg-slate-900 text-white border-none rounded-lg px-3 py-1.5 font-semibold text-xs shadow-xl">
+                    Help Center
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <button className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-all duration-300 text-[13.5px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40 outline-none">
+                <LifeBuoy className="w-[18px] h-[18px] transition-colors" />
+                <span className="flex-1 text-left truncate">Help Center</span>
+              </button>
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="start" 
+            side="right" 
+            sideOffset={collapsedState ? 12 : 8} 
+            className="w-56 rounded-xl p-2 shadow-elevated border-border bg-popover/95 backdrop-blur-xl"
+          >
+            <div className="px-2 py-1.5">
+              <h4 className="font-semibold text-sm">Help & Support</h4>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Need help with Clixpro?</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer py-2 rounded-lg gap-3">
+              <Book className="w-4 h-4 text-muted-foreground" /> Documentation
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer py-2 rounded-lg gap-3">
+              <MessageCircleQuestion className="w-4 h-4 text-muted-foreground" /> FAQ
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer py-2 rounded-lg gap-3">
+              <Headphones className="w-4 h-4 text-muted-foreground" /> Contact Support
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer py-2 rounded-lg gap-3">
+              <Keyboard className="w-4 h-4 text-muted-foreground" /> Keyboard Shortcuts
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5 flex items-center gap-3 opacity-60">
+              <Info className="w-4 h-4 text-muted-foreground" /> 
+              <span className="text-xs font-medium">Version 1.0.0</span>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 }

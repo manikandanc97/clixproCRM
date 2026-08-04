@@ -16,6 +16,7 @@ import { RevenueChartPointType } from "@/shared/types/report";
 import { motion } from "framer-motion";
 
 import { ChartContainer } from "@/shared/components/charts/ChartContainer";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 interface RevenueChartProps {
   data: RevenueChartPointType[];
@@ -23,6 +24,7 @@ interface RevenueChartProps {
 }
 
 const RevenueChart = ({ data, loading }: RevenueChartProps) => {
+  const { formatCurrency, currencySymbol } = useCurrency();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -83,7 +85,7 @@ const RevenueChart = ({ data, loading }: RevenueChartProps) => {
                 axisLine={false} 
                 tickLine={false} 
                 tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
-                tickFormatter={(value) => `$${value/1000}k`}
+                tickFormatter={(value) => `${currencySymbol}${value/1000}k`}
               />
               <Tooltip 
                 cursor={{ 
@@ -113,7 +115,7 @@ const RevenueChart = ({ data, loading }: RevenueChartProps) => {
                   textTransform: "uppercase",
                   letterSpacing: "0.2em",
                 }}
-                formatter={(value) => [`$${Number(value ?? 0).toLocaleString()}`, "Revenue"]}
+                formatter={(value) => [formatCurrency(value as number), "Revenue"]}
               />
               <Area 
                 type="monotone" 

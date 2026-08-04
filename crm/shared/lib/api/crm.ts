@@ -58,8 +58,8 @@ function normalizeReportsData(data: ReportsDataType): ReportsDataType {
 }
 
 // ─── Existing endpoints ───────────────────────────────────────────────────────
-export async function fetchDashboardData() {
-  return normalizeDashboardData(await unwrapResponse<DashboardDataType>(client.get("/crm/dashboard")));
+export async function fetchDashboardData(timeframe: string = "month") {
+  return normalizeDashboardData(await unwrapResponse<DashboardDataType>(client.get(`/crm/dashboard?timeframe=${timeframe}`)));
 }
 
 export function fetchRevenueGrowth(filter: string = "Year") {
@@ -91,8 +91,42 @@ export async function fetchReportsData() {
 }
 
 // ─── New dynamic endpoints ────────────────────────────────────────────────────
-export function fetchAnalyticsData() {
-  return unwrapResponse<AnalyticsDataType>(client.get("/crm/analytics"));
+export function fetchLeadNotes(leadId: string) {
+  return unwrapResponse<any>(client.get(`/crm/leads/${leadId}/notes`));
+}
+
+export function createLeadNote(leadId: string, data: any) {
+  return unwrapResponse<any>(client.post(`/crm/leads/${leadId}/notes`, data));
+}
+
+export function fetchLeadTimeline(leadId: string) {
+  return unwrapResponse<any>(client.get(`/crm/leads/${leadId}/timeline`));
+}
+
+export function createLeadTimelineEvent(leadId: string, data: any) {
+  return unwrapResponse<any>(client.post(`/crm/leads/${leadId}/timeline`, data));
+}
+
+export function fetchLeadAttachments(leadId: string) {
+  return unwrapResponse<any>(client.get(`/crm/leads/${leadId}/attachments`));
+}
+
+export function createLeadAttachment(leadId: string, data: any) {
+  return unwrapResponse<any>(client.post(`/crm/leads/${leadId}/attachments`, data));
+}
+
+export function fetchLeadMeetings(leadId: string) {
+  return unwrapResponse<any>(client.get(`/crm/leads/${leadId}/meetings`));
+}
+
+export function createLeadMeeting(leadId: string, data: any) {
+  return unwrapResponse<any>(client.post(`/crm/leads/${leadId}/meetings`, data));
+}
+
+// ─── Analytics endpoints ──────────────────────────────────────────────────────
+export function fetchAnalyticsData(filter?: string) {
+  const query = filter ? `?filter=${encodeURIComponent(filter)}` : "";
+  return unwrapResponse<AnalyticsDataType>(client.get(`/crm/analytics${query}`));
 }
 
 export function fetchHotLeads() {
@@ -141,6 +175,15 @@ export function fetchAiSettings() {
 
 export function fetchNotificationSettings() {
   return unwrapResponse<NotificationSettingsDataType>(client.get("/crm/settings/notifications"));
+}
+
+export function fetchRevenueTargets() {
+  return unwrapResponse<any[]>(client.get("/crm/settings/revenue-targets"));
+}
+
+export function fetchRevenueTargetAnalytics(filters: Record<string, any> = {}) {
+  const searchParams = new URLSearchParams(filters);
+  return unwrapResponse<any>(client.get(`/crm/analytics/revenue-target?${searchParams.toString()}`));
 }
 
 // ─── Creation endpoints ──────────────────────────────────────────────────────

@@ -26,20 +26,22 @@ export const leadSchema = z.object({
   company: z.string().min(2, "Company must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  status: z.enum(["NEW", "CONTACTED", "PROPOSAL_SENT", "WON", "LOST"]),
+  source: z.string().optional(),
+  stage: z.enum(["NEW", "CONTACTED", "PROPOSAL_SENT", "WON", "LOST"]),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   value: z.union([z.string(), z.number()]).optional(),
-  valueAmount: z.number().optional(),
-  stage: z.string().optional(),
-  priority: z.enum(["Low", "Medium", "High", "Urgent"]).optional(),
-  probability: z.number().min(0).max(100).optional(),
+  expectedCloseDate: z.union([z.string(), z.date()]).optional(),
+  tags: z.array(z.string()).optional(),
+  assignedToId: z.string().optional(),
+  // Won/Lost outcome fields
   wonReason: z.string().optional(),
+  wonDate: z.union([z.string(), z.date()]).optional(),
+  actualRevenue: z.union([z.string(), z.number()]).optional(),
   lostReason: z.string().optional(),
   competitor: z.string().optional(),
-  wonDate: z.string().optional(),
-  actualRevenue: z.number().optional(),
   notes: z.string().optional(),
-  followUpAt: z.union([z.string(), z.date()]).optional(), // Handle both string from JSON and Date from React DatePicker
 }).strict();
+
 
 export const customerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

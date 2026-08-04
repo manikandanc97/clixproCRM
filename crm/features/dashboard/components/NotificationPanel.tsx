@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Bell, Check, Clock, UserPlus, FileCheck, AlertCircle, Settings } from "lucide-react";
+import { Bell, Check, Clock, UserPlus, FileCheck, AlertCircle, Settings, Calendar, DollarSign, IndianRupee, Briefcase } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,26 +10,60 @@ import {
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/shared/hooks/use-dashboard";
+import { useCurrency } from "@/shared/hooks/use-currency";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 type Notification = {
   id: string;
   title: string;
   description: string;
-  time: Date;
+  time: string | Date;
   read: boolean;
-  type: "lead" | "quote" | "system" | "task";
+  type: "lead" | "task" | "quote" | "system" | "lead_assigned" | "task_due" | "task_completed" | "customer_added" | "invoice_paid" | "meeting_reminder" | "employee_added";
 };
+
+function safeFormatDistanceToNow(time: string | Date | number | null | undefined): string {
+  if (!time) return "Recently";
+  
+  try {
+    let dateObj: Date;
+
+    if (time instanceof Date) {
+      dateObj = time;
+    } else if (typeof time === "number") {
+      dateObj = new Date(time);
+    } else if (typeof time === "string") {
+      dateObj = parseISO(time);
+      if (isNaN(dateObj.getTime())) {
+        dateObj = new Date(time);
+      }
+      if (isNaN(dateObj.getTime())) {
+        return time;
+      }
+    } else {
+      return "Recently";
+    }
+
+    if (isNaN(dateObj.getTime())) {
+      return "Recently";
+    }
+
+    return formatDistanceToNow(dateObj, { addSuffix: true }).replace(/^about\s+/, '');
+  } catch {
+    return typeof time === "string" ? time : "Recently";
+  }
+}
 
 export default function NotificationPanel() {
   const { data, isLoading: loading } = useNotifications();
+  const { currency } = useCurrency();
+  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   const notifications = useMemo(() => {
     if (!data?.notifications) return [];
     return data.notifications.map(n => ({
       ...n,
-      time: typeof n.time === 'string' ? parseISO(n.time) : n.time,
       read: n.read || readIds.has(n.id)
     }));
   }, [data, readIds]);
@@ -47,9 +81,15 @@ export default function NotificationPanel() {
 
   const getIcon = (type: Notification["type"]) => {
     switch (type) {
-      case "lead": return <UserPlus className="w-4 h-4 text-emerald-500" />;
+      case "lead": 
+      case "lead_assigned": return <UserPlus className="w-4 h-4 text-emerald-500" />;
       case "quote": return <FileCheck className="w-4 h-4 text-blue-500" />;
-      case "task": return <AlertCircle className="w-4 h-4 text-amber-500" />;
+      case "task_due": return <AlertCircle className="w-4 h-4 text-amber-500" />;
+      case "task_completed": return <Check className="w-4 h-4 text-emerald-500" />;
+      case "customer_added": return <Briefcase className="w-4 h-4 text-blue-500" />;
+      case "invoice_paid": return <CurrencyIcon className="w-4 h-4 text-emerald-600" />;
+      case "meeting_reminder": return <Calendar className="w-4 h-4 text-violet-500" />;
+      case "employee_added": return <UserPlus className="w-4 h-4 text-amber-600" />;
       default: return <Settings className="w-4 h-4 text-muted-foreground" />;
     }
   };
@@ -124,7 +164,7 @@ export default function NotificationPanel() {
                         </p>
                         <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {formatDistanceToNow(notification.time, { addSuffix: true }).replace('about ', '')}
+                          {safeFormatDistanceToNow(notification.time)}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">

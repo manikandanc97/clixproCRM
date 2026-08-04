@@ -30,7 +30,7 @@ import {
 import { useRevenueGrowth } from "@/shared/hooks/use-dashboard";
 import { ChartContainer } from "@/shared/components/charts/ChartContainer";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/crm-formatters";
+import { useCurrency } from "@/shared/hooks/use-currency";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 const DATE_FILTERS = [
@@ -47,6 +47,7 @@ const SalesChart = () => {
   const [chartType, setChartType] = useState<"revenue" | "deals">("revenue");
   const [dateFilter, setDateFilter] = useState("Year");
   const { data: revenueData, isLoading, refetch, isFetching } = useRevenueGrowth(dateFilter);
+  const { formatCurrency, currencySymbol } = useCurrency();
 
   const handleRefresh = async () => {
     toast.info("Refreshing sales data...");
@@ -218,9 +219,9 @@ const SalesChart = () => {
                 tickFormatter={(value) => {
                   const num = Number(value) || 0;
                   if (chartType === "deals") return String(num);
-                  if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
-                  if (num >= 1000) return `$${Math.round(num / 1000)}k`;
-                  return `$${num}`;
+                  if (num >= 1000000) return `${currencySymbol}${(num / 1000000).toFixed(1)}M`;
+                  if (num >= 1000) return `${currencySymbol}${Math.round(num / 1000)}k`;
+                  return `${currencySymbol}${num}`;
                 }}
                 dx={-10}
               />
@@ -246,7 +247,7 @@ const SalesChart = () => {
                             <>
                               <div className="flex justify-between items-center gap-4">
                                 <span className="text-sm font-medium text-muted-foreground">Revenue</span>
-                                <span className="text-sm font-bold text-emerald-500">{formatCurrency(data.value || 0, "USD")}</span>
+                                <span className="text-sm font-bold text-emerald-500">{formatCurrency(data.value || 0)}</span>
                               </div>
                               {data.deals !== undefined && (
                                 <div className="flex justify-between items-center gap-4">
@@ -298,7 +299,7 @@ const SalesChart = () => {
                   </div>
                   <span className="text-muted-foreground font-medium">Highest Revenue:</span>
                   <span className="font-bold text-foreground">
-                    {formatCurrency(revenueData?.highestRevenue || 0, "USD").replace(".00", "")}
+                    {formatCurrency(revenueData?.highestRevenue || 0).replace(".00", "")}
                   </span>
                 </div>
                 
@@ -308,7 +309,7 @@ const SalesChart = () => {
                   </div>
                   <span className="text-muted-foreground font-medium">Average Monthly:</span>
                   <span className="font-bold text-foreground">
-                    {formatCurrency(revenueData?.averageMonthlyRevenue || 0, "USD").replace(".00", "")}
+                    {formatCurrency(revenueData?.averageMonthlyRevenue || 0).replace(".00", "")}
                   </span>
                 </div>
                 

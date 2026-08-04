@@ -22,7 +22,15 @@ import {
   createQuotation,
   updateQuotation,
   deleteQuotation,
-  updatePipelineItem
+  updatePipelineItem,
+  fetchLeadNotes,
+  createLeadNote,
+  fetchLeadTimeline,
+  createLeadTimelineEvent,
+  fetchLeadAttachments,
+  createLeadAttachment,
+  fetchLeadMeetings,
+  createLeadMeeting
 } from "@/shared/lib/api/crm";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -91,6 +99,9 @@ export function useCreateLead() {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
       toast.success("Lead created successfully");
     },
     onError: (error: Error) => {
@@ -107,6 +118,9 @@ export function useUpdateLead() {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
       toast.success("Lead updated successfully");
     },
     onError: (error: Error) => {
@@ -127,15 +141,15 @@ export function useUpdatePipelineItem() {
         if (!old || !old.items) return old;
         
         let newStage = undefined;
-        if (data.status) {
-          const statusToStage: Record<string, string> = {
+        if (data.stage) {
+          const enumToStage: Record<string, string> = {
             "NEW": "New Lead",
             "CONTACTED": "Contacted",
             "PROPOSAL_SENT": "Proposal Sent",
             "WON": "Won",
             "LOST": "Lost"
           };
-          newStage = statusToStage[data.status];
+          newStage = enumToStage[data.stage];
         }
 
         return {
@@ -161,6 +175,8 @@ export function useUpdatePipelineItem() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
     onSuccess: () => {
       // Toast is handled in the component
@@ -197,6 +213,10 @@ export function useDeleteLead() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     }
   });
 }
@@ -332,6 +352,91 @@ export function useDeleteQuotation() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to delete quotation");
+    },
+  });
+}
+
+// ─── Lead Details Hooks ──────────────────────────────────────────────────────────
+
+export function useLeadNotes(leadId: string) {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["leadNotes", leadId, token],
+    queryFn: () => fetchLeadNotes(leadId),
+    enabled: isAuthenticated && !!leadId,
+  });
+}
+
+export function useCreateLeadNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, data }: { leadId: string; data: any }) => createLeadNote(leadId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["leadNotes", variables.leadId] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadTimeline", variables.leadId] });
+      toast.success("Note added successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to add note");
+    },
+  });
+}
+
+export function useLeadTimeline(leadId: string) {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["leadTimeline", leadId, token],
+    queryFn: () => fetchLeadTimeline(leadId),
+    enabled: isAuthenticated && !!leadId,
+  });
+}
+
+export function useLeadAttachments(leadId: string) {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["leadAttachments", leadId, token],
+    queryFn: () => fetchLeadAttachments(leadId),
+    enabled: isAuthenticated && !!leadId,
+  });
+}
+
+export function useCreateLeadAttachment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, data }: { leadId: string; data: any }) => createLeadAttachment(leadId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["leadAttachments", variables.leadId] });
+      queryClient.invalidateQueries({ queryKey: ["leadTimeline", variables.leadId] });
+      toast.success("Attachment added successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to add attachment");
+    },
+  });
+}
+
+export function useLeadMeetings(leadId: string) {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["leadMeetings", leadId, token],
+    queryFn: () => fetchLeadMeetings(leadId),
+    enabled: isAuthenticated && !!leadId,
+  });
+}
+
+export function useCreateLeadMeeting() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, data }: { leadId: string; data: any }) => createLeadMeeting(leadId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["leadMeetings", variables.leadId] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadTimeline", variables.leadId] });
+      toast.success("Meeting scheduled successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to schedule meeting");
     },
   });
 }

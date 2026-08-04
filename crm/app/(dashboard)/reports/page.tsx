@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Download, Calendar, TrendingUp, Users, DollarSign, Target } from "lucide-react";
+import { BarChart3, Download, Calendar, TrendingUp, Users, DollarSign, IndianRupee, Target } from "lucide-react";
 import dynamic from "next/dynamic";
 const RevenueChart = dynamic(() => import("@/features/reports/components/RevenueChart"));
 const ConversionChart = dynamic(() => import("@/features/reports/components/ConversionChart"));
@@ -12,12 +12,15 @@ const RevenueTarget = dynamic(() => import("@/features/reports/components/Revenu
 import { PageErrorState } from "@/shared/components/page-states";
 import { ReportsSkeleton } from "@/features/reports/components/ReportsSkeleton";
 import { useReports } from "@/shared/hooks/use-crm";
+import { useCurrency } from "@/shared/hooks/use-currency";
 // import { } from "@/shared/ui/button";
 import { CRMPageHeader, CRMMetricCard, CRMPageContainer, CRMMetricsGrid } from "@/shared/components/crm";
 import { toast } from "sonner";
 
 const ReportsPage = () => {
   const { data, isLoading: loading, error, refetch } = useReports();
+  const { currency } = useCurrency();
+  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
 
   const handleTimePeriod = () => {
     toast.info("Time Period Selection", {
@@ -70,7 +73,7 @@ const ReportsPage = () => {
 
       <CRMMetricsGrid cols={4} className="gap-4">
         {(data?.stats ?? []).map((stat, index) => {
-          const Icon = stat.title.toLowerCase().includes("revenue") ? DollarSign :
+          const Icon = stat.title.toLowerCase().includes("revenue") ? CurrencyIcon :
             stat.title.toLowerCase().includes("conversion") || stat.title.toLowerCase().includes("win") ? Target :
             stat.title.toLowerCase().includes("deal") ? Users :
             TrendingUp;

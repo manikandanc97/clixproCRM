@@ -19,10 +19,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const customer = await prisma.$transaction(async (tx) => {
-      if (lead.status !== "WON") {
+      if (lead.stage !== "WON") {
         await tx.lead.update({
           where: { id: leadId },
-          data: { status: "WON" }
+          data: { stage: "WON" }
         });
       }
 

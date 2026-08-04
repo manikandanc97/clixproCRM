@@ -25,11 +25,57 @@ client.interceptors.request.use(
   }
 );
 
+let isRefreshing = false;
+let failedQueue: { resolve: (value?: unknown) => void; reject: (reason?: unknown) => void; }[] = [];
+
+const processQueue = (error: Error | null, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 client.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error?.response?.status === 401 && typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("auth:expired"));
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Prevent infinite loops if refresh itself fails or it's a login failure
+    if (originalRequest.url === "/auth/refresh" || originalRequest.url === "/auth/login") {
+      return Promise.reject(error);
+    }
+
+    if (error?.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(() => {
+          return client(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        processQueue(null);
+        return client(originalRequest);
+      } catch (err) {
+        processQueue(err as Error);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("auth:expired"));
+        }
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
     return Promise.reject(error);

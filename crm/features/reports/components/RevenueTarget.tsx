@@ -5,12 +5,14 @@ import { motion } from "framer-motion";
 import { Target, Calendar, ArrowUpRight } from "lucide-react";
 import { EmptyStateCard } from "@/shared/components/page-states";
 import { RevenueTargetType } from "@/shared/types/report";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 const RevenueTarget = ({ data }: { data: RevenueTargetType | null }) => {
   if (!data) {
     return <EmptyStateCard title="No revenue target" message="Revenue target data will appear when it is available from the backend." />;
   }
 
+  const { currencySymbol } = useCurrency();
   const currentRevenue = data.revenue;
   const targetRevenue = data.target;
   const percentage = Math.round((currentRevenue / targetRevenue) * 100);
@@ -36,11 +38,11 @@ const RevenueTarget = ({ data }: { data: RevenueTargetType | null }) => {
           <div className="flex items-end justify-between min-w-0">
             <div className="min-w-0">
               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1 truncate">Current Revenue</p>
-              <h3 className="text-3xl font-bold text-foreground tracking-tight truncate">${(currentRevenue/1000).toFixed(0)}k</h3>
+              <h3 className="text-3xl font-bold text-foreground tracking-tight truncate">{currencySymbol}{(currentRevenue/1000).toFixed(0)}k</h3>
             </div>
             <div className="text-right min-w-0">
               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-1 truncate">Target</p>
-              <h4 className="text-lg font-bold text-muted-foreground tracking-tight truncate">${(targetRevenue/1000).toFixed(0)}k</h4>
+              <h4 className="text-lg font-bold text-muted-foreground tracking-tight truncate">{currencySymbol}{(targetRevenue/1000).toFixed(0)}k</h4>
             </div>
           </div>
 
@@ -68,7 +70,7 @@ const RevenueTarget = ({ data }: { data: RevenueTargetType | null }) => {
         <div className="grid grid-cols-2 gap-3 min-w-0">
           <div className="p-4 bg-muted rounded-xl space-y-0.5 min-w-0">
             <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider truncate">Remaining</p>
-            <p className="text-base font-bold text-foreground truncate">${(remaining/1000).toFixed(0)}k</p>
+            <p className="text-base font-bold text-foreground truncate">{currencySymbol}{(remaining/1000).toFixed(0)}k</p>
           </div>
           <div className="p-4 bg-indigo-50 rounded-xl space-y-0.5 min-w-0">
             <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider truncate">Change</p>

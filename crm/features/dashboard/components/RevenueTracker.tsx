@@ -8,33 +8,55 @@ import {
   RadialBar,
   PolarAngleAxis,
 } from "recharts";
-import { Target, TrendingUp, ArrowUpRight, DollarSign, ChevronRight } from "lucide-react";
-import { useAnalytics } from "@/shared/hooks/use-analytics";
+import { Target, TrendingUp, TrendingDown, ArrowUpRight, DollarSign, IndianRupee, ChevronRight, AlertCircle } from "lucide-react";
+import { useRevenueTarget } from "@/shared/hooks/use-revenue-target";
 import { ChartContainer } from "@/shared/components/charts/ChartContainer";
+import { useCurrency } from "@/shared/hooks/use-currency";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function RevenueTracker() {
-  const { data: analyticsData, isLoading: loading } = useAnalytics();
+  const { data: targetData, isLoading: loading } = useRevenueTarget();
+  const { currencySymbol, currency } = useCurrency();
+  const router = useRouter();
+  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
 
-  const latestRevenueData = analyticsData?.revenueOverview?.[analyticsData.revenueOverview.length - 1];
-  const revenueStat = analyticsData?.topStats.find(s => s.title === "Total Revenue");
+  const currentRevenue = targetData?.currentRevenue ?? 0;
+  const targetRevenue = targetData?.targetValue ?? 0;
+  const percentage = targetData?.achievementPercentage ?? 0;
+  const hasTarget = targetData?.hasTarget ?? false;
   
-  const currentRevenue = latestRevenueData?.revenue ?? 0;
-  const targetRevenue = latestRevenueData?.target ?? 0;
-  const percentage = Math.min(100, Math.round((currentRevenue / (targetRevenue || 1)) * 100));
+  // Cap percentage for chart display, but keep original for text
+  const chartPercentage = Math.min(percentage, 100);
 
   const chartData = [
     {
       name: "Revenue",
-      value: percentage,
+      value: chartPercentage,
       fill: "url(#colorRevenue)",
     },
   ];
 
   const formatLargeNumber = (num: number) => {
-    if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `$${(num / 1000).toFixed(1)}k`;
-    return `$${num}`;
+    if (num >= 1000000) return `${currencySymbol}${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${currencySymbol}${(num / 1000).toFixed(1)}k`;
+    return `${currencySymbol}${num}`;
   };
+
+  const trend = targetData?.trend;
+
+  if (!hasTarget && !loading) {
+    return (
+      <CRMCard animate={false} className="h-full bg-gradient-to-br from-card to-background/50 flex flex-col justify-center items-center text-center">
+        <Target className="w-12 h-12 text-muted-foreground/30 mb-4" />
+        <h3 className="font-bold text-lg mb-2">No Target Configured</h3>
+        <p className="text-sm text-muted-foreground mb-4">Set up a revenue target to start tracking progress.</p>
+        <Link href="/settings?section=targets" className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors">
+          Configure Target
+        </Link>
+      </CRMCard>
+    );
+  }
 
   return (
     <CRMCard 
@@ -51,19 +73,32 @@ export default function RevenueTracker() {
           <div>
             <CardTitle>Revenue Target</CardTitle>
             <div className="flex items-center gap-1 mt-0.5">
-              <TrendingUp className={`w-3.5 h-3.5 ${revenueStat?.positive ? 'text-emerald-500' : 'text-rose-500'}`} />
-              <span className={`text-xs font-bold ${revenueStat?.positive ? 'text-emerald-500' : 'text-rose-500'}`}>
-                {revenueStat?.change ?? "0%"}
+              {trend?.direction === "up" ? (
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+              ) : trend?.direction === "down" ? (
+                <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
+              ) : (
+                <AlertCircle className="w-3.5 h-3.5 text-muted-foreground" />
+              )}
+              <span className={`text-xs font-bold ${
+                trend?.direction === "up" ? "text-emerald-500" : 
+                trend?.direction === "down" ? "text-rose-500" : 
+                "text-muted-foreground"
+              }`}>
+                {trend?.direction === "up" ? "▲" : trend?.direction === "down" ? "▼" : ""} {trend?.value ?? 0}%
               </span>
               <span className="text-xs font-medium text-muted-foreground">
-                vs last month
+                vs last period
               </span>
             </div>
           </div>
         </div>
-        <button className="text-muted-foreground hover:text-muted-foreground transition-colors p-2 hover:bg-muted rounded-xl">
+        <Link 
+          href="/settings?section=targets"
+          className="text-muted-foreground hover:text-muted-foreground transition-colors p-2 hover:bg-muted rounded-xl flex items-center justify-center"
+        >
           <ChevronRight className="w-5 h-5" />
-        </button>
+        </Link>
       </CardHeader>
 
       <CardContent className="px-6 pb-6 pt-2 flex flex-col flex-1 relative z-10 min-w-0">
@@ -144,15 +179,24 @@ export default function RevenueTracker() {
           </div>
         </div>
 
-        <button className="mt-3 w-full py-3 bg-slate-950 dark:bg-muted text-white dark:text-slate-950 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 transition-all group/btn">
+        {hasTarget && targetRevenue > 0 && currentRevenue === 0 && (
+          <p className="text-center text-xs text-muted-foreground mb-3 font-medium">
+            Start closing deals to achieve your revenue goal.
+          </p>
+        )}
+
+        <button 
+          onClick={() => router.push("/reports")}
+          className="mt-3 w-full py-3 bg-slate-950 dark:bg-muted text-white dark:text-slate-950 rounded-xl font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-900 transition-all group/btn"
+        >
           View Analytics
-          <ArrowUpRight className="w-4 h-4 transition-transform" />
+          <ArrowUpRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
         </button>
       </CardContent>
 
       {/* Subtle background pattern */}
       <div className="absolute -bottom-6 -left-6 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.05] transition-all duration-700 pointer-events-none z-0">
-        <DollarSign className="w-64 h-64 text-emerald-500 stroke-[3]" />
+        <CurrencyIcon className="w-64 h-64 text-emerald-500 stroke-[3]" />
       </div>
     </CRMCard>
   );

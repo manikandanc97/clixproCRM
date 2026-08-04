@@ -44,6 +44,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
 import { useDeleteQuotation } from "@/shared/hooks/use-crm";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 interface QuotationsTableProps {
   quotations: QuotationType[];
@@ -96,6 +97,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
   const { mutate: deleteQuotationMutation } = useDeleteQuotation();
+  const { formatCurrency } = useCurrency();
 
   const sortedQuotations = useMemo(() => {
     if (!sortConfig) return quotations;
@@ -227,7 +229,7 @@ const QuotationsTable = ({ quotations }: QuotationsTableProps) => {
 
                 <CRMTableCell className="hidden md:table-cell">
                   <div className="flex flex-col">
-                    <span className="font-bold text-foreground text-sm tracking-tight">{quote.amount}</span>
+                    <span className="font-bold text-foreground text-sm tracking-tight">{formatCurrency(quote.amountValue)}</span>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">Excl. Tax</span>
                   </div>
                 </CRMTableCell>

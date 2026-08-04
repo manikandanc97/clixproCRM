@@ -1,11 +1,12 @@
 import { SignJWT, jwtVerify } from "jose";
 import { JWTPayload } from "./utils";
+import crypto from "crypto";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "fallback-secret-key-do-not-use-in-production-1234"
 );
 
-export async function signJWT(payload: JWTPayload, expiresIn: string = "24h"): Promise<string> {
+export async function signJWT(payload: JWTPayload, expiresIn: string = "15m"): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -21,4 +22,12 @@ export async function verifyJWT(token: string): Promise<JWTPayload | null> {
   } catch (_error) {
     return null;
   }
+}
+
+export function generateRefreshToken(): string {
+  return crypto.randomBytes(40).toString("hex");
+}
+
+export function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
 }

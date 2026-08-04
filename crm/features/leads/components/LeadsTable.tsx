@@ -32,6 +32,7 @@ import {
   ArrowUpDown
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { FormModal } from "@/shared/components/form-modal";
 import { LeadForm } from "@/features/forms/LeadForm";
@@ -41,7 +42,9 @@ import { MeetingForm } from "@/features/forms/MeetingForm";
 import { StageTransitionModal } from "./StageTransitionModal";
 import { ConfirmMoveModal } from "@/features/pipeline/components/ConfirmMoveModal";
 import { WonLostModal, WonLostSubmitData } from "@/features/pipeline/components/WonLostModal";
+import { useCurrency } from "@/shared/hooks/use-currency";
 import { useUpdatePipelineItem } from "@/shared/hooks/use-crm";
+import { updateLead } from "@/shared/lib/api/crm";
 import { useRouter } from "next/navigation";
 import {
   AlertDialog,
@@ -71,14 +74,23 @@ import { cn } from "@/shared/lib/utils";
 import { useLeads } from "../hooks/useLeads";
 import { Badge } from "@/shared/ui/badge";
 import { AddNoteModal } from "./AddNoteModal";
+import { Input } from "@/shared/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { LeadDetailsDrawer } from "./LeadDetailsDrawer";
 import { formatDistanceToNow } from "date-fns";
+import { LeadEmptyState } from "./LeadEmptyState";
 
 interface LeadsTableProps {
   leads: LeadType[];
   totalCount: number;
+  rawTotalCount?: number;
+  globalSearchQuery?: string;
+  globalStatusFilter?: string;
   onActiveFiltersChange?: (hasFilters: boolean) => void;
   onClearFilters?: (clearFn: () => void) => void;
+  onGlobalClearFilters?: () => void;
+  onAddLead?: () => void;
+  onImport?: () => void;
 }
 
 const statusVariantMap: Record<string, StatusVariant> = {
@@ -111,8 +123,15 @@ const isOverdue = (dateStr: string | null | undefined) => {
 
 const LeadsTable = ({ 
   leads, 
+  totalCount,
+  rawTotalCount,
+  globalSearchQuery,
+  globalStatusFilter,
   onActiveFiltersChange, 
-  onClearFilters 
+  onClearFilters,
+  onGlobalClearFilters,
+  onAddLead,
+  onImport
 }: LeadsTableProps) => {
   const {
     sortedLeads,
@@ -164,7 +183,9 @@ const LeadsTable = ({
   const [wonLostModal, setWonLostModal] = useState<{ isOpen: boolean; type: "Won" | "Lost" | null; deal: any; originalStage: string | null }>({ isOpen: false, type: null, deal: null, originalStage: null });
 
   const { mutate: updatePipelineItem, isPending: isUpdating } = useUpdatePipelineItem();
+  const queryClient = useQueryClient();
   const router = useRouter();
+  const { formatCurrency } = useCurrency();
 
   const handleStageChange = (lead: LeadType, targetStage: string) => {
     const originalStage = lead.status;
@@ -190,10 +211,10 @@ const LeadsTable = ({
   const handleConfirmMoveSubmit = () => {
     if (!confirmMoveModal.deal || !confirmMoveModal.targetStage || !confirmMoveModal.originalStage) return;
     const { deal, targetStage, originalStage } = confirmMoveModal;
-    const stageToStatus: Record<string, string> = { "New Lead": "NEW", "Contacted": "CONTACTED", "Proposal Sent": "PROPOSAL_SENT", "Won": "WON", "Lost": "LOST" };
-    const status = stageToStatus[targetStage] || "NEW";
+    const stageToEnum: Record<string, string> = { "New Lead": "NEW", "Contacted": "CONTACTED", "Proposal Sent": "PROPOSAL_SENT", "Won": "WON", "Lost": "LOST" };
+    const stage = stageToEnum[targetStage] || "NEW";
 
-    updatePipelineItem({ id: deal.id, data: { status } }, {
+    updatePipelineItem({ id: deal.id, data: { stage } }, {
       onSuccess: () => {
         toast.success(`Deal moved from ${originalStage} to ${targetStage}.`);
         setConfirmMoveModal(prev => ({ ...prev, isOpen: false }));
@@ -207,13 +228,13 @@ const LeadsTable = ({
 
   const handleWonLostSubmit = (data: WonLostSubmitData) => {
     if (!wonLostModal.deal || !wonLostModal.type) return;
-    const stageToStatus: Record<string, string> = { "Won": "WON", "Lost": "LOST" };
-    const status = stageToStatus[wonLostModal.type] || "NEW";
+    const stageToEnum: Record<string, string> = { "Won": "WON", "Lost": "LOST" };
+    const stage = stageToEnum[wonLostModal.type] || "NEW";
     
     updatePipelineItem({
       id: wonLostModal.deal.id,
       data: {
-        status,
+        stage,
         ...(wonLostModal.type === "Won" 
             ? { wonReason: data.reason, wonDate: data.wonDate, actualRevenue: data.actualRevenue, notes: data.notes } 
             : { lostReason: data.reason, competitor: data.competitor, notes: data.notes })
@@ -385,9 +406,10 @@ const LeadsTable = ({
       ),
       cell: (lead: LeadType) => {
         const prob = lead.probability || 0;
+        const val = lead.valueAmount ? formatCurrency(lead.valueAmount) : formatCurrency(Number(String(lead.value).replace(/[^0-9.-]+/g,"")));
         return (
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-bold text-foreground">{lead.value}</span>
+            <span className="text-sm font-bold text-foreground">{val}</span>
             <span className="text-xs font-semibold text-muted-foreground">{prob}%</span>
           </div>
         );
@@ -488,6 +510,59 @@ const LeadsTable = ({
     },
     {
       header: (
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">Notes</div>
+      ),
+      cell: (lead: LeadType) => {
+        const count = lead.notesCount || 0;
+        return (
+          <div className="flex justify-center">
+            <Badge 
+              variant={count > 0 ? "secondary" : "outline"} 
+              className={cn(
+                "cursor-pointer hover:opacity-80 transition-opacity gap-1.5 px-2.5 py-1 text-xs font-semibold",
+                count > 0 ? "bg-amber-100 text-amber-700 hover:bg-amber-200 border-transparent" : "text-muted-foreground bg-transparent"
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDetailsLeadId(lead.id);
+              }}
+            >
+              📝 {count}
+            </Badge>
+          </div>
+        );
+      },
+      className: "w-[90px]",
+    },
+    {
+      header: (
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Meetings</div>
+      ),
+      cell: (lead: LeadType) => {
+        const meeting = lead.upcomingMeeting;
+        if (!meeting) {
+          return <div className="text-[11px] text-muted-foreground font-medium">No Meeting</div>;
+        }
+        
+        let timeStr = "";
+        try {
+          const date = new Date(meeting.startTime);
+          timeStr = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "numeric" }).format(date);
+        } catch(e) {}
+        
+        return (
+          <div className="flex flex-col">
+            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Upcoming</span>
+            <span className="text-xs font-medium text-blue-600 flex items-center gap-1">
+              📅 {timeStr}
+            </span>
+          </div>
+        );
+      },
+      className: "w-[150px]",
+    },
+    {
+      header: (
         <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">Actions</div>
       ),
       headerClassName: "text-right",
@@ -520,6 +595,12 @@ const LeadsTable = ({
                     <Tag className="w-3.5 h-3.5" /> View Customer Details
                   </DropdownMenuItem>
                 </>
+              )}
+
+              {lead.status !== "Won" && lead.status !== "Lost" && (
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStageChange(lead, "Won"); }} className="gap-2 text-xs text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950 cursor-pointer font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Convert to Customer (Mark Won)
+                </DropdownMenuItem>
               )}
 
               {lead.status === "Lost" ? (
@@ -559,25 +640,32 @@ const LeadsTable = ({
     },
   ];
 
-  if (leads.length === 0) {
+  if (sortedLeads.length === 0) {
+    const activeFiltersContext = [];
+    if (globalSearchQuery) activeFiltersContext.push({ label: "Search", value: globalSearchQuery });
+    if (globalStatusFilter && globalStatusFilter !== "all") activeFiltersContext.push({ label: "Global Stage", value: globalStatusFilter });
+    if (filters.stage !== "All Stages") activeFiltersContext.push({ label: "Stage", value: filters.stage });
+    if (filters.priority !== "All Priorities") activeFiltersContext.push({ label: "Priority", value: filters.priority });
+    if (filters.activity !== "All Activity") activeFiltersContext.push({ label: "Activity", value: filters.activity });
+    
     return (
-      <div className="w-full min-h-[400px] bg-card rounded-xl border border-dashed border-border flex flex-col items-center justify-center p-8 text-center shadow-sm">
-        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-          <Inbox className="w-8 h-8 text-primary" />
-        </div>
-        <h3 className="text-lg font-bold text-foreground mb-2">No leads found</h3>
-        <p className="text-sm text-muted-foreground max-w-sm mb-6">
-          Your pipeline is looking a little empty. Add new leads to start tracking your deals and growing your business.
-        </p>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Share2 className="w-4 h-4" /> Import Leads
-          </Button>
-          <Button className="gap-2 shadow-sm">
-            <User className="w-4 h-4" /> Add Lead
-          </Button>
-        </div>
-      </div>
+      <LeadEmptyState 
+        totalLeads={rawTotalCount ?? leads.length}
+        searchQuery={globalSearchQuery}
+        hasFilters={hasActiveFilters || (globalStatusFilter && globalStatusFilter !== "all")}
+        activeFilters={activeFiltersContext}
+        onClearSearch={onGlobalClearFilters}
+        onClearFilters={() => {
+          clearFilters();
+          if (onGlobalClearFilters) onGlobalClearFilters();
+        }}
+        onResetAll={() => {
+          clearFilters();
+          if (onGlobalClearFilters) onGlobalClearFilters();
+        }}
+        onAddLead={onAddLead || (() => {})} 
+        onImport={onImport || (() => toast.info("Import feature coming soon."))}
+      />
     );
   }
 
@@ -679,7 +767,7 @@ const LeadsTable = ({
               </div>
               <div className="space-y-1">
                 <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Value</span>
-                <p className="text-sm font-bold text-foreground">{lead.value}</p>
+                <p className="text-sm font-bold text-foreground">{lead.valueAmount ? formatCurrency(lead.valueAmount) : formatCurrency(Number(String(lead.value).replace(/[^0-9.-]+/g,"")))}</p>
               </div>
               <div className="space-y-1">
                 <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Priority</span>
@@ -890,7 +978,6 @@ const LeadsTable = ({
         {customerLead && (
           <CustomerForm 
             initialData={{
-              id: customerLead.id,
               name: customerLead.name,
               company: customerLead.company,
               email: customerLead.email,
@@ -899,7 +986,18 @@ const LeadsTable = ({
               createdAt: customerLead.createdAt,
               updatedAt: customerLead.updatedAt,
             } as any}
-            onSuccess={() => setCustomerLead(null)} 
+            onSuccess={async () => {
+              // Mark lead as Won
+              try {
+                await updateLead(customerLead.id, { status: "Won" });
+                queryClient.invalidateQueries({ queryKey: ["leads"] });
+                queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+                toast.success(`${customerLead.name} has been marked as Won.`);
+              } catch {
+                toast.error("Failed to update lead status to Won.");
+              }
+              setCustomerLead(null);
+            }}
             onCancel={() => setCustomerLead(null)} 
           />
         )}

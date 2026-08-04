@@ -4,6 +4,7 @@ import { PipelineLeadType } from "@/shared/types/pipeline";
 import { 
   MoreHorizontal, 
   DollarSign, 
+  IndianRupee,
   Clock, 
   MessageSquare, 
   UserPlus, 
@@ -41,7 +42,8 @@ const PipelineCard = ({ item, isOverlay, onSelect }: Props) => {
     isDragging
   } = useSortable({ id: item.id, data: { type: 'Card', item } });
   
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
+  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -137,8 +139,8 @@ const PipelineCard = ({ item, isOverlay, onSelect }: Props) => {
       {/* Metrics */}
       <div className="flex items-center justify-between pt-2.5 mt-1 border-t border-border/50">
         <div className="flex items-center gap-1 text-sm font-bold text-foreground">
-          <span className="text-success"><DollarSign className="w-3.5 h-3.5" /></span>
-          {formatCurrency(item.valueAmount)}
+          <span className="text-success"><CurrencyIcon className="w-3.5 h-3.5" /></span>
+          {item.valueAmount ? formatCurrency(item.valueAmount) : formatCurrency(Number(String(item.value || "0").replace(/[^0-9.-]+/g,"")))}
         </div>
         <div className="flex items-center gap-2">
           <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">

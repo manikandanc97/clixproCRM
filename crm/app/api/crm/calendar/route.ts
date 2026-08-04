@@ -31,7 +31,7 @@ export async function GET(req: Request) {
         },
         include: {
           assignedTo: { select: { id: true, name: true } },
-          relatedLead: { select: { id: true, name: true, company: true } },
+          lead: { select: { id: true, name: true, company: true } },
         },
       }),
       prisma.task.findMany({
@@ -46,7 +46,7 @@ export async function GET(req: Request) {
       prisma.lead.findMany({
         where: {
           tenantId: session.tenantId,
-          followUpAt: { gte: start, lte: end },
+          expectedCloseDate: { gte: start, lte: end },
         },
         include: {
           assignedTo: { select: { id: true, name: true } },
@@ -69,8 +69,8 @@ export async function GET(req: Request) {
         status: m.status,
         location: m.location,
         isOnline: m.isOnline,
-        assignedTo: m.assignedTo,
-        relatedLead: m.relatedLead,
+        assignedToId: m.assignedToId,
+        relatedLead: m.lead,
       })),
       ...tasks.map((t) => {
         // Assume tasks are all-day events on their due date, or 1 hour if not specified
@@ -96,7 +96,7 @@ export async function GET(req: Request) {
         };
       }),
       ...leads.map((l) => {
-        const lStart = l.followUpAt ? new Date(l.followUpAt) : new Date();
+        const lStart = l.expectedCloseDate ? new Date(l.expectedCloseDate) : new Date();
         const lEnd = new Date(lStart);
         lEnd.setHours(lEnd.getHours() + 1);
 
@@ -110,10 +110,10 @@ export async function GET(req: Request) {
           endTime: lEnd.toISOString(),
           isAllDay: false,
           type: "FOLLOW_UP",
-          status: l.status,
+          status: l.stage,
           location: null,
           isOnline: false,
-          assignedTo: l.assignedTo,
+          assignedToId: l.assignedToId,
           relatedLead: { id: l.id, name: l.name, company: l.company },
         };
       }),
@@ -150,7 +150,7 @@ export async function POST(req: Request) {
         type: (type as EventType) || EventType.MEETING,
         isAllDay: isAllDay || false,
         assignedToId: assignedToId || session.userId,
-        relatedLeadId: relatedLeadId || null,
+        leadId: relatedLeadId || null,
         location,
         isOnline: isOnline || false,
         status: "SCHEDULED",

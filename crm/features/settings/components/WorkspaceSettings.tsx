@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Building2, Hash, Globe, MapPin, DollarSign, Upload, AlertTriangle } from "lucide-react";
+import { Building2, Hash, Globe, MapPin, DollarSign, IndianRupee, Upload, AlertTriangle } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import {
@@ -18,10 +18,13 @@ import Image from "next/image";
 
 import { useWorkspace } from "@/shared/hooks/use-settings";
 import { PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 const WorkspaceSettings = () => {
   const { data: workspace, isLoading: loading, error, refetch } = useWorkspace();
   const workspaceLogo = workspace?.logo;
+  const { currency } = useCurrency();
+  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
 
   if (loading) {
     return <ComponentLoadingState label="Loading workspace configuration..." />;
@@ -127,14 +130,13 @@ const WorkspaceSettings = () => {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground">Default Currency</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+                <CurrencyIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
                 <Select defaultValue={workspace?.currency ?? undefined}>
                   <SelectTrigger className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:ring-primary/20 font-medium text-sm">
                     <SelectValue placeholder="Select Currency" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-border">
                     <SelectItem value="USD" className="text-xs font-medium">USD – US Dollar</SelectItem>
-                    <SelectItem value="EUR" className="text-xs font-medium">EUR – Euro</SelectItem>
                     <SelectItem value="INR" className="text-xs font-medium">INR – Indian Rupee</SelectItem>
                   </SelectContent>
                 </Select>

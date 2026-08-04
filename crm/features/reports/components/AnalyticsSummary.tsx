@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/shared/ui/card";
 import { motion } from "framer-motion";
 import { EmptyStateCard } from "@/shared/components/page-states";
 import { ReportInsightType } from "@/shared/types/report";
+import { useRouter } from "next/navigation";
 
 const iconMap = {
   revenue: TrendingUp,
@@ -19,6 +20,8 @@ const colorMap = {
 };
 
 const AnalyticsSummary = ({ insights }: { insights: ReportInsightType[] }) => {
+  const router = useRouter();
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -36,7 +39,7 @@ const AnalyticsSummary = ({ insights }: { insights: ReportInsightType[] }) => {
             <p className="text-muted-foreground text-sm">Automated analysis of your CRM data</p>
           </div>
         </div>
-        <button className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors">
+        <button onClick={() => router.push("/ai-insights")} className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors">
           View all insights
           <ArrowRight className="w-4 h-4" />
         </button>

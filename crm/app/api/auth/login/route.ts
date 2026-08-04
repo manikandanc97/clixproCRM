@@ -26,12 +26,11 @@ export async function POST(req: Request) {
     const data = await AuthService.login(result.data, { ip, userAgent });
 
     const cookieStore = await cookies();
-    const cookieOptions: {
+    const commonCookieOptions: {
       httpOnly: boolean;
       secure: boolean;
       sameSite: "lax" | "strict" | "none";
       path: string;
-      maxAge?: number;
     } = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -39,11 +38,18 @@ export async function POST(req: Request) {
       path: "/",
     };
 
-    if (result.data.staySignedIn) {
-      cookieOptions.maxAge = 30 * 24 * 60 * 60; // 30 days
-    }
+    // Access token (15 mins)
+    cookieStore.set("auth_token", data.token, { 
+      ...commonCookieOptions, 
+      maxAge: 15 * 60 
+    });
 
-    cookieStore.set("auth_token", data.token, cookieOptions);
+    // Refresh token (30 days if staySignedIn, else session)
+    const refreshOptions = { ...commonCookieOptions, maxAge: undefined as number | undefined };
+    if (result.data.staySignedIn) {
+      refreshOptions.maxAge = 30 * 24 * 60 * 60; // 30 days
+    }
+    cookieStore.set("refresh_token", data.refreshToken, refreshOptions);
 
     return NextResponse.json({
       success: true,

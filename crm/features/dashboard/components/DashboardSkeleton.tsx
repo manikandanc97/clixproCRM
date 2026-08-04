@@ -52,7 +52,45 @@ export function DashboardSkeleton() {
 
         {/* Right Sidebar Column Skeleton */}
         <div className="space-y-6 xl:space-y-8">
-          <Card className="bg-card/60 dark:bg-card/40 border-transparent rounded-xl h-[320px] skeleton" />
+          {/* Revenue Tracker Skeleton */}
+          <Card className="bg-card/60 dark:bg-card/40 border-transparent rounded-xl flex flex-col overflow-hidden">
+            <CardHeader className="flex flex-row items-start justify-between pb-2 px-6 pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-muted/60 dark:bg-muted/40 rounded-xl">
+                  <div className="w-5 h-5 skeleton rounded-sm opacity-50" />
+                </div>
+                <div>
+                  <div className="w-32 h-5 skeleton rounded mb-1.5" />
+                  <div className="w-24 h-3 skeleton rounded" />
+                </div>
+              </div>
+              <div className="w-9 h-9 skeleton rounded-xl opacity-50" />
+            </CardHeader>
+            <CardContent className="px-6 pb-6 pt-2 flex flex-col flex-1">
+              <div className="flex-1 flex items-center justify-between w-full py-2">
+                <div className="flex flex-col items-start space-y-2">
+                  <div className="w-14 h-2.5 skeleton rounded" />
+                  <div className="w-12 h-6 md:h-7 skeleton rounded" />
+                </div>
+
+                <div className="w-full max-w-[160px] aspect-square relative shrink-0 min-h-[160px] flex items-center justify-center">
+                  <div className="w-[140px] h-[140px] rounded-full border-[14px] border-muted/40 dark:border-muted/20 flex flex-col items-center justify-center relative">
+                    <div className="absolute inset-0 rounded-full animate-pulse bg-muted/5 dark:bg-muted/10" />
+                    <div className="w-16 h-8 skeleton rounded mb-1.5 z-10" />
+                    <div className="w-12 h-2.5 skeleton rounded z-10" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end space-y-2">
+                  <div className="w-14 h-2.5 skeleton rounded" />
+                  <div className="w-20 h-6 md:h-7 skeleton rounded" />
+                </div>
+              </div>
+
+              <div className="w-56 h-3 skeleton rounded mx-auto mb-3 mt-1 opacity-50" />
+              <div className="mt-3 w-full py-3 h-[44px] skeleton rounded-xl" />
+            </CardContent>
+          </Card>
           <Card className="bg-card/60 dark:bg-card/40 border-transparent rounded-xl h-[520px]">
             <CardHeader className="px-6 pt-6"><div className="w-32 h-6 skeleton rounded" /></CardHeader>
             <CardContent className="px-6 pb-6"><div className="w-full h-full skeleton rounded-xl" /></CardContent>

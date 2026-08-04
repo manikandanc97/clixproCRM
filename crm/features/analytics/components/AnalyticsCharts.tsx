@@ -34,6 +34,7 @@ import { CRMCard, CRMCardHeader } from "@/shared/components/crm";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 import { ChartContainer } from "@/shared/components/charts/ChartContainer";
+import { useCurrency } from "@/shared/hooks/use-currency";
 import { 
   RevenuePoint, 
   LeadsGrowthPoint, 
@@ -52,9 +53,8 @@ const tooltipStyle = {
 };
 
 export const RevenueOverviewChart = ({ data, loading }: { data?: RevenuePoint[], loading?: boolean }) => {
-
+  const { formatCurrency, currencySymbol } = useCurrency();
   const latest = data?.[data.length - 1] || { revenue: 0, target: 0 };
-  const formatCurrency = (val: number) => `$${val.toLocaleString()}`;
 
   return (
     <CRMCard className="h-[420px]" noPadding accentSeed="revenue">
@@ -109,7 +109,7 @@ export const RevenueOverviewChart = ({ data, loading }: { data?: RevenuePoint[],
               axisLine={false}
               tickLine={false}
               tick={axisTickStyle}
-              tickFormatter={(value) => `$${value >= 1000 ? value/1000 + 'k' : value}`}
+              tickFormatter={(value) => `${currencySymbol}${value >= 1000 ? value/1000 + 'k' : value}`}
             />
             <RechartsTooltip
               cursor={false}

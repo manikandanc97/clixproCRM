@@ -167,21 +167,23 @@ const PipelineBoard = ({ items, onAddDeal }: PipelineBoardProps) => {
     const targetStage = confirmMoveModal.targetStage;
     const originalStage = confirmMoveModal.originalStage;
 
-    const stageToStatus: Record<string, string> = {
+
+    const stageToEnum: Record<string, string> = {
       "New Lead": "NEW",
       "Contacted": "CONTACTED",
       "Proposal Sent": "PROPOSAL_SENT",
       "Won": "WON",
       "Lost": "LOST",
     };
-    const status = stageToStatus[targetStage] || "NEW";
+    const stage = stageToEnum[targetStage] || "NEW";
+
 
     // Update local state to reflect the move visually before API if not already done
     movePipelineItem(deal.id as string, targetStage as any);
     
     updatePipelineItem({ 
       id: deal.id as string, 
-      data: { status } 
+      data: { stage } 
     }, {
       onSuccess: () => {
         if (originalStage === "Won") {
@@ -217,8 +219,8 @@ const PipelineBoard = ({ items, onAddDeal }: PipelineBoardProps) => {
   const handleWonLostSubmit = (data: WonLostSubmitData) => {
     if (!wonLostModal.deal || !wonLostModal.type) return;
     
-    const stageToStatus: Record<string, string> = { "Won": "WON", "Lost": "LOST" };
-    const status = stageToStatus[wonLostModal.type] || "NEW";
+    const stageToEnum: Record<string, string> = { "Won": "WON", "Lost": "LOST" };
+    const stage = stageToEnum[wonLostModal.type] || "NEW";
     
     // Update locally
     movePipelineItem(wonLostModal.deal.id as string, wonLostModal.type);
@@ -226,7 +228,7 @@ const PipelineBoard = ({ items, onAddDeal }: PipelineBoardProps) => {
     updatePipelineItem({
       id: wonLostModal.deal.id as string,
       data: {
-        status,
+        stage,
         ...(wonLostModal.type === "Won" 
             ? { wonReason: data.reason, wonDate: data.wonDate, actualRevenue: data.actualRevenue, notes: data.notes } 
             : { lostReason: data.reason, competitor: data.competitor, notes: data.notes })

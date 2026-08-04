@@ -6,10 +6,14 @@ import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Flame, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useHotLeads } from "@/shared/hooks/use-dashboard";
+import { useCurrency } from "@/shared/hooks/use-currency";
+import { useRouter } from "next/navigation";
 
 export default function HotLeads() {
+  const router = useRouter();
   const { data } = useHotLeads();
   const leads = data?.leads ?? [];
+  const { formatCurrency } = useCurrency();
 
   return (
     <div className="w-full h-full">
@@ -21,7 +25,7 @@ export default function HotLeads() {
             </div>
             <CardTitle>Hot Leads</CardTitle>
           </div>
-          <Button variant="ghost" className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">View All</Button>
+          <Button variant="ghost" onClick={() => router.push("/leads")} className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">View All</Button>
         </CardHeader>
         <CardContent className="pt-0 flex-1 flex flex-col">
           {leads.length === 0 ? (
@@ -58,7 +62,7 @@ export default function HotLeads() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <span className="block font-bold text-foreground text-sm">{lead.value}</span>
+                      <span className="block font-bold text-foreground text-sm">{formatCurrency(Number(String(lead.value).replace(/[^0-9.-]+/g,"")))}</span>
                       <span className="text-[10px] font-bold text-warning flex items-center gap-0.5">
                         <Flame className="w-3 h-3" /> {lead.score} Score
                       </span>

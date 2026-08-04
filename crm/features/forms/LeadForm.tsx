@@ -9,6 +9,7 @@ import { FormInput, FormSelect, FormDatePicker } from "@/shared/components/form-
 import { Button } from "@/shared/ui/button";
 import { useCreateLead, useUpdateLead } from "@/shared/hooks/use-crm";
 import { Loader2 } from "lucide-react";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 const leadSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -32,6 +33,7 @@ interface LeadFormProps {
 export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: LeadFormProps) => {
   const { mutateAsync: createMutate, isPending: isCreating } = useCreateLead();
   const { mutateAsync: updateMutate, isPending: isUpdating } = useUpdateLead();
+  const { currencySymbol } = useCurrency();
 
   const isPending = isCreating || isUpdating;
 
@@ -121,7 +123,7 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
               { label: "Lost", value: "LOST" },
             ]} 
           />
-          <FormInput name="value" label="Estimated Value ($)" placeholder="5000" />
+          <FormInput name="value" label={`Estimated Value (${currencySymbol})`} placeholder="5000" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

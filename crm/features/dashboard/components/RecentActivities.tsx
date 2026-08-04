@@ -12,11 +12,13 @@ import { Button } from "@/shared/ui/button";
 
 import { useDashboardData } from "@/shared/hooks/use-dashboard";
 import { ActivityItem } from "./ActivityItem";
+import { useRouter } from "next/navigation";
 
 
 type CategoryType = "all" | "leads" | "tasks" | "quotations";
 
 const RecentActivities = () => {
+  const router = useRouter();
   const { data: dashboardData } = useDashboardData();
   const activities = dashboardData?.recentActivities ?? [];
   const [filter, setFilter] = useState<CategoryType>("all");
@@ -36,9 +38,7 @@ const RecentActivities = () => {
   };
 
   const handleViewAll = () => {
-    toast.success("Full Activity Log", {
-      description: "Navigating to global activity audit trails.",
-    });
+    router.push("/reports");
   };
 
   return (

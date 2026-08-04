@@ -13,6 +13,7 @@ const BillingSettings = dynamic(() => import("@/features/settings/components/Bil
 const IntegrationSettings = dynamic(() => import("@/features/settings/components/IntegrationSettings"));
 const AISettings = dynamic(() => import("@/features/settings/components/AISettings"));
 const PersonalizationSettings = dynamic(() => import("@/features/settings/components/PersonalizationSettings"));
+const RevenueTargetSettings = dynamic(() => import("@/features/settings/components/RevenueTargetSettings"));
 import { motion, AnimatePresence } from "framer-motion";
 import { CRMPageContainer } from "@/shared/components/crm";
 
@@ -38,6 +39,7 @@ const SettingsPage = () => {
       case "personalization": return <PersonalizationSettings />;
       case "notifications": return <NotificationSettings />;
       case "security":      return <SecuritySettings />;
+      case "targets":       return <RevenueTargetSettings />;
       default:              return <ProfileSettings />;
     }
   };

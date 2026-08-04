@@ -5,7 +5,8 @@ import { PipelineLeadType } from "@/shared/types/pipeline";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
-import { DollarSign, Trophy, XCircle, Loader2 } from "lucide-react";
+import { DollarSign, IndianRupee, Trophy, XCircle, Loader2 } from "lucide-react";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 export interface WonLostSubmitData {
   reason: string;
@@ -26,6 +27,8 @@ interface WonLostModalProps {
 
 export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading }: WonLostModalProps) {
   const [internalLoading, setInternalLoading] = useState(false);
+  const { currency } = useCurrency();
+  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
   const [reason, setReason] = useState("");
   const [competitor, setCompetitor] = useState("");
   const [actualRevenue, setActualRevenue] = useState("");
@@ -88,7 +91,7 @@ export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading 
               <div className="space-y-2.5">
                 <Label>Actual Revenue <span className="text-destructive ml-0.5">*</span></Label>
                 <div className="relative">
-                  <DollarSign className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                  <CurrencyIcon className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
                     type="number"
                     required

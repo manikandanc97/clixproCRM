@@ -16,6 +16,7 @@ import {
 import { CardTitle } from "@/shared/ui/card";
 import { Separator } from "@/shared/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 const FUNNEL_STAGES = [
   { id: "New Lead", label: "New Lead", color: "bg-blue-500" },
@@ -25,21 +26,9 @@ const FUNNEL_STAGES = [
 ];
 
 export default function LeadFunnel({ loading: externalLoading }: { loading?: boolean }) {
-  const { data, isLoading: internalLoading } = useAnalytics();
-  const loading = externalLoading || internalLoading;
   const [dateFilter, setDateFilter] = useState("This Month");
-
-  if (loading) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full h-full"
-      >
-        <DashboardWidgetSkeleton rows={4} />
-      </motion.div>
-    );
-  }
+  const { data, isLoading: internalLoading } = useAnalytics(dateFilter);
+  const loading = externalLoading || internalLoading;
 
   const rawStages = data?.pipelineStages ?? [];
   const stageDataMap = rawStages.reduce((acc, stage) => {
@@ -110,31 +99,43 @@ export default function LeadFunnel({ loading: externalLoading }: { loading?: boo
                     >
                       <div className="flex justify-between items-center mb-2 min-w-0 gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className={`text-[13px] font-bold truncate ${item.isEmpty ? 'text-muted-foreground' : 'text-foreground'}`}>
+                          <span className={`text-[13px] font-bold truncate ${item.isEmpty && !loading ? 'text-muted-foreground' : 'text-foreground'}`}>
                             {item.label}
                           </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-colors duration-300 shrink-0 ${
-                            item.isEmpty 
-                              ? 'bg-muted/50 text-muted-foreground/60' 
-                              : 'bg-muted dark:bg-slate-800 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-                          }`}>
-                            {item.percentage}%
-                          </span>
+                          {loading ? (
+                            <Skeleton className="h-5 w-10 rounded-md" />
+                          ) : (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-colors duration-300 shrink-0 ${
+                              item.isEmpty 
+                                ? 'bg-muted/50 text-muted-foreground/60' 
+                                : 'bg-muted dark:bg-slate-800 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                            }`}>
+                              {item.percentage}%
+                            </span>
+                          )}
                         </div>
-                        <span className={`text-sm font-bold tracking-tight shrink-0 ${item.isEmpty ? 'text-muted-foreground' : 'text-foreground'}`}>
-                          {item.count.toLocaleString()}
-                        </span>
+                        {loading ? (
+                          <Skeleton className="h-4 w-8" />
+                        ) : (
+                          <span className={`text-sm font-bold tracking-tight shrink-0 ${item.isEmpty ? 'text-muted-foreground' : 'text-foreground'}`}>
+                            {item.count.toLocaleString()}
+                          </span>
+                        )}
                       </div>
                       <div className="h-2.5 w-full bg-muted dark:bg-slate-800/50 rounded-full overflow-hidden flex justify-start min-w-0">
-                        {!item.isEmpty && (
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: item.width }}
-                            transition={{ duration: 1, delay: 0.3 + (index * 0.05), type: "spring", stiffness: 40, damping: 15 }}
-                            className={`h-full rounded-full ${item.color} relative overflow-hidden`}
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out" />
-                          </motion.div>
+                        {loading ? (
+                          <Skeleton className="h-full w-full" />
+                        ) : (
+                          !item.isEmpty && (
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: item.width }}
+                              transition={{ duration: 1, delay: 0.3 + (index * 0.05), type: "spring", stiffness: 40, damping: 15 }}
+                              className={`h-full rounded-full ${item.color} relative overflow-hidden`}
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out" />
+                            </motion.div>
+                          )
                         )}
                       </div>
                     </motion.div>
@@ -154,19 +155,19 @@ export default function LeadFunnel({ loading: externalLoading }: { loading?: boo
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="flex flex-col bg-muted/40 rounded-lg p-3">
                 <span className="text-xs text-muted-foreground font-medium mb-1">Total Leads</span>
-                <span className="text-sm font-bold text-foreground">{totalLeads}</span>
+                {loading ? <Skeleton className="h-5 w-12" /> : <span className="text-sm font-bold text-foreground">{totalLeads}</span>}
               </div>
               <div className="flex flex-col bg-muted/40 rounded-lg p-3">
                 <span className="text-xs text-muted-foreground font-medium mb-1">Won</span>
-                <span className="text-sm font-bold text-foreground">{wonCount}</span>
+                {loading ? <Skeleton className="h-5 w-12" /> : <span className="text-sm font-bold text-foreground">{wonCount}</span>}
               </div>
               <div className="flex flex-col bg-muted/40 rounded-lg p-3">
                 <span className="text-xs text-muted-foreground font-medium mb-1">Conversion</span>
-                <span className="text-sm font-bold text-foreground">{overallConversion}%</span>
+                {loading ? <Skeleton className="h-5 w-12" /> : <span className="text-sm font-bold text-foreground">{overallConversion}%</span>}
               </div>
               <div className="flex flex-col bg-muted/40 rounded-lg p-3">
                 <span className="text-xs text-muted-foreground font-medium mb-1">Avg Deal Time</span>
-                <span className="text-sm font-bold text-foreground">6 Days</span>
+                {loading ? <Skeleton className="h-5 w-16" /> : <span className="text-sm font-bold text-foreground">6 Days</span>}
               </div>
             </div>
           </div>

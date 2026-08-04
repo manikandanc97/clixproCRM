@@ -15,11 +15,11 @@ import {
 } from "@/shared/lib/api/crm";
 import { useAuth } from "@/features/auth/components/auth-provider";
 
-export function useDashboardData() {
+export function useDashboardData(timeframe: string = "month") {
   const { isAuthenticated, isHydrated, token } = useAuth();
   return useQuery({
-    queryKey: ["dashboardData", token],
-    queryFn: fetchDashboardData,
+    queryKey: ["dashboardData", timeframe, token],
+    queryFn: () => fetchDashboardData(timeframe),
     enabled: isHydrated && isAuthenticated,
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 30 * 1000, // 30 seconds
@@ -136,11 +136,11 @@ import { useAnalytics } from "./use-analytics";
  * This ensures that even if specific components aren't mounted yet,
  * the core CRM data is being fetched and cached.
  */
-export function useDashboardInitializer() {
+export function useDashboardInitializer(timeframe: string = "month") {
   const { isAuthenticated, isInitializing: isAuthInitializing } = useAuth();
   
   // Primary dashboard data
-  const dashboard = useDashboardData();
+  const dashboard = useDashboardData(timeframe);
   
   // Entity data
   const leads = useLeads();

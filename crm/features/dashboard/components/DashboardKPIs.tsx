@@ -3,6 +3,7 @@
 import React from "react";
 import { 
   DollarSign, 
+  IndianRupee,
   Users, 
   Target, 
   TrendingUp, 
@@ -23,7 +24,7 @@ import {
 export default function DashboardKPIs() {
   const { access, user } = useAuth();
   const { queries } = useDashboardInitializer();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
 
   // Extract query data safely
   const dashboardData = queries.dashboard.data;
@@ -56,7 +57,7 @@ export default function DashboardKPIs() {
         if (!dashboardRevenue) return "neutral" as const;
         return dashboardRevenue.positive ? ("up" as const) : ("down" as const);
       },
-      icon: DollarSign,
+      icon: currency === "INR" ? IndianRupee : DollarSign,
       color: "emerald" as const,
       loading: queries.dashboard.isLoading,
       sparklineData: dashboardRevenue?.sparklineData,

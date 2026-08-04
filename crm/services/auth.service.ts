@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { RegisterInput, LoginInput } from "@/shared/validators/auth.validator";
 import { hashPassword, verifyPassword } from "@/shared/lib/auth/password";
-import { signJWT } from "@/shared/lib/auth/jwt";
+import { signJWT, generateRefreshToken, hashToken } from "@/shared/lib/auth/jwt";
 
 export class AuthError extends Error {
   statusCode: number;
@@ -129,15 +129,21 @@ export class AuthService {
     const permissions = membership?.role?.permissions?.filter((rp: any) => rp.hasAccess).map((rp: any) => rp.module) || [];
 
     const jwtPayload = { userId: user.id, tenantId, roleId, role: roleName };
-    const token = await signJWT(jwtPayload);
+    const accessToken = await signJWT(jwtPayload);
+    const refreshToken = generateRefreshToken();
+    const tokenHash = hashToken(refreshToken);
+
+    const sessionDuration = data.staySignedIn
+      ? 30 * 24 * 60 * 60 * 1000 // 30 days
+      : 24 * 60 * 60 * 1000;     // 24 hours
 
     await prisma.session.create({
       data: {
         userId: user.id,
-        tokenHash: token,
+        tokenHash: tokenHash,
         ipAddress: reqInfo.ip,
         userAgent: reqInfo.userAgent,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
+        expiresAt: new Date(Date.now() + sessionDuration),
       }
     });
 
@@ -162,14 +168,97 @@ export class AuthService {
         role: roleName,
         permissions
       }, 
-      token 
+      token: accessToken,
+      refreshToken
     };
   }
 
-  static async logout(token: string) {
+  static async refreshSession(refreshToken: string, reqInfo: { ip?: string; userAgent?: string }) {
+    const tokenHash = hashToken(refreshToken);
+
+    const session = await prisma.session.findUnique({
+      where: { tokenHash },
+      include: {
+        user: {
+          include: {
+            memberships: {
+              include: {
+                role: {
+                  include: { permissions: true }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!session) {
+      throw new AuthError("Invalid or expired refresh token", 401);
+    }
+
+    if (session.expiresAt < new Date()) {
+      await prisma.session.delete({ where: { id: session.id } });
+      throw new AuthError("Session expired. Please log in again.", 401);
+    }
+
+    const user = session.user;
+    if (user.status !== "ACTIVE" || (user.lockedUntil && user.lockedUntil > new Date())) {
+      await prisma.session.delete({ where: { id: session.id } });
+      throw new AuthError("Account inactive or locked.", 403);
+    }
+
+    // Generate new tokens
+    const membership = user.memberships[0];
+    const tenantId = membership?.tenantId || "";
+    const roleId = membership?.roleId || "";
+    const roleName = membership?.role?.name || "EMPLOYEE";
+    const permissions = membership?.role?.permissions?.filter((rp: any) => rp.hasAccess).map((rp: any) => rp.module) || [];
+
+    const jwtPayload = { userId: user.id, tenantId, roleId, role: roleName };
+    const newAccessToken = await signJWT(jwtPayload);
+    const newRefreshToken = generateRefreshToken();
+    const newTokenHash = hashToken(newRefreshToken);
+
+    // Keep the original expiration duration, just extend from now
+    const timeRemaining = session.expiresAt.getTime() - Date.now();
+    const isExtendedSession = timeRemaining > 24 * 60 * 60 * 1000;
+    const sessionDuration = isExtendedSession 
+      ? 30 * 24 * 60 * 60 * 1000 // 30 days
+      : 24 * 60 * 60 * 1000;     // 24 hours
+
+    await prisma.session.update({
+      where: { id: session.id },
+      data: {
+        tokenHash: newTokenHash,
+        ipAddress: reqInfo.ip,
+        userAgent: reqInfo.userAgent,
+        expiresAt: new Date(Date.now() + sessionDuration),
+      }
+    });
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        status: user.status,
+        tenantId,
+        role: roleName,
+        permissions
+      },
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
+      isExtendedSession
+    };
+  }
+
+  static async logout(refreshToken: string) {
+    // Hash the token because it's stored hashed in the DB
+    const tokenHash = hashToken(refreshToken);
     // Delete session from database
     await prisma.session.deleteMany({
-      where: { tokenHash: token }
+      where: { tokenHash }
     });
   }
 }

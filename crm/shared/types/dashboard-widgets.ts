@@ -3,7 +3,7 @@ export interface ApiNotification {
   title: string;
   description: string;
   time: string;
-  type: "lead" | "task" | "quote" | "system";
+  type: "lead" | "task" | "quote" | "system" | "lead_assigned" | "task_due" | "task_completed" | "customer_added" | "invoice_paid" | "meeting_reminder" | "employee_added";
   read: boolean;
 }
 

@@ -6,12 +6,15 @@ import { cookies } from "next/headers";
 export async function POST(_req: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
+    const refreshToken = cookieStore.get("refresh_token")?.value;
     
-    if (token) {
-      await AuthService.logout(token);
-      cookieStore.delete("auth_token");
+    if (refreshToken) {
+      await AuthService.logout(refreshToken);
     }
+    
+    // Always clear both cookies on logout
+    cookieStore.delete("auth_token");
+    cookieStore.delete("refresh_token");
 
     return NextResponse.json({
       success: true,

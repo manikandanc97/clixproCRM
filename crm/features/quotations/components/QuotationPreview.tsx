@@ -27,6 +27,7 @@ import {
 import { QuotationType } from "@/shared/types/quotation";
 import { Separator } from "@/shared/ui/separator";
 import { motion } from "framer-motion";
+import { useCurrency } from "@/shared/hooks/use-currency";
 
 interface QuotationPreviewProps {
   quotation: QuotationType | null;
@@ -35,6 +36,7 @@ interface QuotationPreviewProps {
 }
 
 const QuotationPreview = ({ quotation, isOpen, onClose }: QuotationPreviewProps) => {
+  const { formatCurrency } = useCurrency();
   if (!quotation) return null;
 
   return (
@@ -178,10 +180,10 @@ const QuotationPreview = ({ quotation, isOpen, onClose }: QuotationPreviewProps)
                     </div>
                     <div>
                       <p className="text-sm font-bold text-foreground">{item.name}</p>
-                      <p className="text-xs text-muted-foreground font-medium">Qty: {item.quantity} x ${item.price}</p>
+                      <p className="text-xs text-muted-foreground font-medium">Qty: {item.quantity} x {formatCurrency(item.price)}</p>
                     </div>
                   </div>
-                  <p className="text-sm font-black text-foreground">${item.total}</p>
+                  <p className="text-sm font-black text-foreground">{formatCurrency(item.total)}</p>
                 </div>
               ))}
               
@@ -190,20 +192,20 @@ const QuotationPreview = ({ quotation, isOpen, onClose }: QuotationPreviewProps)
               <div className="space-y-2">
                 <div className="flex justify-between text-sm text-muted-foreground font-medium">
                   <span>Subtotal</span>
-                  <span>${quotation.amountValue}</span>
+                  <span>{formatCurrency(quotation.amountValue)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-muted-foreground font-medium">
                   <span>Tax (10%)</span>
-                  <span>+${quotation.tax}</span>
+                  <span>+{formatCurrency(quotation.tax)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-rose-500 font-medium">
                   <span>Discount</span>
-                  <span>-${quotation.discount}</span>
+                  <span>-{formatCurrency(quotation.discount)}</span>
                 </div>
                 <Separator className="my-2 bg-muted" />
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-base font-black text-foreground">Total Amount</span>
-                  <span className="text-2xl font-black text-emerald-600">${quotation.amountValue + (quotation.tax || 0) - (quotation.discount || 0)}</span>
+                  <span className="text-2xl font-black text-emerald-600">{formatCurrency(quotation.amountValue + (quotation.tax || 0) - (quotation.discount || 0))}</span>
                 </div>
               </div>
             </div>

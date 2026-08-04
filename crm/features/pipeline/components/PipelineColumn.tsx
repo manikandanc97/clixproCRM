@@ -2,7 +2,7 @@
 
 import { PipelineLeadType } from "@/shared/types/pipeline";
 import PipelineCard from "./PipelineCard";
-import { Plus, MoreHorizontal, TrendingUp, DollarSign, Target } from "lucide-react";
+import { Plus, MoreHorizontal, TrendingUp, DollarSign, IndianRupee, Target } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
@@ -23,8 +23,9 @@ const PipelineColumn = ({ title, items, onSelectDeal, onAddDeal }: Props) => {
   });
 
   const totalValue = items.reduce((sum, item) => sum + (item.valueAmount || 0), 0);
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
   const formattedTotal = formatCurrency(totalValue);
+  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
 
   const getHeaderIconColor = (t: string) => {
     switch (t) {
@@ -107,7 +108,7 @@ const PipelineColumn = ({ title, items, onSelectDeal, onAddDeal }: Props) => {
       <div className="px-5 py-3 bg-background/40 border-t border-border flex items-center justify-between">
          <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center text-primary">
-               <DollarSign className="w-3 h-3" />
+               <CurrencyIcon className="w-3 h-3" />
             </div>
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Avg: <span className="text-foreground">{formatCurrency(items.length ? Math.floor(totalValue/items.length) : 0)}</span></span>
          </div>

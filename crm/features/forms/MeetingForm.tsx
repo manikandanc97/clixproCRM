@@ -25,6 +25,7 @@ type MeetingFormValues = z.infer<typeof meetingSchema>;
 interface MeetingFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+  defaultLeadId?: string;
 }
 
 export const MeetingForm = ({ onSuccess, onCancel }: MeetingFormProps) => {
