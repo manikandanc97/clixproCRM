@@ -27,7 +27,7 @@ const ActivityHeatmap = ({ data }: { data: ActivityHeatmapPointType[] }) => {
       </CardHeader>
       <CardContent className="p-8 pt-4">
         {data.length === 0 ? (
-          <EmptyStateCard title="No activity data" message="Sales activity will appear after leads, tasks, or quotations are recorded." />
+          <EmptyStateCard icon={Info} title="No activity data" message="Sales activity will appear after leads, tasks, or quotations are recorded." />
         ) : (
         <>
         <div className="flex flex-col gap-2">

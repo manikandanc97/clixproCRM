@@ -21,6 +21,7 @@ const KanbanView = dynamic(() => import("@/features/tasks/components/KanbanView"
 const CalendarView = dynamic(() => import("@/features/tasks/components/CalendarView").then(mod => ({ default: mod.CalendarView })));
 const TimelineView = dynamic(() => import("@/features/tasks/components/TimelineView").then(mod => ({ default: mod.TimelineView })));
 const TaskDetailsDrawer = dynamic(() => import("@/features/tasks/components/TaskDetailsDrawer"));
+import { EmptyState } from "@/shared/components/EmptyState";
 import { PageErrorState } from "@/shared/components/page-states";
 import { TasksSkeleton } from "@/features/tasks/components/TasksSkeleton";
 import { useTasks } from "@/shared/hooks/use-crm";
@@ -252,26 +253,11 @@ const TasksPage = () => {
             )}
           </motion.div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="crm-empty-state"
-          >
-            <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center mb-5">
-              <SearchX className="w-8 h-8 text-muted-foreground/40" />
-            </div>
-            <h3 className="text-lg font-bold text-foreground mb-2">No tasks found</h3>
-            <p className="text-muted-foreground text-center max-w-sm mb-6 text-sm font-medium">
-              Try adjusting your search or filters to find the tasks you&apos;re looking for.
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => { setSearchQuery(""); setStatusFilter("all"); }}
-              className="px-5"
-            >
-              Clear Filters
-            </Button>
-          </motion.div>
+          <EmptyState
+            icon={CheckSquare}
+            title="No tasks found"
+            description="No tasks match the current search or filters."
+          />
         )}
       </AnimatePresence>
       </div>

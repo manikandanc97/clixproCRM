@@ -63,9 +63,8 @@ const getPriorityColor = (p?: string) => {
 const LeadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("grid"); // Make grid default for this test or keep list
   
-  const { leads, setLeads } = useCRMStore();
+  const { leads, setLeads, leadViewMode, setLeadViewMode } = useCRMStore();
   const safeLeads = useMemo(() => Array.isArray(leads) ? leads : [], [leads]);
   const { data, isLoading: loading, error, refetch } = useLeads();
   const searchParams = useSearchParams();
@@ -194,8 +193,8 @@ const LeadsPage = () => {
           <CRMToolbar 
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
+            viewMode={leadViewMode}
+            setViewMode={setLeadViewMode}
             placeholder="Search leads, companies, emails, or phones..."
           >
             <div className="flex items-center gap-2">
@@ -224,7 +223,7 @@ const LeadsPage = () => {
 
         <div className="flex-1 min-h-0 flex flex-col">
           <AnimatePresence mode="wait">
-            {viewMode === "list" ? (
+            {leadViewMode === "table" ? (
               <motion.div key="list-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col min-h-0">
                 <LeadsTable 
                   leads={filteredLeads} 

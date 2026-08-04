@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 const QuotationsTable = dynamic(() => import("@/features/quotations/components/QuotationsTable"), {
   loading: () => <div className="h-[400px] skeleton rounded-xl" />
 });
+import { EmptyState } from "@/shared/components/EmptyState";
 import { PageErrorState } from "@/shared/components/page-states";
 import { QuotationsSkeleton } from "@/features/quotations/components/QuotationsSkeleton";
 import { useQuotations } from "@/shared/hooks/use-crm";
@@ -186,30 +187,15 @@ const QuotationsPage = () => {
                 exit={{ opacity: 0 }}
                 className="flex-1 flex flex-col min-h-0"
               >
-            <QuotationsTable quotations={filteredQuotations} />
-          </motion.div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="crm-empty-state"
-          >
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
-              <SearchX className="w-10 h-10 text-muted-foreground/30" />
-            </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">No quotations found</h3>
-            <p className="text-muted-foreground text-center max-w-sm mb-8 text-sm font-medium">
-              Try adjusting your search or filters to find the quotations you&apos;re looking for.
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={() => { setSearchQuery(""); setStatusFilter("all"); }}
-            className="px-6"
-            >
-              Clear All Filters
-            </Button>
-          </motion.div>
-        )}
+                <QuotationsTable quotations={filteredQuotations} />
+              </motion.div>
+            ) : (
+              <EmptyState 
+                icon={FileText}
+                title="No quotations found"
+                description="No quotations match the current search or filters."
+              />
+            )}
       </AnimatePresence>
         </div>
       </div>

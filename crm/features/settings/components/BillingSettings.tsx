@@ -45,7 +45,7 @@ const BillingSettings = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {licenseDetails.length === 0 ? (
           <div className="sm:col-span-2 lg:col-span-4">
-            <EmptyStateCard title="No license details" message="License details will appear when they are configured in the backend." />
+            <EmptyStateCard icon={Key} title="No license details" message="License details will appear when they are configured in the backend." />
           </div>
         ) : licenseDetails.map((detail) => (
           <CRMCard key={detail.id} className="space-y-3">
@@ -65,7 +65,7 @@ const BillingSettings = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {modules.length === 0 ? (
             <div className="sm:col-span-2 lg:col-span-4">
-              <EmptyStateCard title="No module data" message="Activated modules will appear when the backend provides billing module records." />
+              <EmptyStateCard icon={Package} title="No module data" message="Activated modules will appear when the backend provides billing module records." />
             </div>
           ) : modules.map((module) => (
             <CRMCard key={module.id} className="flex items-center gap-3">

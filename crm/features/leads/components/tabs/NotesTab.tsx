@@ -6,6 +6,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { useLeadNotes, useCreateLeadNote } from "@/shared/hooks/use-crm";
 import { toast } from "sonner";
 import { Textarea } from "@/shared/ui/textarea";
+import { EmptyState } from "@/shared/components/EmptyState";
 
 export function NotesTab({ leadId }: { leadId: string }) {
   const { data: notesResp, isLoading } = useLeadNotes(leadId);
@@ -46,15 +47,12 @@ export function NotesTab({ leadId }: { leadId: string }) {
       {isLoading ? (
         <div className="text-center py-12 text-sm text-muted-foreground">Loading notes...</div>
       ) : sortedNotes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-            <MessageSquare className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <h3 className="text-sm font-semibold">No Notes Yet</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-[250px]">
-            Add internal notes to keep track of conversations and updates.
-          </p>
-        </div>
+        <EmptyState
+          icon={MessageSquare}
+          title="No notes found"
+          description="Add internal notes to keep track of conversations and updates."
+          size="sm"
+        />
       ) : (
         <div className="space-y-4 relative">
           <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-border -z-10" />

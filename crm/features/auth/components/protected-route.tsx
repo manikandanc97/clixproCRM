@@ -42,22 +42,15 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [access.routes, isAuthenticated, isInitializing, pathname, router]);
 
-  // Show branded loading screen while auth is being hydrated from localStorage.
-  // This prevents the blank screen and the false redirect to /login.
-  // Show branded loading screen while auth is being hydrated or transitioning.
+  // Show branded loading screen while auth is being hydrated, transitioning, or unauthenticated redirecting.
   // This prevents blank states and premature rendering of protected content.
-  if (isInitializing || (isAuthenticated && !user)) {
+  if (isInitializing || (isAuthenticated && !user) || !isAuthenticated) {
     return <AuthLoadingScreen />;
   }
 
-  // Not authenticated — render nothing while redirect happens
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // Route not allowed — render nothing while redirect happens
+  // Route not allowed — render loading screen while redirect happens
   if (!isRouteAllowed(pathname, access.routes)) {
-    return null;
+    return <AuthLoadingScreen />;
   }
 
   return <>{children}</>;

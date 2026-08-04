@@ -202,14 +202,10 @@ const CustomersPage = () => {
           </motion.div>
         ) : (
           <EmptyState
-            icon={SearchX}
+            icon={Users}
             title="No customers found"
-            description="Try adjusting your search or filters to find the customers you're looking for."
-            action={{
-              label: "Clear All Filters",
-              onClick: () => { setSearchQuery(""); setStatusFilter("all"); setSegmentFilter("all"); }
-                }}
-              />
+            description="No customers match the current search or filters."
+          />
             )}
           </AnimatePresence>
         </div>

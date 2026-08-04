@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     // If access token is missing or invalid, try to auto-refresh
     if (!payload) {
       if (!refreshToken) {
-        return NextResponse.json({ success: false, data: { user: null }, error: { code: "UNAUTHORIZED", message: "Not authenticated" } }, { status: 200 });
+        return NextResponse.json({ success: false, data: { user: null }, error: { code: "UNAUTHORIZED", message: "Not authenticated" } }, { status: 401 });
       }
 
       try {
@@ -50,8 +50,8 @@ export async function GET(req: Request) {
           success: true,
           data: { user: data.user }
         }, { status: 200 });
-      } catch (refreshError) {
-        return NextResponse.json({ success: false, data: { user: null }, error: { code: "UNAUTHORIZED", message: "Session expired" } }, { status: 200 });
+      } catch (_refreshError) {
+        return NextResponse.json({ success: false, data: { user: null }, error: { code: "UNAUTHORIZED", message: "Session expired" } }, { status: 401 });
       }
     }
 
@@ -75,7 +75,7 @@ export async function GET(req: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ success: false, data: { user: null }, error: { code: "UNAUTHORIZED", message: "User not found" } }, { status: 200 });
+      return NextResponse.json({ success: false, data: { user: null }, error: { code: "UNAUTHORIZED", message: "User not found" } }, { status: 401 });
     }
 
     // Format permissions and role nicely

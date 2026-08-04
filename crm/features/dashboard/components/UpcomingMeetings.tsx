@@ -97,9 +97,9 @@ export default function UpcomingMeetings() {
           {!hasMeetings ? (
             <EmptyState 
               icon={Calendar}
-              title="No Upcoming Meetings"
-              description="You're all caught up for today.\nNo meetings are scheduled."
-              primaryAction={{ label: "Schedule Meeting", onClick: handleSchedule }}
+              title="No meetings scheduled"
+              description="No upcoming meetings scheduled."
+              action={{ label: "Schedule Meeting", onClick: handleSchedule }}
             />
           ) : (
             <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar">

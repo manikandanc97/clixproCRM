@@ -31,14 +31,9 @@ export default function PublicRoute({ children }: PublicRouteProps) {
     }
   }, [isAuthenticated, isInitializing, router]);
 
-  // During init, show the loading screen to prevent login form flash
-  if (isInitializing) {
+  // During init or when redirecting authenticated user, show loading screen instead of blank null
+  if (isInitializing || isAuthenticated) {
     return <AuthLoadingScreen />;
-  }
-
-  // Already authenticated — render nothing while redirect happens
-  if (isAuthenticated) {
-    return null;
   }
 
   return <>{children}</>;

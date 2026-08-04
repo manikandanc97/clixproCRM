@@ -29,6 +29,7 @@ export interface LeadType {
   isConverted?: boolean;
   notes?: NoteType[];
   notesCount?: number;
+  meetingsCount?: number;
   upcomingMeeting?: any;
 }
 

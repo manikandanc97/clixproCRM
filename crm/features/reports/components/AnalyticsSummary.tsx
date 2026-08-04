@@ -48,7 +48,7 @@ const AnalyticsSummary = ({ insights }: { insights: ReportInsightType[] }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {insights.length === 0 ? (
           <div className="md:col-span-3">
-            <EmptyStateCard title="No insights yet" message="Insights will appear when there is enough CRM activity in the database." />
+            <EmptyStateCard icon={Sparkles} title="No insights yet" message="Insights will appear when there is enough CRM activity in the database." />
           </div>
         ) : insights.map((insight) => {
           const Icon = iconMap[insight.type];

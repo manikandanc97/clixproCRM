@@ -4,6 +4,7 @@ import { Paperclip, Download, Trash2, UploadCloud, File, FileText, Image as Imag
 import { format } from "date-fns";
 import { useLeadAttachments, useCreateLeadAttachment } from "@/shared/hooks/use-crm";
 import { formatBytes } from "@/shared/lib/utils";
+import { EmptyState } from "@/shared/components/EmptyState";
 
 const getFileIcon = (fileType: string) => {
   if (fileType.includes("image")) return <ImageIcon className="w-8 h-8 text-blue-500" />;
@@ -53,15 +54,12 @@ export function AttachmentsTab({ leadId }: { leadId: string }) {
       {isLoading ? (
         <div className="text-center py-12 text-sm text-muted-foreground">Loading attachments...</div>
       ) : attachments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center border border-dashed rounded-xl bg-muted/10">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-            <Paperclip className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <h3 className="text-sm font-semibold">No Attachments</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-[250px]">
-            Upload proposals, contracts, and other related documents.
-          </p>
-        </div>
+        <EmptyState
+          icon={Paperclip}
+          title="No documents found"
+          description="Upload proposals, contracts, and other related documents."
+          size="sm"
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {attachments.map((attachment: any) => (

@@ -6,6 +6,20 @@ import { CustomerType } from '@/shared/types/customer';
 import { PipelineLeadType as DealType } from '@/shared/types/pipeline';
 import { QuotationType } from '@/shared/types/quotation';
 
+export type LeadViewMode = 'cards' | 'table';
+
+const getInitialLeadViewMode = (): LeadViewMode => {
+  if (typeof window === 'undefined') return 'cards';
+  try {
+    const saved = localStorage.getItem('leadViewMode');
+    if (saved === 'table' || saved === 'list') return 'table';
+    if (saved === 'cards' || saved === 'grid') return 'cards';
+  } catch {
+    // Ignore storage access errors
+  }
+  return 'cards';
+};
+
 interface CRMState {
   // Entities
   leads: LeadType[];
@@ -18,6 +32,7 @@ interface CRMState {
   // UI State
   sidebarCollapsed: boolean;
   activeTimeframe: 'today' | 'week' | 'month' | 'year';
+  leadViewMode: LeadViewMode;
   
   // Preferences (Moved from Context for unified management)
   accentColor: string;
@@ -39,6 +54,7 @@ interface CRMState {
   
   setSidebarCollapsed: (collapsed: boolean) => void;
   setActiveTimeframe: (timeframe: 'today' | 'week' | 'month' | 'year') => void;
+  setLeadViewMode: (mode: LeadViewMode | 'grid' | 'list') => void;
   
   setAccentColor: (color: string) => void;
   setFontFamily: (font: string) => void;
@@ -70,6 +86,7 @@ export const useCRMStore = create<CRMState>()(
       notifications: [],
       sidebarCollapsed: false,
       activeTimeframe: 'month',
+      leadViewMode: getInitialLeadViewMode(),
       accentColor: 'emerald',
       fontFamily: 'sans',
       currency: 'USD',
@@ -92,6 +109,17 @@ export const useCRMStore = create<CRMState>()(
 
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       setActiveTimeframe: (timeframe) => set({ activeTimeframe: timeframe }),
+      setLeadViewMode: (mode) => {
+        const normalizedMode: LeadViewMode = (mode === 'table' || mode === 'list') ? 'table' : 'cards';
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('leadViewMode', normalizedMode);
+          } catch {
+            // Ignore storage quota/permission errors
+          }
+        }
+        set({ leadViewMode: normalizedMode });
+      },
       
       setAccentColor: (accentColor) => set({ accentColor }),
       setFontFamily: (fontFamily) => set({ fontFamily }),
@@ -122,6 +150,7 @@ export const useCRMStore = create<CRMState>()(
           return {
             sidebarCollapsed: state?.sidebarCollapsed ?? false,
             activeTimeframe: state?.activeTimeframe ?? 'month',
+            leadViewMode: state?.leadViewMode ?? 'cards',
             accentColor: state?.accentColor ?? 'emerald',
             fontFamily: state?.fontFamily ?? 'sans',
             currency: state?.currency ?? 'USD',
@@ -133,6 +162,7 @@ export const useCRMStore = create<CRMState>()(
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
         activeTimeframe: state.activeTimeframe,
+        leadViewMode: state.leadViewMode,
         accentColor: state.accentColor,
         fontFamily: state.fontFamily,
         currency: state.currency,

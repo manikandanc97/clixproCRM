@@ -9,8 +9,8 @@ import { motion } from "framer-motion";
 interface CRMToolbarProps {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
-  viewMode?: "list" | "grid";
-  setViewMode?: (mode: "list" | "grid") => void;
+  viewMode?: "list" | "grid" | "table" | "cards";
+  setViewMode?: (mode: any) => void;
   onFilterClick?: () => void;
   children?: React.ReactNode;
   placeholder?: string;
@@ -27,6 +27,10 @@ export const CRMToolbar = ({
   placeholder = "Search...",
   className,
 }: CRMToolbarProps) => {
+  const isTable = viewMode === "list" || viewMode === "table";
+  const isCards = viewMode === "grid" || viewMode === "cards";
+  const usesNamedMode = viewMode === "table" || viewMode === "cards";
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 5 }}
@@ -61,16 +65,18 @@ export const CRMToolbar = ({
         {viewMode && setViewMode && (
           <div className="crm-segment">
             <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
+              variant={isTable ? "secondary" : "ghost"}
               size="icon-xs"
-              onClick={() => setViewMode("list")}
+              onClick={() => setViewMode(usesNamedMode ? "table" : "list")}
+              title="Table View"
             >
               <List className="w-4 h-4" />
             </Button>
             <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              variant={isCards ? "secondary" : "ghost"}
               size="icon-xs"
-              onClick={() => setViewMode("grid")}
+              onClick={() => setViewMode(usesNamedMode ? "cards" : "grid")}
+              title="Cards View"
             >
               <Grid className="w-4 h-4" />
             </Button>

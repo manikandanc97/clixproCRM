@@ -28,6 +28,7 @@ import {
   ActivityTimeline,
   CRMPageSection
 } from "@/shared/components/crm";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { Button } from "@/shared/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { 
@@ -152,78 +153,90 @@ export default function EmployeesPage() {
               </CRMTableRow>
             </CRMTableHeader>
             <CRMTableBody>
-              {filteredEmployees.map((emp) => (
-                <CRMTableRow key={emp.id} className="cursor-default">
-                  <CRMTableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-                        <AvatarImage src={""} alt={emp.name} />
-                        <AvatarFallback>{emp.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-bold text-sm tracking-tight">{emp.name}</div>
-                        <div className="text-[10px] text-muted-foreground font-medium">{emp.email}</div>
+              {filteredEmployees.length > 0 ? (
+                filteredEmployees.map((emp) => (
+                  <CRMTableRow key={emp.id} className="cursor-default">
+                    <CRMTableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+                          <AvatarImage src={""} alt={emp.name} />
+                          <AvatarFallback>{emp.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-bold text-sm tracking-tight">{emp.name}</div>
+                          <div className="text-[10px] text-muted-foreground font-medium">{emp.email}</div>
+                        </div>
                       </div>
-                    </div>
-                  </CRMTableCell>
-                  <CRMTableCell>
-                    <span className="text-sm font-semibold capitalize">{getSafeStr(emp.role).toLowerCase()}</span>
-                  </CRMTableCell>
-                  <CRMTableCell>
-                    <CRMStatusBadge tone={emp.status === 'ACTIVE' ? 'success' : 'warning'}>
-                      {emp.status}
-                    </CRMStatusBadge>
-                  </CRMTableCell>
-                  <CRMTableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {new Date(emp.createdAt).toLocaleDateString()}
-                    </span>
-                  </CRMTableCell>
-                  <CRMTableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5 shadow-elevated border-border bg-popover/95 backdrop-blur-xl">
-                        <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setIsViewModalOpen(true); }} className="cursor-pointer py-2.5 rounded-xl group">
-                          <User className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                          <span className="font-semibold text-sm">View Details</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setIsEditModalOpen(true); }} className="cursor-pointer py-2.5 rounded-xl group">
-                          <Edit2 className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                          <span className="font-semibold text-sm">Edit Employee</span>
-                        </DropdownMenuItem>
-                        
-                        <DropdownMenuSeparator />
-                        
-                        <DropdownMenuItem 
-                          onClick={() => {
-                            const newStatus = emp.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-                            toggleStatusMutation.mutate(
-                              { id: emp.id, status: newStatus },
-                              { onSuccess: () => toast.success(`Employee ${newStatus.toLowerCase()}d`) }
-                            );
-                          }}
-                          className="cursor-pointer py-2.5 rounded-xl group"
-                        >
-                          <Power className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                          <span className="font-semibold text-sm">{emp.status === "ACTIVE" ? "Deactivate" : "Activate"}</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          variant="destructive"
-                          onClick={() => { setSelectedEmployee(emp); setIsDeleteModalOpen(true); }}
-                          className="cursor-pointer py-2.5 rounded-xl group"
-                        >
-                          <Trash2 className="mr-3 h-4 w-4 transition-colors" />
-                          <span className="font-bold text-sm transition-colors">Delete Employee</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    </CRMTableCell>
+                    <CRMTableCell>
+                      <span className="text-sm font-semibold capitalize">{getSafeStr(emp.role).toLowerCase()}</span>
+                    </CRMTableCell>
+                    <CRMTableCell>
+                      <CRMStatusBadge tone={emp.status === 'ACTIVE' ? 'success' : 'warning'}>
+                        {emp.status}
+                      </CRMStatusBadge>
+                    </CRMTableCell>
+                    <CRMTableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(emp.createdAt).toLocaleDateString()}
+                      </span>
+                    </CRMTableCell>
+                    <CRMTableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5 shadow-elevated border-border bg-popover/95 backdrop-blur-xl">
+                          <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setIsViewModalOpen(true); }} className="cursor-pointer py-2.5 rounded-xl group">
+                            <User className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <span className="font-semibold text-sm">View Details</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setIsEditModalOpen(true); }} className="cursor-pointer py-2.5 rounded-xl group">
+                            <Edit2 className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <span className="font-semibold text-sm">Edit Employee</span>
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuSeparator />
+                          
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              const newStatus = emp.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+                              toggleStatusMutation.mutate(
+                                { id: emp.id, status: newStatus },
+                                { onSuccess: () => toast.success(`Employee ${newStatus.toLowerCase()}d`) }
+                              );
+                            }}
+                            className="cursor-pointer py-2.5 rounded-xl group"
+                          >
+                            <Power className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <span className="font-semibold text-sm">{emp.status === "ACTIVE" ? "Deactivate" : "Activate"}</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            variant="destructive"
+                            onClick={() => { setSelectedEmployee(emp); setIsDeleteModalOpen(true); }}
+                            className="cursor-pointer py-2.5 rounded-xl group"
+                          >
+                            <Trash2 className="mr-3 h-4 w-4 transition-colors" />
+                            <span className="font-bold text-sm transition-colors">Delete Employee</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </CRMTableCell>
+                  </CRMTableRow>
+                ))
+              ) : (
+                <CRMTableRow className="hover:bg-transparent border-0">
+                  <CRMTableCell colSpan={5} className="p-4 border-0">
+                    <EmptyState
+                      icon={Users}
+                      title="No employees found"
+                      description="No employees match the current search or filters."
+                    />
                   </CRMTableCell>
                 </CRMTableRow>
-              ))}
+              )}
             </CRMTableBody>
           </DataTable>
         </div>

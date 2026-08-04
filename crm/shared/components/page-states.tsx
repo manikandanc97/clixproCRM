@@ -109,25 +109,15 @@ export function PageErrorState({ title, message, onRetry }: ErrorStateProps) {
   );
 }
 
-export function EmptyStateCard({ title, message }: EmptyStateProps) {
+import { EmptyState } from "@/shared/components/EmptyState";
+import { LucideIcon } from "lucide-react";
+
+export function EmptyStateCard({ title, message, icon }: EmptyStateProps & { icon?: LucideIcon }) {
   return (
-    <div className="crm-empty-state">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        <AlertCircle className="h-8 w-8" />
-      </div>
-      <h3 className="mt-5 text-xl font-semibold text-foreground">{title}</h3>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">{message}</p>
-    </div>
+    <EmptyState
+      icon={icon}
+      title={title}
+      description={message}
+    />
   );
 }
-
-
-
-
-
-
-
-
-
-
-

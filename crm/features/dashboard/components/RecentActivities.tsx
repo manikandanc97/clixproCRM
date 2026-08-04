@@ -103,8 +103,8 @@ const RecentActivities = () => {
               >
                 <EmptyState 
                   icon={Filter}
-                  title={`No ${filter} activities`}
-                  description="Check back later for updates or try a different filter."
+                  title="No activities recorded"
+                  description="No recent activity or events logged."
                 />
               </motion.div>
             )}

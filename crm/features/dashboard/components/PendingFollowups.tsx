@@ -48,9 +48,9 @@ export default function PendingFollowups() {
             {pendingTasks.length === 0 ? (
               <EmptyState 
                 icon={CheckSquare}
-                title="All Tasks Completed 🎉"
-                description="Great work!\nThere are no pending tasks at the moment."
-                primaryAction={{ label: "Create New Task", onClick: () => {} }}
+                title="No tasks found"
+                description="No pending tasks at the moment."
+                action={{ label: "Create New Task", onClick: () => router.push("/tasks?new=true") }}
               />
             ) : (
               <>

@@ -4,6 +4,7 @@ import { Calendar, Clock, MapPin, Video } from "lucide-react";
 import { format } from "date-fns";
 import { useLeadMeetings, useCreateLeadMeeting } from "@/shared/hooks/use-crm";
 import { FormModal } from "@/shared/components/form-modal";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { MeetingForm } from "@/features/forms/MeetingForm";
 
 export function MeetingsTab({ leadId }: { leadId: string }) {
@@ -23,15 +24,12 @@ export function MeetingsTab({ leadId }: { leadId: string }) {
       {isLoading ? (
         <div className="text-center py-12 text-sm text-muted-foreground">Loading meetings...</div>
       ) : meetings.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center border border-dashed rounded-xl bg-muted/10">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-            <Calendar className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <h3 className="text-sm font-semibold">No Meetings</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-[250px]">
-            Schedule a meeting to connect with this lead.
-          </p>
-        </div>
+        <EmptyState
+          icon={Calendar}
+          title="No meetings scheduled"
+          description="Schedule a meeting to connect with this lead."
+          size="sm"
+        />
       ) : (
         <div className="space-y-4 relative">
           <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-border -z-10" />

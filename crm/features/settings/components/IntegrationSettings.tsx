@@ -45,7 +45,7 @@ const IntegrationSettings = () => {
       </div>
 
       {integrations.length === 0 ? (
-        <EmptyStateCard title="No integrations configured" message="Integration records will appear when they are available from the backend." />
+        <EmptyStateCard icon={Webhook} title="No integrations configured" message="Integration records will appear when they are available from the backend." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {integrations.map((integration) => (

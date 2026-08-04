@@ -25,7 +25,7 @@ const SalesFunnel = ({ data }: { data: FunnelPointType[] }) => {
       <CardContent className="p-6 pt-4 min-w-0">
         <div className="space-y-3 min-w-0">
           {data.length === 0 ? (
-            <EmptyStateCard title="No funnel data" message="Funnel metrics will appear after leads are added to the database." />
+            <EmptyStateCard icon={TrendingUp} title="No funnel data" message="Funnel metrics will appear after leads are added to the database." />
           ) : data.map((item, idx) => (
             <div key={idx} className="relative min-w-0">
               <div className="flex justify-between items-center mb-1 px-1 min-w-0">

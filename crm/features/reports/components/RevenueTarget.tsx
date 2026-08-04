@@ -9,7 +9,7 @@ import { useCurrency } from "@/shared/hooks/use-currency";
 
 const RevenueTarget = ({ data }: { data: RevenueTargetType | null }) => {
   if (!data) {
-    return <EmptyStateCard title="No revenue target" message="Revenue target data will appear when it is available from the backend." />;
+    return <EmptyStateCard icon={Target} title="No revenue target" message="Revenue target data will appear when it is available from the backend." />;
   }
 
   const { currencySymbol } = useCurrency();

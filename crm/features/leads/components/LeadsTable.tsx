@@ -652,7 +652,7 @@ const LeadsTable = ({
       <LeadEmptyState 
         totalLeads={rawTotalCount ?? leads.length}
         searchQuery={globalSearchQuery}
-        hasFilters={hasActiveFilters || (globalStatusFilter && globalStatusFilter !== "all")}
+        hasFilters={Boolean(hasActiveFilters || (globalStatusFilter && globalStatusFilter !== "all"))}
         activeFilters={activeFiltersContext}
         onClearSearch={onGlobalClearFilters}
         onClearFilters={() => {
@@ -680,17 +680,8 @@ const LeadsTable = ({
           columns={columns}
           wrapperClassName="flex-auto overflow-auto relative"
           rowClassName="h-16 hover:bg-muted/30 transition-colors"
-          emptyMessage={
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <SearchX className="w-8 h-8 text-muted-foreground/30" />
-              </div>
-              <h3 className="text-lg font-bold text-foreground mb-1">No matching leads</h3>
-              <p className="text-muted-foreground text-center max-w-sm text-xs font-medium">
-                We couldn&apos;t find any leads matching your current filters.
-              </p>
-            </div>
-          }
+          emptyTitle="No leads found"
+          emptyDescription="No leads match the current search or filters."
         />
       </div>
 

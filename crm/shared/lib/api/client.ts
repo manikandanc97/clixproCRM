@@ -44,8 +44,18 @@ client.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
     // Prevent infinite loops if refresh itself fails or it's a login failure
-    if (originalRequest.url === "/auth/refresh" || originalRequest.url === "/auth/login") {
+    if (originalRequest.url?.includes("/auth/refresh") || originalRequest.url?.includes("/auth/login")) {
+      if (originalRequest.url?.includes("/auth/refresh") && error?.response?.status === 401) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("has_session");
+          window.dispatchEvent(new CustomEvent("auth:expired"));
+        }
+      }
       return Promise.reject(error);
     }
 
@@ -70,6 +80,7 @@ client.interceptors.response.use(
       } catch (err) {
         processQueue(err as Error);
         if (typeof window !== "undefined") {
+          localStorage.removeItem("has_session");
           window.dispatchEvent(new CustomEvent("auth:expired"));
         }
         return Promise.reject(err);

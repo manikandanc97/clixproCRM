@@ -3,6 +3,7 @@ import { useLeadTimeline } from "@/shared/hooks/use-crm";
 import { formatDistanceToNow, format } from "date-fns";
 import { Clock, CheckCircle2, User, Mail, Phone, Calendar, ArrowRight, FileText, Settings, Target } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { EmptyState } from "@/shared/components/EmptyState";
 
 const getIconForAction = (action: string) => {
   const a = action.toLowerCase();
@@ -27,15 +28,12 @@ export function TimelineTab({ leadId }: { leadId: string }) {
 
   if (events.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-          <Clock className="w-5 h-5 text-muted-foreground" />
-        </div>
-        <h3 className="text-sm font-semibold">No Activity</h3>
-        <p className="text-xs text-muted-foreground mt-1 max-w-[250px]">
-          No activities have been recorded for this lead yet.
-        </p>
-      </div>
+      <EmptyState
+        icon={Clock}
+        title="No activity recorded"
+        description="No activities have been recorded for this lead yet."
+        size="sm"
+      />
     );
   }
 

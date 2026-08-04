@@ -10,6 +10,8 @@ import {
   TableRow 
 } from "@/shared/ui/table";
 import { cn } from "@/shared/lib/utils";
+import { EmptyState } from "@/shared/components/EmptyState";
+import { LucideIcon } from "lucide-react";
 
 interface DataTableProps<T> {
   data: T[];
@@ -24,6 +26,9 @@ interface DataTableProps<T> {
   wrapperClassName?: string;
   rowClassName?: string | ((item: T) => string);
   emptyMessage?: string | React.ReactNode;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyIcon?: LucideIcon;
 }
 
 export function DataTable<T>({
@@ -33,8 +38,28 @@ export function DataTable<T>({
   className,
   wrapperClassName,
   rowClassName,
-  emptyMessage = "No data available.",
+  emptyMessage,
+  emptyTitle = "No data available",
+  emptyDescription = "There are no records matching your criteria.",
+  emptyIcon,
 }: DataTableProps<T>) {
+  const renderEmptyState = () => {
+    if (React.isValidElement(emptyMessage)) {
+      return emptyMessage;
+    }
+
+    const title = typeof emptyMessage === "string" ? emptyMessage : emptyTitle;
+
+    return (
+      <EmptyState 
+        icon={emptyIcon}
+        title={title}
+        description={emptyDescription}
+        className="border-none bg-transparent shadow-none p-6 min-h-[220px]"
+      />
+    );
+  };
+
   return (
     <Table className={cn("min-w-full", className)} wrapperClassName={wrapperClassName}>
       <TableHeader className="sticky top-0 z-10 bg-card shadow-sm">
@@ -68,12 +93,12 @@ export function DataTable<T>({
             </TableRow>
           ))
         ) : (
-          <TableRow>
+          <TableRow className="hover:bg-transparent border-0">
             <TableCell 
               colSpan={columns.length} 
-              className="h-32 text-center text-muted-foreground"
+              className="p-4 text-center text-muted-foreground border-0"
             >
-              {emptyMessage}
+              {renderEmptyState()}
             </TableCell>
           </TableRow>
         )}
@@ -81,8 +106,3 @@ export function DataTable<T>({
     </Table>
   );
 }
-
-
-
-
-

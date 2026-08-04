@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/shared/hooks/use-dashboard";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { EmptyState } from "@/shared/components/EmptyState";
 
 type Notification = {
   id: string;
@@ -174,13 +175,13 @@ export default function NotificationPanel() {
                   </motion.div>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                    <Bell className="w-8 h-8 text-muted-foreground/30" />
-                  </div>
-                  <h4 className="font-bold text-sm text-foreground mb-1">All caught up!</h4>
-                  <p className="text-xs text-muted-foreground">You don&apos;t have any new notifications.</p>
-                </div>
+                <EmptyState 
+                  icon={Bell}
+                  title="All caught up!"
+                  description="You don't have any new notifications."
+                  size="sm"
+                  className="py-8 border-none bg-transparent shadow-none"
+                />
               )}
             </AnimatePresence>
           )}
