@@ -25,6 +25,11 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { useCurrency } from "@/shared/hooks/use-currency";
 
+import { useViewMode } from "@/shared/hooks/useViewMode";
+import { ViewToggle } from "@/shared/components/crm/ViewToggle";
+import { PerformanceGrid } from "./PerformanceGrid";
+import { AnimatePresence, motion } from "framer-motion";
+
 interface PerformanceTableProps {
   performance: PerformanceType[];
 }
@@ -35,6 +40,7 @@ type SortConfig = {
 } | null;
 
 const PerformanceTable = ({ performance }: PerformanceTableProps) => {
+  const [viewMode, setViewMode] = useViewMode("reports", "list");
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const { formatCurrency } = useCurrency();
 
@@ -69,177 +75,197 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
   );
 
   return (
-    <div className="flex-auto flex flex-col min-h-0 relative">
-      <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-auto max-h-[calc(100vh-360px)]">
-    <CRMDataTable containerClassName="border-0 shadow-none rounded-none flex-auto h-full overflow-auto" className="w-full">
-      <CRMTableHeader className="sticky top-0 z-10 bg-card shadow-sm">
-        <CRMTableRow>
-          <CRMTableHeaderCell 
-            className="cursor-pointer group select-none bg-card"
-            onClick={() => handleSort("name")}
-          >
-            <div className="flex items-center gap-2">
-              Team Member <CRMSortIndicator active={sortConfig?.key === "name"} direction={sortConfig?.direction} />
-            </div>
-          </CRMTableHeaderCell>
-          <CRMTableHeaderCell 
-            className="cursor-pointer group select-none"
-            onClick={() => handleSort("dealsClosed")}
-          >
-            <div className="flex items-center gap-2">
-              Deals Closed <CRMSortIndicator active={sortConfig?.key === "dealsClosed"} direction={sortConfig?.direction} />
-            </div>
-          </CRMTableHeaderCell>
-            <CRMTableHeaderCell className="bg-card">Revenue Target</CRMTableHeaderCell>
-          <CRMTableHeaderCell 
-            className="cursor-pointer group select-none bg-card"
-            onClick={() => handleSort("conversionRate")}
-          >
-            <div className="flex items-center gap-2">
-              Conversion <CRMSortIndicator active={sortConfig?.key === "conversionRate"} direction={sortConfig?.direction} />
-            </div>
-          </CRMTableHeaderCell>
-          <CRMTableHeaderCell className="text-right bg-card">Trend</CRMTableHeaderCell>
-        </CRMTableRow>
-      </CRMTableHeader>
-
-      <CRMTableBody>
-        {paginatedPerformance.map((item, idx) => (
-          <CRMTableRow key={item.id}>
-            <CRMTableCell>
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Avatar className="w-10 h-10 rounded-lg border border-border bg-muted flex items-center justify-center font-bold text-xs">
-                    <AvatarFallback>
-                      {item.name.split(' ').map((n: string) => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  {idx === 0 && (
-                    <div className="absolute -top-1 -right-1 bg-amber-500 text-white p-0.5 rounded-full shadow-sm">
-                      <Trophy className="w-3 h-3" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground transition-colors text-sm">{item.name}</p>
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Senior Executive</p>
-                </div>
-              </div>
-            </CRMTableCell>
-
-            <CRMTableCell>
-              <div className="flex items-center gap-2">
-                <span className="text-base font-bold text-foreground">{item.dealsClosed}</span>
-                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Deals</span>
-              </div>
-            </CRMTableCell>
-
-            <CRMTableCell>
-              <div className="w-48 space-y-2">
-                <div className="flex justify-between text-[11px] font-bold">
-                  <span className="text-foreground">{formatCurrency(item.revenueValue)}</span>
-                  <span className="text-muted-foreground">85% of Goal</span>
-                </div>
-                <Progress value={85} className="h-1.5" />
-              </div>
-            </CRMTableCell>
-
-            <CRMTableCell>
-              <Badge variant="outline" className="border-none bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-wider">
-                {item.conversionRate}
-              </Badge>
-            </CRMTableCell>
-
-            <CRMTableCell className="text-right">
-              <div className={cn(
-                "flex items-center justify-end gap-1.5 font-bold text-xs",
-                item.trendPositive ? "text-success" : "text-destructive"
-              )}>
-                {item.trendPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                {item.trend}
-                <div className={cn(
-                  "p-1 rounded-md ml-1",
-                  item.trendPositive ? "bg-success/10" : "bg-destructive/10"
-                )}>
-                  <ArrowUpRight className={cn("w-3 h-3", !item.trendPositive && "rotate-90")} />
-                </div>
-              </div>
-            </CRMTableCell>
-          </CRMTableRow>
-        ))}
-      </CRMTableBody>
-    </CRMDataTable>
+    <div className="flex-auto flex flex-col min-h-0 relative space-y-4">
+      <div className="flex items-center justify-end">
+        <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
       </div>
 
-      {sortedPerformance.length > 10 && (
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0">
-          <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
-            Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–<span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, sortedPerformance.length)}</span> of <span className="font-bold text-foreground">{new Intl.NumberFormat().format(sortedPerformance.length)}</span> Performers
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold">
-                    {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[4rem]">
-                  {[10, 25, 50, 100].map(size => (
-                    <DropdownMenuItem key={size} onClick={() => { setRowsPerPage(size); setCurrentPage(1); }} className="font-medium text-sm cursor-pointer hover:bg-muted">
-                      {size}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={viewMode}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex-1 flex flex-col min-h-0"
+        >
+          {viewMode === "list" || viewMode === "table" ? (
+            <>
+              <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-auto max-h-[calc(100vh-360px)]">
+                <CRMDataTable containerClassName="border-0 shadow-none rounded-none flex-auto h-full overflow-auto" className="w-full">
+                  <CRMTableHeader className="sticky top-0 z-10 bg-card shadow-sm">
+                    <CRMTableRow>
+                      <CRMTableHeaderCell 
+                        className="cursor-pointer group select-none bg-card"
+                        onClick={() => handleSort("name")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Team Member <CRMSortIndicator active={sortConfig?.key === "name"} direction={sortConfig?.direction} />
+                        </div>
+                      </CRMTableHeaderCell>
+                      <CRMTableHeaderCell 
+                        className="cursor-pointer group select-none"
+                        onClick={() => handleSort("dealsClosed")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Deals Closed <CRMSortIndicator active={sortConfig?.key === "dealsClosed"} direction={sortConfig?.direction} />
+                        </div>
+                      </CRMTableHeaderCell>
+                      <CRMTableHeaderCell className="bg-card">Revenue Target</CRMTableHeaderCell>
+                      <CRMTableHeaderCell 
+                        className="cursor-pointer group select-none bg-card"
+                        onClick={() => handleSort("conversionRate")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Conversion <CRMSortIndicator active={sortConfig?.key === "conversionRate"} direction={sortConfig?.direction} />
+                        </div>
+                      </CRMTableHeaderCell>
+                      <CRMTableHeaderCell className="text-right bg-card">Trend</CRMTableHeaderCell>
+                    </CRMTableRow>
+                  </CRMTableHeader>
 
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronsLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
-                Page {currentPage}
+                  <CRMTableBody>
+                    {paginatedPerformance.map((item, idx) => (
+                      <CRMTableRow key={item.id}>
+                        <CRMTableCell>
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              <Avatar className="w-10 h-10 rounded-lg border border-border bg-muted flex items-center justify-center font-bold text-xs">
+                                <AvatarFallback>
+                                  {item.name.split(' ').map((n: string) => n[0]).join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              {idx === 0 && (
+                                <div className="absolute -top-1 -right-1 bg-amber-500 text-white p-0.5 rounded-full shadow-sm">
+                                  <Trophy className="w-3 h-3" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground transition-colors text-sm">{item.name}</p>
+                              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Senior Executive</p>
+                            </div>
+                          </div>
+                        </CRMTableCell>
+
+                        <CRMTableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base font-bold text-foreground">{item.dealsClosed}</span>
+                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Deals</span>
+                          </div>
+                        </CRMTableCell>
+
+                        <CRMTableCell>
+                          <div className="w-48 space-y-2">
+                            <div className="flex justify-between text-[11px] font-bold">
+                              <span className="text-foreground">{formatCurrency(item.revenueValue)}</span>
+                              <span className="text-muted-foreground">85% of Goal</span>
+                            </div>
+                            <Progress value={85} className="h-1.5" />
+                          </div>
+                        </CRMTableCell>
+
+                        <CRMTableCell>
+                          <Badge variant="outline" className="border-none bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-wider">
+                            {item.conversionRate}
+                          </Badge>
+                        </CRMTableCell>
+
+                        <CRMTableCell className="text-right">
+                          <div className={cn(
+                            "flex items-center justify-end gap-1.5 font-bold text-xs",
+                            item.trendPositive ? "text-success" : "text-destructive"
+                          )}>
+                            {item.trendPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                            {item.trend}
+                            <div className={cn(
+                              "p-1 rounded-md ml-1",
+                              item.trendPositive ? "bg-success/10" : "bg-destructive/10"
+                            )}>
+                              <ArrowUpRight className={cn("w-3 h-3", !item.trendPositive && "rotate-90")} />
+                            </div>
+                          </div>
+                        </CRMTableCell>
+                      </CRMTableRow>
+                    ))}
+                  </CRMTableBody>
+                </CRMDataTable>
               </div>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronsRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+
+              {sortedPerformance.length > 10 && (
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0">
+                  <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
+                    Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–<span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, sortedPerformance.length)}</span> of <span className="font-bold text-foreground">{new Intl.NumberFormat().format(sortedPerformance.length)}</span> Performers
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold">
+                            {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-[4rem]">
+                          {[10, 25, 50, 100].map(size => (
+                            <DropdownMenuItem key={size} onClick={() => { setRowsPerPage(size); setCurrentPage(1); }} className="font-medium text-sm cursor-pointer hover:bg-muted">
+                              {size}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronsLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
+                        Page {currentPage}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronsRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <PerformanceGrid performance={sortedPerformance} />
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };

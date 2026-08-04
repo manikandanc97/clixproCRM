@@ -1,16 +1,18 @@
 "use client";
 
-import { Search, List, Grid, Filter } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { motion } from "framer-motion";
+import { ViewToggle, ViewOption } from "./ViewToggle";
 
 interface CRMToolbarProps {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
-  viewMode?: "list" | "grid" | "table" | "cards";
+  viewMode?: string;
   setViewMode?: (mode: any) => void;
+  viewOptions?: readonly ViewOption[] | ViewOption[];
   onFilterClick?: () => void;
   children?: React.ReactNode;
   placeholder?: string;
@@ -22,15 +24,12 @@ export const CRMToolbar = ({
   setSearchQuery,
   viewMode,
   setViewMode,
+  viewOptions,
   onFilterClick,
   children,
   placeholder = "Search...",
   className,
 }: CRMToolbarProps) => {
-  const isTable = viewMode === "list" || viewMode === "table";
-  const isCards = viewMode === "grid" || viewMode === "cards";
-  const usesNamedMode = viewMode === "table" || viewMode === "cards";
-
   return (
     <motion.div 
       initial={{ opacity: 0, y: 5 }}
@@ -63,29 +62,17 @@ export const CRMToolbar = ({
         {children}
         
         {viewMode && setViewMode && (
-          <div className="crm-segment">
-            <Button
-              variant={isTable ? "secondary" : "ghost"}
-              size="icon-xs"
-              onClick={() => setViewMode(usesNamedMode ? "table" : "list")}
-              title="Table View"
-            >
-              <List className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={isCards ? "secondary" : "ghost"}
-              size="icon-xs"
-              onClick={() => setViewMode(usesNamedMode ? "cards" : "grid")}
-              title="Cards View"
-            >
-              <Grid className="w-4 h-4" />
-            </Button>
-          </div>
+          <ViewToggle
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            options={viewOptions}
+          />
         )}
       </div>
     </motion.div>
   );
 };
+
 
 
 

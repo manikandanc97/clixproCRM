@@ -60,11 +60,14 @@ const getPriorityColor = (p?: string) => {
   }
 };
 
+import { useViewMode } from "@/shared/hooks/useViewMode";
+
 const LeadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [viewMode, setViewMode] = useViewMode("leads", "cards");
   
-  const { leads, setLeads, leadViewMode, setLeadViewMode } = useCRMStore();
+  const { leads, setLeads } = useCRMStore();
   const safeLeads = useMemo(() => Array.isArray(leads) ? leads : [], [leads]);
   const { data, isLoading: loading, error, refetch } = useLeads();
   const searchParams = useSearchParams();
@@ -193,8 +196,8 @@ const LeadsPage = () => {
           <CRMToolbar 
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            viewMode={leadViewMode}
-            setViewMode={setLeadViewMode}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
             placeholder="Search leads, companies, emails, or phones..."
           >
             <div className="flex items-center gap-2">
@@ -223,7 +226,7 @@ const LeadsPage = () => {
 
         <div className="flex-1 min-h-0 flex flex-col">
           <AnimatePresence mode="wait">
-            {leadViewMode === "table" ? (
+            {viewMode === "list" || viewMode === "table" ? (
               <motion.div key="list-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col min-h-0">
                 <LeadsTable 
                   leads={filteredLeads} 

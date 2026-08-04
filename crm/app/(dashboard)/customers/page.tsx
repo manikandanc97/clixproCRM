@@ -28,11 +28,17 @@ const CustomerForm = dynamic(() => import("@/features/forms/CustomerForm").then(
 });
 import { useSearchParams } from "next/navigation";
 
+const CustomersGrid = dynamic(() => import("@/features/customers/components/CustomersGrid").then(mod => ({ default: mod.CustomersGrid })), {
+  loading: () => <div className="h-[400px] skeleton rounded-xl" />
+});
+import { useViewMode } from "@/shared/hooks/useViewMode";
+
 const CustomersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [segmentFilter, setSegmentFilter] = useState("all");
-  
+  const [viewMode, setViewMode] = useViewMode("customers", "list");
+
   const { customers, setCustomers } = useCRMStore();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const safeCustomers = Array.isArray(customers) ? customers : [];
@@ -164,6 +170,8 @@ const CustomersPage = () => {
           <CRMToolbar 
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
             placeholder="Search customers, companies..."
           >
             <div className="flex items-center gap-2">
@@ -186,21 +194,31 @@ const CustomersPage = () => {
           <AnimatePresence mode="wait">
             {filteredCustomers.length > 0 ? (
               <motion.div
-                key="table"
+                key={viewMode}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="flex-1 flex flex-col min-h-0"
               >
-            <CustomersTable 
-              customers={filteredCustomers} 
-              onEdit={(customer) => {
-                setSelectedCustomer(customer);
-                setIsAddModalOpen(true);
-              }}
-            />
-          </motion.div>
-        ) : (
+                {viewMode === "list" || viewMode === "table" ? (
+                  <CustomersTable 
+                    customers={filteredCustomers} 
+                    onEdit={(customer) => {
+                      setSelectedCustomer(customer);
+                      setIsAddModalOpen(true);
+                    }}
+                  />
+                ) : (
+                  <CustomersGrid 
+                    customers={filteredCustomers} 
+                    onEdit={(customer) => {
+                      setSelectedCustomer(customer);
+                      setIsAddModalOpen(true);
+                    }}
+                  />
+                )}
+              </motion.div>
+            ) : (
           <EmptyState
             icon={Users}
             title="No customers found"

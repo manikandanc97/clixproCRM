@@ -7,6 +7,10 @@ import dynamic from "next/dynamic";
 const QuotationsTable = dynamic(() => import("@/features/quotations/components/QuotationsTable"), {
   loading: () => <div className="h-[400px] skeleton rounded-xl" />
 });
+const QuotationsGrid = dynamic(() => import("@/features/quotations/components/QuotationsGrid").then(mod => ({ default: mod.QuotationsGrid })), {
+  loading: () => <div className="h-[400px] skeleton rounded-xl" />
+});
+import { useViewMode } from "@/shared/hooks/useViewMode";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PageErrorState } from "@/shared/components/page-states";
 import { QuotationsSkeleton } from "@/features/quotations/components/QuotationsSkeleton";
@@ -31,7 +35,8 @@ import { useSearchParams } from "next/navigation";
 const QuotationsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  
+  const [viewMode, setViewMode] = useViewMode("quotations", "list");
+
   const { quotations, setQuotations } = useCRMStore();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const safeQuotations = Array.isArray(quotations) ? quotations : [];
@@ -159,6 +164,8 @@ const QuotationsPage = () => {
           <CRMToolbar 
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
             placeholder="Search quotes, clients..."
           >
             <div className="flex items-center gap-2">
@@ -181,13 +188,17 @@ const QuotationsPage = () => {
           <AnimatePresence mode="wait">
             {filteredQuotations.length > 0 ? (
               <motion.div
-                key="table"
+                key={viewMode}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="flex-1 flex flex-col min-h-0"
               >
-                <QuotationsTable quotations={filteredQuotations} />
+                {viewMode === "list" || viewMode === "table" ? (
+                  <QuotationsTable quotations={filteredQuotations} />
+                ) : (
+                  <QuotationsGrid quotations={filteredQuotations} />
+                )}
               </motion.div>
             ) : (
               <EmptyState 

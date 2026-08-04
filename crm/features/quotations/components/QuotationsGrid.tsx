@@ -1,0 +1,240 @@
+"use client";
+
+import React, { useState } from "react";
+import { QuotationType } from "@/shared/types/quotation";
+import { Badge } from "@/shared/ui/badge";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { Button } from "@/shared/ui/button";
+import { 
+  MoreHorizontal, 
+  FileText, 
+  Send, 
+  Download, 
+  ExternalLink, 
+  Trash2, 
+  Eye, 
+  Copy,
+  Clock,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Sparkles
+} from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/shared/ui/dropdown-menu";
+import { CRMCard } from "@/shared/components/crm";
+import { cn } from "@/shared/lib/utils";
+import { toast } from "sonner";
+import { useDeleteQuotation } from "@/shared/hooks/use-crm";
+import { useCurrency } from "@/shared/hooks/use-currency";
+import QuotationPreview from "./QuotationPreview";
+
+interface QuotationsGridProps {
+  quotations: QuotationType[];
+}
+
+export const QuotationsGrid: React.FC<QuotationsGridProps> = ({ quotations }) => {
+  const [selectedQuote, setSelectedQuote] = useState<QuotationType | null>(null);
+  const { mutate: deleteQuotationMutation } = useDeleteQuotation();
+  const { formatCurrency } = useCurrency();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(12);
+
+  const totalPages = Math.ceil(quotations.length / rowsPerPage);
+  const paginatedQuotations = quotations.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  const handleDelete = (id: string) => {
+    deleteQuotationMutation(id);
+  };
+
+  const handleAction = (action: string, quote: QuotationType) => {
+    toast.info(`${action}: ${quote.quoteId}`, {
+      description: `Initiating ${action.toLowerCase()} for ${quote.client}.`,
+    });
+  };
+
+  return (
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-6">
+        {paginatedQuotations.map((quote, idx) => (
+          <CRMCard
+            key={quote.id}
+            delay={idx * 0.04}
+            className="group relative flex flex-col justify-between p-5"
+          >
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center border border-border">
+                    <FileText className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground group-hover:text-primary transition-colors text-base tracking-tight cursor-pointer" onClick={() => setSelectedQuote(quote)}>
+                      {quote.quoteId}
+                    </h3>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{quote.client}</p>
+                  </div>
+                </div>
+
+                <Badge variant="outline" className={cn(
+                  "border-none px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-sm",
+                  quote.status === "APPROVED" && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                  quote.status === "PENDING" && "bg-amber-500/10 text-amber-600 border-amber-500/20",
+                  quote.status === "EXPIRED" && "bg-rose-500/10 text-rose-600 border-rose-500/20",
+                  !['APPROVED', 'PENDING', 'EXPIRED'].includes(quote.status) && 'bg-muted text-muted-foreground'
+                )}>
+                  {quote.status}
+                </Badge>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50 space-y-3 mb-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Deal Value</span>
+                  <span className="text-sm font-bold text-foreground">{formatCurrency(quote.amountValue)}</span>
+                </div>
+
+                <div className="h-px w-full bg-border/50" />
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-0.5">Probability</span>
+                    <span className="text-xs font-bold text-emerald-600">{quote.probability || 0}%</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-0.5">Views</span>
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1">
+                      <Eye className="w-3 h-3 text-muted-foreground" /> {quote.viewCount || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 font-bold text-xs rounded-xl flex-1"
+                onClick={() => setSelectedQuote(quote)}
+              >
+                <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Preview Quote
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-9 w-9 p-0 rounded-xl">
+                    <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                  <DropdownMenuItem onClick={() => setSelectedQuote(quote)} className="text-xs font-medium cursor-pointer">
+                    <ExternalLink className="w-3.5 h-3.5 mr-2" /> View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAction("Email", quote)} className="text-xs font-medium cursor-pointer">
+                    <Send className="w-3.5 h-3.5 mr-2" /> Send to Client
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAction("Download", quote)} className="text-xs font-medium cursor-pointer">
+                    <Download className="w-3.5 h-3.5 mr-2" /> Download PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleAction("Duplicate", quote)} className="text-xs font-medium cursor-pointer">
+                    <Copy className="w-3.5 h-3.5 mr-2" /> Duplicate Quote
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDelete(quote.id)} className="text-xs font-medium cursor-pointer text-destructive focus:text-destructive">
+                    <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete Quote
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </CRMCard>
+        ))}
+      </div>
+
+      {quotations.length > 12 && (
+        <div className="mt-auto pt-4 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 pb-6">
+          <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
+            Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–<span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, quotations.length)}</span> of <span className="font-bold text-foreground">{new Intl.NumberFormat().format(quotations.length)}</span> Quotes
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold bg-background">
+                    {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[4rem]">
+                  {[12, 24, 48].map(size => (
+                    <DropdownMenuItem key={size} onClick={() => { setRowsPerPage(size); setCurrentPage(1); }} className="font-medium text-sm cursor-pointer hover:bg-muted">
+                      {size}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors bg-background"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors bg-background"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
+                Page {currentPage}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors bg-background"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors bg-background"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <QuotationPreview 
+        quotation={selectedQuote}
+        isOpen={!!selectedQuote}
+        onClose={() => setSelectedQuote(null)}
+      />
+    </div>
+  );
+};
