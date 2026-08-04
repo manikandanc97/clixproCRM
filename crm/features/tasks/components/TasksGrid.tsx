@@ -71,8 +71,8 @@ export const TasksGrid: React.FC<TasksGridProps> = ({ tasks, onTaskClick }) => {
                   <Badge variant="outline" className={cn(
                     "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5",
                     task.priority === "HIGH" && "border-rose-500/25 bg-rose-500/10 text-rose-700",
-                    task.priority === "MEDIUM" && "border-blue-500/25 bg-blue-500/10 text-blue-700",
-                    task.priority === "LOW" && "border-emerald-500/25 bg-emerald-500/10 text-emerald-700"
+                    task.priority === "MEDIUM" && "border-amber-500/25 bg-amber-500/10 text-amber-700",
+                    task.priority === "LOW" && "border-blue-500/25 bg-blue-500/10 text-blue-700"
                   )}>
                     {task.priority}
                   </Badge>

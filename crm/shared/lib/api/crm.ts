@@ -141,6 +141,10 @@ export function createLeadMeeting(leadId: string, data: any) {
   return unwrapResponse<any>(client.post(`/crm/leads/${leadId}/meetings`, data));
 }
 
+export function createMeeting(data: any) {
+  return unwrapResponse<any>(client.post(`/crm/meetings`, data));
+}
+
 // ─── Analytics endpoints ──────────────────────────────────────────────────────
 export function fetchAnalyticsData(filter?: string) {
   const query = filter ? `?filter=${encodeURIComponent(filter)}` : "";

@@ -17,9 +17,11 @@ interface TaskKanbanColumnProps {
   tasks: TaskType[];
   onTaskClick: (task: TaskType) => void;
   onAddTask?: () => void;
+  onScheduleMeeting?: (task: TaskType) => void;
+  onEditTask?: (task: TaskType) => void;
 }
 
-export const TaskKanbanColumn = ({ id, title, tasks, onTaskClick, onAddTask }: TaskKanbanColumnProps) => {
+export const TaskKanbanColumn = ({ id, title, tasks, onTaskClick, onAddTask, onScheduleMeeting, onEditTask }: TaskKanbanColumnProps) => {
   const { setNodeRef } = useDroppable({
     id,
     data: {
@@ -58,9 +60,18 @@ export const TaskKanbanColumn = ({ id, title, tasks, onTaskClick, onAddTask }: T
         ref={setNodeRef}
         className="flex-1 space-y-4 bg-muted/20 p-2.5 rounded-xl border border-border/40 min-h-[500px]"
       >
-        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-          {tasks.map((task) => (
-            <TaskKanbanCard key={task.id} task={task} onClick={onTaskClick} />
+        <SortableContext 
+          items={tasks.map(t => t.id)} 
+          strategy={verticalListSortingStrategy}
+        >
+          {tasks.map(task => (
+            <TaskKanbanCard 
+              key={task.id} 
+              task={task} 
+              onClick={onTaskClick} 
+              onScheduleMeeting={onScheduleMeeting}
+              onEditTask={onEditTask}
+            />
           ))}
         </SortableContext>
         

@@ -43,8 +43,8 @@ export default function PendingFollowups() {
           </div>
           <Button variant="ghost" onClick={() => router.push("/tasks")} className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">View All</Button>
         </CardHeader>
-        <CardContent className="pt-0 flex-1 flex flex-col">
-          <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+        <CardContent className="pt-0 flex-1 flex flex-col overflow-hidden">
+          <div className="space-y-4 flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col pr-2">
             {pendingTasks.length === 0 ? (
               <EmptyState 
                 icon={CheckSquare}
@@ -85,10 +85,6 @@ export default function PendingFollowups() {
                     </motion.div>
                   ))}
                 </div>
-                
-                <Button variant="outline" onClick={() => router.push("/tasks")} className="w-full mt-auto rounded-xl border-border bg-transparent hover:bg-muted text-muted-foreground font-bold text-[11px] uppercase tracking-wider">
-                  + Add New Task
-                </Button>
               </>
             )}
           </div>

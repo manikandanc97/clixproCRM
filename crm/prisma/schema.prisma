@@ -407,11 +407,9 @@ enum LeadPriority {
   LOW
   MEDIUM
   HIGH
-  URGENT
 }
 
 enum TaskPriority {
-  URGENT
   HIGH
   MEDIUM
   LOW

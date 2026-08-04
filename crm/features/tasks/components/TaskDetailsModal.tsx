@@ -2,11 +2,11 @@
 
 import type { ComponentType } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from "@/shared/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/shared/ui/dialog";
 import { TaskType } from "@/shared/types/task";
 import { Badge } from "@/shared/ui/badge";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
@@ -15,12 +15,14 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Loader2,
   Play,
   Sparkles,
   Tag,
   Users,
   X,
 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Progress } from "@/shared/ui/progress";
@@ -29,18 +31,21 @@ import { cn } from "@/shared/lib/utils";
 
 import { useUpdateTask } from "@/shared/hooks/use-crm";
 
-interface TaskDetailsDrawerProps {
+interface TaskDetailsModalProps {
   task: TaskType | null;
   isOpen: boolean;
   onClose: () => void;
+  onScheduleMeeting?: (task: TaskType) => void;
 }
 
-const TaskDetailsDrawer = ({
+const TaskDetailsModal = ({
   task,
   isOpen,
   onClose,
-}: TaskDetailsDrawerProps) => {
+  onScheduleMeeting,
+}: TaskDetailsModalProps) => {
   const { mutate: updateTask } = useUpdateTask();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   if (!task) return null;
 
@@ -85,10 +90,10 @@ const TaskDetailsDrawer = ({
   ];
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent
         showCloseButton={false}
-        className="flex h-full flex-col border-l border-border/60 bg-background p-0 sm:max-w-2xl"
+        className="flex flex-col gap-0 overflow-hidden bg-background p-0 sm:max-w-2xl max-h-[90vh]"
       >
         <header className="shrink-0 border-b border-border/60 bg-card/40 px-6 py-5 backdrop-blur-sm">
           <div className="mb-4 flex items-start justify-between gap-4">
@@ -124,13 +129,13 @@ const TaskDetailsDrawer = ({
             </Button>
           </div>
 
-          <SheetTitle className="text-2xl font-bold leading-tight text-foreground">
+          <DialogTitle className="text-2xl font-bold leading-tight text-foreground">
             {task.title}
-          </SheetTitle>
-          <SheetDescription className="mt-2 text-sm text-muted-foreground">
+          </DialogTitle>
+          <DialogDescription className="mt-2 text-sm text-muted-foreground">
             Managed by {"Unassigned"} • Last updated{" "}
             {task.lastActivity ?? "recently"}
-          </SheetDescription>
+          </DialogDescription>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/80 px-3 py-2">
@@ -177,16 +182,6 @@ const TaskDetailsDrawer = ({
                     label="Progress"
                     value={`${task.progress}%`}
                     icon={CheckCircle2}
-                  />
-                  <StatTile
-                    label="Estimate"
-                    value={task.estimatedTime ?? "4h"}
-                    icon={Clock}
-                  />
-                  <StatTile
-                    label="Collaborators"
-                    value={String(collaborators)}
-                    icon={Users}
                   />
                   <StatTile
                     label="Attachments"
@@ -284,25 +279,34 @@ const TaskDetailsDrawer = ({
             <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:min-w-0 sm:items-center">
               <Button
                 variant="ghost"
+                onClick={() => onScheduleMeeting?.(task)}
                 className="h-10 w-full min-w-0 px-2 text-xs font-semibold sm:w-auto sm:px-4"
               >
                 <Calendar className="h-3.5 w-3.5" />
-                <span className="truncate">Reschedule</span>
+                <span className="truncate">Schedule Meeting</span>
               </Button>
               <Button
+                variant={isCompleted ? "outline" : "default"}
                 className="h-10 w-full min-w-0 px-2 text-xs font-semibold sm:w-auto sm:px-5"
-                disabled={isCompleted}
-                onClick={() => updateTask({ id: task.id, data: { status: "COMPLETED" } })}
+                disabled={isUpdating}
+                onClick={() => {
+                  setIsUpdating(true);
+                  updateTask(
+                    { id: task.id, data: { status: isCompleted ? "PENDING" : "COMPLETED" } },
+                    { onSettled: () => setIsUpdating(false) }
+                  );
+                }}
               >
+                {isUpdating ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
                 <span className="truncate">
-                  {isCompleted ? "Completed" : "Mark Complete"}
+                  {isCompleted ? "Reopen Task" : "Mark Complete"}
                 </span>
               </Button>
             </div>
           </div>
         </footer>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -324,7 +328,7 @@ const StatTile = ({ label, value, icon: Icon }: StatTileProps) => (
   </div>
 );
 
-export default TaskDetailsDrawer;
+export default TaskDetailsModal;
 
 
 

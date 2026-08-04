@@ -27,6 +27,8 @@ interface KanbanViewProps {
   tasks: TaskType[];
   onTaskClick: (task: TaskType) => void;
   onAddTask?: (status?: string) => void;
+  onScheduleMeeting?: (task: TaskType) => void;
+  onEditTask?: (task: TaskType) => void;
 }
 
 const COLUMN_CONFIGS: { id: TaskType["status"]; title: string; color: string }[] = [
@@ -38,7 +40,7 @@ const COLUMN_CONFIGS: { id: TaskType["status"]; title: string; color: string }[]
   { id: "CANCELLED", title: "Cancelled", color: "slate" },
 ];
 
-export const KanbanView = ({ tasks, onTaskClick, onAddTask }: KanbanViewProps) => {
+export const KanbanView = ({ tasks, onTaskClick, onAddTask, onScheduleMeeting, onEditTask }: KanbanViewProps) => {
   const [activeTask, setActiveTask] = useState<TaskType | null>(null);
   const updateStatusMutation = useUpdateTaskStatus();
 
@@ -104,6 +106,8 @@ export const KanbanView = ({ tasks, onTaskClick, onAddTask }: KanbanViewProps) =
                 tasks={statusTasks} 
                 onTaskClick={onTaskClick}
                 onAddTask={() => onAddTask?.(col.id)}
+                onScheduleMeeting={onScheduleMeeting}
+                onEditTask={onEditTask}
               />
             );
           })}
@@ -119,7 +123,7 @@ export const KanbanView = ({ tasks, onTaskClick, onAddTask }: KanbanViewProps) =
           }),
         }}>
           {activeTask ? (
-            <TaskKanbanCard task={activeTask} onClick={onTaskClick} isOverlay />
+            <TaskKanbanCard task={activeTask} onClick={onTaskClick} onScheduleMeeting={onScheduleMeeting} onEditTask={onEditTask} isOverlay />
           ) : null}
         </DragOverlay>
       </DndContext>

@@ -534,3 +534,25 @@ export function useCreateLeadMeeting() {
     },
   });
 }
+
+export function useCreateMeeting() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => import("@/shared/lib/api/crm").then(m => m.createMeeting(data)),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["meetings"] });
+      if (variables.taskId) {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        queryClient.invalidateQueries({ queryKey: ["task", variables.taskId] });
+      }
+      if (variables.leadId) {
+        queryClient.invalidateQueries({ queryKey: ["leadMeetings", variables.leadId] });
+        queryClient.invalidateQueries({ queryKey: ["leadTimeline", variables.leadId] });
+      }
+      toast.success("Meeting scheduled successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to schedule meeting");
+    },
+  });
+}

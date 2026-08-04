@@ -102,11 +102,12 @@ const statusVariantMap: Record<string, StatusVariant> = {
 };
 
 const getPriorityColor = (p?: string) => {
-  switch (p) {
-    case "Urgent": return "bg-destructive text-destructive-foreground border-destructive";
-    case "High": return "bg-destructive/10 text-destructive border-destructive/20";
-    case "Medium": return "bg-primary/10 text-primary border-primary/20";
-    case "Low": return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+  if (!p) return "bg-muted text-muted-foreground border-border";
+  switch (p.toUpperCase()) {
+    case "URGENT": return "bg-purple-500/10 text-purple-700 border-purple-500/25";
+    case "HIGH": return "bg-rose-500/10 text-rose-700 border-rose-500/25";
+    case "MEDIUM": return "bg-amber-500/10 text-amber-700 border-amber-500/25";
+    case "LOW": return "bg-blue-500/10 text-blue-700 border-blue-500/25";
     default: return "bg-muted text-muted-foreground border-border";
   }
 };

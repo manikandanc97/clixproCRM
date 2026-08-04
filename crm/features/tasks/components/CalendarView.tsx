@@ -67,8 +67,8 @@ export const CalendarView = ({ tasks, onTaskClick }: CalendarViewProps) => {
                     className={cn(
                       "px-2 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider truncate cursor-pointer transition-all hover:scale-[1.03] border shadow-sm",
                       task.priority === 'HIGH' ? 'bg-rose-500/5 text-rose-600 border-rose-500/20' : 
-                      task.priority === 'MEDIUM' ? 'bg-blue-500/5 text-blue-600 border-blue-500/20' : 
-                      'bg-muted/50 text-muted-foreground border-border/50'
+                      task.priority === 'MEDIUM' ? 'bg-amber-500/5 text-amber-600 border-amber-500/20' : 
+                      'bg-blue-500/5 text-blue-600 border-blue-500/20'
                     )}
                   >
                     {task.title}

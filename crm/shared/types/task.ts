@@ -43,7 +43,7 @@ export interface TaskType {
   title: string;
   description?: string | null;
   status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "BLOCKED" | "CANCELLED" | "OVERDUE";
-  priority: "URGENT" | "HIGH" | "MEDIUM" | "LOW";
+  priority: "HIGH" | "MEDIUM" | "LOW";
   dueDate?: string | null;
   dueDateValue?: string | null;
   reminderDate?: string | null;

@@ -1143,6 +1143,41 @@ export class CrmService {
         },
       });
 
+      // Timeline Event for Lead if status changed
+      if (existing.relatedLeadId) {
+        if (targetStatus === "COMPLETED" && existing.status !== "COMPLETED") {
+          await tx.timelineEvent.create({
+            data: {
+              tenantId,
+              leadId: existing.relatedLeadId,
+              userId,
+              action: "Task Completed",
+              description: `Task "${existing.title}" was marked as completed.`
+            }
+          });
+        } else if (targetStatus !== "COMPLETED" && existing.status === "COMPLETED") {
+          await tx.timelineEvent.create({
+            data: {
+              tenantId,
+              leadId: existing.relatedLeadId,
+              userId,
+              action: "Task Reopened",
+              description: `Task "${existing.title}" was reopened.`
+            }
+          });
+        } else {
+          await tx.timelineEvent.create({
+            data: {
+              tenantId,
+              leadId: existing.relatedLeadId,
+              userId,
+              action: "Task Updated",
+              description: `Task "${existing.title}" was updated.`
+            }
+          });
+        }
+      }
+
       // Assignee Notification if changed
       if (data.assignedToId && data.assignedToId !== existing.assignedToId && data.assignedToId !== userId) {
         await tx.notification.create({
@@ -1189,6 +1224,18 @@ export class CrmService {
           details: { taskId: id, title: task.title },
         },
       });
+
+      if (task.relatedLeadId) {
+        await tx.timelineEvent.create({
+          data: {
+            tenantId,
+            leadId: task.relatedLeadId,
+            userId,
+            action: "Task Deleted",
+            description: `Task "${task.title}" was deleted.`
+          }
+        });
+      }
 
       return task;
     });
@@ -1968,6 +2015,92 @@ export class CrmService {
   static async getHotLeads(tenantId: string) {
     const leads = await prisma.lead.findMany({ where: { tenantId, stage: "NEW" }, take: 5, orderBy: { createdAt: 'desc' } });
     return leads.map(l => ({ id: l.id, name: l.name, company: l.company, score: 90, value: formatCurrency(toNumber(l.value), "USD") }));
+  }
+
+  static async createMeeting(
+    tenantId: string,
+    userId: string,
+    data: {
+      title: string;
+      startTime: Date | string;
+      endTime: Date | string;
+      location?: string | null;
+      isOnline?: boolean;
+      type?: any;
+      description?: string | null;
+      isAllDay?: boolean;
+      assignedToId?: string;
+      leadId?: string | null;
+      taskId?: string | null;
+      status?: string;
+    }
+  ) {
+    if (!data.leadId) {
+      throw new Error("Meeting must be linked to a Lead or CRM record.");
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const meeting = await tx.meeting.create({
+        data: {
+          tenantId,
+          title: data.title,
+          startTime: new Date(data.startTime),
+          endTime: new Date(data.endTime),
+          location: data.location || null,
+          isOnline: data.isOnline || false,
+          type: data.type || "MEETING",
+          description: data.description || null,
+          isAllDay: data.isAllDay || false,
+          assignedToId: data.assignedToId || userId,
+          leadId: data.leadId || null,
+          status: data.status || "SCHEDULED",
+        },
+        include: {
+          assignedTo: { select: { name: true, email: true, id: true } }
+        }
+      });
+
+      if (data.leadId) {
+        await tx.timelineEvent.create({
+          data: {
+            tenantId,
+            leadId: data.leadId,
+            userId,
+            action: "Meeting Scheduled",
+            description: `Scheduled meeting: ${meeting.title}`,
+          }
+        });
+      }
+
+      if (data.taskId) {
+        await tx.task.update({
+          where: { id: data.taskId },
+          data: { relatedMeetingId: meeting.id }
+        });
+        
+        await tx.auditLog.create({
+          data: {
+            tenantId,
+            userId,
+            action: "TASK_UPDATED",
+            module: "TASKS",
+            details: { taskId: data.taskId, relatedMeetingId: meeting.id, note: "Scheduled a related meeting" },
+          },
+        });
+      }
+
+      await tx.notification.create({
+        data: {
+          tenantId,
+          userId: data.assignedToId || userId,
+          title: "Meeting Scheduled",
+          message: `Meeting "${meeting.title}" scheduled.`,
+          type: "INFO",
+        }
+      });
+
+      return meeting;
+    });
   }
 
   static async getMeetings(tenantId: string) {

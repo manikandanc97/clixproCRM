@@ -23,7 +23,7 @@ const TasksGrid = dynamic(() => import("@/features/tasks/components/TasksGrid").
 const KanbanView = dynamic(() => import("@/features/tasks/components/KanbanView").then(mod => ({ default: mod.KanbanView })));
 const CalendarView = dynamic(() => import("@/features/tasks/components/CalendarView").then(mod => ({ default: mod.CalendarView })));
 const TimelineView = dynamic(() => import("@/features/tasks/components/TimelineView").then(mod => ({ default: mod.TimelineView })));
-const TaskDetailsDrawer = dynamic(() => import("@/features/tasks/components/TaskDetailsDrawer"));
+const TaskDetailsModal = dynamic(() => import("@/features/tasks/components/TaskDetailsModal"));
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PageErrorState } from "@/shared/components/page-states";
 import { TasksSkeleton } from "@/features/tasks/components/TasksSkeleton";
@@ -43,7 +43,9 @@ import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { FormModal } from "@/shared/components/form-modal";
+import { MeetingForm } from "@/features/forms/MeetingForm";
 import { CreateTaskModal } from "@/features/tasks/components/CreateTaskModal";
+import { EditTaskModal } from "@/features/tasks/components/EditTaskModal";
 import { useSearchParams } from "next/navigation";
 
 const VIEW_MODES = [
@@ -70,6 +72,8 @@ const TasksPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useViewMode("tasks", "list");
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
+  const [meetingTask, setMeetingTask] = useState<TaskType | null>(null);
+  const [taskToEdit, setTaskToEdit] = useState<TaskType | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(searchParams.get("new") === "true");
 
   const { tasks, setTasks } = useCRMStore();
@@ -96,6 +100,14 @@ const TasksPage = () => {
       setTasks(data.tasks);
     }
   }, [data?.tasks, setTasks]);
+
+  const handleScheduleMeeting = (task: TaskType) => {
+    if (!task.relatedLead && !task.relatedCustomer) {
+      toast.error("This task is not linked to a Lead, Customer, or Deal. Link a CRM record before scheduling a meeting.");
+      return;
+    }
+    setMeetingTask(task);
+  };
 
   const filteredTasks = useMemo(() => {
     return safeTasks.filter((task: TaskType) => {
@@ -241,13 +253,13 @@ const TasksPage = () => {
                 className="flex-1 flex flex-col min-h-0"
               >
                 {(viewMode === "list" || viewMode === "table") && (
-                  <TasksTable tasks={filteredTasks} onTaskClick={setSelectedTask} />
+                  <TasksTable tasks={filteredTasks} onTaskClick={setSelectedTask} onScheduleMeeting={handleScheduleMeeting} onEditTask={setTaskToEdit} />
                 )}
                 {(viewMode === "grid" || viewMode === "cards") && (
                   <TasksGrid tasks={filteredTasks} onTaskClick={setSelectedTask} />
                 )}
                 {viewMode === "kanban" && (
-                  <KanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} onAddTask={() => setIsAddModalOpen(true)} />
+                  <KanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} onAddTask={() => setIsAddModalOpen(true)} onScheduleMeeting={handleScheduleMeeting} onEditTask={setTaskToEdit} />
                 )}
                 {viewMode === "calendar" && (
                   <CalendarView tasks={filteredTasks} onTaskClick={setSelectedTask} />
@@ -271,17 +283,38 @@ const TasksPage = () => {
         </div>
       </div>
 
-      <TaskDetailsDrawer
+      <TaskDetailsModal
         task={selectedTask}
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
+        onScheduleMeeting={handleScheduleMeeting}
       />
-
       <CreateTaskModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={() => refetch()}
       />
+      <EditTaskModal
+        task={taskToEdit}
+        isOpen={!!taskToEdit}
+        onClose={() => setTaskToEdit(null)}
+        onSuccess={() => refetch()}
+      />
+      <FormModal
+        isOpen={!!meetingTask}
+        onOpenChange={(open) => !open && setMeetingTask(null)}
+        title="Schedule Meeting"
+      >
+        <MeetingForm
+          defaultTaskId={meetingTask?.id}
+          defaultLeadId={meetingTask?.relatedLead?.id || undefined}
+          onSuccess={() => {
+            setMeetingTask(null);
+            refetch();
+          }}
+          onCancel={() => setMeetingTask(null)}
+        />
+      </FormModal>
     </CRMPageContainer>
   );
 };

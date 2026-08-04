@@ -16,8 +16,9 @@ import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
-import { useCreateTask, useEmployees, useLeads, useCustomers, useQuotations } from "@/shared/hooks/use-crm";
+import { useUpdateTask, useEmployees, useLeads, useCustomers, useQuotations } from "@/shared/hooks/use-crm";
 import { useAuth } from "@/features/auth/components/auth-provider";
+import { TaskType } from "@/shared/types/task";
 import {
   CheckSquare,
   ListTodo,
@@ -67,15 +68,16 @@ interface RelatedRecord {
 
 // ─── Component ───
 
-interface CreateTaskModalProps {
+interface EditTaskModalProps {
+  task: TaskType | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onClose, onSuccess }) => {
   const { user } = useAuth();
-  const createTask = useCreateTask();
+  const { mutate: updateTask, isPending } = useUpdateTask();
   const { data: employeesData } = useEmployees();
   const { data: leadsData } = useLeads();
   const { data: customersData } = useCustomers();
@@ -108,6 +110,38 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
       checklist: [],
     },
   });
+
+  React.useEffect(() => {
+    if (task && isOpen) {
+      let formattedDueDate = defaultDueDate;
+      if (task.dueDate) {
+        const parsedDate = new Date(task.dueDate);
+        if (!isNaN(parsedDate.getTime())) {
+          formattedDueDate = parsedDate.toISOString().slice(0, 16);
+        }
+      }
+
+      form.reset({
+        title: task.title,
+        description: task.description || "",
+        assignedToId: task.assignedTo?.id || user?.id || "",
+        priority: task.priority as any,
+        dueDate: formattedDueDate,
+        checklist: task.checklist || [],
+      });
+      setAttachments(task.attachments || []);
+      
+      if (task.relatedLead) {
+        setRelatedRecord({ type: "lead", id: task.relatedLead.id, label: task.relatedLead.name, sub: task.relatedLead.company || "" });
+      } else if (task.relatedCustomer) {
+        setRelatedRecord({ type: "customer", id: task.relatedCustomer.id, label: task.relatedCustomer.name, sub: task.relatedCustomer.company || "" });
+      } else if (task.relatedQuotation) {
+        setRelatedRecord({ type: "quotation", id: task.relatedQuotation.id, label: `#${task.relatedQuotation.quoteNumber}`, sub: (task.relatedQuotation as any).client });
+      } else {
+        setRelatedRecord(null);
+      }
+    }
+  }, [task, isOpen, user?.id, form, defaultDueDate]);
 
   const { fields: checklistFields, append: appendChecklist, remove: removeChecklist } = useFieldArray({
     control: form.control,
@@ -169,33 +203,31 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     setActiveTab("general");
   };
 
-  const onSubmit = async (values: TaskFormValues) => {
-    try {
-      await createTask.mutateAsync({
-        title: values.title,
-        description: values.description || "",
-        dueDate: new Date(values.dueDate).toISOString(),
-        assignedToId: values.assignedToId,
-        priority: values.priority,
-        status: "PENDING",
-        createdById: user?.id,
-        reminderDate: null,
-        tags: [],
-        // Related record
-        relatedLeadId: relatedRecord?.type === "lead" ? relatedRecord.id : null,
-        relatedCustomerId: relatedRecord?.type === "customer" ? relatedRecord.id : null,
-        relatedQuotationId: relatedRecord?.type === "quotation" ? relatedRecord.id : null,
-        relatedMeetingId: null,
-        // Optional
-        checklist: values.checklist,
-        attachments: attachments.map((a) => ({ ...a, fileType: "application/octet-stream", fileUrl: "" })),
-      } as any);
-      resetForm();
-      onSuccess?.();
-      onClose();
-    } catch (_) {
-      // toast handled by mutation hook
-    }
+  const onSubmit = (data: TaskFormValues) => {
+    if (!task) return;
+    const payload: any = {
+      title: data.title,
+      description: data.description || null,
+      assignedToId: data.assignedToId,
+      priority: data.priority,
+      dueDate: new Date(data.dueDate).toISOString(),
+      checklist: data.checklist,
+      attachments,
+      relatedLeadId: relatedRecord?.type === "lead" ? relatedRecord.id : null,
+      relatedCustomerId: relatedRecord?.type === "customer" ? relatedRecord.id : null,
+      relatedQuotationId: relatedRecord?.type === "quotation" ? relatedRecord.id : null,
+    };
+
+    updateTask(
+      { id: task.id, data: payload },
+      {
+        onSuccess: () => {
+          onSuccess?.();
+          resetForm();
+          onClose();
+        },
+      }
+    );
   };
 
   const watchedDueDate = form.watch("dueDate");
@@ -219,9 +251,11 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                 <CheckSquare className="size-4 text-primary" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-bold tracking-tight">Create Task</DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  Quick-capture a task. Add details later.
+                <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
+                  Edit Task
+                </DialogTitle>
+                <DialogDescription className="mt-1 text-sm text-muted-foreground">
+                  Update the task details below.
                 </DialogDescription>
               </div>
             </div>
@@ -604,25 +638,18 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                   variant="ghost"
                   size="sm"
                   onClick={() => { resetForm(); onClose(); }}
-                  disabled={createTask.isPending}
+                  disabled={isPending}
                   className="h-9 px-4 text-xs font-semibold"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  size="sm"
-                  disabled={createTask.isPending}
-                  className="h-9 px-6 text-xs font-bold rounded-lg shadow-sm min-w-28"
+                  disabled={isPending}
+                  className="h-10 px-5 gap-2 font-semibold shadow-sm w-full sm:w-auto"
                 >
-                  {createTask.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 size-3.5 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    "Create Task"
-                  )}
+                  {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckSquare className="w-4 h-4" />}
+                  Save Changes
                 </Button>
               </div>
             </div>

@@ -17,6 +17,7 @@ const leadSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
   status: z.enum(["NEW", "CONTACTED", "PROPOSAL_SENT", "WON", "LOST"]),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
   value: z.string().optional(),
   followUpAt: z.date().optional(),
 });
@@ -55,6 +56,9 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
       status: initialData?.status 
         ? (Object.values(stageToStatus).includes(initialData.status) ? initialData.status as any : "NEW") 
         : ((initialStage && stageToStatus[initialStage]) ? stageToStatus[initialStage] as LeadFormValues['status'] : "NEW"),
+      priority: initialData?.priority 
+        ? (initialData.priority.toUpperCase() as "LOW" | "MEDIUM" | "HIGH") 
+        : "MEDIUM",
       value: initialData?.value?.replace(/[^0-9.]/g, '') || "",
       followUpAt: initialData?.followUpAt ? new Date(initialData.followUpAt) : undefined,
     },
@@ -76,6 +80,7 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
             email: data.email,
             phone: formattedPhone,
             status: data.status,
+            priority: data.priority,
             value: data.value ? data.value.replace(/[^0-9.]/g, '') : "0",
             followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
           }
@@ -87,6 +92,7 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
           email: data.email,
           phone: formattedPhone,
           status: data.status,
+          priority: data.priority,
           value: data.value ? data.value.replace(/[^0-9.]/g, '') : "0",
           followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
         });
@@ -123,10 +129,19 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
               { label: "Lost", value: "LOST" },
             ]} 
           />
-          <FormInput name="value" label={`Estimated Value (${currencySymbol})`} placeholder="5000" />
+          <FormSelect 
+            name="priority" 
+            label="Priority" 
+            options={[
+              { label: "Low", value: "LOW" },
+              { label: "Medium", value: "MEDIUM" },
+              { label: "High", value: "HIGH" },
+            ]} 
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput name="value" label={`Estimated Value (${currencySymbol})`} placeholder="5000" />
           <FormDatePicker name="followUpAt" label="Follow-up Date" />
         </div>
 

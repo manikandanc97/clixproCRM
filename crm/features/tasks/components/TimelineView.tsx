@@ -61,8 +61,8 @@ export const TimelineView = ({ tasks, onTaskClick }: TimelineViewProps) => {
                       className={cn(
                         "absolute top-1/2 -translate-y-1/2 h-8 rounded-lg cursor-pointer transition-all hover:scale-[1.02] shadow-sm flex items-center px-3 gap-2 border",
                         task.priority === "HIGH" ? 'bg-rose-500 text-white border-rose-600/20 shadow-rose-500/10' : 
-                        task.priority === "MEDIUM" ? 'bg-blue-500 text-white border-blue-600/20 shadow-blue-500/10' : 
-                        'bg-foreground text-background border-foreground/10 shadow-foreground/5'
+                        task.priority === "MEDIUM" ? 'bg-amber-500 text-white border-amber-600/20 shadow-amber-500/10' : 
+                        'bg-blue-500 text-white border-blue-600/20 shadow-blue-500/10'
                       )}
                       style={{ 
                         left: `${(startIdx / dates.length) * 100}%`,
