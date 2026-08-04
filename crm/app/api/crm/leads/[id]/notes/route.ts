@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { LeadNoteService, LeadTimelineService } from "@/services";
 import { getAuthSession } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 
@@ -9,7 +9,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
-    const notes = await CrmService.getLeadNotes(session.tenantId, id);
+    const notes = await LeadNoteService.getLeadNotes(session.tenantId, id);
     return NextResponse.json({ success: true, data: notes }, { status: 200 });
   } catch (error: unknown) {
     return handleApiError(error);
@@ -23,10 +23,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const note = await CrmService.createLeadNote(session.tenantId, id, session.userId, body);
+    const note = await LeadNoteService.createLeadNote(session.tenantId, id, session.userId, body);
     
     // Automatically add a timeline event
-    await CrmService.createTimelineEvent(session.tenantId, id, "Note Added", "A new note was added", session.userId);
+    await LeadTimelineService.createTimelineEvent(session.tenantId, id, "Note Added", "A new note was added", session.userId);
     
     return NextResponse.json({ success: true, data: note }, { status: 201 });
   } catch (error: unknown) {

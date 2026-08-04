@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { TaskQueryService, TaskService } from "@/services";
 import { getAuthSession, requireRole } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { taskSchema, paginationSchema } from "@/shared/validations";
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     const sortBy = url.searchParams.get("sortBy") || "dueDate";
     const sortOrder = (url.searchParams.get("sortOrder") as "asc" | "desc") || "asc";
 
-    const result = await CrmService.getTasks(session.tenantId, {
+    const result = await TaskQueryService.getTasks(session.tenantId, {
       userId: session.userId,
       role: session.role,
       page,
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const rawBody = await req.json();
     const body = taskSchema.parse(rawBody);
     
-    const task = await CrmService.createTask(session.tenantId, session.userId, {
+    const task = await TaskService.createTask(session.tenantId, session.userId, {
       title: body.title,
       description: body.description,
       dueDate: body.dueDate,

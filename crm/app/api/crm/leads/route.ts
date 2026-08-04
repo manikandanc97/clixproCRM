@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { LeadService } from "@/services";
 import { getAuthSession, requireRole } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { leadSchema, paginationSchema } from "@/shared/validations";
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     const search = url.searchParams.get("search") || "";
     const stage = url.searchParams.get("stage") || url.searchParams.get("status") || "";
 
-    const leads = await CrmService.getLeads(session.tenantId, "USD", page, limit, search, stage);
+    const leads = await LeadService.getLeads(session.tenantId, "USD", page, limit, search, stage);
     return NextResponse.json({ success: true, data: leads }, { status: 200 });
   } catch (error: unknown) { return handleApiError(error); }
 }
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
     const rawBody = await req.json();
     const body = leadSchema.parse(rawBody);
-    const lead = await CrmService.createLead(session.tenantId, session.userId, body);
+    const lead = await LeadService.createLead(session.tenantId, session.userId, body);
     return NextResponse.json({ success: true, data: lead }, { status: 201 });
   } catch (error: unknown) { return handleApiError(error); }
 }

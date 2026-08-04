@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { MeetingService } from "@/services";
 import { getAuthSession } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 
@@ -11,7 +11,7 @@ export async function GET() {
     // Using PascalCase for method name mapping
             // Type-safe lookup object approach
     const serviceMap = {
-      method: CrmService.getMeetings
+      method: MeetingService.getMeetings
     };
     const meetings = await serviceMap.method(session.tenantId);
     return NextResponse.json({ success: true, data: { meetings } }, { status: 200 });
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const meeting = await CrmService.createMeeting(session.tenantId, session.userId, {
+    const meeting = await MeetingService.createMeeting(session.tenantId, session.userId, {
       title: body.title,
       startTime: body.startTime,
       endTime: body.endTime,

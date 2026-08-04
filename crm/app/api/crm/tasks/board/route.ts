@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { TaskQueryService } from "@/services";
 import { getAuthSession } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const search = url.searchParams.get("search") || "";
 
-    const result = await CrmService.getTasks(session.tenantId, {
+    const result = await TaskQueryService.getTasks(session.tenantId, {
       userId: session.userId,
       role: session.role,
       limit: 1000,

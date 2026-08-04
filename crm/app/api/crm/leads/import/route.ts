@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { LeadImportService } from "@/services";
 import { requireRole } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { z } from "zod";
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "No leads provided" }, { status: 400 });
     }
 
-    const result = await CrmService.bulkImportLeads(
+    const result = await LeadImportService.bulkImportLeads(
       session.tenantId,
       session.userId,
       leads,

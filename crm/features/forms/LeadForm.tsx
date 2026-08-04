@@ -80,7 +80,7 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
             email: data.email,
             phone: formattedPhone,
             status: data.status,
-            priority: data.priority,
+            priority: data.priority as any,
             value: data.value ? data.value.replace(/[^0-9.]/g, '') : "0",
             followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
           }
@@ -92,7 +92,7 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
           email: data.email,
           phone: formattedPhone,
           status: data.status,
-          priority: data.priority,
+          priority: data.priority as any,
           value: data.value ? data.value.replace(/[^0-9.]/g, '') : "0",
           followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
         });

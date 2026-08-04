@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { MeetingService, LeadTimelineService } from "@/services";
 import { getAuthSession } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import prisma from "@/lib/prisma";
@@ -10,7 +10,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
-    const meetings = await CrmService.getLeadMeetings(session.tenantId, id);
+    const meetings = await MeetingService.getLeadMeetings(session.tenantId, id);
     return NextResponse.json({ success: true, data: meetings }, { status: 200 });
   } catch (error: unknown) {
     return handleApiError(error);
@@ -44,7 +44,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
     });
     
-    await CrmService.createTimelineEvent(session.tenantId, id, "Meeting Scheduled", `Scheduled meeting: ${meeting.title}`, session.userId);
+    await LeadTimelineService.createTimelineEvent(session.tenantId, id, "Meeting Scheduled", `Scheduled meeting: ${meeting.title}`, session.userId);
     
     return NextResponse.json({ success: true, data: meeting }, { status: 201 });
   } catch (error: unknown) {

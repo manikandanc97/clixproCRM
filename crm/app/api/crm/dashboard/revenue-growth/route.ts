@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { AnalyticsService } from "@/services";
 import { getAuthSession } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const filter = searchParams.get("filter") || "Year";
 
-    const data = await CrmService.getRevenueGrowthData(session.tenantId, filter);
+    const data = await AnalyticsService.getRevenueGrowthData(session.tenantId, filter);
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: unknown) {
     return handleApiError(error);

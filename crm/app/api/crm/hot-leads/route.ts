@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { LeadService } from "@/services";
 import { getAuthSession } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 
@@ -11,7 +11,7 @@ export async function GET() {
     // Using PascalCase for method name mapping
             // Type-safe lookup object approach
     const serviceMap = {
-      method: CrmService.getHotLeads
+      method: LeadService.getHotLeads
     };
     const leads = await serviceMap.method(session.tenantId);
     return NextResponse.json({ success: true, data: { leads } }, { status: 200 });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { TaskQueryService } from "@/services";
 import { getAuthSession } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 
@@ -8,7 +8,7 @@ export async function GET() {
     const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
-    const result = await CrmService.getTasks(session.tenantId, {
+    const result = await TaskQueryService.getTasks(session.tenantId, {
       userId: session.userId,
       role: session.role,
       limit: 1000,

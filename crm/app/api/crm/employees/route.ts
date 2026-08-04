@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { EmployeeService } from "@/services";
 import { requireRole } from "@/lib/auth-utils";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
       limit: url.searchParams.get("limit"),
     });
 
-    const employeesData = await CrmService.getEmployees(session.tenantId, page, limit);
+    const employeesData = await EmployeeService.getEmployees(session.tenantId, page, limit);
     return NextResponse.json({ success: true, data: { employees: employeesData.employees, stats: employeesData.stats, recentActivities: employeesData.activities, pagination: employeesData.pagination } }, { status: 200 });
   } catch (error) { return handleApiError(error); }
 }

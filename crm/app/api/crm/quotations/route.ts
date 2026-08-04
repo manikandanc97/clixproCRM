@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CrmService } from "@/services/crm.service";
+import { QuotationService } from "@/services";
 import { getAuthSession, requireRole } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { quoteSchema, paginationSchema } from "@/shared/validations";
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     });
     const search = url.searchParams.get("search") || "";
 
-    const quotations = await CrmService.getQuotations(session.tenantId, page, limit, search);
+    const quotations = await QuotationService.getQuotations(session.tenantId, page, limit, search);
     return NextResponse.json({ success: true, data: quotations }, { status: 200 });
   } catch (error: unknown) { return handleApiError(error); }
 }
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
     const rawBody = await req.json();
     const body = quoteSchema.parse(rawBody);
-    const quotation = await CrmService.createQuotation(session.tenantId, body);
+    const quotation = await QuotationService.createQuotation(session.tenantId, body);
     return NextResponse.json({ success: true, data: quotation }, { status: 201 });
   } catch (error: unknown) { return handleApiError(error); }
 }
