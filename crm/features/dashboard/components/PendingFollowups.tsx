@@ -76,7 +76,7 @@ export default function PendingFollowups() {
                         <h4 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors leading-snug">{task.title}</h4>
                         <div className="flex items-center gap-1.5 mt-1.5 text-xs font-medium text-muted-foreground">
                           <Clock className="w-3.5 h-3.5" />
-                          <span className={`${task.priority === "HIGH" ? "text-rose-500" : task.priority === "MEDIUM" ? "text-amber-500" : ""}`}>{formatDueDate(task.dueDate)}</span>
+                          <span className={`${task.priority === "HIGH" ? "text-rose-500" : task.priority === "MEDIUM" ? "text-amber-500" : ""}`}>{formatDueDate(task.dueDate || "")}</span>
                         </div>
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300">

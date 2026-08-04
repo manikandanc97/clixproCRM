@@ -20,18 +20,27 @@ import {
 import { TaskType } from "@/shared/types/task";
 import { TaskKanbanColumn } from "./TaskKanbanColumn";
 import { TaskKanbanCard } from "./TaskKanbanCard";
-import { useUpdateTask } from "@/shared/hooks/use-crm";
+import { useUpdateTaskStatus } from "@/shared/hooks/use-crm";
 import { toast } from "sonner";
 
 interface KanbanViewProps {
   tasks: TaskType[];
   onTaskClick: (task: TaskType) => void;
+  onAddTask?: (status?: string) => void;
 }
 
-export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
-  const statuses: TaskType["status"][] = ["PENDING", "IN_PROGRESS", "COMPLETED"];
+const COLUMN_CONFIGS: { id: TaskType["status"]; title: string; color: string }[] = [
+  { id: "PENDING", title: "Pending", color: "blue" },
+  { id: "IN_PROGRESS", title: "In Progress", color: "amber" },
+  { id: "BLOCKED", title: "Blocked", color: "red" },
+  { id: "COMPLETED", title: "Completed", color: "emerald" },
+  { id: "OVERDUE", title: "Overdue", color: "rose" },
+  { id: "CANCELLED", title: "Cancelled", color: "slate" },
+];
+
+export const KanbanView = ({ tasks, onTaskClick, onAddTask }: KanbanViewProps) => {
   const [activeTask, setActiveTask] = useState<TaskType | null>(null);
-  const { mutate: updateTask } = useUpdateTask();
+  const updateStatusMutation = useUpdateTaskStatus();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -50,53 +59,29 @@ export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
     if (task) setActiveTask(task);
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const isActiveATask = active.data.current?.type === "Task";
-    const isOverATask = over.data.current?.type === "Task";
-    const isOverAColumn = over.data.current?.type === "Column";
-
-    if (!isActiveATask) return;
-
-    if (isOverATask) {
-      const activeIndex = tasks.findIndex((t) => t.id === activeId);
-      const overIndex = tasks.findIndex((t) => t.id === overId);
-
-      if (tasks[activeIndex].status !== tasks[overIndex].status) {
-        updateTask({ id: activeId as string, data: { status: tasks[overIndex].status } });
-      }
-    }
-
-    if (isOverAColumn) {
-      if (statuses.includes(overId as TaskType["status"])) {
-        updateTask({ id: activeId as string, data: { status: overId as TaskType["status"] } });
-      }
-    }
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
-    const { over } = event;
+    const { active, over } = event;
     setActiveTask(null);
 
     if (!over) return;
 
-    const activeId = event.active.id;
-    const overId = over.id;
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
-    if (activeId !== overId) {
-      const movedTask = tasks.find(t => t.id === activeId);
-      if (movedTask) {
-        toast.success(`Task moved to ${movedTask.status}`, {
-          description: `"${movedTask.title}" updated successfully.`,
-        });
+    let targetStatus: TaskType["status"] | null = null;
+
+    if (COLUMN_CONFIGS.some((c) => c.id === overId)) {
+      targetStatus = overId as TaskType["status"];
+    } else {
+      const overTask = tasks.find((t) => t.id === overId);
+      if (overTask) {
+        targetStatus = overTask.status;
       }
+    }
+
+    const activeTaskObj = tasks.find((t) => t.id === activeId);
+    if (activeTaskObj && targetStatus && activeTaskObj.status !== targetStatus) {
+      updateStatusMutation.mutate({ id: activeId, status: targetStatus });
     }
   };
 
@@ -106,19 +91,19 @@ export const KanbanView = ({ tasks, onTaskClick }: KanbanViewProps) => {
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-6 overflow-x-auto pb-6 kanban-board-scroll items-start min-h-[600px]">
-          {statuses.map((status) => {
-            const statusTasks = tasks.filter((t) => t.status === status);
+        <div className="flex gap-5 overflow-x-auto pb-6 kanban-board-scroll items-start min-h-[600px]">
+          {COLUMN_CONFIGS.map((col) => {
+            const statusTasks = tasks.filter((t) => t.status === col.id);
             return (
               <TaskKanbanColumn 
-                key={status} 
-                id={status} 
-                title={status} 
+                key={col.id} 
+                id={col.id} 
+                title={col.title} 
                 tasks={statusTasks} 
-                onTaskClick={onTaskClick} 
+                onTaskClick={onTaskClick}
+                onAddTask={() => onAddTask?.(col.id)}
               />
             );
           })}

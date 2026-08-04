@@ -7,8 +7,12 @@ import {
   fetchCustomersData, 
   fetchLeadsData, 
   fetchPipelineData, 
-  fetchTasksData, 
+  fetchTasksData,
+  fetchTaskDashboard,
+  fetchTaskBoard,
+  fetchTaskCalendar, 
   fetchQuotationsData,
+  fetchEmployees,
   fetchReportsData,
   createLead,
   updateLead,
@@ -18,6 +22,9 @@ import {
   deleteCustomer,
   createTask,
   updateTask,
+  updateTaskStatus,
+  assignTask,
+  completeTask,
   deleteTask,
   createQuotation,
   updateQuotation,
@@ -63,12 +70,48 @@ export function usePipeline() {
   });
 }
 
-export function useTasks() {
+export function useTasks(params?: Record<string, any>) {
   const { isAuthenticated, token } = useAuth();
   return useQuery({
-    queryKey: ["tasks", token],
-    queryFn: fetchTasksData,
-    enabled: isAuthenticated ,
+    queryKey: ["tasks", token, params],
+    queryFn: () => fetchTasksData(params),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useTaskDashboard() {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["tasks-dashboard", token],
+    queryFn: fetchTaskDashboard,
+    enabled: isAuthenticated,
+  });
+}
+
+export function useTaskBoard(search?: string) {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["tasks-board", token, search],
+    queryFn: () => fetchTaskBoard(search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useTaskCalendar(startDate?: string, endDate?: string) {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["tasks-calendar", token, startDate, endDate],
+    queryFn: () => fetchTaskCalendar(startDate, endDate),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useEmployees() {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["employees", token],
+    queryFn: fetchEmployees,
+    enabled: isAuthenticated,
   });
 }
 
@@ -302,11 +345,62 @@ export function useDeleteTask() {
     mutationFn: deleteTask,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-board"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-calendar"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Task deleted successfully");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to delete task");
+    },
+  });
+}
+
+export function useUpdateTaskStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => updateTaskStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-board"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Task status updated");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update status");
+    },
+  });
+}
+
+export function useAssignTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, assignedToId }: { id: string; assignedToId: string }) => assignTask(id, assignedToId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-board"] });
+      toast.success("Task reassigned successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to reassign task");
+    },
+  });
+}
+
+export function useCompleteTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => completeTask(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-board"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Task marked as completed");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to complete task");
     },
   });
 }

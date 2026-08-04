@@ -61,12 +61,39 @@ export const employeeSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(), // Employee API might take status
 }).strict();
 
+export const checklistItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  completed: z.boolean(),
+  completedAt: z.string().optional().nullable(),
+});
+
+export const attachmentItemSchema = z.object({
+  id: z.string(),
+  fileName: z.string(),
+  fileUrl: z.string(),
+  fileSize: z.number(),
+  fileType: z.string(),
+  createdAt: z.string().optional(),
+});
+
 export const taskSchema = z.object({
-  title: z.string().min(2, "Title must be at least 2 characters"),
-  description: z.string().optional(),
-  dueDate: z.union([z.string(), z.date()]).optional(),
-  priority: z.enum(["HIGH", "MEDIUM", "LOW"]),
-  status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]),
+  title: z.string().min(2, "Task Title must be at least 2 characters"),
+  description: z.string().optional().nullable(),
+  dueDate: z.union([z.string(), z.date()]).refine((val) => Boolean(val), { message: "Due date is required" }),
+  assignedToId: z.string().min(1, "Assignee is required"),
+  priority: z.enum(["URGENT", "HIGH", "MEDIUM", "LOW"]).default("MEDIUM"),
+  status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "BLOCKED", "CANCELLED", "OVERDUE"]).default("PENDING"),
+  reminderDate: z.union([z.string(), z.date(), z.null()]).optional(),
+  createdById: z.string().optional().nullable(),
+  relatedLeadId: z.string().optional().nullable(),
+  relatedCustomerId: z.string().optional().nullable(),
+  relatedMeetingId: z.string().optional().nullable(),
+  relatedQuotationId: z.string().optional().nullable(),
+  tags: z.array(z.string()).optional(),
+  checklist: z.array(checklistItemSchema).optional(),
+  attachments: z.array(attachmentItemSchema).optional(),
+  completedAt: z.union([z.string(), z.date(), z.null()]).optional(),
 }).strict();
 
 export const quoteSchema = z.object({

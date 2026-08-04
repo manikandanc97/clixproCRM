@@ -16,9 +16,10 @@ interface TaskKanbanColumnProps {
   title: string;
   tasks: TaskType[];
   onTaskClick: (task: TaskType) => void;
+  onAddTask?: () => void;
 }
 
-export const TaskKanbanColumn = ({ id, title, tasks, onTaskClick }: TaskKanbanColumnProps) => {
+export const TaskKanbanColumn = ({ id, title, tasks, onTaskClick, onAddTask }: TaskKanbanColumnProps) => {
   const { setNodeRef } = useDroppable({
     id,
     data: {
@@ -27,9 +28,13 @@ export const TaskKanbanColumn = ({ id, title, tasks, onTaskClick }: TaskKanbanCo
   });
 
   const handleAddTask = () => {
-    toast.info("Quick Add Task", {
-      description: `Creating new task in ${title} column.`,
-    });
+    if (onAddTask) {
+      onAddTask();
+    } else {
+      toast.info("Quick Add Task", {
+        description: `Creating new task in ${title} column.`,
+      });
+    }
   };
 
   return (

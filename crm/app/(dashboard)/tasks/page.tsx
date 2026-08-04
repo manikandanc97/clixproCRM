@@ -43,7 +43,7 @@ import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { FormModal } from "@/shared/components/form-modal";
-const TaskForm = dynamic(() => import("@/features/forms/TaskForm").then(mod => ({ default: mod.TaskForm })));
+import { CreateTaskModal } from "@/features/tasks/components/CreateTaskModal";
 import { useSearchParams } from "next/navigation";
 
 const VIEW_MODES = [
@@ -56,9 +56,12 @@ const VIEW_MODES = [
 
 const STATUS_FILTERS = [
   { id: "all", label: "All" },
-  { id: "pending", label: "Pending" },
-  { id: "in-progress", label: "In Progress" },
-  { id: "completed", label: "Completed" },
+  { id: "PENDING", label: "Pending" },
+  { id: "IN_PROGRESS", label: "In Progress" },
+  { id: "BLOCKED", label: "Blocked" },
+  { id: "COMPLETED", label: "Completed" },
+  { id: "OVERDUE", label: "Overdue" },
+  { id: "CANCELLED", label: "Cancelled" },
 ];
 
 const TasksPage = () => {
@@ -70,16 +73,23 @@ const TasksPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(searchParams.get("new") === "true");
 
   const { tasks, setTasks } = useCRMStore();
-  const safeTasks = useMemo(() => Array.isArray(tasks) ? tasks : [], [tasks]);
-  const { data, isLoading: loading, error, refetch } = useTasks();
+  const safeTasks = useMemo(() => (Array.isArray(tasks) ? tasks : []), [tasks]);
+
+  const queryParams = useMemo(() => {
+    const params: Record<string, string> = {};
+    if (searchQuery) params.search = searchQuery;
+    if (statusFilter !== "all") params.status = statusFilter;
+    return params;
+  }, [searchQuery, statusFilter]);
+
+  const { data, isLoading: loading, error, refetch } = useTasks(queryParams);
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, "", newUrl);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (data?.tasks) {
@@ -91,18 +101,25 @@ const TasksPage = () => {
     return safeTasks.filter((task: TaskType) => {
       const normalizedQuery = searchQuery.toLowerCase();
       const matchesSearch =
+        !searchQuery ||
         task.title.toLowerCase().includes(normalizedQuery) ||
-        task.description.toLowerCase().includes(normalizedQuery) ||
-        "Unassigned".toLowerCase().includes(normalizedQuery);
-      const normalizedStatus = task.status.toLowerCase().replace(/\s+/g, "-");
-      const matchesStatus = statusFilter === "all" || normalizedStatus === statusFilter;
+        (task.description && task.description.toLowerCase().includes(normalizedQuery)) ||
+        (task.tags && task.tags.some((t) => t.toLowerCase().includes(normalizedQuery))) ||
+        (task.assignedTo?.name && task.assignedTo.name.toLowerCase().includes(normalizedQuery));
+
+      const matchesStatus = statusFilter === "all" || task.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [safeTasks, searchQuery, statusFilter]);
 
-  const completedCount = safeTasks.filter((t) => t.status === "COMPLETED").length;
-  const inProgressCount = safeTasks.filter((t) => t.status === "IN_PROGRESS").length;
-  const overdueCount = safeTasks.filter((t) => t.isOverdue).length;
+  const stats = data?.dashboardStats || {
+    total: safeTasks.length,
+    pending: safeTasks.filter((t) => t.status === "PENDING").length,
+    inProgress: safeTasks.filter((t) => t.status === "IN_PROGRESS").length,
+    completed: safeTasks.filter((t) => t.status === "COMPLETED").length,
+    overdue: safeTasks.filter((t) => t.isOverdue || t.status === "OVERDUE").length,
+    completionRate: safeTasks.length > 0 ? Math.round((safeTasks.filter((t) => t.status === "COMPLETED").length / safeTasks.length) * 100) : 0,
+  };
 
   const handleNewTask = () => {
     setIsAddModalOpen(true);
@@ -110,7 +127,7 @@ const TasksPage = () => {
 
   const handleExport = () => {
     toast.success("Tasks Exported", {
-      description: `Exported ${filteredTasks.length} tasks to productivity manifest.`,
+      description: `Exported ${filteredTasks.length} tasks to CSV manifest.`,
     });
   };
 
@@ -143,8 +160,8 @@ const TasksPage = () => {
         <CRMMetricsGrid>
           <CRMMetricCard
             title="Total Tasks"
-            value={safeTasks.length}
-            change="0%"
+            value={stats.total}
+            change={`${stats.completionRate}% Done`}
             trend="up"
             icon={CheckSquare}
             color="blue"
@@ -152,8 +169,8 @@ const TasksPage = () => {
           />
           <CRMMetricCard
             title="Completed"
-            value={completedCount}
-            change="0%"
+            value={stats.completed}
+            change={`${stats.completionRate}%`}
             trend="up"
             icon={CheckCircle2}
             color="emerald"
@@ -161,8 +178,8 @@ const TasksPage = () => {
           />
           <CRMMetricCard
             title="In Progress"
-            value={inProgressCount}
-            change="0%"
+            value={stats.inProgress}
+            change={`${stats.pending} Pending`}
             trend="up"
             icon={Target}
             color="orange"
@@ -170,9 +187,9 @@ const TasksPage = () => {
           />
           <CRMMetricCard
             title="Overdue"
-            value={overdueCount}
-            change="0%"
-            trend={overdueCount > 0 ? "down" : "up"}
+            value={stats.overdue}
+            change={stats.overdue > 0 ? "Requires Action" : "Clean"}
+            trend={stats.overdue > 0 ? "down" : "up"}
             icon={AlertCircle}
             color="pink"
             delay={0.2}
@@ -189,19 +206,18 @@ const TasksPage = () => {
             viewMode={viewMode}
             setViewMode={setViewMode}
             viewOptions={VIEW_MODES}
-            placeholder="Search tasks, assignees..."
+            placeholder="Search tasks, assignees, tags..."
           >
             {/* Status filters */}
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-full">
               {STATUS_FILTERS.map((s) => {
-                const key = s.id === "all" ? "all" : s.id;
-                const isActive = statusFilter === key;
+                const isActive = statusFilter === s.id;
                 return (
                   <Button
                     key={s.id}
                     variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    onClick={() => setStatusFilter(key)}
+                    onClick={() => setStatusFilter(s.id)}
                     className="h-9 px-3 text-xs font-semibold"
                   >
                     {s.label}
@@ -212,43 +228,47 @@ const TasksPage = () => {
           </CRMToolbar>
         </div>
 
-      {/* Main content */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        <AnimatePresence mode="wait">
-          {filteredTasks.length > 0 ? (
-            <motion.div
-              key={viewMode}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1 flex flex-col min-h-0"
-            >
-            {(viewMode === "list" || viewMode === "table") && (
-              <TasksTable tasks={filteredTasks} onTaskClick={setSelectedTask} />
+        {/* Main content */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          <AnimatePresence mode="wait">
+            {filteredTasks.length > 0 ? (
+              <motion.div
+                key={viewMode}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 flex flex-col min-h-0"
+              >
+                {(viewMode === "list" || viewMode === "table") && (
+                  <TasksTable tasks={filteredTasks} onTaskClick={setSelectedTask} />
+                )}
+                {(viewMode === "grid" || viewMode === "cards") && (
+                  <TasksGrid tasks={filteredTasks} onTaskClick={setSelectedTask} />
+                )}
+                {viewMode === "kanban" && (
+                  <KanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} onAddTask={() => setIsAddModalOpen(true)} />
+                )}
+                {viewMode === "calendar" && (
+                  <CalendarView tasks={filteredTasks} onTaskClick={setSelectedTask} />
+                )}
+                {viewMode === "timeline" && (
+                  <TimelineView tasks={filteredTasks} onTaskClick={setSelectedTask} />
+                )}
+              </motion.div>
+            ) : (
+              <EmptyState
+                icon={CheckSquare}
+                title="No tasks found"
+                description="No tasks match the current search or status filter."
+                action={{
+                  label: "Create Task",
+                  onClick: handleNewTask,
+                }}
+              />
             )}
-            {(viewMode === "grid" || viewMode === "cards") && (
-              <TasksGrid tasks={filteredTasks} onTaskClick={setSelectedTask} />
-            )}
-            {viewMode === "kanban" && (
-              <KanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} />
-            )}
-            {viewMode === "calendar" && (
-              <CalendarView tasks={filteredTasks} onTaskClick={setSelectedTask} />
-            )}
-            {viewMode === "timeline" && (
-              <TimelineView tasks={filteredTasks} onTaskClick={setSelectedTask} />
-            )}
-          </motion.div>
-        ) : (
-          <EmptyState
-            icon={CheckSquare}
-            title="No tasks found"
-            description="No tasks match the current search or filters."
-          />
-        )}
-      </AnimatePresence>
-      </div>
+          </AnimatePresence>
+        </div>
       </div>
 
       <TaskDetailsDrawer
@@ -257,18 +277,11 @@ const TasksPage = () => {
         onClose={() => setSelectedTask(null)}
       />
 
-      <FormModal
-        title="Create New Task"
-        description="Add a new task to your productivity list."
+      <CreateTaskModal
         isOpen={isAddModalOpen}
-        onOpenChange={setIsAddModalOpen}
-        size="lg"
-      >
-        <TaskForm 
-          onSuccess={() => setIsAddModalOpen(false)} 
-          onCancel={() => setIsAddModalOpen(false)} 
-        />
-      </FormModal>
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={() => refetch()}
+      />
     </CRMPageContainer>
   );
 };

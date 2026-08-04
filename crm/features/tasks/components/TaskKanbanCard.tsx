@@ -117,20 +117,20 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay }: TaskKanbanCardProps
       </h4>
       
       <div className="mb-4 pointer-events-none">
-        <TaskIntelligenceBadge type="progress" value={task.progress} />
+        <TaskIntelligenceBadge type="progress" value={task.progress ?? 0} />
       </div>
 
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
         <div className="flex items-center -space-x-1.5">
           <Avatar className="w-6 h-6 border-2 border-card shadow-sm rounded-lg">
             <AvatarFallback className="text-[8px] font-bold bg-muted text-muted-foreground">
-              {"Unassigned".split(' ').map(n => n[0]).join('')}
+              {"Unassigned".split(' ').map((n: string) => n[0]).join('')}
             </AvatarFallback>
           </Avatar>
-          {task.collaborators?.slice(0, 2).map(c => (
+          {task.collaborators?.slice(0, 2).map((c: { id: string; name: string }) => (
             <Avatar key={c.id} className="w-6 h-6 border-2 border-card shadow-sm rounded-lg">
               <AvatarFallback className="text-[8px] font-bold bg-primary/15 text-primary">
-                {c.name.split(' ').map(n => n[0]).join('')}
+                {c.name.split(' ').map((n: string) => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
           ))}

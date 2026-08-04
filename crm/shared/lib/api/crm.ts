@@ -78,8 +78,26 @@ export function fetchPipelineData() {
   return unwrapResponse<PipelineDataType>(client.get("/crm/pipeline"));
 }
 
-export function fetchTasksData() {
-  return unwrapResponse<TasksDataType>(client.get("/crm/tasks"));
+export function fetchTasksData(params?: Record<string, any>) {
+  const query = params ? "?" + new URLSearchParams(params as any).toString() : "";
+  return unwrapResponse<TasksDataType>(client.get(`/crm/tasks${query}`));
+}
+
+export function fetchTaskDashboard() {
+  return unwrapResponse<{ stats: any[]; dashboardStats: any }>(client.get("/crm/tasks/dashboard"));
+}
+
+export function fetchTaskBoard(search?: string) {
+  const query = search ? `?search=${encodeURIComponent(search)}` : "";
+  return unwrapResponse<Record<string, TaskType[]>>(client.get(`/crm/tasks/board${query}`));
+}
+
+export function fetchTaskCalendar(startDate?: string, endDate?: string) {
+  const params: Record<string, string> = {};
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  const query = Object.keys(params).length > 0 ? "?" + new URLSearchParams(params).toString() : "";
+  return unwrapResponse<any[]>(client.get(`/crm/tasks/calendar${query}`));
 }
 
 export function fetchQuotationsData() {
@@ -222,6 +240,18 @@ export function createTask(data: Partial<TaskType>) {
 
 export function updateTask(id: string, data: Partial<TaskType>) {
   return unwrapResponse<TaskType>(client.patch(`/crm/tasks/${id}`, data));
+}
+
+export function updateTaskStatus(id: string, status: string) {
+  return unwrapResponse<TaskType>(client.patch(`/crm/tasks/${id}/status`, { status }));
+}
+
+export function assignTask(id: string, assignedToId: string) {
+  return unwrapResponse<TaskType>(client.patch(`/crm/tasks/${id}/assign`, { assignedToId }));
+}
+
+export function completeTask(id: string) {
+  return unwrapResponse<TaskType>(client.patch(`/crm/tasks/${id}/complete`, {}));
 }
 
 export function deleteTask(id: string) {

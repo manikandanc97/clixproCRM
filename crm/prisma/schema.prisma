@@ -58,6 +58,7 @@ model User {
   assignedQuotations  Quotation[]  @relation("QuotationAssignedTo")
   sessions            Session[]
   assignedTasks       Task[]       @relation("TaskAssignedTo")
+  createdTasks        Task[]       @relation("TaskCreatedBy")
   assignedMeetings    Meeting[]    @relation("MeetingAssignedTo")
   memberships         TenantUser[]
   notes               Note[]       @relation("NoteAuthor")
@@ -107,6 +108,7 @@ model Customer {
   quotations    Quotation[]
   leadId        String?
   leads         Lead[]         @relation("LeadCustomer")
+  tasks         Task[]         @relation("TaskCustomer")
 
   @@index([tenantId, status])
   @@index([assignedToId])
@@ -146,6 +148,7 @@ model Lead {
   notes             Note[]
   timelineEvents    TimelineEvent[]
   attachments       Attachment[]
+  tasks             Task[]         @relation("TaskLead")
 
   @@index([tenantId, stage])
   @@index([assignedToId])
@@ -153,22 +156,42 @@ model Lead {
 }
 
 model Task {
-  id           String       @id @default(uuid())
-  tenantId     String
-  assignedToId String?
-  title        String
-  description  String?
-  dueDate      DateTime?
-  priority     TaskPriority @default(MEDIUM)
-  status       TaskStatus   @default(PENDING)
-  deletedAt    DateTime?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  assignedTo   User?        @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id                      String       @id @default(uuid())
+  tenantId                String
+  title                   String
+  description             String?
+  status                  TaskStatus   @default(PENDING)
+  priority                TaskPriority @default(MEDIUM)
+  dueDate                 DateTime?
+  reminderDate            DateTime?
+  assignedToId            String?
+  createdById             String?
+  relatedLeadId           String?
+  relatedCustomerId       String?
+  relatedMeetingId        String?
+  relatedQuotationId      String?
+  tags                    String[]     @default([])
+  checklist               Json?
+  attachments             Json?
+  completedAt             DateTime?
+  deletedAt               DateTime?
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  assignedTo       User?      @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  createdBy        User?      @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  tenant           Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  relatedLead      Lead?      @relation("TaskLead", fields: [relatedLeadId], references: [id], onDelete: SetNull)
+  relatedCustomer  Customer?  @relation("TaskCustomer", fields: [relatedCustomerId], references: [id], onDelete: SetNull)
+  relatedMeeting   Meeting?   @relation("TaskMeeting", fields: [relatedMeetingId], references: [id], onDelete: SetNull)
+  relatedQuotation Quotation? @relation("TaskQuotation", fields: [relatedQuotationId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, status])
+  @@index([tenantId, dueDate])
   @@index([assignedToId])
+  @@index([createdById])
+  @@index([relatedLeadId])
+  @@index([relatedCustomerId])
 }
 
 model Quotation {
@@ -187,6 +210,7 @@ model Quotation {
   assignedTo   User?           @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
   customer     Customer?       @relation(fields: [customerId], references: [id])
   tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tasks        Task[]          @relation("TaskQuotation")
 
   @@unique([tenantId, quoteNumber])
   @@index([customerId])
@@ -337,6 +361,7 @@ model Meeting {
   tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assignedTo    User?     @relation("MeetingAssignedTo", fields: [assignedToId], references: [id])
   lead          Lead?     @relation(fields: [leadId], references: [id])
+  tasks         Task[]    @relation("TaskMeeting")
 
   @@index([tenantId])
   @@index([assignedToId])
@@ -386,6 +411,7 @@ enum LeadPriority {
 }
 
 enum TaskPriority {
+  URGENT
   HIGH
   MEDIUM
   LOW
@@ -395,6 +421,9 @@ enum TaskStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
+  BLOCKED
+  CANCELLED
+  OVERDUE
 }
 
 enum QuotationStatus {
