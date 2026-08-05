@@ -89,7 +89,7 @@ export const FormSelect = ({ name, label, placeholder, description, options, cla
           <FormLabel>{label}</FormLabel>
           <Select onValueChange={field.onChange} defaultValue={field.value}>
             <FormControl>
-              <SelectTrigger>
+              <SelectTrigger className={cn("w-full", className)}>
                 <SelectValue placeholder={placeholder} />
               </SelectTrigger>
             </FormControl>
@@ -109,7 +109,11 @@ export const FormSelect = ({ name, label, placeholder, description, options, cla
   );
 };
 
-export const FormDatePicker = ({ name, label, placeholder, description, className }: BaseFieldProps) => {
+interface FormDatePickerProps extends BaseFieldProps {
+  disabled?: (date: Date) => boolean;
+}
+
+export const FormDatePicker = ({ name, label, placeholder, description, className, disabled }: FormDatePickerProps) => {
   const { control } = useFormContext();
   return (
     <FormField
@@ -142,9 +146,9 @@ export const FormDatePicker = ({ name, label, placeholder, description, classNam
                 mode="single"
                 selected={field.value}
                 onSelect={field.onChange}
-                disabled={(date) =>
+                disabled={disabled ?? ((date) =>
                   date > new Date() || date < new Date("1900-01-01")
-                }
+                )}
                 initialFocus
               />
             </PopoverContent>

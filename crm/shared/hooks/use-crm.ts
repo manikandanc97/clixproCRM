@@ -28,6 +28,7 @@ import {
   deleteTask,
   createQuotation,
   updateQuotation,
+  updateQuotationStatus,
   deleteQuotation,
   updatePipelineItem,
   fetchLeadNotes,
@@ -431,6 +432,21 @@ export function useUpdateQuotation() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update quotation");
+    },
+  });
+}
+
+export function useUpdateQuotationStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => updateQuotationStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Quotation status updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update quotation status");
     },
   });
 }

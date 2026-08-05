@@ -97,9 +97,14 @@ export const taskSchema = z.object({
 }).strict();
 
 export const quoteSchema = z.object({
+  leadId: z.string().min(1, "Deal is required"),
   client: z.string().min(2, "Client name is required"),
-  amount: z.string().min(1, "Amount is required"),
-  status: z.enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED"]),
+  amount: z.union([z.string(), z.number()]).optional(),
+  discount: z.number().optional(),
+  tax: z.number().optional(),
+  items: z.array(z.any()).optional(),
+  notes: z.string().optional(),
+  status: z.enum(["DRAFT", "SENT", "ACCEPTED", "REJECTED", "EXPIRED"]),
   validTill: z.union([z.string(), z.date()]).optional(),
 }).strict();
 
@@ -145,4 +150,35 @@ export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
   limit: z.coerce.number().int().min(1).max(1000).catch(1000),
 });
+
+export const scheduleMeetingSchema = z.object({
+  title: z.string().min(2, "Title must be at least 2 characters"),
+  date: z.date(),
+  time: z.string().min(1, "Time is required"),
+  notes: z.string().optional(),
+  leadId: z.string().optional().nullable(),
+  customerId: z.string().optional().nullable(),
+  quotationId: z.string().optional().nullable(),
+  taskId: z.string().optional().nullable(),
+}).refine(data => data.leadId || data.customerId || data.quotationId, {
+  message: "Meeting must be linked to a Lead, Customer, or Deal",
+  path: ["leadId"]
+});
+
+export const logMeetingSchema = z.object({
+  title: z.string().min(2, "Title must be at least 2 characters"),
+  date: z.date(),
+  time: z.string().min(1, "Time is required"),
+  notes: z.string().optional(),
+  outcome: z.string().optional(),
+  duration: z.coerce.number().min(1, "Duration must be at least 1 minute").optional().default(30),
+  leadId: z.string().optional().nullable(),
+  customerId: z.string().optional().nullable(),
+  quotationId: z.string().optional().nullable(),
+  taskId: z.string().optional().nullable(),
+}).refine(data => data.leadId || data.customerId || data.quotationId, {
+  message: "Meeting must be linked to a Lead, Customer, or Deal",
+  path: ["leadId"]
+});
+
 

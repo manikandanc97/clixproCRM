@@ -106,7 +106,7 @@ const TasksPage = () => {
   }, [data?.tasks, setTasks]);
 
   const handleScheduleMeeting = (task: TaskType) => {
-    if (!task.relatedLead && !task.relatedCustomer) {
+    if (!task.relatedLead && !task.relatedCustomer && !task.relatedQuotation) {
       toast.error("This task is not linked to a Lead, Customer, or Deal. Link a CRM record before scheduling a meeting.");
       return;
     }
@@ -307,11 +307,13 @@ const TasksPage = () => {
       <FormModal
         isOpen={!!meetingTask}
         onOpenChange={(open) => !open && setMeetingTask(null)}
-        title="Schedule Meeting"
+        title="Meeting"
       >
         <MeetingForm
           defaultTaskId={meetingTask?.id}
           defaultLeadId={meetingTask?.relatedLead?.id || undefined}
+          defaultCustomerId={meetingTask?.relatedCustomer?.id || undefined}
+          defaultQuotationId={meetingTask?.relatedQuotation?.id || undefined}
           onSuccess={() => {
             setMeetingTask(null);
             refetch();

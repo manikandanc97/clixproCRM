@@ -30,9 +30,11 @@ import { FormModal } from "@/shared/components/form-modal";
 const QuoteForm = dynamic(() => import("@/features/forms/QuoteForm").then(mod => ({ default: mod.QuoteForm })), {
   loading: () => <div className="h-[300px] skeleton rounded-xl" />
 });
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { QuotationType } from "@/shared/types/quotation";
 
 const QuotationsPage = () => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useViewMode("quotations", "list");
@@ -44,10 +46,27 @@ const QuotationsPage = () => {
 
   const searchParams = useSearchParams();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editQuote, setEditQuote] = useState<QuotationType | null>(null);
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId && data?.quotations) {
+      const q = data.quotations.find((q) => q.id === editId || q.quoteId === editId);
+      if (q) {
+        setEditQuote(q);
+        setIsAddModalOpen(true);
+      }
+      // Remove edit param from url
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("edit");
+      window.history.replaceState({}, "", newUrl.toString());
+    }
+  }, [searchParams, data?.quotations]);
 
   useEffect(() => {
     if (searchParams.get("new") === "true") {
       const timer = setTimeout(() => {
+        setEditQuote(null);
         setIsAddModalOpen(true);
         const newUrl = window.location.pathname;
         window.history.replaceState({}, "", newUrl);
@@ -77,6 +96,7 @@ const QuotationsPage = () => {
   }, [safeQuotations, searchQuery, statusFilter]);
 
   const handleCreateQuote = () => {
+    setEditQuote(null);
     setIsAddModalOpen(true);
   };
 
@@ -128,10 +148,10 @@ const QuotationsPage = () => {
       />
 
       <div className="shrink-0">
-        <CRMMetricsGrid cols={3} className="gap-4">
+        <CRMMetricsGrid cols={4} className="gap-4">
           <CRMMetricCard 
-            title="Total Quotes"
-            value={safeQuotations.length}
+            title="Total Quotations"
+            value={data?.stats?.[0]?.value || safeQuotations.length}
             change="0%"
             trend="up"
             icon={FileText}
@@ -139,8 +159,8 @@ const QuotationsPage = () => {
             delay={0.1}
           />
           <CRMMetricCard 
-            title="Avg. Deal Size"
-            value={averageDealSize.toLocaleString("en-US")}
+            title="Total Quote Value"
+            value={data?.stats?.[1]?.value || `$${safeQuotations.reduce((sum, q) => sum + (q.amountValue ?? 0), 0).toLocaleString("en-US")}`}
             change="0%"
             trend="up"
             icon={TrendingUp}
@@ -148,13 +168,22 @@ const QuotationsPage = () => {
             delay={0.2}
           />
           <CRMMetricCard 
-            title="Pending Approval"
-            value={safeQuotations.filter(q => q.status === "PENDING").length}
+            title="Pending Quotes"
+            value={data?.stats?.[2]?.value || safeQuotations.filter(q => q.status === "SENT").length}
             change="0%"
-            trend="up"
+            trend="neutral"
             icon={Clock}
             color="orange"
             delay={0.3}
+          />
+          <CRMMetricCard 
+            title="Approved Quotes"
+            value={data?.stats?.[3]?.value || safeQuotations.filter(q => q.status === "ACCEPTED").length}
+            change="0%"
+            trend="up"
+            icon={FileText}
+            color="emerald"
+            delay={0.4}
           />
         </CRMMetricsGrid>
       </div>
@@ -169,7 +198,7 @@ const QuotationsPage = () => {
             placeholder="Search quotes, clients..."
           >
             <div className="flex items-center gap-2">
-              {["All", "Pending", "Approved", "Expired"].map((status) => (
+              {["All", "Draft", "Sent", "Accepted", "Rejected", "Expired"].map((status) => (
                 <Button
                   key={status}
                   variant={statusFilter === status.toLowerCase() ? "secondary" : "ghost"}
@@ -204,7 +233,7 @@ const QuotationsPage = () => {
               <EmptyState 
                 icon={FileText}
                 title="No quotations found"
-                description="No quotations match the current search or filters."
+                description="Create your first quotation to send a professional proposal to your customer."
               />
             )}
       </AnimatePresence>
@@ -212,13 +241,14 @@ const QuotationsPage = () => {
       </div>
 
       <FormModal
-        title="Create Sales Quotation"
-        description="Generate a professional quote for your client."
+        title={editQuote ? "Edit Sales Quotation" : "Create Sales Quotation"}
+        description={editQuote ? "Update the details of your existing quotation." : "Generate a professional quote for your client."}
         isOpen={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
         size="lg"
       >
         <QuoteForm 
+          initialData={editQuote || undefined}
           onSuccess={() => setIsAddModalOpen(false)} 
           onCancel={() => setIsAddModalOpen(false)} 
         />

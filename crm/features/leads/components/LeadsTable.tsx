@@ -946,14 +946,15 @@ const LeadsTable = ({
       </FormModal>
 
       <FormModal
-        title="Schedule Meeting"
-        description={`Schedule a meeting with ${meetingLead?.name}.`}
+        title="Meeting"
+        description={`Schedule or log a meeting with ${meetingLead?.name}.`}
         isOpen={!!meetingLead}
         onOpenChange={(open) => !open && setMeetingLead(null)}
         size="md"
       >
         {meetingLead && (
           <MeetingForm 
+            defaultLeadId={meetingLead.id}
             onSuccess={() => setMeetingLead(null)} 
             onCancel={() => setMeetingLead(null)} 
           />

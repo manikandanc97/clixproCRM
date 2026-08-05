@@ -109,6 +109,7 @@ model Customer {
   leadId        String?
   leads         Lead[]         @relation("LeadCustomer")
   tasks         Task[]         @relation("TaskCustomer")
+  meetings      Meeting[]
 
   @@index([tenantId, status])
   @@index([assignedToId])
@@ -149,6 +150,7 @@ model Lead {
   timelineEvents    TimelineEvent[]
   attachments       Attachment[]
   tasks             Task[]         @relation("TaskLead")
+  quotations        Quotation[]
 
   @@index([tenantId, stage])
   @@index([assignedToId])
@@ -199,10 +201,15 @@ model Quotation {
   tenantId     String
   customerId   String?
   assignedToId String?
+  leadId       String
   quoteNumber  String
   client       String
   amount       Decimal         @default(0) @db.Decimal(12, 2)
-  status       QuotationStatus @default(PENDING)
+  discount     Decimal?        @default(0) @db.Decimal(12, 2)
+  tax          Decimal?        @default(0) @db.Decimal(12, 2)
+  items        Json?
+  notes        String?
+  status       QuotationStatus @default(DRAFT)
   validTill    DateTime?
   deletedAt    DateTime?
   createdAt    DateTime        @default(now())
@@ -210,11 +217,14 @@ model Quotation {
   assignedTo   User?           @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
   customer     Customer?       @relation(fields: [customerId], references: [id])
   tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead         Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
   tasks        Task[]          @relation("TaskQuotation")
+  meetings     Meeting[]
 
   @@unique([tenantId, quoteNumber])
   @@index([customerId])
   @@index([assignedToId])
+  @@index([leadId])
 }
 
 model Session {
@@ -352,6 +362,8 @@ model Meeting {
   isAllDay      Boolean   @default(false)
   assignedToId  String?
   leadId        String?
+  customerId    String?
+  quotationId   String?
   status        String    @default("SCHEDULED")
   reminderAt    DateTime?
   participants  Json?
@@ -361,11 +373,15 @@ model Meeting {
   tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assignedTo    User?     @relation("MeetingAssignedTo", fields: [assignedToId], references: [id])
   lead          Lead?     @relation(fields: [leadId], references: [id])
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  quotation     Quotation? @relation(fields: [quotationId], references: [id])
   tasks         Task[]    @relation("TaskMeeting")
 
   @@index([tenantId])
   @@index([assignedToId])
   @@index([leadId])
+  @@index([customerId])
+  @@index([quotationId])
 }
 
 model Notification {
@@ -425,8 +441,9 @@ enum TaskStatus {
 }
 
 enum QuotationStatus {
-  PENDING
-  APPROVED
+  DRAFT
+  SENT
+  ACCEPTED
   REJECTED
   EXPIRED
 }

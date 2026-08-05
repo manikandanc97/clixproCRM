@@ -274,6 +274,10 @@ export function deleteQuotation(id: string) {
   return unwrapResponse<{ id: string }>(client.delete(`/crm/quotations/${id}`));
 }
 
+export function updateQuotationStatus(id: string, status: string) {
+  return unwrapResponse<QuotationType>(client.patch(`/crm/quotations/${id}/status`, { status }));
+}
+
 export function createEmployee(data: Partial<EmployeeType>) {
   return unwrapResponse<EmployeeType>(client.post("/crm/employees", data));
 }

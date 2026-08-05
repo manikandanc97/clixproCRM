@@ -114,7 +114,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     },
   });
 
-  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues, {
+  const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues as TaskFormValues, {
     externalOriginalValues: {
       attachments: [],
       relatedRecord: null

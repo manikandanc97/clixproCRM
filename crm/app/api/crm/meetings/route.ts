@@ -24,6 +24,28 @@ export async function POST(req: Request) {
     if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
+    const isLog = body.isLog === true;
+    
+    // Backend validation for date/time
+    const startTime = new Date(body.startTime);
+    const now = new Date();
+    
+    if (isLog) {
+      if (startTime > now) {
+        return NextResponse.json({ success: false, message: "Cannot log a meeting in the future." }, { status: 400 });
+      }
+    } else {
+      // Allow a 5-minute buffer for scheduling
+      const bufferNow = new Date(now.getTime() - 5 * 60000);
+      if (startTime < bufferNow) {
+        return NextResponse.json({ success: false, message: "Cannot schedule a meeting in the past." }, { status: 400 });
+      }
+    }
+
+    if (!body.leadId && !body.customerId && !body.quotationId) {
+      return NextResponse.json({ success: false, message: "Meeting must be linked to a Lead, Customer, or Deal." }, { status: 400 });
+    }
+
     const meeting = await MeetingService.createMeeting(session.tenantId, session.userId, {
       title: body.title,
       startTime: body.startTime,
@@ -35,8 +57,13 @@ export async function POST(req: Request) {
       isAllDay: body.isAllDay,
       assignedToId: body.assignedToId,
       leadId: body.leadId,
+      customerId: body.customerId,
+      quotationId: body.quotationId,
       taskId: body.taskId,
       status: body.status,
+      isLog: isLog,
+      duration: body.duration,
+      meetingNotes: body.notes,
     });
     
     return NextResponse.json({ success: true, data: meeting }, { status: 201 });

@@ -130,8 +130,8 @@ export function MeetingsTab({ leadId }: { leadId: string }) {
       )}
 
       <FormModal
-        title="Schedule Meeting"
-        description="Schedule a new meeting with this lead."
+        title="Meeting"
+        description="Schedule or log a meeting with this lead."
         isOpen={isScheduling}
         onOpenChange={setIsScheduling}
         size="md"

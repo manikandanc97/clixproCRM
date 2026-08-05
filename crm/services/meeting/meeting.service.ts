@@ -30,12 +30,17 @@ export class MeetingService {
       isAllDay?: boolean;
       assignedToId?: string;
       leadId?: string | null;
+      customerId?: string | null;
+      quotationId?: string | null;
       taskId?: string | null;
       status?: string;
+      duration?: number;
+      meetingNotes?: string;
+      isLog?: boolean; // Flag to indicate if it's logging a past meeting
     }
   ) {
-    if (!data.leadId) {
-      throw new Error("Meeting must be linked to a Lead or CRM record.");
+    if (!data.leadId && !data.customerId && !data.quotationId) {
+      throw new Error("Meeting must be linked to a Lead, Customer, or Deal.");
     }
 
     return prisma.$transaction(async (tx) => {
@@ -52,7 +57,11 @@ export class MeetingService {
           isAllDay: data.isAllDay || false,
           assignedToId: data.assignedToId || userId,
           leadId: data.leadId || null,
-          status: data.status || "SCHEDULED",
+          customerId: data.customerId || null,
+          quotationId: data.quotationId || null,
+          status: data.isLog ? "COMPLETED" : (data.status || "SCHEDULED"),
+          duration: data.duration || 30,
+          meetingNotes: data.meetingNotes || null,
         },
         include: {
           assignedTo: { select: { name: true, email: true, id: true } }
@@ -65,8 +74,8 @@ export class MeetingService {
             tenantId,
             leadId: data.leadId,
             userId,
-            action: "Meeting Scheduled",
-            description: `Scheduled meeting: ${meeting.title}`,
+            action: data.isLog ? "Meeting Logged" : "Meeting Scheduled",
+            description: `${data.isLog ? "Logged" : "Scheduled"} meeting: ${meeting.title}`,
           }
         });
       }
