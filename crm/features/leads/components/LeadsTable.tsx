@@ -65,7 +65,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/shared/ui/dropdown-menu";
-import { LeadType } from "@/shared/types/lead";
+import { LeadType, LeadStatus } from "@/shared/types/lead";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { DataTable } from "@/shared/components/DataTable";
@@ -94,11 +94,11 @@ interface LeadsTableProps {
 }
 
 const statusVariantMap: Record<string, StatusVariant> = {
-  "New": "blue",
-  "Contacted": "amber",
-  "Proposal Sent": "indigo",
-  "Won": "emerald",
-  "Lost": "rose",
+  [LeadStatus.NEW]: "blue",
+  [LeadStatus.CONTACTED]: "amber",
+  [LeadStatus.PROPOSAL_SENT]: "indigo",
+  [LeadStatus.WON]: "emerald",
+  [LeadStatus.LOST]: "rose",
 };
 
 const getPriorityColor = (p?: string) => {
@@ -181,7 +181,7 @@ const LeadsTable = ({
   const [detailsLeadId, setDetailsLeadId] = useState<string | null>(null);
   
   const [confirmMoveModal, setConfirmMoveModal] = useState<{ isOpen: boolean; deal: any; targetStage: string | null; originalStage: string | null }>({ isOpen: false, deal: null, targetStage: null, originalStage: null });
-  const [wonLostModal, setWonLostModal] = useState<{ isOpen: boolean; type: "Won" | "Lost" | null; deal: any; originalStage: string | null }>({ isOpen: false, type: null, deal: null, originalStage: null });
+  const [wonLostModal, setWonLostModal] = useState<{ isOpen: boolean; type: LeadStatus.WON | LeadStatus.LOST | null; deal: any; originalStage: string | null }>({ isOpen: false, type: null, deal: null, originalStage: null });
 
   const { mutate: updatePipelineItem, isPending: isUpdating } = useUpdatePipelineItem();
   const queryClient = useQueryClient();
@@ -192,10 +192,10 @@ const LeadsTable = ({
     const originalStage = lead.status;
     const deal = { ...lead, stage: originalStage };
     
-    if (targetStage === "Lost" || targetStage === "Won") {
+    if (targetStage === LeadStatus.LOST || targetStage === LeadStatus.WON) {
       setWonLostModal({
         isOpen: true,
-        type: targetStage as "Won" | "Lost",
+        type: targetStage as LeadStatus.WON | LeadStatus.LOST,
         deal: { ...deal, stage: targetStage },
         originalStage
       });
@@ -212,8 +212,8 @@ const LeadsTable = ({
   const handleConfirmMoveSubmit = () => {
     if (!confirmMoveModal.deal || !confirmMoveModal.targetStage || !confirmMoveModal.originalStage) return;
     const { deal, targetStage, originalStage } = confirmMoveModal;
-    const stageToEnum: Record<string, string> = { "New Lead": "NEW", "Contacted": "CONTACTED", "Proposal Sent": "PROPOSAL_SENT", "Won": "WON", "Lost": "LOST" };
-    const stage = stageToEnum[targetStage] || "NEW";
+    
+    const stage = targetStage as string;
 
     updatePipelineItem({ id: deal.id, data: { stage } }, {
       onSuccess: () => {
@@ -229,14 +229,14 @@ const LeadsTable = ({
 
   const handleWonLostSubmit = (data: WonLostSubmitData) => {
     if (!wonLostModal.deal || !wonLostModal.type) return;
-    const stageToEnum: Record<string, string> = { "Won": "WON", "Lost": "LOST" };
-    const stage = stageToEnum[wonLostModal.type] || "NEW";
+    
+    const stage = wonLostModal.type;
     
     updatePipelineItem({
       id: wonLostModal.deal.id,
       data: {
         stage,
-        ...(wonLostModal.type === "Won" 
+        ...(stage === LeadStatus.WON 
             ? { wonReason: data.reason, wonDate: data.wonDate, actualRevenue: data.actualRevenue, notes: data.notes } 
             : { lostReason: data.reason, competitor: data.competitor, notes: data.notes })
       }
@@ -337,7 +337,7 @@ const LeadsTable = ({
       cell: (lead: LeadType) => (
         <StatusBadge 
           status={lead.status} 
-          variant={statusVariantMap[lead.status] || "slate"} 
+          variant={statusVariantMap[lead.stage] || "slate"} 
         />
       ),
       className: "w-[130px]",
@@ -464,7 +464,7 @@ const LeadsTable = ({
         
         return (
           <div className="flex flex-col gap-1.5">
-            {lead.status === "Won" ? (
+            {lead.stage === LeadStatus.WON ? (
               <div className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Completed
               </div>
@@ -584,7 +584,7 @@ const LeadsTable = ({
             <DropdownMenuContent align="end" className="w-56 shadow-lg border-border/50">
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingLead(lead); }} className="gap-2 text-xs cursor-pointer"><Edit2 className="w-3.5 h-3.5" /> Edit Lead</DropdownMenuItem>
               
-              {lead.status === "Won" && (
+              {lead.stage === LeadStatus.WON && (
                 <>
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }} className="gap-2 text-xs text-blue-600 focus:text-blue-700 cursor-pointer">
                     <User className="w-3.5 h-3.5" /> View Customer
@@ -598,27 +598,27 @@ const LeadsTable = ({
                 </>
               )}
 
-              {lead.status !== "Won" && lead.status !== "Lost" && (
+              {lead.stage !== LeadStatus.WON && lead.stage !== LeadStatus.LOST && (
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStageChange(lead, "Won"); }} className="gap-2 text-xs text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950 cursor-pointer font-medium">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Convert to Customer (Mark Won)
                 </DropdownMenuItem>
               )}
 
-              {lead.status === "Lost" ? (
+              {lead.stage === LeadStatus.LOST ? (
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }} className="gap-2 text-xs cursor-pointer"><RefreshCw className="w-3.5 h-3.5" /> Reopen Lead</DropdownMenuItem>
-              ) : lead.status !== "Won" ? (
+              ) : lead.stage !== LeadStatus.WON ? (
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }} className="gap-2 text-xs cursor-pointer"><RefreshCw className="w-3.5 h-3.5" /> Move Stage</DropdownMenuItem>
               ) : null}
 
               <DropdownMenuSeparator />
 
-              {lead.status !== "Lost" && (
+              {lead.stage !== LeadStatus.LOST && (
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTaskLead(lead); }} className="gap-2 text-xs cursor-pointer"><CheckCircle2 className="w-3.5 h-3.5" /> Create Task</DropdownMenuItem>
               )}
               
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setMeetingLead(lead); }} className="gap-2 text-xs cursor-pointer"><Calendar className="w-3.5 h-3.5" /> Schedule Meeting</DropdownMenuItem>
               
-              {lead.status !== "Lost" && (
+              {lead.stage !== LeadStatus.LOST && (
                 <>
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Email Draft", lead.name, lead); }} className="gap-2 text-xs cursor-pointer"><Mail className="w-3.5 h-3.5" /> Send Email</DropdownMenuItem>
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Call Initiated", lead.name, lead); }} className="gap-2 text-xs cursor-pointer"><Phone className="w-3.5 h-3.5" /> Call</DropdownMenuItem>
@@ -715,7 +715,7 @@ const LeadsTable = ({
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingLead(lead); }}>Edit Lead</DropdownMenuItem>
                   
-                  {lead.status === "Won" && (
+                  {lead.stage === LeadStatus.WON && (
                     <>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }}>View Customer</DropdownMenuItem>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }}>Open Customer Profile</DropdownMenuItem>
@@ -723,21 +723,21 @@ const LeadsTable = ({
                     </>
                   )}
 
-                  {lead.status === "Lost" ? (
+                  {lead.stage === LeadStatus.LOST ? (
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }}>Reopen Lead</DropdownMenuItem>
-                  ) : lead.status !== "Won" ? (
+                  ) : lead.stage !== LeadStatus.WON ? (
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }}>Move Stage</DropdownMenuItem>
                   ) : null}
 
                   <DropdownMenuSeparator />
 
-                  {lead.status !== "Lost" && (
+                  {lead.stage !== LeadStatus.LOST && (
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTaskLead(lead); }}>Create Task</DropdownMenuItem>
                   )}
                   
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setMeetingLead(lead); }}>Schedule Meeting</DropdownMenuItem>
                   
-                  {lead.status !== "Lost" && (
+                  {lead.stage !== LeadStatus.LOST && (
                     <>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Email Draft", lead.name, lead); }}>Send Email</DropdownMenuItem>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Call Initiated", lead.name, lead); }}>Call</DropdownMenuItem>
@@ -754,7 +754,7 @@ const LeadsTable = ({
               <div className="space-y-1">
                 <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Stage</span>
                 <div>
-                  <StatusBadge status={lead.status} variant={statusVariantMap[lead.status] || "slate"} />
+                  <StatusBadge status={lead.status} variant={statusVariantMap[lead.stage] || "slate"} />
                 </div>
               </div>
               <div className="space-y-1">
@@ -771,7 +771,7 @@ const LeadsTable = ({
               </div>
               <div className="space-y-1">
                 <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Next Follow-up</span>
-                {lead.status === "Won" ? (
+                {lead.stage === LeadStatus.WON ? (
                   <p className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Completed
                   </p>
@@ -982,7 +982,7 @@ const LeadsTable = ({
             onSuccess={async () => {
               // Mark lead as Won
               try {
-                await updateLead(customerLead.id, { status: "Won" });
+                await updateLead(customerLead.id, { stage: LeadStatus.WON });
                 queryClient.invalidateQueries({ queryKey: ["leads"] });
                 queryClient.invalidateQueries({ queryKey: ["dashboard"] });
                 toast.success(`${customerLead.name} has been marked as Won.`);

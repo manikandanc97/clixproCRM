@@ -1,5 +1,7 @@
 "use client";
 
+import { LeadStatus } from "@/shared/types/lead";
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
@@ -19,7 +21,7 @@ export function StageTransitionModal({ isOpen, onClose, deal, onSelectTargetStag
 
   if (!isOpen || !deal) return null;
 
-  const stages = Object.values(PIPELINE_STAGE_LABELS);
+  const stages = Object.keys(PIPELINE_STAGE_LABELS) as LeadStatus[];
   
   const handleConfirm = () => {
     if (selectedStage && selectedStage !== deal.stage) {
@@ -58,7 +60,7 @@ export function StageTransitionModal({ isOpen, onClose, deal, onSelectTargetStag
                   )}
                 >
                   <div className="flex justify-between items-center">
-                    <span>{stage}</span>
+                    <span>{PIPELINE_STAGE_LABELS[stage]}</span>
                     {isCurrent && <span className="text-xs uppercase tracking-wider font-bold">Current</span>}
                   </div>
                 </button>

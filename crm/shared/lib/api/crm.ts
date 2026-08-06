@@ -38,6 +38,7 @@ function ensureArray<T>(value: T[] | null | undefined): T[] {
 
 function normalizeDashboardData(data: DashboardDataType): DashboardDataType {
   return {
+    ...data,
     stats: ensureArray(data?.stats),
     recentActivities: ensureArray(data?.recentActivities),
     salesChartData: ensureArray(data?.salesChartData),
@@ -54,6 +55,11 @@ function normalizeReportsData(data: ReportsDataType): ReportsDataType {
     activityHeatmap: ensureArray(data?.activityHeatmap),
     insights: ensureArray(data?.insights),
     revenueTarget: data?.revenueTarget ?? null,
+    leadSources: ensureArray(data?.leadSources),
+    topCustomers: ensureArray(data?.topCustomers),
+    recentActivities: ensureArray(data?.recentActivities),
+    upcomingFollowUps: ensureArray(data?.upcomingFollowUps),
+    salesActivities: ensureArray(data?.salesActivities),
   };
 }
 
@@ -104,8 +110,9 @@ export function fetchQuotationsData() {
   return unwrapResponse<QuotationsDataType>(client.get("/crm/quotations"));
 }
 
-export async function fetchReportsData() {
-  return normalizeReportsData(await unwrapResponse<ReportsDataType>(client.get("/crm/reports")));
+export async function fetchReportsData(params?: Record<string, any>) {
+  const query = params ? "?" + new URLSearchParams(params as any).toString() : "";
+  return normalizeReportsData(await unwrapResponse<ReportsDataType>(client.get(`/crm/reports${query}`)));
 }
 
 // ─── New dynamic endpoints ────────────────────────────────────────────────────
@@ -197,6 +204,26 @@ export function fetchAiSettings() {
 
 export function fetchNotificationSettings() {
   return unwrapResponse<NotificationSettingsDataType>(client.get("/crm/settings/notifications"));
+}
+
+export function updateWorkspaceData(data: Partial<WorkspaceDataType>) {
+  return unwrapResponse<WorkspaceDataType>(client.patch("/crm/settings/workspace", data));
+}
+
+export function updateSecuritySettings(data: Partial<SecuritySettingsDataType>) {
+  return unwrapResponse<SecuritySettingsDataType>(client.patch("/crm/settings/security", data));
+}
+
+export function updateIntegrationSettings(id: string, connected: boolean) {
+  return unwrapResponse<any>(client.patch(`/crm/settings/integrations/${id}`, { connected }));
+}
+
+export function updateAiSettings(data: Partial<AiSettingsDataType>) {
+  return unwrapResponse<AiSettingsDataType>(client.patch("/crm/settings/ai", data));
+}
+
+export function updateNotificationSettings(data: Partial<NotificationSettingsDataType>) {
+  return unwrapResponse<NotificationSettingsDataType>(client.patch("/crm/settings/notifications", data));
 }
 
 export function fetchRevenueTargets() {

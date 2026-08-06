@@ -4,6 +4,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { Clock, CheckCircle2, User, Mail, Phone, Calendar, ArrowRight, FileText, Settings, Target } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { ListSkeleton } from "@/shared/components/skeletons";
 
 const getIconForAction = (action: string) => {
   const a = action.toLowerCase();
@@ -23,7 +24,11 @@ export function TimelineTab({ leadId }: { leadId: string }) {
   const events = timelineResp?.data || [];
 
   if (isLoading) {
-    return <div className="text-center py-12 text-sm text-muted-foreground">Loading timeline...</div>;
+    return (
+      <div className="pt-4">
+        <ListSkeleton rows={3} />
+      </div>
+    );
   }
 
   if (events.length === 0) {

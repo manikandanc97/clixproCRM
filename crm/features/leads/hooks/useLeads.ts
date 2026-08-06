@@ -67,10 +67,7 @@ export function useLeads(leads: LeadType[]) {
 
     // 1. Apply Filters
     if (filters.stage !== "All Stages") {
-      result = result.filter(lead => {
-        if (filters.stage === "New Lead") return lead.status === "New";
-        return lead.status === filters.stage;
-      });
+      result = result.filter(lead => lead.stage === filters.stage);
     }
 
     if (filters.priority !== "All Priorities") {

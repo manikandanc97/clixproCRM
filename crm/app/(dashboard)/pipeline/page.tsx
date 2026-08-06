@@ -146,7 +146,7 @@ const PipelinePage = () => {
             change="0%"
             trend="up"
             icon={CurrencyIcon}
-            color="purple"
+            color="emerald"
             delay={0.1}
           />
           <CRMMetricCard 
@@ -155,7 +155,7 @@ const PipelinePage = () => {
             change="0%"
             trend="up"
             icon={Target}
-            color="blue"
+            color="cyan"
             delay={0.2}
           />
           <CRMMetricCard 
@@ -164,7 +164,7 @@ const PipelinePage = () => {
             change="0%"
             trend={stuckDeals > 0 ? "down" : "up"}
             icon={TrendingUp}
-            color="blue"
+            color="pink"
             delay={0.3}
           />
         </CRMMetricsGrid>

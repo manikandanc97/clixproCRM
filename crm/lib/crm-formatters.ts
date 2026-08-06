@@ -3,21 +3,22 @@
 
 
 import { useCRMStore } from "@/shared/store/useCRMStore";
+import { LeadStatus } from "@/shared/types/lead";
 
 export const LEAD_STATUS_LABELS: Record<string, string> = {
-  NEW: "New",
-  CONTACTED: "Contacted",
-  PROPOSAL_SENT: "Proposal Sent",
-  WON: "Won",
-  LOST: "Lost",
+  [LeadStatus.NEW]: "New",
+  [LeadStatus.CONTACTED]: "Contacted",
+  [LeadStatus.PROPOSAL_SENT]: "Proposal Sent",
+  [LeadStatus.WON]: "Won",
+  [LeadStatus.LOST]: "Lost",
 };
 
 export const PIPELINE_STAGE_LABELS: Record<string, string> = {
-  NEW: "New Lead",
-  CONTACTED: "Contacted",
-  PROPOSAL_SENT: "Proposal Sent",
-  WON: "Won",
-  LOST: "Lost",
+  [LeadStatus.NEW]: "New Lead",
+  [LeadStatus.CONTACTED]: "Contacted",
+  [LeadStatus.PROPOSAL_SENT]: "Proposal Sent",
+  [LeadStatus.WON]: "Won",
+  [LeadStatus.LOST]: "Lost",
 };
 
 export const TASK_PRIORITY_LABELS: Record<string, string> = {

@@ -176,6 +176,19 @@ export class DashboardService {
       ? ((activeUsersCurrent - activeUsersPrevious) / activeUsersPrevious) * 100
       : (activeUsersCurrent > 0 ? 100 : 0);
 
+    const revenueTargetData = await prisma.revenueTarget.findFirst({
+      where: { tenantId, isActive: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    const targetValue = revenueTargetData ? toNumber(revenueTargetData.value) : 0;
+    const targetChange = targetValue > 0 ? (currentRevenue / targetValue) * 100 : 0;
+    const revenueTarget = {
+      revenue: currentRevenue,
+      target: targetValue,
+      change: formatPercentage(targetChange / 100),
+      positive: targetChange >= 100
+    };
+
     return {
       stats: dashboardStats,
       recentActivities,
@@ -185,6 +198,7 @@ export class DashboardService {
       weeklyGrowth: Math.round(weeklyGrowth * 10) / 10,
       liveTrafficGrowth: Math.round(liveTrafficGrowth * 10) / 10,
       activeUsersGrowth: Math.round(activeUsersGrowth * 10) / 10,
+      revenueTarget,
     };
   }
 }

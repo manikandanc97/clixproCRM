@@ -4,7 +4,7 @@ import { MetricCardType } from "./common";
 
 export interface RevenueChartPointType {
   name: string;
-  revenue: number;
+  total: number;
 }
 
 export interface ConversionChartPointType {
@@ -49,6 +49,40 @@ export interface PerformanceType {
   trendPositive: boolean;
 }
 
+export interface LeadSourceType {
+  name: string;
+  value: number;
+}
+
+export interface TopCustomerType {
+  id: string;
+  name: string;
+  company: string;
+  revenue: number;
+}
+
+export interface RecentActivityType {
+  id: string;
+  action: string;
+  description: string | null;
+  createdAt: string;
+  userName?: string;
+  leadName?: string;
+}
+
+export interface UpcomingFollowUpType {
+  id: string;
+  title: string;
+  type: "TASK" | "MEETING";
+  date: string;
+  status: string;
+}
+
+export interface SalesActivityType {
+  name: string;
+  value: number;
+}
+
 export interface ReportsDataType {
   stats: MetricCardType[];
   revenueChart: RevenueChartPointType[];
@@ -58,6 +92,11 @@ export interface ReportsDataType {
   activityHeatmap: ActivityHeatmapPointType[];
   insights: ReportInsightType[];
   revenueTarget: RevenueTargetType | null;
+  leadSources: LeadSourceType[];
+  topCustomers: TopCustomerType[];
+  recentActivities: RecentActivityType[];
+  upcomingFollowUps: UpcomingFollowUpType[];
+  salesActivities: SalesActivityType[];
 }
 
 

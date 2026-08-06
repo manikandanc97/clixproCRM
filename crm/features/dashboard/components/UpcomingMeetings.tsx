@@ -100,6 +100,7 @@ export default function UpcomingMeetings() {
               title="No meetings scheduled"
               description="No upcoming meetings scheduled."
               action={{ label: "Schedule Meeting", onClick: handleSchedule }}
+              className="border-none bg-transparent shadow-none"
             />
           ) : (
             <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar">

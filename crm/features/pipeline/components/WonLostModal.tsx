@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { PipelineLeadType } from "@/shared/types/pipeline";
+import { LeadStatus } from "@/shared/types/lead";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
@@ -19,7 +20,7 @@ export interface WonLostSubmitData {
 interface WonLostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: "Won" | "Lost" | null;
+  type: LeadStatus.WON | LeadStatus.LOST | null;
   deal: PipelineLeadType | null;
   onSubmit: (data: WonLostSubmitData) => void;
   isLoading?: boolean;
@@ -53,9 +54,9 @@ export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading 
     setInternalLoading(true);
     onSubmit({ 
       reason, 
-      competitor: type === "Lost" ? competitor : undefined,
-      actualRevenue: type === "Won" ? Number(actualRevenue) : undefined,
-      wonDate: type === "Won" ? wonDate : undefined,
+      competitor: type === LeadStatus.LOST ? competitor : undefined,
+      actualRevenue: type === LeadStatus.WON ? Number(actualRevenue) : undefined,
+      wonDate: type === LeadStatus.WON ? wonDate : undefined,
       notes
     });
   };
@@ -67,7 +68,7 @@ export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading 
       <DialogContent aria-describedby={undefined} className="sm:max-w-[450px] p-0 overflow-hidden gap-0">
         <DialogHeader className="p-6 pb-4 border-b bg-muted/30">
           <DialogTitle className="flex items-center gap-3 text-xl">
-            {type === "Won" ? (
+            {type === LeadStatus.WON ? (
               <>
                 <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-full">
                   <Trophy className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -86,7 +87,7 @@ export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading 
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {type === "Won" && (
+          {type === LeadStatus.WON && (
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2.5">
                 <Label>Actual Revenue <span className="text-destructive ml-0.5">*</span></Label>
@@ -119,8 +120,8 @@ export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading 
 
           <div className="space-y-2.5">
             <Label>
-              {type === "Won" ? "What helped us win this deal?" : "Why was this deal lost?"}
-              {type === "Lost" ? (
+              {type === LeadStatus.WON ? "What helped us win this deal?" : "Why was this deal lost?"}
+              {type === LeadStatus.LOST ? (
                 <span className="text-destructive ml-0.5">*</span>
               ) : (
                 <span className="text-muted-foreground font-normal ml-0.5">(Optional)</span>
@@ -128,14 +129,14 @@ export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading 
             </Label>
             <Input
               type="text"
-              required={type === "Lost"}
+              required={type === LeadStatus.LOST}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={type === "Won" ? "Great features, pricing..." : "Pricing, missing features..."}
+              placeholder={type === LeadStatus.WON ? "Great features, pricing..." : "Pricing, missing features..."}
             />
           </div>
 
-          {type === "Lost" && (
+          {type === LeadStatus.LOST && (
             <div className="space-y-2.5">
               <Label>Competitor <span className="text-muted-foreground font-normal ml-0.5">(Optional)</span></Label>
               <Input
@@ -149,10 +150,10 @@ export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading 
 
           <div className="space-y-2.5">
             <Label>
-              Notes {type === "Lost" ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground font-normal ml-0.5">(Optional)</span>}
+              Notes {type === LeadStatus.LOST ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground font-normal ml-0.5">(Optional)</span>}
             </Label>
             <Textarea
-              required={type === "Lost"}
+              required={type === LeadStatus.LOST}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="resize-none min-h-[100px]"
@@ -162,8 +163,8 @@ export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading 
 
           <DialogFooter className="pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={showLoading} className="w-full sm:w-auto">Cancel</Button>
-            <Button type="submit" disabled={showLoading} variant={type === "Won" ? "default" : "destructive"} className="w-full sm:w-auto gap-2">
-              {showLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : type === "Won" ? <Trophy className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+            <Button type="submit" disabled={showLoading} variant={type === LeadStatus.WON ? "default" : "destructive"} className="w-full sm:w-auto gap-2">
+              {showLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : type === LeadStatus.WON ? <Trophy className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
               {showLoading ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>

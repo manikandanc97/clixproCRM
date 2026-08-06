@@ -63,10 +63,10 @@ export default function WelcomeBanner() {
         </div>
 
         <div className="flex flex-wrap gap-3 shrink-0">
-          {hasPermission(PERMISSIONS.ANALYTICS_READ) && (
+          {hasPermission(PERMISSIONS.REPORTS_READ) && (
             <Button asChild className="rounded-full px-6 h-10 bg-white text-slate-950 hover:bg-slate-200 font-bold transition-all shadow-md">
-              <Link href="/analytics" className="flex items-center gap-2 text-sm">
-                View Analytics
+              <Link href="/reports" className="flex items-center gap-2 text-sm">
+                View Reports
                 <ArrowUpRight className="w-4 h-4" />
               </Link>
             </Button>

@@ -6,8 +6,6 @@ import {
   FileText,
   KanbanSquare,
   LayoutDashboard,
-  Lightbulb,
-  PieChart,
   Settings,
   ShieldCheck,
   Ticket,
@@ -18,7 +16,7 @@ import {
 import { CRM_ROLES, type RoleKey } from "./roles";
 import type { NavGroup, NavItem } from "../rbac";
 
-const navLibrary: Record<string, NavItem> = {
+export const navLibrary: Record<string, NavItem> = {
   dashboard: { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   leads: { title: "Leads", href: "/leads", icon: Users },
   myLeads: { title: "My Leads", href: "/my-leads", icon: Users },
@@ -27,9 +25,7 @@ const navLibrary: Record<string, NavItem> = {
   tasks: { title: "Tasks", href: "/tasks", icon: CheckSquare },
   calendar: { title: "Calendar", href: "/calendar", icon: CalendarDays },
   quotations: { title: "Quotations", href: "/quotations", icon: FileText },
-  reports: { title: "Reports", href: "/reports", icon: BarChart3 },
-  analytics: { title: "Analytics", href: "/analytics", icon: PieChart },
-  aiInsights: { title: "AI Insights", href: "/ai-insights", icon: Lightbulb },
+  reports: { title: "Reports & Analytics", href: "/reports", icon: BarChart3 },
   employees: { title: "Employees", href: "/employees", icon: UserSquare2 },
   roleManagement: {
     title: "Role Management",
@@ -63,7 +59,7 @@ export const roleMenuConfig: Record<RoleKey, NavGroup[]> = {
     },
     {
       label: "Insights",
-      items: [navLibrary.reports, navLibrary.analytics, navLibrary.aiInsights],
+      items: [navLibrary.reports],
     },
     {
       label: "Administration",

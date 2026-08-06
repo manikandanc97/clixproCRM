@@ -32,4 +32,5 @@ export interface DashboardDataType {
   weeklyGrowth?: number;
   liveTrafficGrowth?: number;
   activeUsersGrowth?: number;
+  revenueTarget?: any; // We can use 'any' or import RevenueTargetType
 }

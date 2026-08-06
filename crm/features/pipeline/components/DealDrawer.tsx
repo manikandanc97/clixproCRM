@@ -37,30 +37,33 @@ export function DealDrawer({ item, isOpen, onClose, onStageChange }: DealDrawerP
   const currentData = { ...item, ...formData };
 
   const stageToProbability: Record<string, number> = {
-    "New Lead": 10,
-    "Contacted": 25,
-    "Proposal Sent": 50,
-    "Won": 100,
-    "Lost": 0,
+    "NEW": 10,
+    "CONTACTED": 25,
+    "PROPOSAL_SENT": 50,
+    "WON": 100,
+    "LOST": 0,
   };
+
+  const hasChanges = Object.keys(formData).length > 0;
 
   const handleChange = (field: keyof PipelineLeadType, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSave = () => {
+    const payload = {
+      name: currentData.name,
+      company: currentData.company,
+      value: currentData.valueAmount,
+      priority: currentData.priority,
+    };
+
     // If stage was changed in the drawer, we save the other fields first,
     // then trigger the standard stage change flow (which handles Won/Lost modals)
     if (currentData.stage && currentData.stage !== item.stage && onStageChange) {
       updateDeal({
         id: item.id,
-        data: {
-          name: currentData.name,
-          company: currentData.company,
-          valueAmount: currentData.valueAmount,
-          priority: currentData.priority,
-          probability: currentData.probability,
-        }
+        data: payload
       }, {
         onSuccess: () => {
           toast.success("Deal updated successfully");
@@ -72,13 +75,7 @@ export function DealDrawer({ item, isOpen, onClose, onStageChange }: DealDrawerP
 
     updateDeal({
       id: item.id,
-      data: {
-        name: currentData.name,
-        company: currentData.company,
-        valueAmount: currentData.valueAmount,
-        priority: currentData.priority,
-        probability: currentData.probability,
-      }
+      data: payload
     }, {
       onSuccess: () => {
         toast.success("Deal updated successfully");
@@ -156,11 +153,11 @@ export function DealDrawer({ item, isOpen, onClose, onStageChange }: DealDrawerP
                     }}
                     className="w-full bg-background border border-border rounded-xl px-4 py-2 text-sm font-semibold focus:border-primary outline-none transition-colors"
                   >
-                    <option value="New Lead">New Lead</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Proposal Sent">Proposal Sent</option>
-                    <option value="Won">Won</option>
-                    <option value="Lost">Lost</option>
+                    <option value="NEW">New Lead</option>
+                    <option value="CONTACTED">Contacted</option>
+                    <option value="PROPOSAL_SENT">Proposal Sent</option>
+                    <option value="WON">Won</option>
+                    <option value="LOST">Lost</option>
                   </select>
                 </div>
 
@@ -171,10 +168,9 @@ export function DealDrawer({ item, isOpen, onClose, onStageChange }: DealDrawerP
                     onChange={(e) => handleChange("priority", e.target.value)}
                     className="w-full bg-background border border-border rounded-xl px-4 py-2 text-sm font-semibold focus:border-primary outline-none transition-colors"
                   >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Urgent">Urgent</option>
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
                   </select>
                 </div>
 
@@ -217,7 +213,7 @@ export function DealDrawer({ item, isOpen, onClose, onStageChange }: DealDrawerP
         </div>
 
         <div className="p-4 border-t border-border bg-background">
-           <Button onClick={handleSave} disabled={isPending} className="w-full font-bold gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
+           <Button onClick={handleSave} disabled={isPending || !hasChanges} className="w-full font-bold gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
              <Save className="w-4 h-4" /> {isPending ? "Saving..." : "Save Changes"}
            </Button>
         </div>

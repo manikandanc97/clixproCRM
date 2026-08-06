@@ -4,12 +4,7 @@ import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { handleApiError } from "@/lib/api-error";
 import { resetPasswordSchema } from "@/shared/validations";
-import { checkRateLimit, incrementRateLimit, getClientIp } from "@/lib/rate-limit";
-
-const RESET_PASSWORD_RATE_LIMIT = {
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 5, // 5 requests per 15 minutes per IP
-};
+import { checkRateLimit, incrementRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
@@ -19,7 +14,7 @@ export async function POST(req: Request) {
     const ip = getClientIp(req);
     const identifier = `reset_pwd_${ip}`;
 
-    const rateLimit = await checkRateLimit(identifier, RESET_PASSWORD_RATE_LIMIT);
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.RESET_PASSWORD);
     if (!rateLimit.allowed) {
       const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
       return NextResponse.json(
@@ -28,7 +23,7 @@ export async function POST(req: Request) {
       );
     }
 
-    await incrementRateLimit(identifier, RESET_PASSWORD_RATE_LIMIT);
+    await incrementRateLimit(identifier, RATE_LIMITS.RESET_PASSWORD);
 
     // 1. Hash the token to compare with DB
     const hashedToken = crypto

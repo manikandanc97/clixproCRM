@@ -98,6 +98,11 @@ export const logoutUser = async () => {
   }
 };
 
+export const updateProfile = async (data: Record<string, any>) => {
+  const response = await client.patch<AuthResponse>("/auth/me", data);
+  return response.data;
+};
+
 
 
 

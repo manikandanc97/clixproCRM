@@ -19,21 +19,12 @@ interface EmptyStateProps {
   message: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { PageHeaderSkeleton, TableSkeleton, FormSkeleton } from "@/shared/components/skeletons";
+
 export function PageLoadingState(_props: LoadingStateProps) {
   return (
     <div className="flex flex-col space-y-6 w-full p-2">
-      {/* Header Skeleton */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-[200px] sm:w-[250px]" />
-          <Skeleton className="h-4 w-[250px] sm:w-[350px]" />
-        </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-9 w-[100px]" />
-          <Skeleton className="h-9 w-[140px]" />
-        </div>
-      </div>
+      <PageHeaderSkeleton />
 
       {/* Metrics Grid Skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -42,20 +33,7 @@ export function PageLoadingState(_props: LoadingStateProps) {
         <Skeleton className="h-[120px] rounded-xl w-full hidden md:block" />
       </div>
 
-      {/* Toolbar Skeleton */}
-      <div className="flex items-center gap-4 pt-2">
-        <Skeleton className="h-10 flex-1" />
-        <Skeleton className="h-10 w-[120px]" />
-      </div>
-
-      {/* Table/List Skeleton */}
-      <div className="space-y-3 pt-2">
-        <Skeleton className="h-12 w-full rounded-lg" />
-        <Skeleton className="h-12 w-full rounded-lg" />
-        <Skeleton className="h-12 w-full rounded-lg" />
-        <Skeleton className="h-12 w-full rounded-lg" />
-        <Skeleton className="h-12 w-full rounded-lg hidden sm:block" />
-      </div>
+      <TableSkeleton rows={5} cols={5} />
     </div>
   );
 }
@@ -69,20 +47,7 @@ export function ComponentLoadingState(_props: LoadingStateProps) {
           <Skeleton className="h-6 w-[150px]" />
           <Skeleton className="h-4 w-[250px]" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[100px]" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[100px]" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[100px]" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </div>
+        <FormSkeleton />
       </div>
     </div>
   );
@@ -112,12 +77,13 @@ export function PageErrorState({ title, message, onRetry }: ErrorStateProps) {
 import { EmptyState } from "@/shared/components/EmptyState";
 import { LucideIcon } from "lucide-react";
 
-export function EmptyStateCard({ title, message, icon }: EmptyStateProps & { icon?: LucideIcon }) {
+export function EmptyStateCard({ title, message, icon, action }: EmptyStateProps & { icon?: LucideIcon, action?: any }) {
   return (
     <EmptyState
       icon={icon}
       title={title}
       description={message}
+      action={action}
     />
   );
 }

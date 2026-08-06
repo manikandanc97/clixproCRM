@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Bell, MessageSquare, Volume2 } from "lucide-react";
+import { Bell, MessageSquare, Volume2, Loader2 } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
@@ -9,10 +9,11 @@ import { Switch } from "@/shared/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { CRMCard } from "@/shared/components/crm";
 import { EmptyStateCard, PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
-import { useNotificationSettings } from "@/shared/hooks/use-settings";
+import { useNotificationSettings, useUpdateNotificationSettings } from "@/shared/hooks/use-settings";
 
 const NotificationSettings = () => {
   const { data, isLoading, error, refetch } = useNotificationSettings();
+  const mutation = useUpdateNotificationSettings();
 
   if (isLoading) {
     return <ComponentLoadingState label="Loading notification settings..." />;
@@ -24,6 +25,31 @@ const NotificationSettings = () => {
 
   const channels = data?.channels ?? [];
   const categories = data?.categories ?? [];
+
+  const handleChannelToggle = (id: string, checked: boolean) => {
+    if (!data) return;
+    const newChannels = channels.map(ch => ch.id === id ? { ...ch, enabled: checked } : ch);
+    mutation.mutate({ ...data, channels: newChannels });
+  };
+
+  const handleCategoryToggle = (categoryId: string, notificationId: string, checked: boolean) => {
+    if (!data) return;
+    const newCategories = categories.map(cat => {
+      if (cat.id === categoryId) {
+        return {
+          ...cat,
+          notifications: cat.notifications.map(n => n.id === notificationId ? { ...n, enabled: checked } : n)
+        };
+      }
+      return cat;
+    });
+    mutation.mutate({ ...data, categories: newCategories });
+  };
+
+  const handlePulseToggle = () => {
+    if (!data) return;
+    mutation.mutate({ ...data, realtimePulseEnabled: !data.realtimePulseEnabled });
+  };
 
   return (
     <div className="space-y-5">
@@ -40,15 +66,22 @@ const NotificationSettings = () => {
               </div>
               <Label className="font-semibold text-sm text-foreground cursor-pointer">{channel.name}</Label>
             </div>
-            <Switch checked={channel.enabled} disabled />
+            <Switch 
+              checked={channel.enabled} 
+              onCheckedChange={(checked) => handleChannelToggle(channel.id, checked)}
+              disabled={mutation.isPending} 
+            />
           </CRMCard>
         ))}
       </div>
 
       <CRMCard>
-        <div className="mb-5">
-          <h3 className="text-base font-bold tracking-tight text-foreground">Notification Preferences</h3>
-          <p className="text-xs text-muted-foreground font-medium mt-0.5">Preferences are rendered from backend configuration.</p>
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-bold tracking-tight text-foreground">Notification Preferences</h3>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Manage alerts and activities.</p>
+          </div>
+          {mutation.isPending && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
         </div>
 
         {categories.length === 0 ? (
@@ -78,7 +111,11 @@ const NotificationSettings = () => {
                         <p className="text-[11px] text-muted-foreground mt-0.5 max-w-sm font-medium">{notification.description ?? "No description provided."}</p>
                       </div>
                     </div>
-                    <Switch checked={notification.enabled} disabled />
+                    <Switch 
+                      checked={notification.enabled} 
+                      onCheckedChange={(checked) => handleCategoryToggle(category.id, notification.id, checked)}
+                      disabled={mutation.isPending} 
+                    />
                   </div>
                 ))}
               </TabsContent>
@@ -95,11 +132,19 @@ const NotificationSettings = () => {
           <div>
             <h4 className="text-sm font-bold text-foreground tracking-tight">Real-time Activity Pulse</h4>
             <p className="text-[11px] text-muted-foreground max-w-sm font-medium mt-0.5">
-              {data?.realtimePulseEnabled ? "Enabled from backend settings." : "Disabled or not configured."}
+              Receive live websocket events for high-priority items.
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="shrink-0" disabled>Configure Pulse</Button>
+        <Button 
+          variant={data?.realtimePulseEnabled ? "default" : "outline"} 
+          size="sm" 
+          className="shrink-0" 
+          onClick={handlePulseToggle}
+          disabled={mutation.isPending}
+        >
+          {data?.realtimePulseEnabled ? "Enabled" : "Disabled"}
+        </Button>
       </CRMCard>
     </div>
   );

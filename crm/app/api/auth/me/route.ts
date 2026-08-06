@@ -121,3 +121,43 @@ export async function GET(req: Request) {
     }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
+    if (!token) return NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "Not authenticated" } }, { status: 401 });
+    
+    const payload = await verifyJWT(token);
+    if (!payload) return NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "Invalid token" } }, { status: 401 });
+
+    const data = await req.json();
+
+    // Update user in DB
+    const updatedUser = await prisma.user.update({
+      where: { id: payload.userId },
+      data: {
+        name: data.name,
+        email: data.email,
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          phone: (updatedUser as any).phone,
+          status: updatedUser.status,
+          tenantId: payload.tenantId,
+        }
+      }
+    }, { status: 200 });
+
+  } catch (error: unknown) {
+    console.error("[ME PATCH ERROR]", error);
+    return NextResponse.json({ success: false, error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to update profile" } }, { status: 500 });
+  }
+}

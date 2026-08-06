@@ -9,7 +9,6 @@ const NotificationSettings = dynamic(() => import("@/features/settings/component
 const SettingsSidebar = dynamic(() => import("@/features/settings/components/SettingsSidebar"));
 const WorkspaceSettings = dynamic(() => import("@/features/settings/components/WorkspaceSettings"));
 const TeamSettings = dynamic(() => import("@/features/settings/components/TeamSettings"));
-const BillingSettings = dynamic(() => import("@/features/settings/components/BillingSettings"));
 const IntegrationSettings = dynamic(() => import("@/features/settings/components/IntegrationSettings"));
 const AISettings = dynamic(() => import("@/features/settings/components/AISettings"));
 const PersonalizationSettings = dynamic(() => import("@/features/settings/components/PersonalizationSettings"));
@@ -33,7 +32,6 @@ const SettingsPage = () => {
       case "profile":       return <ProfileSettings />;
       case "workspace":     return <WorkspaceSettings />;
       case "team":          return <TeamSettings />;
-      case "billing":       return <BillingSettings />;
       case "integrations":  return <IntegrationSettings />;
       case "ai":            return <AISettings />;
       case "personalization": return <PersonalizationSettings />;

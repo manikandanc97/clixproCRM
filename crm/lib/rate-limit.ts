@@ -6,6 +6,21 @@ type RateLimitConfig = {
   maxRequests: number;
 };
 
+export const RATE_LIMITS = {
+  LOGIN: { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 requests / 15 min
+  REGISTER: { maxRequests: 5, windowMs: 60 * 60 * 1000 }, // 5 requests / hour
+  REFRESH: { maxRequests: 10, windowMs: 15 * 60 * 1000 }, // 10 requests / 15 min
+  FORGOT_PASSWORD: { maxRequests: 3, windowMs: 60 * 60 * 1000 }, // 3 requests / hour
+  RESET_PASSWORD: { maxRequests: 5, windowMs: 60 * 60 * 1000 }, // 5 requests / hour
+  DELETE: { maxRequests: 20, windowMs: 60 * 1000 }, // 20 requests / minute
+  BULK_DELETE: { maxRequests: 5, windowMs: 60 * 1000 }, // 5 requests / minute
+  IMPORT: { maxRequests: 5, windowMs: 60 * 60 * 1000 }, // 5 requests / hour
+  EXPORT: { maxRequests: 20, windowMs: 60 * 60 * 1000 }, // 20 requests / hour
+  FILE_UPLOAD: { maxRequests: 20, windowMs: 60 * 60 * 1000 }, // 20 requests / hour
+  AI: { maxRequests: 20, windowMs: 60 * 1000 }, // 20 requests / minute
+  ADMIN: { maxRequests: 60, windowMs: 60 * 1000 }, // 60 requests / minute
+};
+
 type RateLimitRecord = {
   count: number;
   resetTime: number;

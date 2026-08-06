@@ -1,5 +1,7 @@
 "use client";
 
+import { LeadStatus } from "@/shared/types/lead";
+
 import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 
@@ -166,7 +168,7 @@ const LeadsPage = () => {
   }).length;
   
   const conversionRate = safeLeads.length
-    ? `${Math.round((safeLeads.filter((lead) => lead.status === "Won").length / safeLeads.length) * 1000) / 10}%`
+    ? `${Math.round((safeLeads.filter((lead) => lead.stage === LeadStatus.WON).length / safeLeads.length) * 1000) / 10}%`
     : "0%";
 
   return (
@@ -209,15 +211,22 @@ const LeadsPage = () => {
                   <X className="w-3.5 h-3.5 mr-1" /> Clear Filters
                 </Button>
               )}
-              {["All", "New", "Contacted", "Proposal Sent", "Won", "Lost"].map((status) => (
+              {[
+  { label: "All", value: "all" },
+  { label: "New", value: LeadStatus.NEW },
+  { label: "Contacted", value: LeadStatus.CONTACTED },
+  { label: "Proposal Sent", value: LeadStatus.PROPOSAL_SENT },
+  { label: "Won", value: LeadStatus.WON },
+  { label: "Lost", value: LeadStatus.LOST }
+].map((statusObj) => (
                 <Button
-                  key={status}
-                  variant={statusFilter === status.toLowerCase() ? "secondary" : "ghost"}
+                  key={statusObj.value}
+                  variant={statusFilter === statusObj.value ? "secondary" : "ghost"}
                   size="sm"
-                  onClick={() => setStatusFilter(status.toLowerCase())}
+                  onClick={() => setStatusFilter(statusObj.value)}
                   className="h-8 px-3 text-xs font-semibold"
                 >
-                  {status}
+                  {statusObj.label}
                 </Button>
               ))}
             </div>

@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { z } from "zod";
 import { logAudit } from "@/lib/audit-logger";
+import { checkRateLimit, incrementRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit";
 
 const roleUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -16,6 +17,18 @@ const roleUpdateSchema = z.object({
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const ip = getClientIp(req);
+    const identifier = `admin_${ip}`;
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.ADMIN);
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      return NextResponse.json(
+        { success: false, error: { code: "TOO_MANY_REQUESTS", message: "Too many requests. Please try again later." } },
+        { status: 429, headers: { "Retry-After": retryAfterSeconds.toString() } }
+      );
+    }
+    await incrementRateLimit(identifier, RATE_LIMITS.ADMIN);
+
     const session = await requirePermission("Roles");
     const tenantId = session.tenantId;
     const { id: roleId } = await params;
@@ -97,6 +110,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const ip = getClientIp(req);
+    const identifier = `delete_${ip}`;
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.DELETE);
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      return NextResponse.json(
+        { success: false, error: { code: "TOO_MANY_REQUESTS", message: "Too many requests. Please try again later." } },
+        { status: 429, headers: { "Retry-After": retryAfterSeconds.toString() } }
+      );
+    }
+    await incrementRateLimit(identifier, RATE_LIMITS.DELETE);
+
     const session = await requirePermission("Roles");
     const tenantId = session.tenantId;
     const { id: roleId } = await params;

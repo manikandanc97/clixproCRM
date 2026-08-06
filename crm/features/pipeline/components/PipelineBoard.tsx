@@ -21,6 +21,7 @@ import {
 import PipelineColumn from "./PipelineColumn";
 import PipelineCard from "./PipelineCard";
 import { PipelineLeadType } from "@/shared/types/pipeline";
+import { LeadStatus } from "@/shared/types/lead";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useCRMStore } from "@/shared/store/useCRMStore";
@@ -29,7 +30,7 @@ import { DealDrawer } from "./DealDrawer";
 import { WonLostModal, WonLostSubmitData } from "./WonLostModal";
 import { ConfirmMoveModal } from "./ConfirmMoveModal";
 
-const stages: PipelineLeadType["stage"][] = ["New Lead", "Contacted", "Proposal Sent", "Won", "Lost"];
+const stages: PipelineLeadType["stage"][] = [LeadStatus.NEW, LeadStatus.CONTACTED, LeadStatus.PROPOSAL_SENT, LeadStatus.WON, LeadStatus.LOST];
 
 interface PipelineBoardProps {
   items: PipelineLeadType[];
@@ -39,7 +40,7 @@ interface PipelineBoardProps {
 const PipelineBoard = ({ items, onAddDeal }: PipelineBoardProps) => {
   const [activeItem, setActiveItem] = useState<PipelineLeadType | null>(null);
   const [selectedDeal, setSelectedDeal] = useState<PipelineLeadType | null>(null);
-  const [wonLostModal, setWonLostModal] = useState<{ isOpen: boolean; type: "Won" | "Lost" | null; deal: PipelineLeadType | null; originalStage: PipelineLeadType["stage"] | null }>({
+  const [wonLostModal, setWonLostModal] = useState<{ isOpen: boolean; type: LeadStatus.WON | LeadStatus.LOST | null; deal: PipelineLeadType | null; originalStage: PipelineLeadType["stage"] | null }>({
     isOpen: false,
     type: null,
     deal: null,
@@ -141,10 +142,10 @@ const PipelineBoard = ({ items, onAddDeal }: PipelineBoardProps) => {
       return;
     }
 
-    if (targetStage === "Lost" || targetStage === "Won") {
+    if (targetStage === LeadStatus.LOST || targetStage === LeadStatus.WON) {
       setWonLostModal({
         isOpen: true,
-        type: targetStage as "Won" | "Lost",
+        type: targetStage as LeadStatus.WON | LeadStatus.LOST,
         deal: { ...deal, stage: targetStage as any },
         originalStage: originalStage as any
       });
@@ -167,15 +168,7 @@ const PipelineBoard = ({ items, onAddDeal }: PipelineBoardProps) => {
     const targetStage = confirmMoveModal.targetStage;
     const originalStage = confirmMoveModal.originalStage;
 
-
-    const stageToEnum: Record<string, string> = {
-      "New Lead": "NEW",
-      "Contacted": "CONTACTED",
-      "Proposal Sent": "PROPOSAL_SENT",
-      "Won": "WON",
-      "Lost": "LOST",
-    };
-    const stage = stageToEnum[targetStage] || "NEW";
+    const stage = targetStage;
 
 
     // Update local state to reflect the move visually before API if not already done
@@ -186,7 +179,7 @@ const PipelineBoard = ({ items, onAddDeal }: PipelineBoardProps) => {
       data: { stage } 
     }, {
       onSuccess: () => {
-        if (originalStage === "Won") {
+        if (originalStage === LeadStatus.WON) {
           toast.success(`Deal moved from Won to ${targetStage}.`, {
             description: "Customer status updated successfully.",
           });
@@ -219,28 +212,28 @@ const PipelineBoard = ({ items, onAddDeal }: PipelineBoardProps) => {
   const handleWonLostSubmit = (data: WonLostSubmitData) => {
     if (!wonLostModal.deal || !wonLostModal.type) return;
     
-    const stageToEnum: Record<string, string> = { "Won": "WON", "Lost": "LOST" };
-    const stage = stageToEnum[wonLostModal.type] || "NEW";
+    
+    const stage = wonLostModal.type;
     
     // Update locally
-    movePipelineItem(wonLostModal.deal.id as string, wonLostModal.type);
+    movePipelineItem(wonLostModal.deal.id as string, stage);
 
     updatePipelineItem({
       id: wonLostModal.deal.id as string,
       data: {
         stage,
-        ...(wonLostModal.type === "Won" 
+        ...(stage === LeadStatus.WON 
             ? { wonReason: data.reason, wonDate: data.wonDate, actualRevenue: data.actualRevenue, notes: data.notes } 
             : { lostReason: data.reason, competitor: data.competitor, notes: data.notes })
       }
     }, {
       onSuccess: () => {
-        if (wonLostModal.type === "Won") {
+        if (wonLostModal.type === LeadStatus.WON) {
           toast.success(`Deal moved from ${wonLostModal.originalStage} to Won.`, {
             description: "Lead successfully converted to Customer.",
           });
         } else {
-          if (wonLostModal.originalStage === "Won") {
+          if (wonLostModal.originalStage === LeadStatus.WON) {
             toast.success(`Deal moved from Won to Lost.`, {
               description: "Customer status updated successfully.",
             });
@@ -295,12 +288,18 @@ const PipelineBoard = ({ items, onAddDeal }: PipelineBoardProps) => {
           {/* Add Stage Placeholder */}
           <div 
             onClick={handleAddStage}
-            className="min-w-[340px] h-[180px] rounded-xl border-2 border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-muted/40 transition-all cursor-pointer group shadow-sm"
+            className="min-w-[340px] max-w-[340px] h-full rounded-xl border-2 border-dashed border-border/60 bg-muted/10 flex flex-col items-center justify-center gap-4 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer group shadow-sm relative overflow-hidden"
           >
-             <div className="w-10 h-10 rounded-xl bg-background shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-               <Plus className="w-5 h-5" />
+             {/* Subtle Background Pattern/Glow */}
+             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-muted/20 pointer-events-none" />
+             
+             <div className="w-12 h-12 rounded-2xl bg-background border border-border shadow-sm flex items-center justify-center group-hover:scale-110 group-hover:-translate-y-1 group-hover:shadow-md transition-all duration-300 relative z-10">
+               <Plus className="w-6 h-6" />
              </div>
-             <span className="text-xs font-bold uppercase tracking-widest">Add New Stage</span>
+             <div className="flex flex-col items-center gap-1 z-10">
+                <span className="text-[13px] font-bold uppercase tracking-widest text-foreground group-hover:text-primary transition-colors">Add New Stage</span>
+                <span className="text-[11px] font-medium text-muted-foreground/70">Customize your pipeline</span>
+             </div>
           </div>
         </div>
 

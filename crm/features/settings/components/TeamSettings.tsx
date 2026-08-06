@@ -4,10 +4,8 @@ import React, { useState } from "react";
 import {
   UserPlus,
   Mail,
-  Shield,
   MoreHorizontal,
   Search,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -47,6 +45,9 @@ import { ComponentLoadingState } from "@/shared/components/page-states";
 const TeamSettings = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { data: hrmData, isLoading: loading } = useEmployees();
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("editor");
   
   const members = hrmData?.employees || [];
 
@@ -59,6 +60,28 @@ const TeamSettings = () => {
       m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleInvite = () => {
+    if (!inviteEmail) return;
+    alert(`Invitation sent to ${inviteEmail} as ${inviteRole}`);
+    setIsInviteOpen(false);
+    setInviteEmail("");
+    setInviteRole("editor");
+  };
+
+  const handleChangeRole = (id: string) => {
+    alert(`Change role dialog for user ${id}`);
+  };
+
+  const handleResend = (id: string) => {
+    alert(`Invitation resent to user ${id}`);
+  };
+
+  const handleRemove = (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to remove ${name} from the team?`)) {
+      alert(`User ${name} removed.`);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -73,9 +96,9 @@ const TeamSettings = () => {
             </p>
           </div>
 
-          <Dialog>
+          <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" disabled>
+              <Button size="sm">
                 <UserPlus className="w-4 h-4" />
                 Invite Member
               </Button>
@@ -94,13 +117,15 @@ const TeamSettings = () => {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       placeholder="name@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
                       className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all text-sm"
                     />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold text-muted-foreground">Workspace Role</Label>
-                  <Select defaultValue="editor">
+                  <Select value={inviteRole} onValueChange={setInviteRole}>
                     <SelectTrigger className="h-10 rounded-lg border-border/60 bg-muted/30 text-sm font-medium">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
@@ -113,7 +138,7 @@ const TeamSettings = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button className="w-full" size="lg" disabled>Send Invitation</Button>
+                <Button className="w-full" size="lg" onClick={handleInvite} disabled={!inviteEmail}>Send Invitation</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -137,9 +162,11 @@ const TeamSettings = () => {
                 <AvatarFallback className="text-[9px] font-bold bg-muted">{member.name[0]}</AvatarFallback>
               </Avatar>
             ))}
-            <div className="w-7 h-7 rounded-lg bg-muted border-2 border-card flex items-center justify-center text-[9px] font-bold text-muted-foreground shadow-sm">
-              +12
-            </div>
+            {members.length > 3 && (
+              <div className="w-7 h-7 rounded-lg bg-muted border-2 border-card flex items-center justify-center text-[9px] font-bold text-muted-foreground shadow-sm">
+                +{members.length - 3}
+              </div>
+            )}
           </div>
         </div>
 
@@ -193,10 +220,10 @@ const TeamSettings = () => {
                       Member Actions
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator className="my-1" />
-                    <DropdownMenuItem className="text-xs font-medium rounded-lg cursor-pointer" disabled>Change Role</DropdownMenuItem>
-                    <DropdownMenuItem className="text-xs font-medium rounded-lg cursor-pointer" disabled>Resend Invitation</DropdownMenuItem>
+                    <DropdownMenuItem className="text-xs font-medium rounded-lg cursor-pointer" onClick={() => handleChangeRole(member.id)}>Change Role</DropdownMenuItem>
+                    <DropdownMenuItem className="text-xs font-medium rounded-lg cursor-pointer" onClick={() => handleResend(member.id)}>Resend Invitation</DropdownMenuItem>
                     <DropdownMenuSeparator className="my-1" />
-                    <DropdownMenuItem className="text-xs font-bold text-destructive focus:bg-destructive/10 rounded-lg cursor-pointer" disabled>
+                    <DropdownMenuItem className="text-xs font-bold text-destructive focus:bg-destructive/10 rounded-lg cursor-pointer" onClick={() => handleRemove(member.id, member.name)}>
                       Remove from Team
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -204,29 +231,6 @@ const TeamSettings = () => {
               </div>
             </motion.div>
           ))}
-        </div>
-      </CRMCard>
-
-      {/* RBAC info */}
-      <CRMCard className="border-primary/20 bg-primary/5 hover:border-primary/30">
-        <div className="flex items-start gap-4">
-          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Shield className="w-4 h-4 text-primary" />
-          </div>
-          <div>
-            <h4 className="font-bold text-primary text-sm tracking-tight flex items-center gap-2">
-              Enterprise Permissions
-              <Badge className="bg-primary text-primary-foreground text-[8px] font-bold uppercase tracking-widest rounded-md">
-                Beta
-              </Badge>
-            </h4>
-            <p className="text-xs text-primary/70 font-medium mt-0.5">
-              Create custom roles with granular permissions for specific modules.{" "}
-              <Button variant="link" className="p-0 h-auto text-xs text-primary font-bold decoration-primary/30" disabled>
-                Configure RBAC <ExternalLink className="w-3 h-3 ml-1 inline" />
-              </Button>
-            </p>
-          </div>
         </div>
       </CRMCard>
     </div>

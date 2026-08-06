@@ -3,12 +3,7 @@ import prisma from "@/lib/prisma";
 import crypto from "crypto";
 import { handleApiError } from "@/lib/api-error";
 import { forgotPasswordSchema } from "@/shared/validations";
-import { checkRateLimit, incrementRateLimit, getClientIp } from "@/lib/rate-limit";
-
-const FORGOT_PASSWORD_RATE_LIMIT = {
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 3, // 3 requests per 15 minutes per IP
-};
+import { checkRateLimit, incrementRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
@@ -20,7 +15,7 @@ export async function POST(req: Request) {
     const ip = getClientIp(req);
     const identifier = `forgot_pwd_${ip}_${normalizedEmail}`;
 
-    const rateLimit = await checkRateLimit(identifier, FORGOT_PASSWORD_RATE_LIMIT);
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.FORGOT_PASSWORD);
     if (!rateLimit.allowed) {
       const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
       return NextResponse.json(
@@ -29,7 +24,7 @@ export async function POST(req: Request) {
       );
     }
 
-    await incrementRateLimit(identifier, FORGOT_PASSWORD_RATE_LIMIT);
+    await incrementRateLimit(identifier, RATE_LIMITS.FORGOT_PASSWORD);
 
     // 1. Find user (never reveal if exists to the client)
     const user = await prisma.user.findUnique({

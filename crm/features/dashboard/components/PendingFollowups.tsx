@@ -51,6 +51,7 @@ export default function PendingFollowups() {
                 title="No tasks found"
                 description="No pending tasks at the moment."
                 action={{ label: "Create New Task", onClick: () => router.push("/tasks?new=true") }}
+                className="border-none bg-transparent shadow-none"
               />
             ) : (
               <>

@@ -1,5 +1,7 @@
 // pipeline types
 
+import { LeadStatus } from "./lead";
+
 export interface PipelineMetricType {
   title: string;
   value: string;
@@ -14,7 +16,7 @@ export interface PipelineLeadType {
   valueAmount: number;
   followUp: string;
   followUpAt: string | null;
-  stage: "New Lead" | "Contacted" | "Proposal Sent" | "Won" | "Lost";
+  stage: LeadStatus;
   // Deal Intelligence
   priority: "High" | "Medium" | "Low";
   probability: number;

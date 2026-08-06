@@ -8,6 +8,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/shared/lib/utils";
 import { useCurrency } from "@/shared/hooks/use-currency";
+import { PIPELINE_STAGE_LABELS } from "@/lib/crm-formatters";
 
 interface Props {
   title: string;
@@ -26,13 +27,14 @@ const PipelineColumn = ({ title, items, onSelectDeal, onAddDeal }: Props) => {
   const { formatCurrency, currency } = useCurrency();
   const formattedTotal = formatCurrency(totalValue);
   const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
+  const displayTitle = PIPELINE_STAGE_LABELS[title] || title;
 
   const getHeaderIconColor = (t: string) => {
     switch (t) {
-      case "Won": return "bg-success";
-      case "Lost": return "bg-destructive";
-      case "Proposal Sent": return "bg-primary";
-      case "Contacted": return "bg-warning";
+      case "WON": return "bg-success";
+      case "LOST": return "bg-destructive";
+      case "PROPOSAL_SENT": return "bg-primary";
+      case "CONTACTED": return "bg-warning";
       default: return "bg-muted-foreground";
     }
   };
@@ -50,7 +52,7 @@ const PipelineColumn = ({ title, items, onSelectDeal, onAddDeal }: Props) => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <div className={cn("w-2 h-2 rounded-full", getHeaderIconColor(title))} />
-            <h2 className="font-bold text-foreground tracking-tight text-sm">{title}</h2>
+            <h2 className="font-bold text-foreground tracking-tight text-sm uppercase tracking-wider">{displayTitle}</h2>
             <Badge variant="secondary" className="bg-background text-muted-foreground border-border shadow-sm rounded-full h-5 px-1.5 min-w-[20px] justify-center text-[10px] font-bold">
               {items.length}
             </Badge>

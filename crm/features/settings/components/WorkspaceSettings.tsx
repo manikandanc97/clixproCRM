@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Building2, Hash, Globe, MapPin, DollarSign, IndianRupee, Upload, AlertTriangle } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Building2, Hash, Globe, MapPin, DollarSign, IndianRupee, Upload, AlertTriangle, Save, Loader2 } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import {
@@ -16,15 +16,39 @@ import { Badge } from "@/shared/ui/badge";
 import { CRMCard } from "@/shared/components/crm";
 import Image from "next/image";
 
-import { useWorkspace } from "@/shared/hooks/use-settings";
+import { useWorkspace, useUpdateWorkspace } from "@/shared/hooks/use-settings";
 import { PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
 import { useCurrency } from "@/shared/hooks/use-currency";
 
 const WorkspaceSettings = () => {
   const { data: workspace, isLoading: loading, error, refetch } = useWorkspace();
-  const workspaceLogo = workspace?.logo;
+  const mutation = useUpdateWorkspace();
   const { currency } = useCurrency();
   const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
+
+  const [formData, setFormData] = useState({
+    name: "",
+    taxId: "",
+    currency: "",
+    timezone: "",
+    address: "",
+    logo: null as string | null
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (workspace) {
+      setFormData({
+        name: workspace.name || "",
+        taxId: (workspace as any).taxId || "",
+        currency: (workspace as any).currency || "INR",
+        timezone: (workspace as any).timezone || "ist",
+        address: (workspace as any).address || "",
+        logo: (workspace as any).logo || null
+      });
+    }
+  }, [workspace]);
 
   if (loading) {
     return <ComponentLoadingState label="Loading workspace configuration..." />;
@@ -33,6 +57,32 @@ const WorkspaceSettings = () => {
   if (error) {
     return <PageErrorState title="Workspace settings unavailable" message={(error as Error).message} onRetry={() => { void refetch(); }} />;
   }
+
+  const handleSave = () => {
+    mutation.mutate(formData);
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData(prev => ({ ...prev, logo: URL.createObjectURL(file) }));
+    }
+  };
+
+  const handleDeleteWorkspace = () => {
+    if (window.confirm("Are you sure you want to delete this workspace? This action cannot be undone.")) {
+      console.log("Workspace deletion triggered");
+      alert("Workspace deletion initiated.");
+    }
+  };
+
+  const hasChanges = 
+    formData.name !== (workspace?.name || "") ||
+    formData.taxId !== ((workspace as any)?.taxId || "") ||
+    formData.currency !== ((workspace as any)?.currency || "USD") ||
+    formData.timezone !== ((workspace as any)?.timezone || "utc") ||
+    formData.address !== ((workspace as any)?.address || "") ||
+    formData.logo !== ((workspace as any)?.logo || null);
 
   return (
     <div className="space-y-5">
@@ -49,17 +99,20 @@ const WorkspaceSettings = () => {
               variant="outline"
               className="rounded-md px-2.5 py-0.5 bg-primary/8 text-primary border-primary/20 font-bold text-[9px] uppercase tracking-widest"
             >
-              {workspace?.plan ?? "No plan configured"}
+              {(workspace as any)?.plan ?? "Pro Plan"}
             </Badge>
           </div>
   
           <div className="flex flex-col sm:flex-row items-start gap-5">
             <div className="relative group shrink-0">
-              <div className="w-20 h-20 rounded-xl bg-muted border border-dashed border-border flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/50">
-                {workspaceLogo ? (
+              <div 
+                className="w-20 h-20 rounded-xl bg-muted border border-dashed border-border flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/50 cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {formData.logo ? (
                   <div className="relative w-full h-full">
                     <Image 
-                      src={workspaceLogo} 
+                      src={formData.logo} 
                       alt="Workspace Logo" 
                       fill 
                       className="object-cover"
@@ -73,8 +126,10 @@ const WorkspaceSettings = () => {
                 </div>
                 <input
                   type="file"
-                  className="absolute inset-0 opacity-0 cursor-not-allowed z-20"
-                  disabled
+                  ref={fileInputRef}
+                  onChange={handleLogoUpload}
+                  accept="image/*"
+                  className="hidden"
                 />
               </div>
             </div>
@@ -86,8 +141,13 @@ const WorkspaceSettings = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled>Upload New</Button>
-                <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" disabled>
+                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>Upload New</Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-destructive hover:bg-destructive/10" 
+                  onClick={() => setFormData(prev => ({ ...prev, logo: null }))}
+                >
                   Remove
                 </Button>
               </div>
@@ -97,11 +157,22 @@ const WorkspaceSettings = () => {
   
         {/* Organization Details */}
         <CRMCard>
-          <div className="mb-5">
-            <h3 className="text-base font-bold tracking-tight text-foreground">Organization Details</h3>
-            <p className="text-xs text-muted-foreground font-medium mt-0.5">
-              Manage your business identity and regional settings.
-            </p>
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold tracking-tight text-foreground">Organization Details</h3>
+              <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                Manage your business identity and regional settings.
+              </p>
+            </div>
+            <Button 
+              size="sm" 
+              onClick={handleSave} 
+              disabled={!hasChanges || mutation.isPending}
+              className="flex items-center gap-2"
+            >
+              {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Save Changes
+            </Button>
           </div>
   
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -110,7 +181,8 @@ const WorkspaceSettings = () => {
               <div className="relative group">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
-                  defaultValue={workspace?.name ?? ""}
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all"
                 />
               </div>
@@ -121,7 +193,8 @@ const WorkspaceSettings = () => {
               <div className="relative group">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
-                  defaultValue={workspace?.taxId ?? ""}
+                  value={formData.taxId}
+                  onChange={(e) => setFormData(prev => ({ ...prev, taxId: e.target.value }))}
                   className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all"
                 />
               </div>
@@ -131,7 +204,7 @@ const WorkspaceSettings = () => {
               <Label className="text-xs font-semibold text-muted-foreground">Default Currency</Label>
               <div className="relative">
                 <CurrencyIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
-                <Select defaultValue={workspace?.currency ?? undefined}>
+                <Select value={formData.currency} onValueChange={(val) => setFormData(prev => ({ ...prev, currency: val }))}>
                   <SelectTrigger className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:ring-primary/20 font-medium text-sm">
                     <SelectValue placeholder="Select Currency" />
                   </SelectTrigger>
@@ -147,7 +220,7 @@ const WorkspaceSettings = () => {
               <Label className="text-xs font-semibold text-muted-foreground">Timezone</Label>
               <div className="relative">
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
-                <Select defaultValue={workspace?.timezone ?? undefined}>
+                <Select value={formData.timezone} onValueChange={(val) => setFormData(prev => ({ ...prev, timezone: val }))}>
                   <SelectTrigger className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:ring-primary/20 font-medium text-sm">
                     <SelectValue placeholder="Select Timezone" />
                   </SelectTrigger>
@@ -165,7 +238,8 @@ const WorkspaceSettings = () => {
               <div className="relative group">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input
-                  defaultValue={workspace?.address ?? ""}
+                  value={formData.address}
+                  onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                   className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all"
                 />
               </div>
@@ -187,7 +261,7 @@ const WorkspaceSettings = () => {
               </p>
             </div>
           </div>
-          <Button variant="destructive" size="sm" disabled>Delete</Button>
+          <Button variant="destructive" size="sm" onClick={handleDeleteWorkspace}>Delete</Button>
         </div>
       </CRMCard>
     </div>

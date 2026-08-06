@@ -31,8 +31,10 @@ export default function HotLeads() {
           {leads.length === 0 ? (
             <EmptyState 
               icon={Flame}
-              title="No Hot Leads"
-              description="Add active leads and interact with them to see them here."
+              title="No hot leads"
+              description="Keep prospecting to find hot opportunities."
+              action={{ label: "Add Lead", onClick: () => router.push("/leads?new=true") }}
+              className="border-none bg-transparent shadow-none"
             />
           ) : (
             <div className="space-y-5">

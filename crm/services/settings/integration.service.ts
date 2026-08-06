@@ -16,14 +16,24 @@ import {
 
 
 export class IntegrationService {
+  private static integrationSettings = {
+    integrations: [
+      { id: "i1", name: "Google Workspace", description: "Sync contacts and calendar", category: "Productivity", connected: true },
+      { id: "i2", name: "Slack", description: "Receive notifications in channels", category: "Communication", connected: false },
+      { id: "i3", name: "Mailchimp", description: "Sync leads to mailing lists", category: "Marketing", connected: true }
+    ]
+  };
+
   static async getIntegrationSettings(_tenantId: string) {
-    return {
-      integrations: [
-        { id: "i1", name: "Google Workspace", description: "Sync contacts and calendar", category: "Productivity", connected: true },
-        { id: "i2", name: "Slack", description: "Receive notifications in channels", category: "Communication", connected: false },
-        { id: "i3", name: "Mailchimp", description: "Sync leads to mailing lists", category: "Marketing", connected: true }
-      ]
-    };
+    return this.integrationSettings;
+  }
+
+  static async updateIntegrationSettings(_tenantId: string, id: string, connected: boolean) {
+    const integration = this.integrationSettings.integrations.find((i) => i.id === id);
+    if (integration) {
+      integration.connected = connected;
+    }
+    return this.integrationSettings;
   }
 }
 

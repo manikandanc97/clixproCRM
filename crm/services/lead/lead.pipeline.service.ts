@@ -84,7 +84,7 @@ export class LeadPipelineService {
         valueAmount: toNumber(lead.value),
         followUp: formatRelativeDate(lead.expectedCloseDate, { fallback: "Not scheduled" }),
         followUpAt: lead.expectedCloseDate,
-        stage: stageLabel,
+        stage: lead.stage,
         priority,
         probability,
         temperature,

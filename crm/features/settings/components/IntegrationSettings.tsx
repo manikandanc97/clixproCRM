@@ -1,17 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, Search, Settings2, Webhook } from "lucide-react";
+import { CheckCircle2, Search, Settings2, Webhook, Loader2 } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { CRMCard } from "@/shared/components/crm";
 import { EmptyStateCard, PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
-import { useIntegrationSettings } from "@/shared/hooks/use-settings";
+import { useIntegrationSettings, useUpdateIntegrationSettings } from "@/shared/hooks/use-settings";
 
 const IntegrationSettings = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { data, isLoading, error, refetch } = useIntegrationSettings();
+  const mutation = useUpdateIntegrationSettings();
 
   if (isLoading) {
     return <ComponentLoadingState label="Loading integrations..." />;
@@ -27,6 +28,10 @@ const IntegrationSettings = () => {
   });
   const connectedCount = integrations.filter((integration) => integration.connected).length;
 
+  const handleToggle = (id: string, currentlyConnected: boolean) => {
+    mutation.mutate({ id, connected: !currentlyConnected });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -39,9 +44,12 @@ const IntegrationSettings = () => {
             onChange={(event) => setSearchTerm(event.target.value)}
           />
         </div>
-        <Badge variant="outline" className="rounded-md bg-primary/5 text-primary border-primary/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest">
-          {connectedCount} Connected
-        </Badge>
+        <div className="flex items-center gap-2">
+          {mutation.isPending && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+          <Badge variant="outline" className="rounded-md bg-primary/5 text-primary border-primary/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest">
+            {connectedCount} Connected
+          </Badge>
+        </div>
       </div>
 
       {integrations.length === 0 ? (
@@ -66,10 +74,36 @@ const IntegrationSettings = () => {
                 </div>
                 <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed font-medium">{integration.description ?? "No description provided."}</p>
               </div>
-              <Button className="w-full rounded-lg h-9 text-[10px] font-bold uppercase tracking-widest" variant={integration.connected ? "outline" : "default"} disabled>
-                {integration.connected && <Settings2 className="w-3.5 h-3.5 mr-2" />}
-                {integration.connected ? "Configure" : "Connect Integration"}
-              </Button>
+              {integration.connected ? (
+                <div className="flex gap-2">
+                  <Button 
+                    className="flex-1 rounded-lg h-9 text-[10px] font-bold uppercase tracking-widest" 
+                    variant="outline" 
+                    onClick={() => { alert(`Opening configuration for ${integration.name}`); }}
+                    disabled={mutation.isPending}
+                  >
+                    <Settings2 className="w-3.5 h-3.5 mr-2" />
+                    Configure
+                  </Button>
+                  <Button 
+                    className="flex-1 rounded-lg h-9 text-[10px] font-bold uppercase tracking-widest hover:bg-destructive hover:text-destructive-foreground hover:border-destructive" 
+                    variant="outline" 
+                    onClick={() => handleToggle(integration.id, integration.connected)}
+                    disabled={mutation.isPending}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  className="w-full rounded-lg h-9 text-[10px] font-bold uppercase tracking-widest" 
+                  variant="default" 
+                  onClick={() => handleToggle(integration.id, integration.connected)}
+                  disabled={mutation.isPending}
+                >
+                  Connect Integration
+                </Button>
+              )}
             </CRMCard>
           ))}
         </div>

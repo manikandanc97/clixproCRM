@@ -105,6 +105,7 @@ const RecentActivities = () => {
                   icon={Filter}
                   title="No activities recorded"
                   description="No recent activity or events logged."
+                  className="border-none bg-transparent shadow-none"
                 />
               </motion.div>
             )}

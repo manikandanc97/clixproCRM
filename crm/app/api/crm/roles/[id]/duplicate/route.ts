@@ -3,9 +3,22 @@ import prisma from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { logAudit } from "@/lib/audit-logger";
+import { checkRateLimit, incrementRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const ip = getClientIp(req);
+    const identifier = `admin_${ip}`;
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.ADMIN);
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      return NextResponse.json(
+        { success: false, error: { code: "TOO_MANY_REQUESTS", message: "Too many requests. Please try again later." } },
+        { status: 429, headers: { "Retry-After": retryAfterSeconds.toString() } }
+      );
+    }
+    await incrementRateLimit(identifier, RATE_LIMITS.ADMIN);
+
     const session = await requirePermission("Roles", "Manage");
     const tenantId = session.tenantId;
     const { id: roleId } = await params;

@@ -10,6 +10,7 @@ import { EmptyState } from "@/shared/components/EmptyState";
 
 import { useViewMode } from "@/shared/hooks/useViewMode";
 import { ViewToggle } from "@/shared/components/crm/ViewToggle";
+import { ListSkeleton } from "@/shared/components/skeletons";
 
 export function NotesTab({ leadId }: { leadId: string }) {
   const { data: notesResp, isLoading } = useLeadNotes(leadId);
@@ -54,7 +55,9 @@ export function NotesTab({ leadId }: { leadId: string }) {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-sm text-muted-foreground">Loading notes...</div>
+        <div className="pt-4">
+          <ListSkeleton rows={3} />
+        </div>
       ) : sortedNotes.length === 0 ? (
         <EmptyState
           icon={MessageSquare}

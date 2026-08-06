@@ -11,3 +11,12 @@ export async function GET() {
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: unknown) { return handleApiError(error); }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    const session = await requireRole(["ADMIN", "MANAGER", "SALES", "SUPPORT", "EMPLOYEE"]);
+    const data = await req.json();
+    const updated = await SecurityService.updateSecuritySettings(session.tenantId, data);
+    return NextResponse.json({ success: true, data: updated }, { status: 200 });
+  } catch (error: unknown) { return handleApiError(error); }
+}

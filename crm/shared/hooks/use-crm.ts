@@ -125,11 +125,11 @@ export function useQuotations() {
   });
 }
 
-export function useReports() {
+export function useReports(params?: Record<string, any>) {
   const { isAuthenticated, token } = useAuth();
   return useQuery({
-    queryKey: ["reports", token],
-    queryFn: fetchReportsData,
+    queryKey: ["reports", token, params],
+    queryFn: () => fetchReportsData(params),
     enabled: isAuthenticated ,
   });
 }

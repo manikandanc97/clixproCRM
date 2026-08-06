@@ -17,7 +17,6 @@ const publicApiPaths = [
   "/api/auth/logout",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
-  "/api/auth/me",
 ];
 
 export async function proxy(request: NextRequest) {
@@ -40,6 +39,37 @@ export async function proxy(request: NextRequest) {
   );
 
   const isApiRoute = pathname.startsWith("/api/");
+
+  // CSRF defense-in-depth (OWASP): reject state-changing cross-origin requests.
+  // Primary mitigation is SameSite=Lax + HttpOnly cookies (browser never
+  // attaches the session cookie to cross-site POST/PATCH/PUT/DELETE). This
+  // adds a second layer without requiring any frontend changes.
+  if (
+    isApiRoute &&
+    request.method !== "GET" &&
+    request.method !== "HEAD" &&
+    request.method !== "OPTIONS"
+  ) {
+    const secFetchSite = request.headers.get("sec-fetch-site");
+    if (
+      secFetchSite &&
+      secFetchSite !== "same-origin" &&
+      secFetchSite !== "none"
+    ) {
+      return NextResponse.json(
+        { success: false, error: { code: "FORBIDDEN", message: "Cross-origin request blocked" } },
+        { status: 403 }
+      );
+    }
+
+    const origin = request.headers.get("origin");
+    if (origin && origin !== request.nextUrl.origin) {
+      return NextResponse.json(
+        { success: false, error: { code: "FORBIDDEN", message: "Cross-origin request blocked" } },
+        { status: 403 }
+      );
+    }
+  }
 
   if (isPublicPath || isPublicApiPath) {
     return NextResponse.next();
@@ -72,6 +102,13 @@ export async function proxy(request: NextRequest) {
       const ip = extractClientIp(request);
       const userAgent = request.headers.get("user-agent") || undefined;
       const data = await AuthService.refreshSession(refreshToken, { ip, userAgent });
+
+      // Forward the refreshed token values to the downstream route so it can
+      // authenticate against the new access token instead of attempting a
+      // second refresh with the already-rotated refresh token. The full cookie
+      // options are set on the response below for the browser.
+      request.cookies.set("auth_token", data.token);
+      request.cookies.set("refresh_token", data.refreshToken);
 
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set("x-user-id", data.user.id);

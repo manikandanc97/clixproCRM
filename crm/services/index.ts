@@ -12,7 +12,6 @@ export * from './analytics/analytics.service';
 export * from './employee/employee.service';
 export * from './settings/workspace.service';
 export * from './settings/security.service';
-export * from './settings/billing.service';
 export * from './settings/integration.service';
 export * from './settings/ai.service';
 export * from './settings/notification.service';

@@ -10,16 +10,11 @@ import { CRMPageContainer } from "@/shared/components/crm";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
 
-// Dynamic imports for heavy dashboard components
-const SalesChart = dynamic(() => import("@/features/dashboard/components/SalesChart"), { ssr: false, loading: () => <div className="h-[350px] skeleton rounded-xl" /> });
-const RevenueTracker = dynamic(() => import("@/features/dashboard/components/RevenueTracker"), { ssr: false, loading: () => <div className="h-[350px] skeleton rounded-xl" /> });
-const LeadFunnel = dynamic(() => import("@/features/dashboard/components/LeadFunnel"), { ssr: false, loading: () => <div className="h-[350px] skeleton rounded-xl" /> });
 
 // Standard dynamic imports
 const RecentActivities = dynamic(() => import("@/features/dashboard/components/RecentActivities"));
 const UpcomingMeetings = dynamic(() => import("@/features/dashboard/components/UpcomingMeetings"));
 const HotLeads = dynamic(() => import("@/features/dashboard/components/HotLeads"));
-const AIInsights = dynamic(() => import("@/features/dashboard/components/AIInsights"));
 const PendingFollowups = dynamic(() => import("@/features/dashboard/components/PendingFollowups"));
 const CalendarWidget = dynamic(() => import("@/features/dashboard/components/CalendarWidget"));
 import WelcomeBanner from "@/features/dashboard/components/WelcomeBanner";
@@ -27,6 +22,12 @@ import { DashboardWidgetWrapper } from "@/features/dashboard/components/Dashboar
 import CreateNewMenu from "@/features/dashboard/components/CreateNewMenu";
 import DashboardKPIs from "@/features/dashboard/components/DashboardKPIs";
 import DashboardFilterMenu from "@/features/dashboard/components/DashboardFilterMenu";
+
+const AIInsights = dynamic(() => import("@/features/reports/components/AIInsights"));
+const RevenueTarget = dynamic(() => import("@/features/reports/components/RevenueTarget"));
+const RevenueChart = dynamic(() => import("@/features/reports/components/RevenueChart"));
+const SalesFunnel = dynamic(() => import("@/features/reports/components/SalesFunnel"));
+const RecentCustomers = dynamic(() => import("@/features/dashboard/components/RecentCustomers"));
 
 const DashboardPage = () => {
   const { 
@@ -87,40 +88,28 @@ const DashboardPage = () => {
         {/* Row 2: KPI Grid */}
         <DashboardKPIs />
 
-        {/* Row 3: Primary Analytics (Sales Chart + Revenue Target) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <DashboardWidgetWrapper 
-              id="salesChart" 
-              title="Sales Chart"
-              isLoading={queries.dashboard.isLoading}
-              isError={queries.dashboard.isError}
-              onRetry={() => queries.dashboard.refetch()}
-              delay={0.5}
-              className="h-full"
-            >
-              <SalesChart />
-            </DashboardWidgetWrapper>
-          </div>
-          <div className="lg:col-span-1">
-            <DashboardWidgetWrapper 
-              id="revenueTracker" 
-              title="Revenue Tracker"
-              isLoading={queries.analytics.isLoading}
-              isError={queries.analytics.isError}
-              onRetry={() => queries.analytics.refetch()}
-              delay={0.6}
-              className="h-full"
-            >
-              <RevenueTracker />
-            </DashboardWidgetWrapper>
-          </div>
-        </div>
 
         {/* Row 4 & 5: Operational Layout */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           <div className="xl:col-span-3 flex flex-col gap-6">
             
+            <div className="grid grid-cols-1 gap-6">
+              <DashboardWidgetWrapper 
+                id="revenueChart" 
+                title="Revenue Chart"
+                isLoading={queries.analytics.isLoading}
+                isError={queries.analytics.isError}
+                onRetry={() => queries.analytics.refetch()}
+                delay={1.2}
+              >
+                <div className="h-[350px]">
+                  <RevenueChart 
+                    data={queries.analytics.data?.revenueOverview?.map(r => ({ name: r.name, total: r.revenue })) || []} 
+                  />
+                </div>
+              </DashboardWidgetWrapper>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <DashboardWidgetWrapper 
                 id="upcomingMeetings" 
@@ -145,7 +134,7 @@ const DashboardPage = () => {
               </DashboardWidgetWrapper>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <DashboardWidgetWrapper 
                 id="hotLeads" 
                 title="Hot Leads"
@@ -158,42 +147,49 @@ const DashboardPage = () => {
               </DashboardWidgetWrapper>
 
               <DashboardWidgetWrapper 
-                id="leadFunnel" 
-                title="Lead Funnel"
-                isLoading={queries.analytics.isLoading}
-                isError={queries.analytics.isError}
-                onRetry={() => queries.analytics.refetch()}
-                delay={1.0}
+                id="recentActivities" 
+                title="Recent Activities"
+                isLoading={queries.dashboard.isLoading}
+                isError={queries.dashboard.isError}
+                onRetry={() => queries.dashboard.refetch()}
+                delay={1.1}
               >
-                <LeadFunnel />
+                <RecentActivities />
               </DashboardWidgetWrapper>
             </div>
 
-            <DashboardWidgetWrapper 
-              id="recentActivities" 
-              title="Recent Activities"
-              isLoading={queries.dashboard.isLoading}
-              isError={queries.dashboard.isError}
-              onRetry={() => queries.dashboard.refetch()}
-              delay={1.1}
-            >
-              <RecentActivities />
-            </DashboardWidgetWrapper>
+            <div className="grid grid-cols-1 gap-6">
+              <DashboardWidgetWrapper 
+                id="recentCustomers" 
+                title="Recent Customers"
+                isLoading={queries.customers?.isLoading || false}
+                isError={queries.customers?.isError || false}
+                onRetry={() => queries.customers?.refetch()}
+                delay={1.3}
+              >
+                <div className="h-[350px]">
+                  <RecentCustomers />
+                </div>
+              </DashboardWidgetWrapper>
+            </div>
 
           </div>
 
           {/* Right Sidebar (Sticky) */}
           <div className="flex flex-col gap-6 w-full xl:sticky xl:top-24 self-start">
+            
             <DashboardWidgetWrapper 
-              id="aiInsights" 
-              title="AI Insights"
-              isLoading={queries.aiInsights.isLoading}
-              isError={queries.aiInsights.isError}
-              onRetry={() => queries.aiInsights.refetch()}
+              id="revenueTarget" 
+              title="Revenue Target"
+              isLoading={queries.dashboard.isLoading}
+              isError={queries.dashboard.isError}
+              onRetry={() => queries.dashboard.refetch()}
               delay={1.2}
             >
-              <AIInsights />
+              <RevenueTarget data={queries.dashboard.data?.revenueTarget ?? null} />
             </DashboardWidgetWrapper>
+
+            <AIInsights />
 
             <DashboardWidgetWrapper 
               id="calendarWidget" 

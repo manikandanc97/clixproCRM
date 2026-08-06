@@ -30,9 +30,9 @@ const ConversionChart = ({ data, loading }: ConversionChartProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="min-w-0"
+      className="min-w-0 h-full flex flex-col"
     >
-      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden group min-w-0">
+      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden group min-w-0 flex-1 flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -47,12 +47,12 @@ const ConversionChart = ({ data, loading }: ConversionChartProps) => {
           </Button>
         </CardHeader>
 
-        <CardContent className="p-8 pt-0 min-w-0">
+        <CardContent className="p-8 pt-0 min-w-0 flex-1 flex flex-col">
           <ChartContainer 
-            height={350} 
+            height="100%" 
             loading={loading}
             hasData={data && data.length > 0}
-            className="mt-4"
+            className="mt-4 flex-1"
           >
             <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />

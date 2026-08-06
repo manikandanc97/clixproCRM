@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { AuthService, AuthError } from "@/services/auth.service";
 import { extractClientIp } from "@/shared/lib/auth/utils";
 import { cookies } from "next/headers";
+import { checkRateLimit, incrementRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
@@ -17,6 +18,18 @@ export async function POST(req: Request) {
 
     const ip = extractClientIp(req);
     const userAgent = req.headers.get("user-agent") || undefined;
+
+    const identifier = `refresh_${ip}`;
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.REFRESH);
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      return NextResponse.json({
+        success: false,
+        error: { code: "TOO_MANY_REQUESTS", message: "Too many requests. Please try again later." }
+      }, { status: 429, headers: { "Retry-After": retryAfterSeconds.toString() } });
+    }
+
+    await incrementRateLimit(identifier, RATE_LIMITS.REFRESH);
 
     const data = await AuthService.refreshSession(refreshToken, { ip, userAgent });
 

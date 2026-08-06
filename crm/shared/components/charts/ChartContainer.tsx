@@ -19,6 +19,8 @@ interface ChartContainerProps {
   minHeight?: string | number;
 }
 
+import { ChartSkeleton } from "@/shared/components/skeletons";
+
 /**
  * A standardized wrapper for Recharts that ensures proper rendering dimensions.
  * Fixes "The width(-1) and height(-1) of chart should be greater than 0" warnings.
@@ -72,9 +74,8 @@ export const ChartContainer = ({
       style={containerStyle}
     >
       {(!isReady || loading) ? (
-        <div className="absolute inset-0 flex flex-col gap-4 p-4 rounded-xl skeleton overflow-hidden">
-          <div className="h-4 w-1/4 skeleton rounded" />
-          <div className="flex-1 w-full rounded-xl skeleton" />
+        <div className="absolute inset-0 z-10 w-full h-full bg-card rounded-xl">
+          <ChartSkeleton height="100%" />
         </div>
       ) : !hasData ? (
         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/5 rounded-xl border border-dashed border-border/50">

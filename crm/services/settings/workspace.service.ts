@@ -18,7 +18,24 @@ import {
 export class WorkspaceService {
   static async getWorkspace(tenantId: string) {
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-    return { name: tenant?.name || "ClixProCRM Workspace" };
+    return { 
+      name: tenant?.name || "ClixProCRM Workspace",
+      taxId: (tenant as any)?.taxId || "",
+      address: (tenant as any)?.address || "",
+      currency: (tenant as any)?.currency || "INR",
+      timezone: (tenant as any)?.timezone || "ist",
+      logo: (tenant as any)?.logo || null
+    };
+  }
+
+  static async updateWorkspace(tenantId: string, data: any) {
+    const updated = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        name: data.name,
+      }
+    });
+    return updated;
   }
 }
 

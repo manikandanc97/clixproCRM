@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/auth-utils";
 import prisma from "@/lib/prisma";
 import { handleApiError } from "@/lib/api-error";
 import { z } from "zod";
+import { checkRateLimit, incrementRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit";
 
 const roleSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -36,6 +37,18 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req);
+    const identifier = `admin_${ip}`;
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.ADMIN);
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      return NextResponse.json(
+        { success: false, error: { code: "TOO_MANY_REQUESTS", message: "Too many requests. Please try again later." } },
+        { status: 429, headers: { "Retry-After": retryAfterSeconds.toString() } }
+      );
+    }
+    await incrementRateLimit(identifier, RATE_LIMITS.ADMIN);
+
     const session = await requirePermission("Roles");
     const body = await req.json();
     const { name, description, color, priority, permissions } = roleSchema.parse(body);

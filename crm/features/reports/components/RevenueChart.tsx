@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 
 import { ChartContainer } from "@/shared/components/charts/ChartContainer";
 import { useCurrency } from "@/shared/hooks/use-currency";
+import { useRouter } from "next/navigation";
 
 interface RevenueChartProps {
   data: RevenueChartPointType[];
@@ -25,48 +26,42 @@ interface RevenueChartProps {
 
 const RevenueChart = ({ data, loading }: RevenueChartProps) => {
   const { formatCurrency, currencySymbol } = useCurrency();
+  const router = useRouter();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="min-w-0"
+      className="min-w-0 h-full flex flex-col"
     >
-      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden group min-w-0">
+      <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden group min-w-0 h-full flex-1 flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <CardTitle className="font-bold text-foreground text-xl tracking-tight">Revenue Analysis</CardTitle>
-              <div className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                +12.5%
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-500/10 text-blue-600 rounded-xl shadow-sm border border-blue-500/20">
+              <TrendingUp className="w-6 h-6" />
             </div>
-            <CardDescription className="text-muted-foreground text-sm mt-1">Monthly revenue trends from live CRM data</CardDescription>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-bold text-foreground text-xl tracking-tight">Revenue Analysis</CardTitle>
+                <div className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" />
+                  +12.5%
+                </div>
+              </div>
+              <CardDescription className="text-muted-foreground text-sm mt-1">Monthly revenue trends from live CRM data</CardDescription>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="hidden sm:flex rounded-xl border-border text-muted-foreground gap-2 h-9">
-              <Filter className="w-4 h-4" />
-              Filter
-            </Button>
-            <Button variant="outline" size="icon" className="rounded-xl border-border text-muted-foreground h-9 w-9">
-              <Download className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="rounded-xl transition-colors h-9 w-9">
-              <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-            </Button>
-          </div>
+          <Button variant="ghost" onClick={() => router.push("/reports")} className="text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/10 rounded-xl px-4 h-9">View All</Button>
         </CardHeader>
 
-        <CardContent className="p-8 pt-0 min-w-0">
+        <CardContent className="p-8 pt-0 min-w-0 flex-1 flex flex-col">
           <ChartContainer 
-            height={350} 
+            height="100%" 
             loading={loading}
             hasData={data && data.length > 0}
-            className="mt-4"
+            className="mt-4 flex-1"
           >
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 15 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
@@ -119,7 +114,7 @@ const RevenueChart = ({ data, loading }: RevenueChartProps) => {
               />
               <Area 
                 type="monotone" 
-                dataKey="revenue" 
+                dataKey="total" 
                 stroke="#3b82f6" 
                 strokeWidth={3}
                 fillOpacity={1} 

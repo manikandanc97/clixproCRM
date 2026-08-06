@@ -3,6 +3,7 @@ import { TaskQueryService, TaskService } from "@/services";
 import { getAuthSession, requireRole } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { taskSchema } from "@/shared/validations";
+import { checkRateLimit, incrementRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -39,6 +40,18 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 
 export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const ip = getClientIp(req);
+    const identifier = `delete_${ip}`;
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.DELETE);
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      return NextResponse.json(
+        { success: false, error: { code: "TOO_MANY_REQUESTS", message: "Too many requests. Please try again later." } },
+        { status: 429, headers: { "Retry-After": retryAfterSeconds.toString() } }
+      );
+    }
+    await incrementRateLimit(identifier, RATE_LIMITS.DELETE);
+
     const session = await requireRole(["ADMIN", "MANAGER", "SALES"]);
 
     const params = await context.params;

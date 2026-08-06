@@ -3,6 +3,7 @@ import { AuthService, AuthError } from "@/services/auth.service";
 import { LoginSchema } from "@/shared/validators/auth.validator";
 import { extractClientIp } from "@/shared/lib/auth/utils";
 import { cookies } from "next/headers";
+import { checkRateLimit, incrementRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
@@ -22,6 +23,18 @@ export async function POST(req: Request) {
 
     const ip = extractClientIp(req);
     const userAgent = req.headers.get("user-agent") || undefined;
+
+    const identifier = `login_${ip}`;
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.LOGIN);
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      return NextResponse.json({
+        success: false,
+        error: { code: "TOO_MANY_REQUESTS", message: "Too many requests. Please try again later." }
+      }, { status: 429, headers: { "Retry-After": retryAfterSeconds.toString() } });
+    }
+
+    await incrementRateLimit(identifier, RATE_LIMITS.LOGIN);
 
     const data = await AuthService.login(result.data, { ip, userAgent });
 

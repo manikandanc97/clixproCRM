@@ -35,6 +35,7 @@ import {
   DialogFooter,
 } from "@/shared/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
+import { navLibrary, roleMenuConfig } from "@/shared/lib/auth/rbac/menu-config";
 
 interface RolePermission {
   module: string;
@@ -51,11 +52,18 @@ interface Role {
   _count?: { users: number; permissions: number };
 }
 
-const MODULES = [
-  "Dashboard", "CRM", "Leads", "Customers", "Contacts", "Pipeline", 
-  "Tasks", "Meetings", "Employees", "Attendance", "Leave", "Payroll", 
-  "Projects", "Reports", "Finance", "Settings"
-];
+const usedTitles = new Set<string>();
+Object.values(roleMenuConfig).forEach(navGroups => {
+  navGroups.forEach(group => {
+    group.items.forEach(item => {
+      usedTitles.add(item.title);
+    });
+  });
+});
+
+const MODULES = Object.values(navLibrary)
+  .filter(nav => usedTitles.has(nav.title))
+  .map(nav => nav.title);
 
 export function RoleList() {
   const queryClient = useQueryClient();
@@ -63,7 +71,9 @@ export function RoleList() {
   const debouncedSearch = useDebounce(searchQuery, 300) || "";
   
   // Permissions editing state
-  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTargetRole, setEditTargetRole] = useState<Role | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
   const [newRoleName, setNewRoleName] = useState("");
 
@@ -113,7 +123,9 @@ export function RoleList() {
     onSuccess: () => {
       toast.success("Role saved successfully");
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      setEditingRoleId(null);
+      setEditDialogOpen(false);
+      setEditTargetRole(null);
+      setCreateDialogOpen(false);
     },
     onError: (err: Error) => toast.error(err.message)
   });
@@ -164,7 +176,7 @@ export function RoleList() {
   });
 
   const handleEditClick = (role: Role) => {
-    setEditingRoleId(role.id);
+    setEditTargetRole(role);
     const isSystemAdmin = role.name.toUpperCase() === "ADMIN" || role.name.toUpperCase() === "SUPER ADMIN";
     
     if (isSystemAdmin) {
@@ -180,12 +192,13 @@ export function RoleList() {
       }
       setEditPermissions(initialPerms);
     }
+    setEditDialogOpen(true);
   };
 
   const handleCreateClick = () => {
-    setEditingRoleId("new");
     setNewRoleName("");
     setEditPermissions([]);
+    setCreateDialogOpen(true);
   };
 
   const handleRenameClick = (role: Role) => {
@@ -215,7 +228,7 @@ export function RoleList() {
       return MODULES;
     }
     if (!role.permissions) return [];
-    return Array.from(new Set(role.permissions.filter((rp) => rp.hasAccess).map((rp) => rp.module).filter(Boolean))) as string[];
+    return Array.from(new Set(role.permissions.filter((rp) => rp.hasAccess && MODULES.includes(rp.module)).map((rp) => rp.module).filter(Boolean))) as string[];
   };
 
   const renderInlinePermissionsEditor = (roleName?: string) => {
@@ -237,6 +250,18 @@ export function RoleList() {
     );
   };
 
+  const isSystemAdminRole = editTargetRole ? (editTargetRole.name.toUpperCase() === "ADMIN" || editTargetRole.name.toUpperCase() === "SUPER ADMIN") : false;
+  
+  let hasEditChanges = false;
+  if (editTargetRole && !isSystemAdminRole) {
+    const initialPerms = editTargetRole.permissions?.filter(rp => rp.hasAccess).map(rp => rp.module) || [];
+    if (initialPerms.length !== editPermissions.length) {
+      hasEditChanges = true;
+    } else {
+      hasEditChanges = editPermissions.some(p => !initialPerms.includes(p));
+    }
+  }
+
   return (
     <>
       <div className="space-y-6">
@@ -251,7 +276,7 @@ export function RoleList() {
             />
           </div>
           <div className="flex items-center gap-2">
-            {canEditAnyRole && editingRoleId !== "new" && (
+            {canEditAnyRole && (
               <Button onClick={handleCreateClick}>
                 <Plus className="mr-2 h-4 w-4" /> Add Role
               </Button>
@@ -270,47 +295,7 @@ export function RoleList() {
               </CRMTableRow>
             </CRMTableHeader>
             <CRMTableBody>
-              {editingRoleId === "new" && (
-                <CRMTableRow className="bg-muted/10">
-                  <CRMTableCell className="align-top pt-4">
-                    <Input 
-                      value={newRoleName}
-                      onChange={(e) => setNewRoleName(e.target.value)}
-                      placeholder="Enter role name"
-                      className="max-w-[200px]"
-                      autoFocus
-                    />
-                  </CRMTableCell>
-                  <CRMTableCell className="align-top p-4">
-                    {renderInlinePermissionsEditor()}
-                  </CRMTableCell>
-                  <CRMTableCell className="align-top pt-4">
-                    <Badge variant="outline">New</Badge>
-                  </CRMTableCell>
-                  <CRMTableCell className="align-top pt-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button 
-                        size="sm" 
-                        onClick={() => {
-                          if (!newRoleName.trim()) {
-                            toast.error("Role name is required");
-                            return;
-                          }
-                          saveMutation.mutate({ id: "new", isNew: true, name: newRoleName });
-                        }}
-                        disabled={saveMutation.isPending}
-                      >
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditingRoleId(null)} disabled={saveMutation.isPending}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </CRMTableCell>
-                </CRMTableRow>
-              )}
-
-              {filteredRoles.length === 0 && editingRoleId !== "new" ? (
+              {filteredRoles.length === 0 ? (
                 <CRMTableRow>
                   <CRMTableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                     No roles found
@@ -322,11 +307,10 @@ export function RoleList() {
                   const canEditThisRole = canEditAnyRole && !(currentUserRole === "ADMIN" && isSuperAdminTarget);
                   const canDeleteThisRole = canEditThisRole && !role.isSystem;
                   const roleIsActive = role.isSystem ? true : role.isActive;
-                  const isEditingThisRow = editingRoleId === role.id;
                   const modules = getModuleBadges(role);
 
                   return (
-                    <CRMTableRow key={role.id} className={isEditingThisRow ? "bg-muted/10" : ""}>
+                    <CRMTableRow key={role.id}>
                       <CRMTableCell className="align-top pt-4">
                         <div className="flex items-center gap-2 font-medium">
                           <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role.color || '#3b82f6' }} />
@@ -337,39 +321,35 @@ export function RoleList() {
                         </div>
                       </CRMTableCell>
                       <CRMTableCell className="align-top pt-4">
-                        {isEditingThisRow ? (
-                          renderInlinePermissionsEditor(role.name)
-                        ) : (
-                          <div className="flex flex-wrap gap-1.5">
-                            {modules.length === 0 ? (
-                              <span className="text-sm text-muted-foreground">No permissions assigned</span>
-                            ) : (
-                              <>
-                                {modules.slice(0, 4).map(m => (
-                                  <Badge key={m} variant="secondary" className="font-normal text-xs bg-muted/50 text-muted-foreground hover:bg-muted">
-                                    {m}
-                                  </Badge>
-                                ))}
-                                {modules.length > 4 && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Badge variant="outline" className="font-normal text-xs border-dashed text-muted-foreground cursor-help">
-                                          +{modules.length - 4} More
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p className="max-w-[200px] leading-relaxed">
-                                          {modules.slice(4).join(', ')}
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        )}
+                        <div className="flex flex-wrap gap-1.5">
+                          {modules.length === 0 ? (
+                            <span className="text-sm text-muted-foreground">No permissions assigned</span>
+                          ) : (
+                            <>
+                              {modules.slice(0, 4).map(m => (
+                                <Badge key={m} variant="secondary" className="font-normal text-xs bg-muted/50 text-muted-foreground hover:bg-muted">
+                                  {m}
+                                </Badge>
+                              ))}
+                              {modules.length > 4 && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="outline" className="font-normal text-xs border-dashed text-muted-foreground cursor-help">
+                                        +{modules.length - 4} More
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="max-w-[200px] leading-relaxed">
+                                        {modules.slice(4).join(', ')}
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </CRMTableCell>
                       <CRMTableCell className="align-top pt-4">
                         <Badge variant={roleIsActive ? "default" : "destructive"} className="font-normal">
@@ -377,20 +357,7 @@ export function RoleList() {
                         </Badge>
                       </CRMTableCell>
                       <CRMTableCell className="align-top pt-4 text-right">
-                        {isEditingThisRow ? (
-                          <div className="flex items-center justify-end gap-2">
-                            <Button 
-                              size="sm" 
-                              onClick={() => saveMutation.mutate({ id: role.id, isNew: false })}
-                              disabled={saveMutation.isPending}
-                            >
-                              Save
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => setEditingRoleId(null)} disabled={saveMutation.isPending}>
-                              Cancel
-                            </Button>
-                          </div>
-                        ) : canEditThisRole ? (
+                        {canEditThisRole ? (
                           <div className="flex items-center justify-end gap-1.5">
                             <Button
                               variant="outline"
@@ -438,6 +405,100 @@ export function RoleList() {
           </DataTable>
         </div>
       </div>
+
+      {/* ── Create Role Dialog ─────────────────────────────────────── */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Create New Role
+            </DialogTitle>
+            <DialogDescription>
+              Define a new role and its module access permissions.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Role Name</label>
+              <Input 
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+                placeholder="e.g. Sales Manager"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Permissions</label>
+              <div className="border rounded-md p-4 bg-muted/20">
+                {renderInlinePermissionsEditor()}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreateDialogOpen(false)}
+              disabled={saveMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!newRoleName.trim()) {
+                  toast.error("Role name is required");
+                  return;
+                }
+                saveMutation.mutate({ id: "new", isNew: true, name: newRoleName });
+              }}
+              disabled={saveMutation.isPending || !newRoleName.trim()}
+            >
+              {saveMutation.isPending ? "Creating…" : "Create Role"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Role Dialog ─────────────────────────────────────── */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Edit Permissions: {editTargetRole?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Modify the module access permissions for this role.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 border rounded-md p-4 mt-2 bg-muted/20">
+            {renderInlinePermissionsEditor(editTargetRole?.name)}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditDialogOpen(false)}
+              disabled={saveMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (editTargetRole) {
+                  saveMutation.mutate({ id: editTargetRole.id, isNew: false });
+                }
+              }}
+              disabled={saveMutation.isPending || isSystemAdminRole || !hasEditChanges}
+            >
+              {saveMutation.isPending ? "Saving…" : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Rename Dialog ─────────────────────────────────────── */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
