@@ -7,6 +7,7 @@ import { useSidebar } from "@/features/dashboard/components/SidebarContext";
 import { motion } from "framer-motion";
 import { MobileBottomNav } from "@/features/dashboard/components/MobileBottomNav";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { usePathname } from "next/navigation";
 
 export default function DashboardShell({
   children,
@@ -16,9 +17,10 @@ export default function DashboardShell({
   const { isCollapsed } = useSidebar();
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  const { toggleSidebar } = useSidebar();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

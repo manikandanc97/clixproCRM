@@ -199,58 +199,25 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
 
       {/* Help Center Item at Bottom */}
       <div className="mt-auto p-3 border-t border-sidebar-border bg-sidebar shrink-0">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            {collapsedState ? (
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-300 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/40 outline-none">
-                      <LifeBuoy className="w-5 h-5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={12} className="bg-slate-900 text-white border-none rounded-lg px-3 py-1.5 font-semibold text-xs shadow-xl">
-                    Help Center
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : (
-              <button className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-all duration-300 text-[13.5px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40 outline-none">
-                <LifeBuoy className="w-[18px] h-[18px] transition-colors" />
-                <span className="flex-1 text-left truncate">Help Center</span>
-              </button>
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="start" 
-            side="right" 
-            sideOffset={collapsedState ? 12 : 8} 
-            className="w-56 rounded-xl p-2 shadow-elevated border-border bg-popover/95 backdrop-blur-xl"
-          >
-            <div className="px-2 py-1.5">
-              <h4 className="font-semibold text-sm">Help & Support</h4>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Need help with Clixpro?</p>
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer py-2 rounded-lg gap-3">
-              <Book className="w-4 h-4 text-muted-foreground" /> Documentation
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer py-2 rounded-lg gap-3">
-              <MessageCircleQuestion className="w-4 h-4 text-muted-foreground" /> FAQ
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer py-2 rounded-lg gap-3">
-              <Headphones className="w-4 h-4 text-muted-foreground" /> Contact Support
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer py-2 rounded-lg gap-3">
-              <Keyboard className="w-4 h-4 text-muted-foreground" /> Keyboard Shortcuts
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <div className="px-2 py-1.5 flex items-center gap-3 opacity-60">
-              <Info className="w-4 h-4 text-muted-foreground" /> 
-              <span className="text-xs font-medium">Version 1.0.0</span>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {collapsedState ? (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/help" className={`flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-300 outline-none ${pathname === '/help' ? 'text-sidebar-primary bg-sidebar-primary/10 shadow-sm' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/40'}`}>
+                  <LifeBuoy className="w-5 h-5" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={12} className="bg-slate-900 text-white border-none rounded-lg px-3 py-1.5 font-semibold text-xs shadow-xl">
+                Help Center
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <Link href="/help" className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-all duration-300 text-[13.5px] font-medium outline-none ${pathname === '/help' ? 'text-sidebar-primary bg-sidebar-primary/10 shadow-sm font-bold' : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40'}`}>
+            <LifeBuoy className="w-[18px] h-[18px] transition-colors" />
+            <span className="flex-1 text-left truncate">Help Center</span>
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -44,7 +44,7 @@ export default function WelcomeBanner() {
 
           <div className="space-y-1">
             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-              Welcome back, <span className="text-emerald-400">{user?.displayName || user?.name || access.roleName}</span>
+              Welcome back, <span className="text-emerald-400 capitalize">{user?.displayName || user?.name || access.roleName}</span>
             </h1>
             <div className="text-slate-400 text-base max-w-2xl leading-relaxed">
               {isLoading ? (

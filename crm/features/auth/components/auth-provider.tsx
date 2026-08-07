@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useRef } from "react";
 import type React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { fetchCurrentUser, loginUser, logoutUser as clearSessionToken } from "@/shared/lib/api/auth";
@@ -62,7 +62,7 @@ const WIDGETS_BY_ROLE: Record<string, string[]> = {
 };
 
 const PERMISSIONS_BY_ROLE: Record<string, string[]> = {
-  [CRM_ROLES.ADMIN]: Object.values(PERMISSIONS),
+  [CRM_ROLES.ADMIN]: [...Object.values(PERMISSIONS), "Help Center"],
   [CRM_ROLES.MANAGER]: [
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.LEADS_CREATE, PERMISSIONS.LEADS_READ, PERMISSIONS.LEADS_UPDATE, PERMISSIONS.LEADS_DELETE,
@@ -73,6 +73,7 @@ const PERMISSIONS_BY_ROLE: Record<string, string[]> = {
     PERMISSIONS.REPORTS_READ,
     PERMISSIONS.EMPLOYEES_READ, PERMISSIONS.ATTENDANCE_READ, PERMISSIONS.PERFORMANCE_READ,
     "leads.view", // Extra specific to CreateNewMenu
+    "Help Center",
   ],
   [CRM_ROLES.SALES]: [
     PERMISSIONS.DASHBOARD_VIEW,
@@ -82,6 +83,7 @@ const PERMISSIONS_BY_ROLE: Record<string, string[]> = {
     PERMISSIONS.TASKS_CREATE, PERMISSIONS.TASKS_READ_ASSIGNED, PERMISSIONS.TASKS_UPDATE_ASSIGNED,
     PERMISSIONS.QUOTATIONS_CREATE, PERMISSIONS.QUOTATIONS_READ_ASSIGNED, PERMISSIONS.QUOTATIONS_UPDATE_ASSIGNED,
     "leads.view",
+    "Help Center",
   ],
   [CRM_ROLES.SUPPORT]: [
     PERMISSIONS.DASHBOARD_VIEW,
@@ -89,11 +91,13 @@ const PERMISSIONS_BY_ROLE: Record<string, string[]> = {
     PERMISSIONS.SUPPORT_TICKETS_READ, PERMISSIONS.SUPPORT_TICKETS_MANAGE,
     PERMISSIONS.TASKS_READ_ASSIGNED, PERMISSIONS.TASKS_UPDATE_ASSIGNED,
     "leads.view",
+    "Help Center",
   ],
   [CRM_ROLES.EMPLOYEE]: [
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.TASKS_READ_ASSIGNED, PERMISSIONS.TASKS_UPDATE_ASSIGNED,
     "leads.view",
+    "Help Center",
   ],
 };
 
@@ -103,7 +107,17 @@ function buildAccess(user: AuthUser | null): RoleAccess {
   }
 
   const roleKey = normalizeRole(user.role);
-  const allowedRoutes = roleRouteConfig[roleKey] || ["/dashboard"];
+  const allowedRoutes = roleRouteConfig[roleKey] ? [...roleRouteConfig[roleKey]] : ["/dashboard"];
+
+  const resolvedPermissions = user.permissions && user.permissions.length > 0 
+    ? user.permissions 
+    : (PERMISSIONS_BY_ROLE[roleKey] || []);
+    
+  if (resolvedPermissions.includes("Help Center") || roleKey === CRM_ROLES.ADMIN) {
+    if (!allowedRoutes.includes("/help")) {
+      allowedRoutes.push("/help");
+    }
+  }
 
   return {
     roleName:
@@ -113,9 +127,7 @@ function buildAccess(user: AuthUser | null): RoleAccess {
         .map((value) => value.charAt(0).toUpperCase() + value.slice(1))
         .join(" "),
     description: user.description || defaultRoleAccess.description,
-    permissions: user.permissions && user.permissions.length > 0 
-      ? user.permissions 
-      : (PERMISSIONS_BY_ROLE[roleKey] || []),
+    permissions: resolvedPermissions,
     routes: allowedRoutes,
     dashboardWidgets: WIDGETS_BY_ROLE[roleKey] || WIDGETS_BY_ROLE[CRM_ROLES.EMPLOYEE],
     analyticsVisibility: user.analyticsVisibility || "self",
@@ -129,8 +141,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-   
-  const _isInitializing = status === "initializing";
+  useEffect(() => {
+    return () => {};
+  }, []);
 
   const logout = useCallback(async () => {
     await clearSessionToken(); // hits /api/auth/logout
@@ -167,7 +180,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const hasFetched = useRef(false);
+
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshUser().finally(() => setIsHydrated(true));
   }, [refreshUser]);

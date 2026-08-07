@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { 
   DollarSign, 
   IndianRupee,
@@ -11,7 +11,7 @@ import {
 import { useAuth } from "@/features/auth/components/auth-provider";
 import { CRM_ROLES } from "@/shared/lib/auth/rbac/roles";
 import { CRMMetricCard, CRMMetricsGrid } from "@/shared/components/crm";
-import { useDashboardInitializer } from "@/shared/hooks/use-dashboard";
+import { useDashboardData, useLeads, usePipeline } from "@/shared/hooks/use-dashboard";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import Link from "next/link";
 import {
@@ -23,13 +23,15 @@ import {
 
 export default function DashboardKPIs() {
   const { access, user } = useAuth();
-  const { queries } = useDashboardInitializer();
+  const dashboardQuery = useDashboardData();
+  const leadsQuery = useLeads();
+  const pipelineQuery = usePipeline();
   const { formatCurrency, currency } = useCurrency();
 
   // Extract query data safely
-  const dashboardData = queries.dashboard.data;
-  const leadsData = queries.leads.data;
-  const pipelineData = queries.pipeline.data;
+  const dashboardData = dashboardQuery.data;
+  const leadsData = leadsQuery.data;
+  const pipelineData = pipelineQuery.data;
 
   // Retrieve metrics returned by the dashboard API
   const dashboardStats = dashboardData?.stats || [];
@@ -44,12 +46,12 @@ export default function DashboardKPIs() {
   const hasError = (query: { isError?: boolean } | null | undefined) => query?.isError;
 
   // Streamlined 4 Core Premium KPI Cards System
-  const kpiConfigs = [
+  const kpiConfigs = useMemo(() => [
     {
       id: "revenue",
       title: "Revenue",
       getValue: () => {
-        if (hasError(queries.dashboard)) return "Error";
+        if (hasError(dashboardQuery)) return "Error";
         return formatCurrency(dashboardRevenue?.valueAmount || 0);
       },
       getChange: () => dashboardRevenue?.change || "+0.0%",
@@ -59,7 +61,7 @@ export default function DashboardKPIs() {
       },
       icon: currency === "INR" ? IndianRupee : DollarSign,
       color: "emerald" as const,
-      loading: queries.dashboard.isLoading,
+      loading: dashboardQuery.isLoading,
       sparklineData: dashboardRevenue?.sparklineData,
       comparisonText: "vs last month",
       href: "/analytics",
@@ -69,7 +71,7 @@ export default function DashboardKPIs() {
       id: "newLeads",
       title: "Total Leads",
       getValue: () => {
-        if (hasError(queries.dashboard) && hasError(queries.leads)) return "Error";
+        if (hasError(dashboardQuery) && hasError(leadsQuery)) return "Error";
         return dashboardLeads?.value || leadsData?.summary?.total?.toLocaleString("en-US") || "0";
       },
       getChange: () => dashboardLeads?.change || "+0.0%",
@@ -79,7 +81,7 @@ export default function DashboardKPIs() {
       },
       icon: Users,
       color: "indigo" as const,
-      loading: queries.dashboard.isLoading || queries.leads.isLoading,
+      loading: dashboardQuery.isLoading || leadsQuery.isLoading,
       sparklineData: dashboardLeads?.sparklineData || [],
       comparisonText: "vs last week",
       href: "/leads",
@@ -89,7 +91,7 @@ export default function DashboardKPIs() {
       id: "activeDeals",
       title: "Active Deals",
       getValue: () => {
-        if (hasError(queries.pipeline) && hasError(queries.leads)) return "Error";
+        if (hasError(pipelineQuery) && hasError(leadsQuery)) return "Error";
         return pipelineActiveDeals?.value || "0 Deals";
       },
       getChange: () => (pipelineActiveDeals as ReturnType<typeof JSON.parse>)?.change || "+0.0%",
@@ -99,7 +101,7 @@ export default function DashboardKPIs() {
       },
       icon: Target,
       color: "cyan" as const,
-      loading: queries.pipeline.isLoading || queries.leads.isLoading,
+      loading: pipelineQuery.isLoading || leadsQuery.isLoading,
       sparklineData: (pipelineActiveDeals as ReturnType<typeof JSON.parse>)?.sparklineData || [],
       comparisonText: "vs last week",
       href: "/pipeline",
@@ -109,7 +111,7 @@ export default function DashboardKPIs() {
       id: "winRate",
       title: "Conversion Rate",
       getValue: () => {
-        if (hasError(queries.pipeline) && hasError(queries.leads)) return "Error";
+        if (hasError(pipelineQuery) && hasError(leadsQuery)) return "Error";
         return pipelineWinRate?.value || "0%";
       },
       getChange: () => (pipelineWinRate as ReturnType<typeof JSON.parse>)?.change || "+0.0%",
@@ -119,20 +121,27 @@ export default function DashboardKPIs() {
       },
       icon: TrendingUp,
       color: "violet" as const,
-      loading: queries.pipeline.isLoading || queries.leads.isLoading,
+      loading: pipelineQuery.isLoading || leadsQuery.isLoading,
       sparklineData: (pipelineWinRate as ReturnType<typeof JSON.parse>)?.sparklineData || [],
       comparisonText: "vs last week",
       href: "/analytics",
       tooltip: "Percentage of leads successfully converted to closed deals.",
     },
-  ];
+  ], [
+    dashboardQuery, dashboardRevenue, dashboardLeads, 
+    leadsQuery, leadsData, 
+    pipelineQuery, pipelineActiveDeals, pipelineWinRate, 
+    formatCurrency, currency
+  ]);
 
   // RBAC & KPI Layout Protection: Limit to the 4 primary cards while honoring user allowed dashboardWidgets
   // Admin role ALWAYS bypasses widget permission checks
   const TOP_KPI_IDS = ["revenue", "newLeads", "activeDeals", "winRate"];
-  const accessibleKpis = kpiConfigs
-    .filter(kpi => TOP_KPI_IDS.includes(kpi.id))
-    .filter(kpi => access.roleName === "Admin" || user?.role === CRM_ROLES.ADMIN || access.dashboardWidgets.includes(kpi.id));
+  const accessibleKpis = useMemo(() => {
+    return kpiConfigs
+      .filter(kpi => TOP_KPI_IDS.includes(kpi.id))
+      .filter(kpi => access.roleName === "Admin" || user?.role === CRM_ROLES.ADMIN || access.dashboardWidgets.includes(kpi.id));
+  }, [kpiConfigs, access.roleName, access.dashboardWidgets, user?.role]);
 
   // Handle empty state gracefully if no metrics are allowed for the role
   if (accessibleKpis.length === 0) {

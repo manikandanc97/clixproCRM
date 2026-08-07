@@ -1,0 +1,157 @@
+URL CHANGED: http://localhost:3000/login
+%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[HMR] connected
+%c%s%c [DEBUG] ROOT_LAYOUT_RENDER_SERVER background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server  
+[DEBUG] PROVIDERS_RENDER
+[DEBUG] PROVIDERS_RENDER
+[DEBUG] AUTH_PROVIDER_RENDER {status: initializing, isHydrated: false}
+[DEBUG] AUTH_PROVIDER_RENDER {status: initializing, isHydrated: false}
+URL CHANGED: http://localhost:3000/login
+[DEBUG] AUTH_PROVIDER_MOUNT
+[DEBUG] PROVIDERS_MOUNT
+[DEBUG] AUTH_PROVIDER_RENDER {status: unauthenticated, isHydrated: false}
+[DEBUG] AUTH_PROVIDER_RENDER {status: unauthenticated, isHydrated: false}
+[DEBUG] AUTH_PROVIDER_RENDER {status: unauthenticated, isHydrated: false}
+[DEBUG] AUTH_PROVIDER_RENDER {status: unauthenticated, isHydrated: false}
+[DEBUG] AUTH_PROVIDER_RENDER {status: unauthenticated, isHydrated: true}
+[DEBUG] AUTH_PROVIDER_RENDER {status: unauthenticated, isHydrated: true}
+[DEBUG] AUTH_PROVIDER_RENDER {status: unauthenticated, isHydrated: true}
+[DEBUG] AUTH_PROVIDER_RENDER {status: unauthenticated, isHydrated: true}
+[Fast Refresh] rebuilding
+[Fast Refresh] done in 130ms
+[DEBUG] AUTH_PROVIDER_RENDER {status: authenticated, isHydrated: true}
+[DEBUG] AUTH_PROVIDER_RENDER {status: authenticated, isHydrated: true}
+%c%s%c [DEBUG] DASHBOARD_LAYOUT_RENDER_SERVER background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server  
+[DEBUG] PROTECTED_ROUTE_RENDER {pathname: /dashboard, isAuthenticated: true, isInitializing: false}
+[DEBUG] PROTECTED_ROUTE_RENDER {pathname: /dashboard, isAuthenticated: true, isInitializing: false}
+[DEBUG] DASHBOARD_SHELL_RENDER
+[DEBUG] DASHBOARD_SHELL_RENDER
+[DEBUG] SIDEBAR_RENDER
+[DEBUG] SIDEBAR_RENDER
+[DEBUG] TOPBAR_RENDER
+[DEBUG] TOPBAR_RENDER
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 1]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 2]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+URL CHANGED: http://localhost:3000/dashboard
+[DEBUG] DASHBOARD_PAGE_MOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_SHELL_MOUNT
+[DEBUG] DASHBOARD_SHELL_UNMOUNT
+[DEBUG] DASHBOARD_PAGE_UNMOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_PAGE_MOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_SHELL_MOUNT
+[DEBUG] DASHBOARD_SHELL_RENDER
+[DEBUG] DASHBOARD_SHELL_RENDER
+[DEBUG] SIDEBAR_RENDER
+[DEBUG] SIDEBAR_RENDER
+[DEBUG] TOPBAR_RENDER
+[DEBUG] TOPBAR_RENDER
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 3]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 4]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 5]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 6]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 7]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 8]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 9]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 10]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 11]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 12]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 13]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 14]
+[DEBUG] DASHBOARD_PAGE isInitializing: true
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 15]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 16]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 17]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 18]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 19]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 20]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 21]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 22]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 23]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 24]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 25]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 26]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 27]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 28]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 29]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 30]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 31]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 32]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_UNMOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_PAGE_MOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_PAGE_UNMOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_PAGE_MOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 33]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 34]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 35]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 36]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 37]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 38]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 39]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 40]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 41]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 42]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_UNMOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_PAGE_MOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 43]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 44]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 45]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 46]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 47]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 48]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 49]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 50]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 51]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_RENDER [Instance: xrd2g] [Render: 52]
+[DEBUG] DASHBOARD_PAGE isInitializing: false
+[DEBUG] DASHBOARD_PAGE_UNMOUNT [Instance: xrd2g]
+[DEBUG] DASHBOARD_PAGE_MOUNT [Instance: xrd2g]

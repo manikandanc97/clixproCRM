@@ -4,7 +4,16 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { Download } from "lucide-react";
 import { DashboardSkeleton } from "@/features/dashboard/components/DashboardSkeleton";
-import { useDashboardInitializer } from "@/shared/hooks/use-dashboard";
+import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
+import { 
+  useDashboardInitializer,
+  useDashboardData,
+  useMeetings,
+  useTasks,
+  useHotLeads,
+  useCustomers
+} from "@/shared/hooks/use-dashboard";
+import { useAnalytics } from "@/shared/hooks/use-analytics";
 import { Button } from "@/shared/ui/button";
 import { CRMPageContainer } from "@/shared/components/crm";
 import { useCRMStore } from "@/shared/store/useCRMStore";
@@ -29,18 +38,88 @@ const RevenueChart = dynamic(() => import("@/features/reports/components/Revenue
 const SalesFunnel = dynamic(() => import("@/features/reports/components/SalesFunnel"));
 const RecentCustomers = dynamic(() => import("@/features/dashboard/components/RecentCustomers"));
 
+// Specific Widget Components
+const RevenueChartWidget = () => {
+  const { data: analyticsData, isLoading, isError, refetch } = useAnalytics();
+  return (
+    <DashboardWidgetWrapper id="revenueChart" title="Revenue Chart" isLoading={isLoading} isError={isError} onRetry={refetch} delay={1.2}>
+      <div className="h-[350px]">
+        <RevenueChart data={analyticsData?.revenueOverview?.map(r => ({ name: r.name, total: r.revenue })) || []} />
+      </div>
+    </DashboardWidgetWrapper>
+  );
+};
+
+const UpcomingMeetingsWidget = () => {
+  const { isLoading, isError, refetch } = useMeetings();
+  return (
+    <DashboardWidgetWrapper id="upcomingMeetings" title="Upcoming Meetings" isLoading={isLoading} isError={isError} onRetry={refetch} delay={0.7}>
+      <UpcomingMeetings />
+    </DashboardWidgetWrapper>
+  );
+};
+
+const PendingFollowupsWidget = () => {
+  const { isLoading, isError, refetch } = useTasks();
+  return (
+    <DashboardWidgetWrapper id="pendingFollowups" title="Pending Tasks" isLoading={isLoading} isError={isError} onRetry={refetch} delay={0.8}>
+      <PendingFollowups />
+    </DashboardWidgetWrapper>
+  );
+};
+
+const HotLeadsWidget = () => {
+  const { isLoading, isError, refetch } = useHotLeads();
+  return (
+    <DashboardWidgetWrapper id="hotLeads" title="Hot Leads" isLoading={isLoading} isError={isError} onRetry={refetch} delay={0.9}>
+      <HotLeads />
+    </DashboardWidgetWrapper>
+  );
+};
+
+const RecentActivitiesWidget = () => {
+  const { isLoading, isError, refetch } = useDashboardData();
+  return (
+    <DashboardWidgetWrapper id="recentActivities" title="Recent Activities" isLoading={isLoading} isError={isError} onRetry={refetch} delay={1.1}>
+      <RecentActivities />
+    </DashboardWidgetWrapper>
+  );
+};
+
+const RecentCustomersWidget = () => {
+  const { isLoading, isError, refetch } = useCustomers();
+  return (
+    <DashboardWidgetWrapper id="recentCustomers" title="Recent Customers" isLoading={isLoading} isError={isError} onRetry={refetch} delay={1.3}>
+      <div className="h-[350px]">
+        <RecentCustomers />
+      </div>
+    </DashboardWidgetWrapper>
+  );
+};
+
+const RevenueTargetWidget = () => {
+  const { data, isLoading, isError, refetch } = useDashboardData();
+  return (
+    <DashboardWidgetWrapper id="revenueTarget" title="Revenue Target" isLoading={isLoading} isError={isError} onRetry={refetch} delay={1.2}>
+      <RevenueTarget data={data?.revenueTarget ?? null} />
+    </DashboardWidgetWrapper>
+  );
+};
+
 const DashboardPage = () => {
-  const { 
-    activeTimeframe, setActiveTimeframe 
-  } = useCRMStore();
+  const activeTimeframe = useCRMStore(state => state.activeTimeframe);
+  const setActiveTimeframe = useCRMStore(state => state.setActiveTimeframe);
 
   const { 
-    queries, 
-    isAuthInitializing,
+    isInitializing,
   } = useDashboardInitializer(activeTimeframe);
 
-  if (isAuthInitializing) {
-    return <DashboardSkeleton />;
+  if (isInitializing) {
+    return (
+      <CRMPageContainer>
+        <DashboardSkeleton />
+      </CRMPageContainer>
+    );
   }
 
   const handleExport = () => {
@@ -94,83 +173,21 @@ const DashboardPage = () => {
           <div className="xl:col-span-3 flex flex-col gap-6">
             
             <div className="grid grid-cols-1 gap-6">
-              <DashboardWidgetWrapper 
-                id="revenueChart" 
-                title="Revenue Chart"
-                isLoading={queries.analytics.isLoading}
-                isError={queries.analytics.isError}
-                onRetry={() => queries.analytics.refetch()}
-                delay={1.2}
-              >
-                <div className="h-[350px]">
-                  <RevenueChart 
-                    data={queries.analytics.data?.revenueOverview?.map(r => ({ name: r.name, total: r.revenue })) || []} 
-                  />
-                </div>
-              </DashboardWidgetWrapper>
+              <RevenueChartWidget />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <DashboardWidgetWrapper 
-                id="upcomingMeetings" 
-                title="Upcoming Meetings"
-                isLoading={queries.meetings.isLoading}
-                isError={queries.meetings.isError}
-                onRetry={() => queries.meetings.refetch()}
-                delay={0.7}
-              >
-                <UpcomingMeetings />
-              </DashboardWidgetWrapper>
-
-              <DashboardWidgetWrapper 
-                id="pendingFollowups" 
-                title="Pending Tasks"
-                isLoading={queries.tasks.isLoading}
-                isError={queries.tasks.isError}
-                onRetry={() => queries.tasks.refetch()}
-                delay={0.8}
-              >
-                <PendingFollowups />
-              </DashboardWidgetWrapper>
+              <UpcomingMeetingsWidget />
+              <PendingFollowupsWidget />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <DashboardWidgetWrapper 
-                id="hotLeads" 
-                title="Hot Leads"
-                isLoading={queries.hotLeads.isLoading}
-                isError={queries.hotLeads.isError}
-                onRetry={() => queries.hotLeads.refetch()}
-                delay={0.9}
-              >
-                <HotLeads />
-              </DashboardWidgetWrapper>
-
-              <DashboardWidgetWrapper 
-                id="recentActivities" 
-                title="Recent Activities"
-                isLoading={queries.dashboard.isLoading}
-                isError={queries.dashboard.isError}
-                onRetry={() => queries.dashboard.refetch()}
-                delay={1.1}
-              >
-                <RecentActivities />
-              </DashboardWidgetWrapper>
+              <HotLeadsWidget />
+              <RecentActivitiesWidget />
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-              <DashboardWidgetWrapper 
-                id="recentCustomers" 
-                title="Recent Customers"
-                isLoading={queries.customers?.isLoading || false}
-                isError={queries.customers?.isError || false}
-                onRetry={() => queries.customers?.refetch()}
-                delay={1.3}
-              >
-                <div className="h-[350px]">
-                  <RecentCustomers />
-                </div>
-              </DashboardWidgetWrapper>
+              <RecentCustomersWidget />
             </div>
 
           </div>
@@ -178,18 +195,11 @@ const DashboardPage = () => {
           {/* Right Sidebar (Sticky) */}
           <div className="flex flex-col gap-6 w-full xl:sticky xl:top-24 self-start">
             
-            <DashboardWidgetWrapper 
-              id="revenueTarget" 
-              title="Revenue Target"
-              isLoading={queries.dashboard.isLoading}
-              isError={queries.dashboard.isError}
-              onRetry={() => queries.dashboard.refetch()}
-              delay={1.2}
-            >
-              <RevenueTarget data={queries.dashboard.data?.revenueTarget ?? null} />
-            </DashboardWidgetWrapper>
+            <RevenueTargetWidget />
 
-            <AIInsights />
+            <React.Suspense fallback={<DashboardWidgetSkeleton />}>
+              <AIInsights />
+            </React.Suspense>
 
             <DashboardWidgetWrapper 
               id="calendarWidget" 

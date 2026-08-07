@@ -105,7 +105,7 @@ export class QuotationService {
     return {
       stats: [
         { title: "Total Quotations", value: quotations.length.toString() },
-        { title: "Total Quote Value", value: formatCurrency(quotations.reduce((acc, q) => acc + toNumber(q.amount), 0), "USD") },
+        { title: "Total Quote Value", value: formatCurrency(quotations.reduce((acc, q) => acc + toNumber(q.amount), 0), "USD"), valueAmount: quotations.reduce((acc, q) => acc + toNumber(q.amount), 0) },
         { title: "Sent Quotes", value: sent.length.toString() },
         { title: "Accepted Quotes", value: accepted.length.toString() },
       ],

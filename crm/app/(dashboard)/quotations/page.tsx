@@ -15,6 +15,7 @@ import { EmptyState } from "@/shared/components/EmptyState";
 import { PageErrorState } from "@/shared/components/page-states";
 import { QuotationsSkeleton } from "@/features/quotations/components/QuotationsSkeleton";
 import { useQuotations } from "@/shared/hooks/use-crm";
+import { useCurrency } from "@/shared/hooks/use-currency";
 import { Button } from "@/shared/ui/button";
 import { 
   CRMPageHeader, 
@@ -38,6 +39,7 @@ const QuotationsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useViewMode("quotations", "list");
+  const { formatCurrency } = useCurrency();
 
   const { quotations, setQuotations } = useCRMStore();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,7 +162,7 @@ const QuotationsPage = () => {
           />
           <CRMMetricCard 
             title="Total Quote Value"
-            value={data?.stats?.[1]?.value || `$${safeQuotations.reduce((sum, q) => sum + (q.amountValue ?? 0), 0).toLocaleString("en-US")}`}
+            value={data?.stats?.[1]?.valueAmount !== undefined ? formatCurrency(data.stats[1].valueAmount) : formatCurrency(safeQuotations.reduce((sum, q) => sum + (q.amountValue ?? 0), 0))}
             change="0%"
             trend="up"
             icon={TrendingUp}

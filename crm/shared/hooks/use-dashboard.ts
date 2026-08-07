@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { 
   fetchDashboardData, 
   fetchHotLeads, 
@@ -14,24 +14,28 @@ import {
   fetchRevenueGrowth
 } from "@/shared/lib/api/crm";
 import { useAuth } from "@/features/auth/components/auth-provider";
+import { useCRMStore } from "@/shared/store/useCRMStore";
 
-export function useDashboardData(timeframe: string = "month") {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+export function useDashboardData(timeframeProp?: string) {
+  const storeTimeframe = useCRMStore((state) => state.activeTimeframe);
+  const timeframe = timeframeProp || storeTimeframe;
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["dashboardData", timeframe, token],
+    queryKey: ["dashboardData", timeframe],
     queryFn: () => fetchDashboardData(timeframe),
     enabled: isHydrated && isAuthenticated,
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 30 * 1000, // 30 seconds
     retry: 1,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 }
 
 export function useRevenueGrowth(filter: string = "Year") {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["revenueGrowth", filter, token],
+    queryKey: ["revenueGrowth", filter],
     queryFn: () => fetchRevenueGrowth(filter),
     enabled: isHydrated && isAuthenticated,
     refetchInterval: 60 * 1000,
@@ -40,9 +44,9 @@ export function useRevenueGrowth(filter: string = "Year") {
 }
 
 export function useHotLeads() {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["hotLeads", token],
+    queryKey: ["hotLeads"],
     queryFn: fetchHotLeads,
     enabled: isHydrated && isAuthenticated ,
     refetchInterval: 5 * 60 * 1000,
@@ -53,9 +57,9 @@ export function useHotLeads() {
 
 
 export function useMeetings() {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["meetings", token],
+    queryKey: ["meetings"],
     queryFn: fetchMeetings,
     enabled: isHydrated && isAuthenticated ,
     refetchInterval: 5 * 60 * 1000,
@@ -64,9 +68,9 @@ export function useMeetings() {
 }
 
 export function useNotifications() {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["notifications", token],
+    queryKey: ["notifications"],
     queryFn: fetchNotifications,
     enabled: isHydrated && isAuthenticated ,
     refetchInterval: 5 * 60 * 1000,
@@ -77,9 +81,9 @@ export function useNotifications() {
 }
 
 export function useAiInsights() {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["aiInsights", token],
+    queryKey: ["aiInsights"],
     queryFn: fetchAiInsights,
     enabled: isHydrated && isAuthenticated ,
     refetchInterval: 10 * 60 * 1000, // AI insights change slowly
@@ -90,9 +94,9 @@ export function useAiInsights() {
 // ─── Entity Hooks ────────────────────────────────────────────────────────────
 
 export function useLeads() {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["leads", token],
+    queryKey: ["leads"],
     queryFn: fetchLeadsData,
     enabled: isHydrated && isAuthenticated ,
     staleTime: 5 * 60 * 1000,
@@ -100,9 +104,9 @@ export function useLeads() {
 }
 
 export function useTasks() {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["tasks", token],
+    queryKey: ["tasks"],
     queryFn: fetchTasksData,
     enabled: isHydrated && isAuthenticated ,
     staleTime: 5 * 60 * 1000,
@@ -110,9 +114,9 @@ export function useTasks() {
 }
 
 export function usePipeline() {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["pipeline", token],
+    queryKey: ["pipeline"],
     queryFn: fetchPipelineData,
     enabled: isHydrated && isAuthenticated ,
     staleTime: 5 * 60 * 1000,
@@ -120,76 +124,46 @@ export function usePipeline() {
 }
 
 export function useCustomers() {
-  const { isAuthenticated, isHydrated, token } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["customers", token],
+    queryKey: ["customers"],
     queryFn: fetchCustomersData,
     enabled: isHydrated && isAuthenticated ,
     staleTime: 5 * 60 * 1000,
   });
 }
 
-import { useAnalytics } from "./use-analytics";
-
 /**
  * Hook to initialize all dashboard-related data in one go.
  * This ensures that even if specific components aren't mounted yet,
  * the core CRM data is being fetched and cached.
  */
-export function useDashboardInitializer(timeframe: string = "month") {
+export function useDashboardInitializer(timeframeProp?: string) {
+  const storeTimeframe = useCRMStore((state) => state.activeTimeframe);
+  const timeframe = timeframeProp || storeTimeframe;
   const { isAuthenticated, isInitializing: isAuthInitializing } = useAuth();
   
   // Primary dashboard data
   const dashboard = useDashboardData(timeframe);
   
-  // Entity data
-  const leads = useLeads();
-  const tasks = useTasks();
-  const pipeline = usePipeline();
-  const customers = useCustomers();
-
-  // Widget specific data
-  const meetings = useMeetings();
-  const hotLeads = useHotLeads();
-  const aiInsights = useAiInsights();
-  const analytics = useAnalytics();
-
-  const queries = {
-    dashboard,
-    leads,
-    tasks,
-    pipeline,
-    customers,
-    meetings,
-    hotLeads,
-    aiInsights,
-    analytics,
-  };
-
+  // Trigger secondary data fetches in parallel
+  useRevenueGrowth();
+  useHotLeads();
+  useMeetings();
+  useNotifications();
+  useAiInsights();
+  useLeads();
+  useTasks();
+  usePipeline();
+  useCustomers();
+  
   // Critical: We are only "initializing" if auth is still reading from storage,
   // OR if we are authenticated but the primary dashboard data hasn't arrived yet.
   const isInitializing = isAuthInitializing || (isAuthenticated && dashboard.isLoading && !dashboard.data);
-  const isLoading = dashboard.isLoading || Object.values(queries).some(q => q.isLoading);
 
   return {
     isAuthenticated,
     isAuthInitializing,
-    isLoading,
     isInitializing,
-    queries, 
-    data: {
-      dashboard: dashboard.data,
-      leads: leads.data,
-      tasks: tasks.data,
-      pipeline: pipeline.data,
-      customers: customers.data,
-      meetings: meetings.data,
-      hotLeads: hotLeads.data,
-      aiInsights: aiInsights.data,
-      analytics: analytics.data,
-    },
-    refetchAll: () => {
-      Object.values(queries).forEach(q => q.refetch());
-    }
   };
 }

@@ -56,9 +56,12 @@ Object.values(roleMenuConfig).forEach(navGroups => {
   });
 });
 
-const MODULES = Object.values(navLibrary)
-  .filter(nav => usedTitles.has(nav.title))
-  .map(nav => nav.title);
+const MODULES = [
+  ...Object.values(navLibrary)
+    .filter(nav => usedTitles.has(nav.title))
+    .map(nav => nav.title),
+  "Help Center"
+];
 
 export function RoleList() {
   const queryClient = useQueryClient();

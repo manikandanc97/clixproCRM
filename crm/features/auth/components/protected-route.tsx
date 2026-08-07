@@ -27,7 +27,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, isInitializing, access, user } = useAuth();
-
+  
   useEffect(() => {
     // Do NOT redirect during initialization — auth state not resolved yet.
     if (isInitializing) return;

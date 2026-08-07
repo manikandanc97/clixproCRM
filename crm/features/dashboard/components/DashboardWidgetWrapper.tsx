@@ -56,7 +56,7 @@ export function DashboardWidgetWrapper({
       transition={{ duration: 0.4, delay, ease: "easeOut" }}
       className={cn("min-h-[200px]", className)}
     >
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {isLoading ? (
           <motion.div
             key="loading"
@@ -98,7 +98,9 @@ export function DashboardWidgetWrapper({
             exit={{ opacity: 0 }}
             className="w-full h-full"
           >
-            {children}
+            <React.Suspense fallback={<DashboardWidgetSkeleton rows={skeletonRows} />}>
+              {children}
+            </React.Suspense>
           </motion.div>
         )}
       </AnimatePresence>

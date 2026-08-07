@@ -11,7 +11,8 @@ type SidebarContextType = {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const { sidebarCollapsed, setSidebarCollapsed } = useCRMStore();
+  const sidebarCollapsed = useCRMStore(state => state.sidebarCollapsed);
+  const setSidebarCollapsed = useCRMStore(state => state.setSidebarCollapsed);
   
   const toggleSidebar = () => setSidebarCollapsed(!sidebarCollapsed);
   

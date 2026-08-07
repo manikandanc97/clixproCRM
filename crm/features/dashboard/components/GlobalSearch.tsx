@@ -17,7 +17,10 @@ export default function GlobalSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   
-  const { leads, customers, pipelineItems, tasks } = useCRMStore();
+  const leads = useCRMStore(state => state.leads);
+  const customers = useCRMStore(state => state.customers);
+  const pipelineItems = useCRMStore(state => state.pipelineItems);
+  const tasks = useCRMStore(state => state.tasks);
   const { formatCurrency } = useCurrency();
 
   // Handle Debounce
