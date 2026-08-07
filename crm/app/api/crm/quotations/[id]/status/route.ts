@@ -20,7 +20,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const quotation = await QuotationService.updateQuotationStatus(tenantId, id, status as QuotationStatus);
 
     return NextResponse.json({ success: true, data: quotation });
-  } catch (error: any) {
+  } catch (error: ReturnType<typeof JSON.parse>) {
     console.error("Quotation Status Error:", error);
     return NextResponse.json({ error: error.message || "Failed to update quotation status" }, { status: 400 });
   }

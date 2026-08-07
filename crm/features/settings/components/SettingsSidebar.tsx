@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   Bell,
   Palette,
-  Package,
   Blocks,
   Sparkles,
   ChevronRight,

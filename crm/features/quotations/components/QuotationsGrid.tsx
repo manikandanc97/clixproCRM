@@ -12,15 +12,12 @@ import {
   Download, 
   ExternalLink, 
   Trash2, 
-  Eye, 
   Copy,
-  Clock,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Sparkles,
   Edit
 } from "lucide-react";
 import { useRouter } from "next/navigation";

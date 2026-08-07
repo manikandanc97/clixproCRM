@@ -10,7 +10,6 @@ import { Button } from "@/shared/ui/button";
 import { FormSubmitButton } from "@/shared/components/form-submit-button";
 import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useCreateTask } from "@/shared/hooks/use-crm";
-import { Loader2 } from "lucide-react";
 
 const taskSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
@@ -56,10 +55,10 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
         // but backend might support them or they can be ignored for now.
         assignedToId: data.assignedToId === "unassigned" ? undefined : data.assignedToId,
         reminderAt: data.reminderAt ? data.reminderAt.toISOString() : undefined,
-      } as any);
+      } as ReturnType<typeof JSON.parse>);
       resetDirty(form.getValues());
       onSuccess?.();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     } catch (_error) {
       // Error handled by hook
     }

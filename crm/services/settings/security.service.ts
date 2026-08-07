@@ -1,18 +1,5 @@
-import prisma from "@/lib/prisma";
-import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
-import {
-  calculateTrend,
-  formatCurrency,
-  countInRange,
-  getMonthRanges,
-  getStatusLabel,
-  formatRelativeDate,
-  toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
-  LEAD_STATUS_LABELS
-} from "@/lib/crm-formatters";
+
+
 
 
 export class SecurityService {
@@ -32,7 +19,7 @@ export class SecurityService {
     return this.securitySettings;
   }
 
-  static async updateSecuritySettings(_tenantId: string, data: any) {
+  static async updateSecuritySettings(_tenantId: string, data: ReturnType<typeof JSON.parse>) {
     if (data.twoFactorEnabled !== undefined) {
       this.securitySettings.twoFactorEnabled = data.twoFactorEnabled;
     }

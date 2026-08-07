@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Plus, MoreHorizontal, Pencil, Trash2, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, ShieldCheck, AlertTriangle } from "lucide-react";
 import { 
   DataTable,
   CRMTableHeader,
@@ -19,13 +19,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/features/auth/components/auth-provider";
 import { Checkbox } from "@/shared/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+
+
 import {
   Dialog,
   DialogContent,

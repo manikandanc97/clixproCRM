@@ -1,18 +1,5 @@
-import prisma from "@/lib/prisma";
-import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
-import {
-  calculateTrend,
-  formatCurrency,
-  countInRange,
-  getMonthRanges,
-  getStatusLabel,
-  formatRelativeDate,
-  toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
-  LEAD_STATUS_LABELS
-} from "@/lib/crm-formatters";
+
+
 
 
 export class NotificationService {
@@ -45,7 +32,7 @@ export class NotificationService {
     return this.notificationSettings;
   }
 
-  static async updateNotificationSettings(_tenantId: string, data: any) {
+  static async updateNotificationSettings(_tenantId: string, data: ReturnType<typeof JSON.parse>) {
     if (data.channels) this.notificationSettings.channels = data.channels;
     if (data.categories) this.notificationSettings.categories = data.categories;
     if (data.realtimePulseEnabled !== undefined) this.notificationSettings.realtimePulseEnabled = data.realtimePulseEnabled;

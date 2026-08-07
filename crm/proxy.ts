@@ -186,7 +186,7 @@ export async function proxy(request: NextRequest) {
         headers: requestHeaders,
       },
     });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   } catch (_error) {
     const refreshResponse = await attemptRefresh();
     if (refreshResponse) {

@@ -48,7 +48,7 @@ export function TimelineTab({ leadId }: { leadId: string }) {
         <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-border -z-10" />
 
         <div className="space-y-6">
-          {events.map((event: any) => (
+          {events.map((event: ReturnType<typeof JSON.parse>) => (
             <div key={event.id} className="relative">
               <div className="absolute -left-6 mt-0.5 w-6 h-6 rounded-full bg-background border-2 border-primary flex items-center justify-center text-primary shadow-sm z-10">
                 {getIconForAction(event.action)}

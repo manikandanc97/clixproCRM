@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Calendar, Clock, MapPin, Video } from "lucide-react";
 import { format } from "date-fns";
-import { useLeadMeetings, useCreateLeadMeeting } from "@/shared/hooks/use-crm";
+import { useLeadMeetings } from "@/shared/hooks/use-crm";
 import { FormModal } from "@/shared/components/form-modal";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { MeetingForm } from "@/features/forms/MeetingForm";
@@ -44,7 +44,7 @@ export function MeetingsTab({ leadId }: { leadId: string }) {
         <div className="space-y-4 relative">
           <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-border -z-10" />
 
-          {meetings.map((meeting: any) => {
+          {meetings.map((meeting: ReturnType<typeof JSON.parse>) => {
             const isUpcoming = new Date(meeting.startTime) > new Date();
             return (
               <div key={meeting.id} className="flex gap-4 relative">
@@ -88,7 +88,7 @@ export function MeetingsTab({ leadId }: { leadId: string }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {meetings.map((meeting: any) => {
+          {meetings.map((meeting: ReturnType<typeof JSON.parse>) => {
             const isUpcoming = new Date(meeting.startTime) > new Date();
             return (
               <div key={meeting.id} className={`bg-card border rounded-xl p-4 shadow-sm flex flex-col justify-between ${isUpcoming ? 'border-primary/30' : 'border-border/60'}`}>

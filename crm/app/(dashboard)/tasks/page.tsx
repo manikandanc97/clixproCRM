@@ -7,7 +7,6 @@ import {
   Download,
   Target,
   AlertCircle,
-  SearchX,
   List,
   Kanban,
   Calendar as CalendarIcon,
@@ -41,7 +40,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 import { toast } from "sonner";
-import { cn } from "@/shared/lib/utils";
 import { FormModal } from "@/shared/components/form-modal";
 import { MeetingForm } from "@/features/forms/MeetingForm";
 import { CreateTaskModal } from "@/features/tasks/components/CreateTaskModal";

@@ -7,9 +7,7 @@ import {
   Calendar,
   Clock,
   Video,
-  MoreHorizontal,
   MapPin,
-  Plus,
   ArrowRight,
   ExternalLink,
 } from "lucide-react";
@@ -21,12 +19,8 @@ import {
   TooltipTrigger,
 } from "@/shared/ui/tooltip";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+
+
 import { useMeetings } from "@/shared/hooks/use-dashboard";
 
 export default function UpcomingMeetings() {

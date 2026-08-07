@@ -1,17 +1,9 @@
 import prisma from "@/lib/prisma";
-import { Prisma, LeadStage } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
-  calculateTrend,
   formatCurrency,
-  countInRange,
-  getMonthRanges,
-  getStatusLabel,
-  formatRelativeDate,
   toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
-  LEAD_STATUS_LABELS
+  formatPercentage
 } from "@/lib/crm-formatters";
 
 export interface ReportFilters {

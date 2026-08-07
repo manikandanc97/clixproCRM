@@ -2,7 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import { Download, Filter } from "lucide-react";
+import { Download } from "lucide-react";
 import { DashboardSkeleton } from "@/features/dashboard/components/DashboardSkeleton";
 import { useDashboardInitializer } from "@/shared/hooks/use-dashboard";
 import { Button } from "@/shared/ui/button";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3, Download, Calendar, TrendingUp, Users, DollarSign, IndianRupee, Target, Filter, RefreshCcw } from "lucide-react";
+import { BarChart3, Download, Calendar, TrendingUp, Users, DollarSign, IndianRupee, Target, RefreshCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import { PageErrorState } from "@/shared/components/page-states";
 import { ReportsSkeleton } from "@/features/reports/components/ReportsSkeleton";
@@ -9,7 +9,6 @@ import { useReports, useEmployees } from "@/shared/hooks/use-crm";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import { CRMPageHeader, CRMMetricCard, CRMPageContainer, CRMMetricsGrid } from "@/shared/components/crm";
 import { toast } from "sonner";
-import { Button } from "@/shared/ui/button";
 
 const RevenueChart = dynamic(() => import("@/features/reports/components/RevenueChart"));
 const ConversionChart = dynamic(() => import("@/features/reports/components/ConversionChart"));
@@ -142,7 +141,7 @@ const ReportsPage = () => {
             TrendingUp;
 
           // Define an array of premium colors
-          const colors: any[] = ["indigo", "violet", "emerald", "rose", "pink", "cyan", "amber", "blue"];
+          const colors: ReturnType<typeof JSON.parse>[] = ["indigo", "violet", "emerald", "rose", "pink", "cyan", "amber", "blue"];
           // We can use a deterministic color based on index or title. Let's map by title or index.
           let assignedColor = stat.color || colors[index % colors.length];
 

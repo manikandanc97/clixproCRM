@@ -1,17 +1,7 @@
 import prisma from "@/lib/prisma";
-import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
+import { Prisma, TaskPriority, TaskStatus } from "@prisma/client";
 import {
-  calculateTrend,
-  formatCurrency,
-  countInRange,
-  getMonthRanges,
-  getStatusLabel,
-  formatRelativeDate,
-  toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
-  LEAD_STATUS_LABELS
+  formatRelativeDate
 } from "@/lib/crm-formatters";
 
 
@@ -189,9 +179,9 @@ export class TaskQueryService {
     ];
 
     const formattedTasks = tasks.map((task) => {
-      const checklistArray = Array.isArray(task.checklist) ? (task.checklist as any[]) : [];
+      const checklistArray = Array.isArray(task.checklist) ? (task.checklist as ReturnType<typeof JSON.parse>[]) : [];
       const totalChecklist = checklistArray.length;
-      const completedChecklist = checklistArray.filter((c: any) => c.completed).length;
+      const completedChecklist = checklistArray.filter((c: ReturnType<typeof JSON.parse>) => c.completed).length;
       const progressPercent =
         totalChecklist > 0
           ? Math.round((completedChecklist / totalChecklist) * 100)
@@ -220,7 +210,7 @@ export class TaskQueryService {
         relatedQuotationId: task.relatedQuotationId,
         tags: task.tags || [],
         checklist: checklistArray,
-        attachments: Array.isArray(task.attachments) ? (task.attachments as any[]) : [],
+        attachments: Array.isArray(task.attachments) ? (task.attachments as ReturnType<typeof JSON.parse>[]) : [],
 
         completedAt: task.completedAt ? task.completedAt.toISOString() : null,
         deletedAt: task.deletedAt ? task.deletedAt.toISOString() : null,
@@ -276,9 +266,9 @@ export class TaskQueryService {
 
     if (!task) return null;
 
-    const checklistArray = Array.isArray(task.checklist) ? (task.checklist as any[]) : [];
+    const checklistArray = Array.isArray(task.checklist) ? (task.checklist as ReturnType<typeof JSON.parse>[]) : [];
     const totalChecklist = checklistArray.length;
-    const completedChecklist = checklistArray.filter((c: any) => c.completed).length;
+    const completedChecklist = checklistArray.filter((c: ReturnType<typeof JSON.parse>) => c.completed).length;
     const now = new Date();
     const isTaskOverdue = Boolean(task.dueDate && task.dueDate < now && task.status !== "COMPLETED" && task.status !== "CANCELLED");
 
@@ -290,7 +280,7 @@ export class TaskQueryService {
       reminderDate: task.reminderDate ? task.reminderDate.toISOString() : null,
       completedAt: task.completedAt ? task.completedAt.toISOString() : null,
       checklist: checklistArray,
-      attachments: Array.isArray(task.attachments) ? (task.attachments as any[]) : [],
+      attachments: Array.isArray(task.attachments) ? (task.attachments as ReturnType<typeof JSON.parse>[]) : [],
       isOverdue: isTaskOverdue,
       progress: totalChecklist > 0 ? Math.round((completedChecklist / totalChecklist) * 100) : task.status === "COMPLETED" ? 100 : 0,
       subtaskCount: { total: totalChecklist, completed: completedChecklist },

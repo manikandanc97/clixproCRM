@@ -1,18 +1,6 @@
 import prisma from "@/lib/prisma";
-import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
-import {
-  calculateTrend,
-  formatCurrency,
-  countInRange,
-  getMonthRanges,
-  getStatusLabel,
-  formatRelativeDate,
-  toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
-  LEAD_STATUS_LABELS
-} from "@/lib/crm-formatters";
+
+
 
 
 export class LeadNoteService {
@@ -26,7 +14,7 @@ export class LeadNoteService {
     });
   }
 
-  static async createLeadNote(tenantId: string, leadId: string, userId: string, data: { message: string, isPinned?: boolean, mentions?: any }) {
+  static async createLeadNote(tenantId: string, leadId: string, userId: string, data: { message: string, isPinned?: boolean, mentions?: ReturnType<typeof JSON.parse> }) {
     return prisma.note.create({
       data: {
         tenantId,

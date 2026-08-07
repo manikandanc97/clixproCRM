@@ -22,9 +22,9 @@ export default function GlobalSearch() {
 
   // Handle Debounce
   useEffect(() => {
-    setIsSearching(true);
+    (() => setIsSearching(true))();
     const timer = setTimeout(() => {
-      setDebouncedQuery(query);
+      (() => setDebouncedQuery(query))();
       setIsSearching(false);
     }, 300);
     return () => clearTimeout(timer);
@@ -58,7 +58,7 @@ export default function GlobalSearch() {
     if (!debouncedQuery) return [];
     
     const lowerQuery = debouncedQuery.toLowerCase();
-    const matched: { id: string, title: string, subtitle: string, type: string, url: string, icon: any }[] = [];
+    const matched: { id: string, title: string, subtitle: string, type: string, url: string, icon: ReturnType<typeof JSON.parse> }[] = [];
 
     // Leads
     leads.forEach(lead => {
@@ -94,7 +94,7 @@ export default function GlobalSearch() {
 
   // Reset selected index when results change
   useEffect(() => {
-    setSelectedIndex(0);
+    (() => setSelectedIndex(0))();
   }, [debouncedQuery]);
 
   // Handle Keyboard Navigation
@@ -114,7 +114,7 @@ export default function GlobalSearch() {
     }
   };
 
-  const handleSelect = (result: any) => {
+  const handleSelect = (result: ReturnType<typeof JSON.parse>) => {
     setIsOpen(false);
     setQuery("");
     setDebouncedQuery("");

@@ -16,10 +16,8 @@ import {
   CheckCircle2,
   Clock,
   Loader2,
-  Play,
   Sparkles,
   Tag,
-  Users,
   X,
 } from "lucide-react";
 import { useState } from "react";

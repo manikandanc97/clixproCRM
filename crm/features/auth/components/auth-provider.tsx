@@ -14,9 +14,9 @@ import {
 } from "@/shared/lib/auth/rbac";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 const _STORAGE_TOKEN_KEY = "orbit_token";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 const _STORAGE_USER_KEY = "orbit_user";
 
 type AuthUser = {
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const _isInitializing = status === "initializing";
 
   const logout = useCallback(async () => {
@@ -158,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setUser(currentUser);
       setStatus("authenticated");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     } catch (_error: unknown) {
       if (typeof window !== "undefined") localStorage.removeItem("has_session");
       setStatus("unauthenticated");

@@ -11,6 +11,7 @@ import { Button } from "@/shared/ui/button";
 
 const RevenueTarget = ({ data }: { data: RevenueTargetType | null }) => {
   const router = useRouter();
+  const { currencySymbol, currency } = useCurrency();
   
   if (!data) {
     return (
@@ -23,7 +24,6 @@ const RevenueTarget = ({ data }: { data: RevenueTargetType | null }) => {
     );
   }
 
-  const { currencySymbol, currency } = useCurrency();
   const currentRevenue = data.revenue;
   const targetRevenue = data.target;
   const percentage = targetRevenue > 0 ? Math.round((currentRevenue / targetRevenue) * 100) : (currentRevenue > 0 ? 100 : 0);

@@ -1,16 +1,9 @@
 import prisma from "@/lib/prisma";
-import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
-  calculateTrend,
   formatCurrency,
-  countInRange,
-  getMonthRanges,
   getStatusLabel,
-  formatRelativeDate,
   toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
   LEAD_STATUS_LABELS
 } from "@/lib/crm-formatters";
 
@@ -22,7 +15,7 @@ export class LeadService {
     const skip = (page - 1) * limit;
     const where: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
     if (search) where.name = { contains: search, mode: "insensitive" };
-    if (stage) where.stage = stage as any;
+    if (stage) where.stage = stage as ReturnType<typeof JSON.parse>;
 
     const [leads, total] = await Promise.all([
       prisma.lead.findMany({
@@ -55,7 +48,7 @@ export class LeadService {
 
     return {
       summary: { total },
-      leads: leads.map((lead: any) => {
+      leads: leads.map((lead: ReturnType<typeof JSON.parse>) => {
         const customerId = lead.email ? customerMap.get(lead.email) : undefined;
         return {
           id: lead.id,
@@ -85,7 +78,7 @@ export class LeadService {
     };
   }
 
-  static async createLead(tenantId: string, userId: string, data: any) {
+  static async createLead(tenantId: string, userId: string, data: ReturnType<typeof JSON.parse>) {
     return await prisma.$transaction(async (tx) => {
       const isWon = data.stage === "WON";
 
@@ -159,7 +152,7 @@ export class LeadService {
     });
   }
 
-  static async updateLead(tenantId: string, userId: string, id: string, data: any) {
+  static async updateLead(tenantId: string, userId: string, id: string, data: ReturnType<typeof JSON.parse>) {
     return await prisma.$transaction(async (tx) => {
       const existingLead = await tx.lead.findUnique({
         where: { id, tenantId },

@@ -9,7 +9,7 @@ import {
   CartesianGrid, 
   Tooltip, 
 } from "recharts";
-import { MoreHorizontal, Download, Filter, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { RevenueChartPointType } from "@/shared/types/report";

@@ -38,7 +38,7 @@ const ProfileSettings = () => {
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    phone: (user as any)?.phone || "",
+    phone: (user as ReturnType<typeof JSON.parse>)?.phone || "",
   });
   
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -58,7 +58,7 @@ const ProfileSettings = () => {
     if (user?.name) score += 30;
     if (user?.email) score += 30;
     if (user?.role) score += 20;
-    if ((user as any)?.phone) score += 20;
+    if ((user as ReturnType<typeof JSON.parse>)?.phone) score += 20;
     return score;
   }, [user]);
 
@@ -74,7 +74,7 @@ const ProfileSettings = () => {
     mutation.mutate(formData);
   };
 
-  const hasChanges = formData.name !== user?.name || formData.email !== user?.email || formData.phone !== ((user as any)?.phone || "");
+  const hasChanges = formData.name !== user?.name || formData.email !== user?.email || formData.phone !== ((user as ReturnType<typeof JSON.parse>)?.phone || "");
 
   return (
     <div className="space-y-5">

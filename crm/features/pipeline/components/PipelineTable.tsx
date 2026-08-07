@@ -3,9 +3,7 @@
 import React, { useState } from "react";
 import { PipelineLeadType } from "@/shared/types/pipeline";
 import { 
-  MoreHorizontal, 
-  DollarSign, 
-  IndianRupee,
+  MoreHorizontal,
   Clock, 
   MessageSquare, 
   UserPlus, 

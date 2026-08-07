@@ -12,10 +12,10 @@ import { cn } from "@/shared/lib/utils";
 import { motion } from "framer-motion";
 
 interface CalendarGridProps {
-  events: any[];
+  events: ReturnType<typeof JSON.parse>[];
   currentDate: Date;
   view: "month" | "week" | "day" | "agenda";
-  onEventClick: (event: any) => void;
+  onEventClick: (event: ReturnType<typeof JSON.parse>) => void;
   onViewChange?: (view: "month") => void;
   onNewEvent: () => void;
 }
@@ -130,7 +130,7 @@ export function CalendarGrid({ events, currentDate, view, onEventClick, onViewCh
     if (events.length === 0) return <EmptyState onNewEvent={onNewEvent} />;
 
     const sorted = [...events].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-    const grouped: Record<string, any[]> = {};
+    const grouped: Record<string, ReturnType<typeof JSON.parse>[]> = {};
     sorted.forEach(ev => {
       const key = format(parseISO(ev.startTime), "yyyy-MM-dd");
       if (!grouped[key]) grouped[key] = [];

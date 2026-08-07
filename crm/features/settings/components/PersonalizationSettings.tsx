@@ -13,7 +13,6 @@ import {
   Sidebar,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { Badge } from "@/shared/ui/badge";
 import { Label } from "@/shared/ui/label";
 import { useTheme } from "next-themes";
 import { cn } from "@/shared/lib/utils";
@@ -38,11 +37,15 @@ const PersonalizationSettings = () => {
   // Load from local storage for persistence
   useEffect(() => {
     const savedCompact = localStorage.getItem("crm-compact-sidebar");
-    if (savedCompact) setCompactSidebar(savedCompact === "true");
+    if (savedCompact && compactSidebar !== (savedCompact === "true")) {
+      (() => setCompactSidebar(savedCompact === "true"))();
+    }
     
     const savedFull = localStorage.getItem("crm-full-width");
-    if (savedFull) setFullWidth(savedFull === "true");
-  }, []);
+    if (savedFull && fullWidth !== (savedFull === "true")) {
+      (() => setFullWidth(savedFull === "true"))();
+    }
+  }, [compactSidebar, fullWidth]);
 
   const toggleCompactSidebar = () => {
     const newValue = !compactSidebar;

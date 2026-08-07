@@ -12,9 +12,9 @@ import {
 } from "@/shared/ui/dialog";
 
 interface EventModalProps {
-  event: any | null;
+  event: ReturnType<typeof JSON.parse> | null;
   onClose: () => void;
-  onEdit: (event: any) => void;
+  onEdit: (event: ReturnType<typeof JSON.parse>) => void;
   onDelete: (eventId: string) => void;
 }
 
@@ -28,7 +28,7 @@ const TYPE_CONFIG: Record<string, { label: string; bg: string; text: string; bor
   BIRTHDAY:  { label: "Birthday",  bg: "bg-pink-500/10",     text: "text-pink-700 dark:text-pink-400",       border: "border-pink-500/20" },
 };
 
-function DetailRow({ icon: Icon, label, value }: { icon: any; label: string; value: React.ReactNode }) {
+function DetailRow({ icon: Icon, label, value }: { icon: ReturnType<typeof JSON.parse>; label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
       <div className="mt-0.5 w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">

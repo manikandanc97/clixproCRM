@@ -37,7 +37,7 @@ export async function getAuthSession(): Promise<AuthSession | null> {
       tenantId: decoded.tenantId,
       role: decoded.role,
     };
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   } catch (_error) {
     return null;
   }
@@ -57,7 +57,7 @@ export async function requireRole(allowedRoles: string[]) {
   return session;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export async function requirePermission(module: string, _action?: string) {
   const session = await getAuthSession();
   

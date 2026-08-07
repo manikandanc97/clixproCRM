@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { FileText, Plus, Download, TrendingUp, Clock, SearchX } from "lucide-react";
+import { FileText, Plus, Download, TrendingUp, Clock } from "lucide-react";
 
 import dynamic from "next/dynamic";
 const QuotationsTable = dynamic(() => import("@/features/quotations/components/QuotationsTable"), {

@@ -7,7 +7,6 @@ import {
   Calendar, 
   CheckCircle2, 
   CircleDashed, 
-  Clock3, 
   Eye, 
   MoreHorizontal, 
   Play, 

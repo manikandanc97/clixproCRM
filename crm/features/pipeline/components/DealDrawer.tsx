@@ -6,7 +6,7 @@ import { PipelineLeadType } from "@/shared/types/pipeline";
 import { useUpdatePipelineItem } from "@/shared/hooks/use-crm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useCurrency } from "@/shared/hooks/use-currency";
-import { DollarSign, IndianRupee, Flame, Clock, Calendar, Check, Save } from "lucide-react";
+import { DollarSign, IndianRupee, Clock, Check, Save } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
 

@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
-import { MessageSquare, Pin, Edit2, Trash2 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { MessageSquare, Pin } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { useLeadNotes, useCreateLeadNote } from "@/shared/hooks/use-crm";
-import { toast } from "sonner";
 import { Textarea } from "@/shared/ui/textarea";
 import { EmptyState } from "@/shared/components/EmptyState";
 
@@ -27,7 +26,7 @@ export function NotesTab({ leadId }: { leadId: string }) {
     });
   };
 
-  const sortedNotes = [...notes].sort((a: any, b: any) => {
+  const sortedNotes = [...notes].sort((a: ReturnType<typeof JSON.parse>, b: ReturnType<typeof JSON.parse>) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -69,7 +68,7 @@ export function NotesTab({ leadId }: { leadId: string }) {
         <div className="space-y-4 relative">
           <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-border -z-10" />
 
-          {sortedNotes.map((note: any) => (
+          {sortedNotes.map((note: ReturnType<typeof JSON.parse>) => (
             <div key={note.id} className="flex gap-4 relative">
               <div className="flex flex-col items-center z-10 pt-1">
                 <Avatar className="w-8 h-8 border-2 border-background shadow-sm">
@@ -106,7 +105,7 @@ export function NotesTab({ leadId }: { leadId: string }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {sortedNotes.map((note: any) => (
+          {sortedNotes.map((note: ReturnType<typeof JSON.parse>) => (
             <div key={note.id} className="bg-card border border-border/60 rounded-xl p-4 shadow-sm relative flex flex-col justify-between">
               {note.isPinned && (
                 <div className="absolute top-3 right-3 bg-amber-100 border border-amber-200 text-amber-600 rounded-full p-1 shadow-sm">

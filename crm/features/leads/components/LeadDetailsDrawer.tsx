@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui/di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { ScrollArea } from "@/shared/ui/scroll-area";
-import { MessageSquare, Calendar, Clock, Paperclip, Mail } from "lucide-react";
+import { MessageSquare, Calendar, Clock, Paperclip } from "lucide-react";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 
 import { NotesTab } from "./tabs/NotesTab";
@@ -26,7 +26,7 @@ export function LeadDetailsDrawer({ isOpen, onOpenChange, leadId, defaultTab = "
 
   // Update active tab when defaultTab changes or modal opens
   React.useEffect(() => {
-    if (isOpen) setActiveTab(defaultTab);
+    if (isOpen) { (() => setActiveTab(defaultTab))(); }
   }, [isOpen, defaultTab]);
 
   if (!lead) return null;

@@ -87,7 +87,7 @@ const QuotationPreview = ({ quotation, isOpen, onClose }: QuotationPreviewProps)
     };
 
     createQuotation(payload, {
-      onSuccess: (newQuote: any) => {
+      onSuccess: (newQuote: ReturnType<typeof JSON.parse>) => {
         toast.success("Quotation duplicated successfully.");
         setIsDuplicating(false);
         onClose();

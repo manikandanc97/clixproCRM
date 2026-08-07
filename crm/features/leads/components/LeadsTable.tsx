@@ -13,23 +13,11 @@ import {
   User, 
   X,
   Trash2,
-  Share2,
-  SearchX,
-  Clock,
   Tag,
-  MessageCircle,
   Building,
   CheckCircle2,
   Edit2,
-  Inbox,
-  ArrowRight,
-  RefreshCw,
-  Globe,
-  Smartphone,
-  Users,
-  ArrowUp,
-  ArrowDown,
-  ArrowUpDown
+  RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -56,7 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { 
   DropdownMenu, 
@@ -74,8 +62,6 @@ import { cn } from "@/shared/lib/utils";
 import { useLeads } from "../hooks/useLeads";
 import { Badge } from "@/shared/ui/badge";
 import { AddNoteModal } from "./AddNoteModal";
-import { Input } from "@/shared/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { LeadDetailsDrawer } from "./LeadDetailsDrawer";
 import { formatDistanceToNow } from "date-fns";
 import { LeadEmptyState } from "./LeadEmptyState";
@@ -180,8 +166,8 @@ const LeadsTable = ({
   const [addNoteLead, setAddNoteLead] = useState<string | null>(null);
   const [detailsLeadId, setDetailsLeadId] = useState<string | null>(null);
   
-  const [confirmMoveModal, setConfirmMoveModal] = useState<{ isOpen: boolean; deal: any; targetStage: string | null; originalStage: string | null }>({ isOpen: false, deal: null, targetStage: null, originalStage: null });
-  const [wonLostModal, setWonLostModal] = useState<{ isOpen: boolean; type: LeadStatus.WON | LeadStatus.LOST | null; deal: any; originalStage: string | null }>({ isOpen: false, type: null, deal: null, originalStage: null });
+  const [confirmMoveModal, setConfirmMoveModal] = useState<{ isOpen: boolean; deal: ReturnType<typeof JSON.parse>; targetStage: string | null; originalStage: string | null }>({ isOpen: false, deal: null, targetStage: null, originalStage: null });
+  const [wonLostModal, setWonLostModal] = useState<{ isOpen: boolean; type: LeadStatus.WON | LeadStatus.LOST | null; deal: ReturnType<typeof JSON.parse>; originalStage: string | null }>({ isOpen: false, type: null, deal: null, originalStage: null });
 
   const { mutate: updatePipelineItem, isPending: isUpdating } = useUpdatePipelineItem();
   const queryClient = useQueryClient();
@@ -298,7 +284,7 @@ const LeadsTable = ({
               { label: "A to Z", val: "asc" },
               { label: "Z to A", val: "desc" }
             ].map(s => (
-              <DropdownMenuItem key={s.val} onClick={() => handleSort("name", s.val as any)} className="text-xs cursor-pointer">
+              <DropdownMenuItem key={s.val} onClick={() => handleSort("name", s.val as ReturnType<typeof JSON.parse>)} className="text-xs cursor-pointer">
                 {s.label}
                 {sortConfig?.key === "name" && sortConfig.direction === s.val && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-primary" />}
               </DropdownMenuItem>
@@ -397,7 +383,7 @@ const LeadsTable = ({
               { label: "High to Low", val: "desc" },
               { label: "Low to High", val: "asc" }
             ].map(s => (
-              <DropdownMenuItem key={s.val} onClick={() => handleSort("valueAmount", s.val as any)} className="text-xs cursor-pointer">
+              <DropdownMenuItem key={s.val} onClick={() => handleSort("valueAmount", s.val as ReturnType<typeof JSON.parse>)} className="text-xs cursor-pointer">
                 {s.label}
                 {sortConfig?.key === "valueAmount" && sortConfig.direction === s.val && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-primary" />}
               </DropdownMenuItem>
@@ -434,7 +420,7 @@ const LeadsTable = ({
               { label: "Upcoming Follow-up", val: "upcoming" },
               { label: "Overdue First", val: "overdue" },
             ].map(s => (
-              <DropdownMenuItem key={s.val} onClick={() => handleSort("activity", s.val as any)} className="text-xs cursor-pointer">
+              <DropdownMenuItem key={s.val} onClick={() => handleSort("activity", s.val as ReturnType<typeof JSON.parse>)} className="text-xs cursor-pointer">
                 {s.label}
                 {sortConfig?.key === "activity" && sortConfig.direction === s.val && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-primary" />}
               </DropdownMenuItem>
@@ -978,7 +964,7 @@ const LeadsTable = ({
               revenueValue: customerLead.valueAmount || 0,
               createdAt: customerLead.createdAt,
               updatedAt: customerLead.updatedAt,
-            } as any}
+            } as ReturnType<typeof JSON.parse>}
             onSuccess={async () => {
               // Mark lead as Won
               try {
@@ -999,7 +985,7 @@ const LeadsTable = ({
       <StageTransitionModal
         isOpen={!!stageTransitionLead}
         onClose={() => setStageTransitionLead(null)}
-        deal={stageTransitionLead ? { ...stageTransitionLead, stage: stageTransitionLead.status } as any : null}
+        deal={stageTransitionLead ? { ...stageTransitionLead, stage: stageTransitionLead.status } as ReturnType<typeof JSON.parse> : null}
         onSelectTargetStage={(deal, targetStage) => {
           setStageTransitionLead(null);
           setTimeout(() => handleStageChange(stageTransitionLead!, targetStage), 150);

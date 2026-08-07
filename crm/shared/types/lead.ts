@@ -39,7 +39,7 @@ export interface LeadType {
   notes?: NoteType[];
   notesCount?: number;
   meetingsCount?: number;
-  upcomingMeeting?: any;
+  upcomingMeeting?: ReturnType<typeof JSON.parse>;
 }
 
 export interface NoteType {

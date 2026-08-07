@@ -6,17 +6,14 @@ import {
   Mail, 
   ExternalLink,
   User,
-  TrendingUp,
   Trash2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight,
-  Star,
-  ShieldCheck
+  ChevronsRight
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { 
   DropdownMenu, 

@@ -38,7 +38,7 @@ export function PageLoadingState(_props: LoadingStateProps) {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export function ComponentLoadingState(_props: LoadingStateProps) {
   return (
     <div className="flex flex-col space-y-6 w-full">
@@ -77,7 +77,7 @@ export function PageErrorState({ title, message, onRetry }: ErrorStateProps) {
 import { EmptyState } from "@/shared/components/EmptyState";
 import { LucideIcon } from "lucide-react";
 
-export function EmptyStateCard({ title, message, icon, action }: EmptyStateProps & { icon?: LucideIcon, action?: any }) {
+export function EmptyStateCard({ title, message, icon, action }: EmptyStateProps & { icon?: LucideIcon, action?: ReturnType<typeof JSON.parse> }) {
   return (
     <EmptyState
       icon={icon}

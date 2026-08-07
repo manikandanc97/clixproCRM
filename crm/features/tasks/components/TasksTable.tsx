@@ -5,7 +5,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { 
-  Calendar, CheckCircle2, CircleDashed, Clock3, Eye, MoreHorizontal, 
+  Calendar, CheckCircle2, Eye, MoreHorizontal, 
   Trash2, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   Pencil, Link2, Download, UserPlus, Loader2
 } from "lucide-react";
@@ -13,7 +13,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";

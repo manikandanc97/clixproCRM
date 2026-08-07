@@ -20,14 +20,13 @@ import {
   DropdownMenuSeparator
 } from "@/shared/ui/dropdown-menu";
 import { CRMCard, CRMStatusBadge } from "@/shared/components/crm";
-import { toast } from "sonner";
 
 interface EmployeesGridProps {
-  employees: any[];
-  onViewDetails: (emp: any) => void;
-  onEdit: (emp: any) => void;
-  onDelete: (emp: any) => void;
-  onToggleStatus: (emp: any) => void;
+  employees: ReturnType<typeof JSON.parse>[];
+  onViewDetails: (emp: ReturnType<typeof JSON.parse>) => void;
+  onEdit: (emp: ReturnType<typeof JSON.parse>) => void;
+  onDelete: (emp: ReturnType<typeof JSON.parse>) => void;
+  onToggleStatus: (emp: ReturnType<typeof JSON.parse>) => void;
 }
 
 const getSafeStr = (val: unknown) => (typeof val === 'string' ? val : typeof val === 'object' && val !== null ? (val as Record<string, unknown>).name as string || '' : String(val || ''));

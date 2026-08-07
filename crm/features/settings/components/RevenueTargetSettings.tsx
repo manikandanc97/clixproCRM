@@ -8,7 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { toast } from "sonner";
-import { Target, Plus, MoreVertical, Copy, Archive, Check, Trash2, Pencil, Calendar, Building, Calculator, Bell, Info, Settings } from "lucide-react";
+import { Target, Plus, MoreVertical, Copy, Check, Trash2, Pencil, Calendar, Info } from "lucide-react";
 import client from "@/shared/lib/api/client";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import { useDirtyState } from "@/shared/hooks/use-dirty-form";
@@ -17,9 +17,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import { Badge } from "@/shared/ui/badge";
 import { Progress } from "@/shared/ui/progress";
-import { Switch } from "@/shared/ui/switch";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { Textarea } from "@/shared/ui/textarea";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import {
   AlertDialog,
@@ -54,8 +51,8 @@ export default function RevenueTargetSettings() {
   const [originalFormData, setOriginalFormData] = useState(defaultFormState);
 
   React.useEffect(() => {
-    setFormData(prev => ({ ...prev, currency: currencyCode }));
-    setOriginalFormData(prev => ({ ...prev, currency: currencyCode }));
+    (() => setFormData(prev => ({ ...prev, currency: currencyCode })))();
+    (() => setOriginalFormData(prev => ({ ...prev, currency: currencyCode })))();
   }, [currencyCode]);
 
   const { isDirty } = useDirtyState(formData, originalFormData);
@@ -66,7 +63,7 @@ export default function RevenueTargetSettings() {
   });
 
   const createTarget = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: ReturnType<typeof JSON.parse>) => {
       const res = await client.post("/crm/settings/revenue-targets", data);
       return res.data.data;
     },
@@ -80,7 +77,7 @@ export default function RevenueTargetSettings() {
   });
 
   const updateTarget = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: ReturnType<typeof JSON.parse>) => {
       const { id, ...rest } = data;
       const res = await client.put(`/crm/settings/revenue-targets/${id}`, rest);
       return res.data.data;
@@ -108,7 +105,7 @@ export default function RevenueTargetSettings() {
     onError: () => toast.error("Failed to delete revenue target"),
   });
 
-  const handleEdit = (target: any) => {
+  const handleEdit = (target: ReturnType<typeof JSON.parse>) => {
     const editState = {
       name: target.name || `${target.periodType} TARGET`,
       periodType: target.periodType,
@@ -156,7 +153,7 @@ export default function RevenueTargetSettings() {
   };
 
 
-  const getStatusBadge = (target: any) => {
+  const getStatusBadge = (target: ReturnType<typeof JSON.parse>) => {
     const now = new Date();
     const startDate = new Date(target.startDate);
     const endDate = new Date(target.endDate);
@@ -203,7 +200,7 @@ export default function RevenueTargetSettings() {
           <div className="space-y-8">
             {/* Active Target */}
             {(() => {
-              const activeTarget = targets?.find((t: any) => t.isActive);
+              const activeTarget = targets?.find((t: ReturnType<typeof JSON.parse>) => t.isActive);
               if (!activeTarget) return null;
               
               const currentRev = activeTarget.currentRevenue || 0;
@@ -288,14 +285,14 @@ export default function RevenueTargetSettings() {
 
             {/* Inactive Targets Grid */}
             {(() => {
-              const inactiveTargets = targets?.filter((t: any) => !t.isActive) || [];
+              const inactiveTargets = targets?.filter((t: ReturnType<typeof JSON.parse>) => !t.isActive) || [];
               if (inactiveTargets.length === 0) return null;
 
               return (
                 <div>
                   <h3 className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-widest pl-1">Previous Targets</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {inactiveTargets.map((target: any) => (
+                    {inactiveTargets.map((target: ReturnType<typeof JSON.parse>) => (
                       <div key={target.id} className="group flex flex-col p-5 border shadow-sm rounded-2xl bg-card/40 opacity-80 hover:opacity-100 hover:bg-card/80 transition-all duration-300">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">

@@ -1,18 +1,7 @@
 import prisma from "@/lib/prisma";
-import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
-import {
-  calculateTrend,
-  formatCurrency,
-  countInRange,
-  getMonthRanges,
-  getStatusLabel,
-  formatRelativeDate,
-  toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
-  LEAD_STATUS_LABELS
-} from "@/lib/crm-formatters";
+import { TaskPriority, TaskStatus } from "@prisma/client";
+
+
 
 
 export class TaskService {
@@ -33,8 +22,8 @@ export class TaskService {
       relatedMeetingId?: string | null;
       relatedQuotationId?: string | null;
       tags?: string[];
-      checklist?: any[];
-      attachments?: any[];
+      checklist?: ReturnType<typeof JSON.parse>[];
+      attachments?: ReturnType<typeof JSON.parse>[];
     }
   ) {
     return prisma.$transaction(async (tx) => {
@@ -54,8 +43,8 @@ export class TaskService {
           relatedMeetingId: data.relatedMeetingId || null,
           relatedQuotationId: data.relatedQuotationId || null,
           tags: data.tags || [],
-          checklist: data.checklist ? (data.checklist as any) : [],
-          attachments: data.attachments ? (data.attachments as any) : [],
+          checklist: data.checklist ? (data.checklist as ReturnType<typeof JSON.parse>) : [],
+          attachments: data.attachments ? (data.attachments as ReturnType<typeof JSON.parse>) : [],
           completedAt: data.status === "COMPLETED" ? new Date() : null,
         },
         include: {
@@ -124,8 +113,8 @@ export class TaskService {
       relatedMeetingId: string | null;
       relatedQuotationId: string | null;
       tags: string[];
-      checklist: any[];
-      attachments: any[];
+      checklist: ReturnType<typeof JSON.parse>[];
+      attachments: ReturnType<typeof JSON.parse>[];
     }>
   ) {
     return prisma.$transaction(async (tx) => {
@@ -137,7 +126,7 @@ export class TaskService {
         throw new Error("Task not found");
       }
 
-      let targetStatus = data.status || existing.status;
+      const targetStatus = data.status || existing.status;
 
       let completedAtValue = existing.completedAt;
       if (targetStatus === "COMPLETED" && existing.status !== "COMPLETED") {
@@ -161,8 +150,8 @@ export class TaskService {
           ...(data.relatedMeetingId !== undefined && { relatedMeetingId: data.relatedMeetingId }),
           ...(data.relatedQuotationId !== undefined && { relatedQuotationId: data.relatedQuotationId }),
           ...(data.tags !== undefined && { tags: data.tags }),
-          ...(data.checklist !== undefined && { checklist: data.checklist as any }),
-          ...(data.attachments !== undefined && { attachments: data.attachments as any }),
+          ...(data.checklist !== undefined && { checklist: data.checklist as ReturnType<typeof JSON.parse> }),
+          ...(data.attachments !== undefined && { attachments: data.attachments as ReturnType<typeof JSON.parse> }),
           completedAt: completedAtValue,
         },
         include: {

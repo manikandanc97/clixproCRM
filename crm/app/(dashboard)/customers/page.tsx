@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, UserPlus, Download, Star, CreditCard, SearchX } from "lucide-react";
+import { Users, UserPlus, Download, Star, CreditCard } from "lucide-react";
 
 import dynamic from "next/dynamic";
 const CustomersTable = dynamic(() => import("@/features/customers/components/CustomersTable").then(mod => ({ default: mod.CustomersTable })), {

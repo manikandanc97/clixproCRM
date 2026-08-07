@@ -92,15 +92,15 @@ export default function DashboardKPIs() {
         if (hasError(queries.pipeline) && hasError(queries.leads)) return "Error";
         return pipelineActiveDeals?.value || "0 Deals";
       },
-      getChange: () => (pipelineActiveDeals as any)?.change || "+0.0%",
+      getChange: () => (pipelineActiveDeals as ReturnType<typeof JSON.parse>)?.change || "+0.0%",
       getTrend: () => {
         if (!pipelineActiveDeals) return "neutral" as const;
-        return (pipelineActiveDeals as any).positive ? ("up" as const) : ("down" as const);
+        return (pipelineActiveDeals as ReturnType<typeof JSON.parse>).positive ? ("up" as const) : ("down" as const);
       },
       icon: Target,
       color: "cyan" as const,
       loading: queries.pipeline.isLoading || queries.leads.isLoading,
-      sparklineData: (pipelineActiveDeals as any)?.sparklineData || [],
+      sparklineData: (pipelineActiveDeals as ReturnType<typeof JSON.parse>)?.sparklineData || [],
       comparisonText: "vs last week",
       href: "/pipeline",
       tooltip: "Number of active deals currently in the pipeline.",
@@ -112,15 +112,15 @@ export default function DashboardKPIs() {
         if (hasError(queries.pipeline) && hasError(queries.leads)) return "Error";
         return pipelineWinRate?.value || "0%";
       },
-      getChange: () => (pipelineWinRate as any)?.change || "+0.0%",
+      getChange: () => (pipelineWinRate as ReturnType<typeof JSON.parse>)?.change || "+0.0%",
       getTrend: () => {
         if (!pipelineWinRate) return "neutral" as const;
-        return (pipelineWinRate as any).positive ? ("up" as const) : ("down" as const);
+        return (pipelineWinRate as ReturnType<typeof JSON.parse>).positive ? ("up" as const) : ("down" as const);
       },
       icon: TrendingUp,
       color: "violet" as const,
       loading: queries.pipeline.isLoading || queries.leads.isLoading,
-      sparklineData: (pipelineWinRate as any)?.sparklineData || [],
+      sparklineData: (pipelineWinRate as ReturnType<typeof JSON.parse>)?.sparklineData || [],
       comparisonText: "vs last week",
       href: "/analytics",
       tooltip: "Percentage of leads successfully converted to closed deals.",

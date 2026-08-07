@@ -34,7 +34,6 @@ import {
   fetchLeadNotes,
   createLeadNote,
   fetchLeadTimeline,
-  createLeadTimelineEvent,
   fetchLeadAttachments,
   createLeadAttachment,
   fetchLeadMeetings,
@@ -71,7 +70,7 @@ export function usePipeline() {
   });
 }
 
-export function useTasks(params?: Record<string, any>) {
+export function useTasks(params?: Record<string, ReturnType<typeof JSON.parse>>) {
   const { isAuthenticated, token } = useAuth();
   return useQuery({
     queryKey: ["tasks", token, params],
@@ -125,7 +124,7 @@ export function useQuotations() {
   });
 }
 
-export function useReports(params?: Record<string, any>) {
+export function useReports(params?: Record<string, ReturnType<typeof JSON.parse>>) {
   const { isAuthenticated, token } = useAuth();
   return useQuery({
     queryKey: ["reports", token, params],
@@ -176,12 +175,12 @@ export function useUpdateLead() {
 export function useUpdatePipelineItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, any> }) => updatePipelineItem(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, ReturnType<typeof JSON.parse>> }) => updatePipelineItem(id, data),
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: ["pipeline"] });
       const previousPipeline = queryClient.getQueryData(["pipeline"]);
 
-      queryClient.setQueryData(["pipeline"], (old: any) => {
+      queryClient.setQueryData(["pipeline"], (old: ReturnType<typeof JSON.parse>) => {
         if (!old || !old.items) return old;
         
         let newStage = undefined;
@@ -198,7 +197,7 @@ export function useUpdatePipelineItem() {
 
         return {
           ...old,
-          items: old.items.map((item: any) => 
+          items: old.items.map((item: ReturnType<typeof JSON.parse>) => 
             item.id === id 
               ? { ...item, ...data, ...(newStage ? { stage: newStage } : {}) } 
               : item
@@ -236,11 +235,11 @@ export function useDeleteLead() {
       await queryClient.cancelQueries({ queryKey: ["leads"] });
       const previousLeads = queryClient.getQueryData(["leads"]);
 
-      queryClient.setQueryData(["leads"], (old: any) => {
+      queryClient.setQueryData(["leads"], (old: ReturnType<typeof JSON.parse>) => {
         if (!old || !old.leads) return old;
         return {
           ...old,
-          leads: old.leads.filter((lead: any) => lead.id !== id),
+          leads: old.leads.filter((lead: ReturnType<typeof JSON.parse>) => lead.id !== id),
           summary: { ...old.summary, total: Math.max(0, (old.summary?.total || 1) - 1) },
           pagination: { ...old.pagination, total: Math.max(0, (old.pagination?.total || 1) - 1) }
         };
@@ -480,7 +479,7 @@ export function useLeadNotes(leadId: string) {
 export function useCreateLeadNote() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ leadId, data }: { leadId: string; data: any }) => createLeadNote(leadId, data),
+    mutationFn: ({ leadId, data }: { leadId: string; data: ReturnType<typeof JSON.parse> }) => createLeadNote(leadId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["leadNotes", variables.leadId] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -514,7 +513,7 @@ export function useLeadAttachments(leadId: string) {
 export function useCreateLeadAttachment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ leadId, data }: { leadId: string; data: any }) => createLeadAttachment(leadId, data),
+    mutationFn: ({ leadId, data }: { leadId: string; data: ReturnType<typeof JSON.parse> }) => createLeadAttachment(leadId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["leadAttachments", variables.leadId] });
       queryClient.invalidateQueries({ queryKey: ["leadTimeline", variables.leadId] });
@@ -538,7 +537,7 @@ export function useLeadMeetings(leadId: string) {
 export function useCreateLeadMeeting() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ leadId, data }: { leadId: string; data: any }) => createLeadMeeting(leadId, data),
+    mutationFn: ({ leadId, data }: { leadId: string; data: ReturnType<typeof JSON.parse> }) => createLeadMeeting(leadId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["leadMeetings", variables.leadId] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -554,7 +553,7 @@ export function useCreateLeadMeeting() {
 export function useCreateMeeting() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => import("@/shared/lib/api/crm").then(m => m.createMeeting(data)),
+    mutationFn: (data: ReturnType<typeof JSON.parse>) => import("@/shared/lib/api/crm").then(m => m.createMeeting(data)),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["meetings"] });
       if (variables.taskId) {

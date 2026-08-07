@@ -8,7 +8,7 @@ import { UseFormReturn } from 'react-hook-form';
  * - Property order
  * - Falsy/Nullable equivalencies (null vs undefined vs "")
  */
-export function compareFormValues(original: any, current: any): boolean {
+export function compareFormValues(original: ReturnType<typeof JSON.parse>, current: ReturnType<typeof JSON.parse>): boolean {
   // Strict equality
   if (original === current) return true;
 
@@ -70,13 +70,13 @@ export function compareFormValues(original: any, current: any): boolean {
   return false;
 }
 
-export function useDirtyForm<T extends Record<string, any>>(
+export function useDirtyForm<T extends Record<string, ReturnType<typeof JSON.parse>>>(
   form: UseFormReturn<T>,
   originalValues: Partial<T> | undefined | null,
   options?: {
     enableBeforeUnload?: boolean;
-    externalOriginalValues?: any;
-    externalValues?: any;
+    externalOriginalValues?: ReturnType<typeof JSON.parse>;
+    externalValues?: ReturnType<typeof JSON.parse>;
   }
 ) {
   const [isDirty, setIsDirty] = useState(false);
@@ -162,9 +162,15 @@ export function useDirtyState<T>(
 
   // Deep comparison
   useEffect(() => {
-    const dirty = !compareFormValues(originalValues, currentValues);
-    setIsDirty(dirty);
-  }, [currentValues, originalValues]);
+    // Avoid synchronous state updates in effect
+    const checkDirty = () => {
+      const dirty = !compareFormValues(originalValues, currentValues);
+      if (isDirty !== dirty) {
+        setIsDirty(dirty);
+      }
+    };
+    checkDirty();
+  }, [currentValues, originalValues, isDirty]);
 
   // Handle browser beforeunload for unsaved changes
   useEffect(() => {

@@ -1,0 +1,1 @@
+const a: ReturnType<typeof JSON.parse> = 1; console.log(a);

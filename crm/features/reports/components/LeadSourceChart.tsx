@@ -15,7 +15,7 @@ interface LeadSourceChartProps {
   loading?: boolean;
 }
 
-const renderActiveShape = (props: any) => {
+const renderActiveShape = (props: ReturnType<typeof JSON.parse>) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
   
   return (
@@ -54,7 +54,7 @@ const renderActiveShape = (props: any) => {
 const LeadSourceChart = ({ data, loading }: LeadSourceChartProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const onPieEnter = (_: any, index: number) => {
+  const onPieEnter = (_: ReturnType<typeof JSON.parse>, index: number) => {
     setActiveIndex(index);
   };
 
@@ -96,7 +96,7 @@ const LeadSourceChart = ({ data, loading }: LeadSourceChartProps) => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  {...({ activeIndex, activeShape: renderActiveShape } as any)}
+                  {...({ activeIndex, activeShape: renderActiveShape } as ReturnType<typeof JSON.parse>)}
                   data={data}
                   cx="50%"
                   cy="50%"

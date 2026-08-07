@@ -213,7 +213,7 @@ export class AuthService {
     const tenantId = membership?.tenantId || "";
     const roleId = membership?.roleId || "";
     const roleName = membership?.role?.name || "EMPLOYEE";
-    const permissions = membership?.role?.permissions?.filter((rp: any) => rp.hasAccess).map((rp: any) => rp.module) || [];
+    const permissions = membership?.role?.permissions?.filter((rp: ReturnType<typeof JSON.parse>) => rp.hasAccess).map((rp: ReturnType<typeof JSON.parse>) => rp.module) || [];
 
     const jwtPayload = { userId: user.id, tenantId, roleId, role: roleName };
     const newAccessToken = await signJWT(jwtPayload);

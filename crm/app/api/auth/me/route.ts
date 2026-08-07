@@ -5,14 +5,14 @@ import { cookies } from "next/headers";
 import { AuthService } from "@/services/auth.service";
 import { extractClientIp } from "@/shared/lib/auth/utils";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export async function GET(req: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("auth_token")?.value;
     const refreshToken = cookieStore.get("refresh_token")?.value;
     
-    let payload = token ? await verifyJWT(token) : null;
+    const payload = token ? await verifyJWT(token) : null;
 
     // If access token is missing or invalid, try to auto-refresh
     if (!payload) {
@@ -149,7 +149,7 @@ export async function PATCH(req: Request) {
           id: updatedUser.id,
           name: updatedUser.name,
           email: updatedUser.email,
-          phone: (updatedUser as any).phone,
+          phone: (updatedUser as ReturnType<typeof JSON.parse>).phone,
           status: updatedUser.status,
           tenantId: payload.tenantId,
         }

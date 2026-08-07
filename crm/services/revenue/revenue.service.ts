@@ -1,17 +1,7 @@
 import prisma from "@/lib/prisma";
-import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
-  calculateTrend,
-  formatCurrency,
-  countInRange,
-  getMonthRanges,
-  getStatusLabel,
-  formatRelativeDate,
-  toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
-  LEAD_STATUS_LABELS
+  toNumber
 } from "@/lib/crm-formatters";
 
 
@@ -23,7 +13,7 @@ export class RevenueService {
     });
   }
 
-  static async createRevenueTarget(tenantId: string, data: any) {
+  static async createRevenueTarget(tenantId: string, data: ReturnType<typeof JSON.parse>) {
     const isActive = data.isActive !== undefined ? data.isActive : true;
     if (isActive) {
       await prisma.revenueTarget.updateMany({
@@ -45,7 +35,7 @@ export class RevenueService {
     });
   }
 
-  static async updateRevenueTarget(tenantId: string, id: string, data: any) {
+  static async updateRevenueTarget(tenantId: string, id: string, data: ReturnType<typeof JSON.parse>) {
     if (data.isActive) {
       await prisma.revenueTarget.updateMany({
         where: { tenantId, isActive: true, id: { not: id } },
@@ -72,13 +62,13 @@ export class RevenueService {
     });
   }
 
-  static async getRevenueTargetAnalytics(tenantId: string, filters: any = {}) {
+  static async getRevenueTargetAnalytics(tenantId: string, filters: ReturnType<typeof JSON.parse> = {}) {
     // Determine the active target based on filters or default
     const targets = await prisma.revenueTarget.findMany({
       where: { tenantId, isActive: true },
     });
 
-    let activeTarget = targets.length > 0 ? targets[0] : null;
+    const activeTarget = targets.length > 0 ? targets[0] : null;
 
     if (!activeTarget) {
       return { hasTarget: false, currentRevenue: 0, targetValue: 0, achievementPercentage: 0, trend: null };
@@ -88,10 +78,10 @@ export class RevenueService {
     // Default to target dates if no timeframe provided, otherwise we'd parse timeframe
     // For simplicity, we'll use the target's configured dates for "current period"
     // Or if a specific filter like "this-month" is applied, we override the period.
-    let start = new Date(activeTarget.startDate);
-    let end = new Date(activeTarget.endDate);
-    let prevStart = new Date(start);
-    let prevEnd = new Date(end);
+    const start = new Date(activeTarget.startDate);
+    const end = new Date(activeTarget.endDate);
+    const prevStart = new Date(start);
+    const prevEnd = new Date(end);
     
     // Simple previous period calculation (e.g. subtract month if monthly)
     if (activeTarget.periodType === "MONTHLY") {

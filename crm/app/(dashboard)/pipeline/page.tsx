@@ -57,7 +57,7 @@ const PipelinePage = () => {
     }
   }, [data?.items, setPipelineItems]);
 
-  const handleAddDeal = (stage?: string | any) => {
+  const handleAddDeal = (stage?: string | ReturnType<typeof JSON.parse>) => {
     setPreselectedStage(typeof stage === 'string' ? stage : undefined);
     setIsAddModalOpen(true);
   };

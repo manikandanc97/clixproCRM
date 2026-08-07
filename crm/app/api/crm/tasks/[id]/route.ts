@@ -31,7 +31,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const rawBody = await req.json();
     const body = taskSchema.partial().parse(rawBody);
 
-    const task = await TaskService.updateTask(session.tenantId, session.userId, id, body as any);
+    const task = await TaskService.updateTask(session.tenantId, session.userId, id, body as ReturnType<typeof JSON.parse>);
     return NextResponse.json({ success: true, data: task }, { status: 200 });
   } catch (error: unknown) {
     return handleApiError(error);

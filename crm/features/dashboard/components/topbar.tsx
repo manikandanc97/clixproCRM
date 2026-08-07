@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { HelpCircle, Command, Search, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useAuth } from "@/features/auth/components/auth-provider";
 import ProfileMenu from "./ProfileMenu";
 import NotificationPanel from "./NotificationPanel";

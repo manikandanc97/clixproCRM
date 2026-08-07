@@ -1,18 +1,5 @@
-import prisma from "@/lib/prisma";
-import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
-import {
-  calculateTrend,
-  formatCurrency,
-  countInRange,
-  getMonthRanges,
-  getStatusLabel,
-  formatRelativeDate,
-  toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
-  LEAD_STATUS_LABELS
-} from "@/lib/crm-formatters";
+
+
 
 
 export class AiService {
@@ -34,7 +21,7 @@ export class AiService {
     return this.aiSettings;
   }
 
-  static async updateAiSettings(_tenantId: string, data: any) {
+  static async updateAiSettings(_tenantId: string, data: ReturnType<typeof JSON.parse>) {
     // update specific features
     if (data.features) {
       this.aiSettings.features = data.features;

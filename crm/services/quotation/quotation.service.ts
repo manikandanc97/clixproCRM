@@ -1,22 +1,14 @@
 import prisma from "@/lib/prisma";
-import { Prisma, Lead, Customer, Quotation, Invoice, Task, PrismaClient, LeadStage, LeadPriority, CustomerStatus, TaskPriority, TaskStatus, QuotationStatus } from "@prisma/client";
+import { Prisma, QuotationStatus } from "@prisma/client";
 import {
-  calculateTrend,
   formatCurrency,
-  countInRange,
-  getMonthRanges,
-  getStatusLabel,
-  formatRelativeDate,
   toNumber,
-  formatDate,
-  formatPercentage,
-  PIPELINE_STAGE_LABELS,
-  LEAD_STATUS_LABELS
+  formatDate
 } from "@/lib/crm-formatters";
 
 
 export class QuotationService {
-  static async createQuotation(tenantId: string, data: { quoteNumber?: string; client: string; leadId: string; amount?: number | string; status?: QuotationStatus; validTill?: string | Date | null; items?: any; notes?: string; discount?: number; tax?: number }) {
+  static async createQuotation(tenantId: string, data: { quoteNumber?: string; client: string; leadId: string; amount?: number | string; status?: QuotationStatus; validTill?: string | Date | null; items?: ReturnType<typeof JSON.parse>; notes?: string; discount?: number; tax?: number }) {
     const quotation = await prisma.quotation.create({
       data: {
         tenantId,
@@ -35,7 +27,7 @@ export class QuotationService {
     return quotation;
   }
 
-  static async updateQuotation(tenantId: string, id: string, data: Partial<{ client: string; amount: number | string; status: QuotationStatus; validTill: string | Date | null; quoteNumber: string; items: any; notes: string; discount: number; tax: number; leadId: string }>) {
+  static async updateQuotation(tenantId: string, id: string, data: Partial<{ client: string; amount: number | string; status: QuotationStatus; validTill: string | Date | null; quoteNumber: string; items: ReturnType<typeof JSON.parse>; notes: string; discount: number; tax: number; leadId: string }>) {
     const quotation = await prisma.quotation.update({
       where: { id, tenantId },
       data: {
@@ -134,7 +126,7 @@ export class QuotationService {
         status: q.status, 
         validTill: formatDate(q.validTill || new Date()),
         validTillValue: q.validTill ? new Date(q.validTill).toISOString() : null,
-        items: q.items as any,
+        items: q.items as ReturnType<typeof JSON.parse>,
         notes: q.notes,
         discount: toNumber(q.discount),
         tax: toNumber(q.tax)

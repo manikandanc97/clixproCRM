@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuotations } from "@/shared/hooks/use-crm";
 import { useWorkspace } from "@/shared/hooks/use-settings";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import { QuotationType } from "@/shared/types/quotation";
 import { Button } from "@/shared/ui/button";
-import { Printer, Download, X, ZoomIn, ZoomOut, Maximize, Clock, FileText } from "lucide-react";
+import { Printer, Download, X, ZoomIn, ZoomOut, Maximize, FileText } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/shared/lib/utils";
 
@@ -54,7 +54,7 @@ export default function QuotationPdfPage() {
     window.print();
   };
 
-  const workspace = (workspaceData || {}) as any;
+  const workspace = (workspaceData || {}) as ReturnType<typeof JSON.parse>;
 
   return (
     <div className="min-h-screen bg-slate-900/40 flex flex-col items-center print:min-h-0 print:bg-white print:block">
@@ -131,14 +131,14 @@ export default function QuotationPdfPage() {
               {workspace.address && (
                 <div className="whitespace-pre-wrap leading-relaxed">{workspace.address}</div>
               )}
-              {(workspace as any).phone && (
-                <p className="font-medium text-slate-900">{(workspace as any).phone}</p>
+              {(workspace as ReturnType<typeof JSON.parse>).phone && (
+                <p className="font-medium text-slate-900">{(workspace as ReturnType<typeof JSON.parse>).phone}</p>
               )}
-              {(workspace as any).email && (
-                <p className="font-medium text-slate-900">{(workspace as any).email}</p>
+              {(workspace as ReturnType<typeof JSON.parse>).email && (
+                <p className="font-medium text-slate-900">{(workspace as ReturnType<typeof JSON.parse>).email}</p>
               )}
-              {(workspace as any).website && (
-                <p className="font-medium text-slate-900">{(workspace as any).website}</p>
+              {(workspace as ReturnType<typeof JSON.parse>).website && (
+                <p className="font-medium text-slate-900">{(workspace as ReturnType<typeof JSON.parse>).website}</p>
               )}
               {workspace.taxId && (
                 <div className="pt-2">

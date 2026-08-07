@@ -8,10 +8,9 @@ import dynamic from "next/dynamic";
 const LeadsTable = dynamic(() => import("@/features/leads/components/LeadsTable"), {
   loading: () => <div className="h-[400px] skeleton rounded-xl" />
 });
-import { 
-  SearchX, UserPlus, Mail, Phone, Sparkles, Zap, Download, Users, TrendingUp,
+import { UserPlus, Mail, Phone, Sparkles, Zap, Download, Users, TrendingUp,
   ChevronRight, UploadCloud, X, MoreVertical, ChevronLeft, ChevronsLeft, ChevronsRight,
-  Calendar, User, Trash2, Edit2, CheckCircle2, ArrowRight, MessageCircle, FileText, Check, RefreshCw, ChevronDown
+  Calendar, User, Trash2, Edit2, CheckCircle2, MessageCircle, FileText, RefreshCw, ChevronDown
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { PageErrorState } from "@/shared/components/page-states";
@@ -35,12 +34,10 @@ import { LeadType } from "@/shared/types/lead";
 import { LeadDetailsDrawer } from "@/features/leads/components/LeadDetailsDrawer";
 import { useSearchParams } from "next/navigation";
 import { Checkbox } from "@/shared/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator
 } from "@/shared/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
-import { Input } from "@/shared/ui/input";
 
 const getStageColor = (status: string) => {
   const s = status?.toLowerCase() || "";

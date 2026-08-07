@@ -12,7 +12,6 @@ import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createEmployee, updateEmployee } from "@/shared/lib/api/crm";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 const employeeSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

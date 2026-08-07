@@ -41,11 +41,11 @@ const WorkspaceSettings = () => {
     if (workspace) {
       setFormData({
         name: workspace.name || "",
-        taxId: (workspace as any).taxId || "",
-        currency: (workspace as any).currency || "INR",
-        timezone: (workspace as any).timezone || "ist",
-        address: (workspace as any).address || "",
-        logo: (workspace as any).logo || null
+        taxId: (workspace as ReturnType<typeof JSON.parse>).taxId || "",
+        currency: (workspace as ReturnType<typeof JSON.parse>).currency || "INR",
+        timezone: (workspace as ReturnType<typeof JSON.parse>).timezone || "ist",
+        address: (workspace as ReturnType<typeof JSON.parse>).address || "",
+        logo: (workspace as ReturnType<typeof JSON.parse>).logo || null
       });
     }
   }, [workspace]);
@@ -78,11 +78,11 @@ const WorkspaceSettings = () => {
 
   const hasChanges = 
     formData.name !== (workspace?.name || "") ||
-    formData.taxId !== ((workspace as any)?.taxId || "") ||
-    formData.currency !== ((workspace as any)?.currency || "USD") ||
-    formData.timezone !== ((workspace as any)?.timezone || "utc") ||
-    formData.address !== ((workspace as any)?.address || "") ||
-    formData.logo !== ((workspace as any)?.logo || null);
+    formData.taxId !== ((workspace as ReturnType<typeof JSON.parse>)?.taxId || "") ||
+    formData.currency !== ((workspace as ReturnType<typeof JSON.parse>)?.currency || "USD") ||
+    formData.timezone !== ((workspace as ReturnType<typeof JSON.parse>)?.timezone || "utc") ||
+    formData.address !== ((workspace as ReturnType<typeof JSON.parse>)?.address || "") ||
+    formData.logo !== ((workspace as ReturnType<typeof JSON.parse>)?.logo || null);
 
   return (
     <div className="space-y-5">
@@ -99,7 +99,7 @@ const WorkspaceSettings = () => {
               variant="outline"
               className="rounded-md px-2.5 py-0.5 bg-primary/8 text-primary border-primary/20 font-bold text-[9px] uppercase tracking-widest"
             >
-              {(workspace as any)?.plan ?? "Pro Plan"}
+              {(workspace as ReturnType<typeof JSON.parse>)?.plan ?? "Pro Plan"}
             </Badge>
           </div>
   

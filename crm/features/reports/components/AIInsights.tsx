@@ -22,7 +22,7 @@ export default function AIInsights() {
 
   const insights = useMemo(() => data ?? { recommendations: [], alerts: [], trends: [] }, [data]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const handleDismiss = (e: React.MouseEvent, _tab: TabType, _id: string) => {
     e.stopPropagation();
     toast.success("Insight dismissed", {
@@ -127,7 +127,7 @@ export default function AIInsights() {
                 className="space-y-3 overflow-hidden"
               >
                 {insights[activeTab].length > 0 ? (
-                  insights[activeTab].map((item: any, index: number) => {
+                  insights[activeTab].map((item: ReturnType<typeof JSON.parse>, index: number) => {
                     const Icon = getIcon(activeTab);
                     
                     const confidence = Math.max(75, 98 - (index * 7)); 

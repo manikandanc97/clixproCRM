@@ -10,7 +10,6 @@ import { Button } from "@/shared/ui/button";
 import { FormSubmitButton } from "@/shared/components/form-submit-button";
 import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useCreateCustomer, useUpdateCustomer } from "@/shared/hooks/use-crm";
-import { Loader2 } from "lucide-react";
 import { CustomerType } from "@/shared/types/customer";
 import { useCurrency } from "@/shared/hooks/use-currency";
 
@@ -74,7 +73,7 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
       }
       resetDirty(form.getValues());
       onSuccess?.();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     } catch (_error) {
       // Error handled by hook
     }

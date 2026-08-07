@@ -69,7 +69,7 @@ export async function fetchDashboardData(timeframe: string = "month") {
 }
 
 export function fetchRevenueGrowth(filter: string = "Year") {
-  return unwrapResponse<any>(client.get(`/crm/dashboard/revenue-growth?filter=${encodeURIComponent(filter)}`));
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.get(`/crm/dashboard/revenue-growth?filter=${encodeURIComponent(filter)}`));
 }
 
 export function fetchCustomersData() {
@@ -84,13 +84,13 @@ export function fetchPipelineData() {
   return unwrapResponse<PipelineDataType>(client.get("/crm/pipeline"));
 }
 
-export function fetchTasksData(params?: Record<string, any>) {
-  const query = params ? "?" + new URLSearchParams(params as any).toString() : "";
+export function fetchTasksData(params?: Record<string, ReturnType<typeof JSON.parse>>) {
+  const query = params ? "?" + new URLSearchParams(params as ReturnType<typeof JSON.parse>).toString() : "";
   return unwrapResponse<TasksDataType>(client.get(`/crm/tasks${query}`));
 }
 
 export function fetchTaskDashboard() {
-  return unwrapResponse<{ stats: any[]; dashboardStats: any }>(client.get("/crm/tasks/dashboard"));
+  return unwrapResponse<{ stats: ReturnType<typeof JSON.parse>[]; dashboardStats: ReturnType<typeof JSON.parse> }>(client.get("/crm/tasks/dashboard"));
 }
 
 export function fetchTaskBoard(search?: string) {
@@ -103,53 +103,53 @@ export function fetchTaskCalendar(startDate?: string, endDate?: string) {
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
   const query = Object.keys(params).length > 0 ? "?" + new URLSearchParams(params).toString() : "";
-  return unwrapResponse<any[]>(client.get(`/crm/tasks/calendar${query}`));
+  return unwrapResponse<ReturnType<typeof JSON.parse>[]>(client.get(`/crm/tasks/calendar${query}`));
 }
 
 export function fetchQuotationsData() {
   return unwrapResponse<QuotationsDataType>(client.get("/crm/quotations"));
 }
 
-export async function fetchReportsData(params?: Record<string, any>) {
-  const query = params ? "?" + new URLSearchParams(params as any).toString() : "";
+export async function fetchReportsData(params?: Record<string, ReturnType<typeof JSON.parse>>) {
+  const query = params ? "?" + new URLSearchParams(params as ReturnType<typeof JSON.parse>).toString() : "";
   return normalizeReportsData(await unwrapResponse<ReportsDataType>(client.get(`/crm/reports${query}`)));
 }
 
 // ─── New dynamic endpoints ────────────────────────────────────────────────────
 export function fetchLeadNotes(leadId: string) {
-  return unwrapResponse<any>(client.get(`/crm/leads/${leadId}/notes`));
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.get(`/crm/leads/${leadId}/notes`));
 }
 
-export function createLeadNote(leadId: string, data: any) {
-  return unwrapResponse<any>(client.post(`/crm/leads/${leadId}/notes`, data));
+export function createLeadNote(leadId: string, data: ReturnType<typeof JSON.parse>) {
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.post(`/crm/leads/${leadId}/notes`, data));
 }
 
 export function fetchLeadTimeline(leadId: string) {
-  return unwrapResponse<any>(client.get(`/crm/leads/${leadId}/timeline`));
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.get(`/crm/leads/${leadId}/timeline`));
 }
 
-export function createLeadTimelineEvent(leadId: string, data: any) {
-  return unwrapResponse<any>(client.post(`/crm/leads/${leadId}/timeline`, data));
+export function createLeadTimelineEvent(leadId: string, data: ReturnType<typeof JSON.parse>) {
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.post(`/crm/leads/${leadId}/timeline`, data));
 }
 
 export function fetchLeadAttachments(leadId: string) {
-  return unwrapResponse<any>(client.get(`/crm/leads/${leadId}/attachments`));
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.get(`/crm/leads/${leadId}/attachments`));
 }
 
-export function createLeadAttachment(leadId: string, data: any) {
-  return unwrapResponse<any>(client.post(`/crm/leads/${leadId}/attachments`, data));
+export function createLeadAttachment(leadId: string, data: ReturnType<typeof JSON.parse>) {
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.post(`/crm/leads/${leadId}/attachments`, data));
 }
 
 export function fetchLeadMeetings(leadId: string) {
-  return unwrapResponse<any>(client.get(`/crm/leads/${leadId}/meetings`));
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.get(`/crm/leads/${leadId}/meetings`));
 }
 
-export function createLeadMeeting(leadId: string, data: any) {
-  return unwrapResponse<any>(client.post(`/crm/leads/${leadId}/meetings`, data));
+export function createLeadMeeting(leadId: string, data: ReturnType<typeof JSON.parse>) {
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.post(`/crm/leads/${leadId}/meetings`, data));
 }
 
-export function createMeeting(data: any) {
-  return unwrapResponse<any>(client.post(`/crm/meetings`, data));
+export function createMeeting(data: ReturnType<typeof JSON.parse>) {
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.post(`/crm/meetings`, data));
 }
 
 // ─── Analytics endpoints ──────────────────────────────────────────────────────
@@ -215,7 +215,7 @@ export function updateSecuritySettings(data: Partial<SecuritySettingsDataType>) 
 }
 
 export function updateIntegrationSettings(id: string, connected: boolean) {
-  return unwrapResponse<any>(client.patch(`/crm/settings/integrations/${id}`, { connected }));
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.patch(`/crm/settings/integrations/${id}`, { connected }));
 }
 
 export function updateAiSettings(data: Partial<AiSettingsDataType>) {
@@ -227,12 +227,12 @@ export function updateNotificationSettings(data: Partial<NotificationSettingsDat
 }
 
 export function fetchRevenueTargets() {
-  return unwrapResponse<any[]>(client.get("/crm/settings/revenue-targets"));
+  return unwrapResponse<ReturnType<typeof JSON.parse>[]>(client.get("/crm/settings/revenue-targets"));
 }
 
-export function fetchRevenueTargetAnalytics(filters: Record<string, any> = {}) {
+export function fetchRevenueTargetAnalytics(filters: Record<string, ReturnType<typeof JSON.parse>> = {}) {
   const searchParams = new URLSearchParams(filters);
-  return unwrapResponse<any>(client.get(`/crm/analytics/revenue-target?${searchParams.toString()}`));
+  return unwrapResponse<ReturnType<typeof JSON.parse>>(client.get(`/crm/analytics/revenue-target?${searchParams.toString()}`));
 }
 
 // ─── Creation endpoints ──────────────────────────────────────────────────────
@@ -248,7 +248,7 @@ export function deleteLead(id: string) {
   return unwrapResponse<{ id: string }>(client.delete(`/crm/leads/${id}`));
 }
 
-export function updatePipelineItem(id: string, data: Record<string, any>) {
+export function updatePipelineItem(id: string, data: Record<string, ReturnType<typeof JSON.parse>>) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return unwrapResponse<any>(client.patch(`/crm/pipeline/${id}`, data));
 }

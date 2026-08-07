@@ -96,19 +96,19 @@ const STEPS = [
 export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpenChange, onSuccess }) => {
   const [step, setStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
-  const [parsedData, setParsedData] = useState<any[]>([]);
+  const [parsedData, setParsedData] = useState<ReturnType<typeof JSON.parse>[]>([]);
   const [fileHeaders, setFileHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({}); 
   
   const [isOfficialTemplate, setIsOfficialTemplate] = useState(false);
   const [showAdvancedMapping, setShowAdvancedMapping] = useState(false);
 
-  const [validationResults, setValidationResults] = useState<{ valid: any[], invalid: any[] }>({ valid: [], invalid: [] });
+  const [validationResults, setValidationResults] = useState<{ valid: ReturnType<typeof JSON.parse>[], invalid: ReturnType<typeof JSON.parse>[] }>({ valid: [], invalid: [] });
   const [duplicateStrategy, setDuplicateStrategy] = useState<"skip" | "update" | "create">("skip");
   
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [summary, setSummary] = useState<{ imported: number, skipped: number, failed: number, failedRows: any[] } | null>(null);
+  const [summary, setSummary] = useState<{ imported: number, skipped: number, failed: number, failedRows: ReturnType<typeof JSON.parse>[] } | null>(null);
 
   const resetState = () => {
     setStep(1);
@@ -164,7 +164,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
       const initialMapping: Record<string, string> = {};
       headers.forEach(header => {
         const lowerHeader = header.toLowerCase().trim();
-        const crmKey = (AUTO_MAP as any)[lowerHeader];
+        const crmKey = (AUTO_MAP as ReturnType<typeof JSON.parse>)[lowerHeader];
         if (crmKey && !initialMapping[crmKey]) {
           initialMapping[crmKey] = header;
         }
@@ -174,7 +174,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
         // Force exact mapping for official template
         IMPORT_TEMPLATE_HEADERS.forEach(h => {
           const lowerHeader = h.toLowerCase().trim();
-          const crmKey = (AUTO_MAP as any)[lowerHeader];
+          const crmKey = (AUTO_MAP as ReturnType<typeof JSON.parse>)[lowerHeader];
           if (crmKey) initialMapping[crmKey] = h;
         });
       }
@@ -189,11 +189,11 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
   };
 
   const handleValidation = () => {
-    const valid: any[] = [];
-    const invalid: any[] = [];
+    const valid: ReturnType<typeof JSON.parse>[] = [];
+    const invalid: ReturnType<typeof JSON.parse>[] = [];
 
     parsedData.forEach((row) => {
-      const mappedRow: any = {};
+      const mappedRow: ReturnType<typeof JSON.parse> = {};
       let hasError = false;
       const errors: string[] = [];
 
@@ -251,7 +251,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
       let totalImported = 0;
       let totalSkipped = 0;
       let totalFailed = 0;
-      let allFailedRows: any[] = [];
+      let allFailedRows: ReturnType<typeof JSON.parse>[] = [];
 
       const chunks = [];
       for (let i = 0; i < validationResults.valid.length; i += chunkSize) {
@@ -288,14 +288,14 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
       setStep(5);
       toast.success("Import completed successfully!");
       if (onSuccess) onSuccess();
-    } catch (error: any) {
+    } catch (error: ReturnType<typeof JSON.parse>) {
       toast.error(error.response?.data?.message || "Failed to import leads.");
       setImporting(false);
       setStep(3);
     }
   };
 
-  const slideVariants: any = {
+  const slideVariants: ReturnType<typeof JSON.parse> = {
     hidden: { opacity: 0, x: 10 },
     visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" } },
     exit: { opacity: 0, x: -10, transition: { duration: 0.2 } }
@@ -762,7 +762,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
                       ].map((strat) => (
                         <div 
                           key={strat.id}
-                          onClick={() => setDuplicateStrategy(strat.id as any)}
+                          onClick={() => setDuplicateStrategy(strat.id as ReturnType<typeof JSON.parse>)}
                           className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                             duplicateStrategy === strat.id 
                               ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/10" 

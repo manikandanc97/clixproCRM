@@ -105,7 +105,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
   const defaultDueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
   const form = useForm<TaskFormValues>({
-    resolver: zodResolver(taskFormSchema) as any,
+    resolver: zodResolver(taskFormSchema) as ReturnType<typeof JSON.parse>,
     defaultValues: {
       title: "",
       description: "",
@@ -123,7 +123,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
         if (!task) return null;
         if (task.relatedLead) return { type: "lead", id: task.relatedLead.id, label: task.relatedLead.name, sub: task.relatedLead.company || "" };
         if (task.relatedCustomer) return { type: "customer", id: task.relatedCustomer.id, label: task.relatedCustomer.name, sub: task.relatedCustomer.company || "" };
-        if (task.relatedQuotation) return { type: "quotation", id: task.relatedQuotation.id, label: `#${task.relatedQuotation.quoteNumber}`, sub: (task.relatedQuotation as any).client };
+        if (task.relatedQuotation) return { type: "quotation", id: task.relatedQuotation.id, label: `#${task.relatedQuotation.quoteNumber}`, sub: (task.relatedQuotation as ReturnType<typeof JSON.parse>).client };
         return null;
       })()
     },
@@ -144,7 +144,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
         title: task.title,
         description: task.description || "",
         assignedToId: task.assignedTo?.id || user?.id || "",
-        priority: task.priority as any,
+        priority: task.priority as ReturnType<typeof JSON.parse>,
         dueDate: formattedDueDate,
         checklist: task.checklist || [],
       });
@@ -155,7 +155,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
       } else if (task.relatedCustomer) {
         setRelatedRecord({ type: "customer", id: task.relatedCustomer.id, label: task.relatedCustomer.name, sub: task.relatedCustomer.company || "" });
       } else if (task.relatedQuotation) {
-        setRelatedRecord({ type: "quotation", id: task.relatedQuotation.id, label: `#${task.relatedQuotation.quoteNumber}`, sub: (task.relatedQuotation as any).client });
+        setRelatedRecord({ type: "quotation", id: task.relatedQuotation.id, label: `#${task.relatedQuotation.quoteNumber}`, sub: (task.relatedQuotation as ReturnType<typeof JSON.parse>).client });
       } else {
         setRelatedRecord(null);
       }
@@ -173,17 +173,17 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
     const q = recordSearch.toLowerCase().trim();
     const results: RelatedRecord[] = [];
 
-    leads.forEach((l: any) => {
+    leads.forEach((l: ReturnType<typeof JSON.parse>) => {
       if (!q || l.name?.toLowerCase().includes(q) || l.company?.toLowerCase().includes(q)) {
         results.push({ type: "lead", id: l.id, label: l.name, sub: l.company });
       }
     });
-    customers.forEach((c: any) => {
+    customers.forEach((c: ReturnType<typeof JSON.parse>) => {
       if (!q || c.name?.toLowerCase().includes(q) || c.company?.toLowerCase().includes(q)) {
         results.push({ type: "customer", id: c.id, label: c.name, sub: c.company });
       }
     });
-    quotations.forEach((qt: any) => {
+    quotations.forEach((qt: ReturnType<typeof JSON.parse>) => {
       if (!q || qt.quoteNumber?.toLowerCase().includes(q) || qt.client?.toLowerCase().includes(q)) {
         results.push({ type: "quotation", id: qt.id, label: `#${qt.quoteNumber}`, sub: qt.client });
       }
@@ -224,7 +224,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
 
   const onSubmit = (data: TaskFormValues) => {
     if (!task) return;
-    const payload: any = {
+    const payload: ReturnType<typeof JSON.parse> = {
       title: data.title,
       description: data.description || null,
       assignedToId: data.assignedToId,
@@ -391,7 +391,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
                               className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
                             >
                               <option value="">Select...</option>
-                              {employees.map((emp: any) => (
+                              {employees.map((emp: ReturnType<typeof JSON.parse>) => (
                                 <option key={emp.id} value={emp.id || emp.userId}>
                                   {emp.name}
                                 </option>

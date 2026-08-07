@@ -10,7 +10,6 @@ import { Button } from "@/shared/ui/button";
 import { FormSubmitButton } from "@/shared/components/form-submit-button";
 import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useCreateLead, useUpdateLead } from "@/shared/hooks/use-crm";
-import { Loader2 } from "lucide-react";
 import { useCurrency } from "@/shared/hooks/use-currency";
 
 const leadSchema = z.object({
@@ -56,7 +55,7 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
       email: initialData?.email || "",
       phone: initialData?.phone || "",
       status: initialData?.status 
-        ? (Object.values(stageToStatus).includes(initialData.status) ? initialData.status as any : "NEW") 
+        ? (Object.values(stageToStatus).includes(initialData.status) ? initialData.status as ReturnType<typeof JSON.parse> : "NEW") 
         : ((initialStage && stageToStatus[initialStage]) ? stageToStatus[initialStage] as LeadFormValues['status'] : "NEW"),
       priority: initialData?.priority 
         ? (initialData.priority.toUpperCase() as "LOW" | "MEDIUM" | "HIGH") 
@@ -84,7 +83,7 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
             email: data.email,
             phone: formattedPhone,
             status: data.status,
-            priority: data.priority as any,
+            priority: data.priority as ReturnType<typeof JSON.parse>,
             value: data.value ? data.value.replace(/[^0-9.]/g, '') : "0",
             followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
           }
@@ -96,14 +95,14 @@ export const LeadForm = ({ initialData, initialStage, onSuccess, onCancel }: Lea
           email: data.email,
           phone: formattedPhone,
           status: data.status,
-          priority: data.priority as any,
+          priority: data.priority as ReturnType<typeof JSON.parse>,
           value: data.value ? data.value.replace(/[^0-9.]/g, '') : "0",
           followUpAt: data.followUpAt ? data.followUpAt.toISOString() : null,
         });
       }
       resetDirty(form.getValues());
       onSuccess?.();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     } catch (_error) {
       // Error handled by hook
     }

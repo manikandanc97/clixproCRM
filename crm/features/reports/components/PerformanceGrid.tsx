@@ -7,7 +7,6 @@ import {
   TrendingDown, 
   TrendingUp, 
   Trophy, 
-  ArrowUpRight, 
   ChevronDown, 
   ChevronLeft, 
   ChevronRight, 

@@ -35,7 +35,7 @@ export const RoleForm = ({ onSuccess, onCancel }: RoleFormProps) => {
 
   const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const onSubmit = async (_data: RoleFormValues) => {
     // In a real app, this would be a mutation
     toast.promise(new Promise(resolve => setTimeout(resolve, 1500)), {

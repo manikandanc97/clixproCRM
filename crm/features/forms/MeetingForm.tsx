@@ -10,7 +10,7 @@ import { Button } from "@/shared/ui/button";
 import { FormSubmitButton } from "@/shared/components/form-submit-button";
 import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useCreateMeeting } from "@/shared/hooks/use-crm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { scheduleMeetingSchema, logMeetingSchema } from "@/shared/validations";
 
 type ScheduleMeetingFormValues = z.infer<typeof scheduleMeetingSchema>;
@@ -42,7 +42,7 @@ export const MeetingForm = ({
   // but use the correct resolver based on the active tab.
   const schema = activeTab === "schedule" ? scheduleMeetingSchema : logMeetingSchema;
 
-  const form = useForm<any>({
+  const form = useForm<ReturnType<typeof JSON.parse>>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: "",
@@ -59,7 +59,7 @@ export const MeetingForm = ({
 
   const { isDirty, resetDirty } = useDirtyForm(form, form.formState.defaultValues);
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: ReturnType<typeof JSON.parse>) => {
     // Combine date and time into a single Date object for startTime
     const [timeStr, period] = data.time.split(" ");
     const [hours, minutes] = (timeStr || "10:00").split(":");

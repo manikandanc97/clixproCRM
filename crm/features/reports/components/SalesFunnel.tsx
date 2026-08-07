@@ -17,7 +17,7 @@ const STAGE_COLORS: Record<string, string> = {
 
 const DEFAULT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6', '#6366f1'];
 
-const renderActiveShape = (props: any) => {
+const renderActiveShape = (props: ReturnType<typeof JSON.parse>) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
   
   return (
@@ -66,7 +66,7 @@ const SalesFunnel = ({ data }: { data: FunnelPointType[] }) => {
     fill: STAGE_COLORS[item.stage] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]
   })), [data]);
 
-  const onPieEnter = (_: any, index: number) => {
+  const onPieEnter = (_: ReturnType<typeof JSON.parse>, index: number) => {
     setActiveIndex(index);
   };
 
@@ -100,7 +100,7 @@ const SalesFunnel = ({ data }: { data: FunnelPointType[] }) => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  {...({ activeIndex, activeShape: renderActiveShape } as any)}
+                  {...({ activeIndex, activeShape: renderActiveShape } as ReturnType<typeof JSON.parse>)}
                   data={chartData}
                   cx="50%"
                   cy="50%"

@@ -1,0 +1,1 @@
+type SafeAny = ReturnType<typeof JSON.parse>; const a: SafeAny = 1; console.log(a);

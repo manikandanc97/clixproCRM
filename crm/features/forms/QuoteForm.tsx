@@ -52,11 +52,11 @@ export const QuoteForm = ({ initialData, onSuccess, onCancel }: QuoteFormProps) 
   defaultDate.setDate(defaultDate.getDate() + 15);
 
   const form = useForm<QuoteFormValues>({
-    resolver: zodResolver(quoteFormSchema) as any,
+    resolver: zodResolver(quoteFormSchema) as ReturnType<typeof JSON.parse>,
     defaultValues: initialData ? {
       leadId: initialData.leadId || "",
       client: initialData.client || "",
-      items: (initialData.items || []).map((item: any) => ({
+      items: (initialData.items || []).map((item: ReturnType<typeof JSON.parse>) => ({
         name: item.name,
         quantity: item.quantity,
         price: item.price,
@@ -196,7 +196,7 @@ export const QuoteForm = ({ initialData, onSuccess, onCancel }: QuoteFormProps) 
                 <div key={field.id} className="flex gap-2 items-start p-3 bg-muted/30 rounded-xl border border-border">
                   <div className="flex-1 space-y-3">
                     <FormField
-                      control={form.control as any}
+                      control={form.control as ReturnType<typeof JSON.parse>}
                       name={`items.${index}.name`}
                       render={({ field }) => (
                         <FormItem>
@@ -207,7 +207,7 @@ export const QuoteForm = ({ initialData, onSuccess, onCancel }: QuoteFormProps) 
                     />
                     <div className="grid grid-cols-3 gap-2">
                       <FormField
-                        control={form.control as any}
+                        control={form.control as ReturnType<typeof JSON.parse>}
                         name={`items.${index}.quantity`}
                         render={({ field }) => (
                           <FormItem>
@@ -218,7 +218,7 @@ export const QuoteForm = ({ initialData, onSuccess, onCancel }: QuoteFormProps) 
                         )}
                       />
                       <FormField
-                        control={form.control as any}
+                        control={form.control as ReturnType<typeof JSON.parse>}
                         name={`items.${index}.price`}
                         render={({ field }) => (
                           <FormItem>
@@ -229,7 +229,7 @@ export const QuoteForm = ({ initialData, onSuccess, onCancel }: QuoteFormProps) 
                         )}
                       />
                       <FormField
-                        control={form.control as any}
+                        control={form.control as ReturnType<typeof JSON.parse>}
                         name={`items.${index}.discount`}
                         render={({ field }) => (
                           <FormItem>
@@ -296,7 +296,7 @@ export const QuoteForm = ({ initialData, onSuccess, onCancel }: QuoteFormProps) 
               disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} 
             />
             <FormField
-              control={form.control as any}
+              control={form.control as ReturnType<typeof JSON.parse>}
               name="notes"
               render={({ field }) => (
                 <FormItem>

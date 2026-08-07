@@ -10,7 +10,6 @@ import {
   useSensor, 
   useSensors, 
   DragStartEvent,
-  DragOverEvent,
   DragEndEvent,
   defaultDropAnimationSideEffects
 } from "@dnd-kit/core";
@@ -21,7 +20,6 @@ import { TaskType } from "@/shared/types/task";
 import { TaskKanbanColumn } from "./TaskKanbanColumn";
 import { TaskKanbanCard } from "./TaskKanbanCard";
 import { useUpdateTaskStatus } from "@/shared/hooks/use-crm";
-import { toast } from "sonner";
 
 interface KanbanViewProps {
   tasks: TaskType[];

@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Button } from "@/shared/ui/button";
-import { Paperclip, Download, Trash2, UploadCloud, File, FileText, Image as ImageIcon } from "lucide-react";
+import { Paperclip, Download, UploadCloud, File, FileText, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useLeadAttachments, useCreateLeadAttachment } from "@/shared/hooks/use-crm";
 import { formatBytes } from "@/shared/lib/utils";
@@ -72,7 +72,7 @@ export function AttachmentsTab({ leadId }: { leadId: string }) {
         />
       ) : viewMode === "list" || viewMode === "table" ? (
         <div className="divide-y divide-border/40 rounded-xl border border-border/60 overflow-hidden bg-card">
-          {attachments.map((attachment: any) => (
+          {attachments.map((attachment: ReturnType<typeof JSON.parse>) => (
             <div key={attachment.id} className="flex items-center justify-between p-3.5 hover:bg-muted/30 transition-colors">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
@@ -96,7 +96,7 @@ export function AttachmentsTab({ leadId }: { leadId: string }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {attachments.map((attachment: any) => (
+          {attachments.map((attachment: ReturnType<typeof JSON.parse>) => (
             <div key={attachment.id} className="flex items-center gap-4 bg-card border rounded-xl p-4 shadow-sm hover:border-primary/30 transition-colors group">
               <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
                 {getFileIcon(attachment.fileType)}

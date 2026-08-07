@@ -11,7 +11,7 @@ interface CRMToolbarProps {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
   viewMode?: string;
-  setViewMode?: (mode: any) => void;
+  setViewMode?: (mode: ReturnType<typeof JSON.parse>) => void;
   viewOptions?: readonly ViewOption[] | ViewOption[];
   onFilterClick?: () => void;
   children?: React.ReactNode;

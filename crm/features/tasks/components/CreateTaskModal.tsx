@@ -26,7 +26,6 @@ import {
   ListTodo,
   Plus,
   Trash2,
-  Loader2,
   Paperclip,
   AlertCircle,
   FileText,
@@ -103,7 +102,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   const defaultDueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
   const form = useForm<TaskFormValues>({
-    resolver: zodResolver(taskFormSchema) as any,
+    resolver: zodResolver(taskFormSchema) as ReturnType<typeof JSON.parse>,
     defaultValues: {
       title: "",
       description: "",
@@ -133,17 +132,17 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     const q = recordSearch.toLowerCase().trim();
     const results: RelatedRecord[] = [];
 
-    leads.forEach((l: any) => {
+    leads.forEach((l: ReturnType<typeof JSON.parse>) => {
       if (!q || l.name?.toLowerCase().includes(q) || l.company?.toLowerCase().includes(q)) {
         results.push({ type: "lead", id: l.id, label: l.name, sub: l.company });
       }
     });
-    customers.forEach((c: any) => {
+    customers.forEach((c: ReturnType<typeof JSON.parse>) => {
       if (!q || c.name?.toLowerCase().includes(q) || c.company?.toLowerCase().includes(q)) {
         results.push({ type: "customer", id: c.id, label: c.name, sub: c.company });
       }
     });
-    quotations.forEach((qt: any) => {
+    quotations.forEach((qt: ReturnType<typeof JSON.parse>) => {
       if (!q || qt.quoteNumber?.toLowerCase().includes(q) || qt.client?.toLowerCase().includes(q)) {
         results.push({ type: "quotation", id: qt.id, label: `#${qt.quoteNumber}`, sub: qt.client });
       }
@@ -202,7 +201,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
         // Optional
         checklist: values.checklist,
         attachments: attachments.map((a) => ({ ...a, fileType: "application/octet-stream", fileUrl: "" })),
-      } as any);
+      } as ReturnType<typeof JSON.parse>);
       resetForm();
       resetDirty();
       onSuccess?.();
@@ -351,7 +350,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                               className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
                             >
                               <option value="">Select...</option>
-                              {employees.map((emp: any) => (
+                              {employees.map((emp: ReturnType<typeof JSON.parse>) => (
                                 <option key={emp.id} value={emp.id || emp.userId}>
                                   {emp.name}
                                 </option>

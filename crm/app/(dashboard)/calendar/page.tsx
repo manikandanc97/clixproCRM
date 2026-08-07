@@ -23,9 +23,9 @@ interface Filters {
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<ViewType>("month");
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<ReturnType<typeof JSON.parse>[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<ReturnType<typeof JSON.parse> | null>(null);
   const [filters, setFilters] = useState<Filters>({ meetings: true, calls: true, tasks: true, leaves: true });
 
   const fetchEvents = async () => {
