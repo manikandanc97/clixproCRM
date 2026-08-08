@@ -76,6 +76,14 @@ export function fetchCustomersData() {
   return unwrapResponse<CustomersDataType>(client.get("/crm/customers"));
 }
 
+export function fetchCompaniesData() {
+  return unwrapResponse<any>(client.get("/crm/companies"));
+}
+
+export function fetchDealsData() {
+  return unwrapResponse<any>(client.get("/crm/deals"));
+}
+
 export function fetchLeadsData() {
   return unwrapResponse<LeadsDataType>(client.get("/crm/leads"));
 }

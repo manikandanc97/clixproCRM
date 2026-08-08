@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { EmployeeService } from "@/services";
 import { requireRole } from "@/lib/auth-utils";
 import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import { handleApiError } from "@/lib/api-error";
 import { employeeSchema, paginationSchema } from "@/shared/validations";
 
@@ -45,7 +43,7 @@ export async function POST(req: Request) {
         createdAt: Date;
       };
     };
-    let generatedPassword: string | null = null;
+    const generatedPassword: string | null = null;
     
     try {
       tenantUser = await prisma.$transaction(async (tx) => {
@@ -56,17 +54,10 @@ export async function POST(req: Request) {
         if (user) {
           throw new Error("USER_ALREADY_EXISTS_OTHER_TENANT");
         } else {
-          let passwordToHash = password;
-          if (!password) {
-            generatedPassword = crypto.randomBytes(8).toString('hex');
-            passwordToHash = generatedPassword;
-          }
-          const hashedPassword = await bcrypt.hash(passwordToHash as string, 10);
           user = await tx.user.create({
             data: {
               name,
               email: normalizedEmail,
-              password: hashedPassword,
             }
           });
         }

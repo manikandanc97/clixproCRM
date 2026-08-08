@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, ChevronDown, Paperclip, Minimize2, Maximize2, MoreVertical } from 'lucide-react';
+import { Bot, X, Send, Paperclip, Minimize2, Maximize2, MoreVertical } from 'lucide-react';
 import { TextStreamChatTransport } from 'ai';
 import { WelcomeScreen } from './welcome-screen';
 import { MessageCard } from './message-card';

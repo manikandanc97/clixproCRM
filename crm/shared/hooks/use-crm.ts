@@ -4,9 +4,11 @@ import { LeadType } from "@/shared/types/lead";
 
 import { useQuery } from "@tanstack/react-query";
 import { 
-  fetchCustomersData, 
-  fetchLeadsData, 
-  fetchPipelineData, 
+  fetchCustomersData,
+  fetchCompaniesData,
+  fetchDealsData,
+  fetchLeadsData,
+  fetchPipelineData,
   fetchTasksData,
   fetchTaskDashboard,
   fetchTaskBoard,
@@ -49,6 +51,24 @@ export function useCustomers() {
     queryKey: ["customers", token],
     queryFn: fetchCustomersData,
     enabled: isAuthenticated ,
+  });
+}
+
+export function useCompanies() {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["companies", token],
+    queryFn: fetchCompaniesData,
+    enabled: isAuthenticated,
+  });
+}
+
+export function useDeals() {
+  const { isAuthenticated, token } = useAuth();
+  return useQuery({
+    queryKey: ["deals", token],
+    queryFn: fetchDealsData,
+    enabled: isAuthenticated,
   });
 }
 

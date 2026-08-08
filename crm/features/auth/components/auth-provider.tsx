@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, u
 import type React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { fetchCurrentUser, loginUser, logoutUser as clearSessionToken } from "@/shared/lib/api/auth";
+import { createClient } from "@/lib/supabase/client";
 import { 
   defaultRoleAccess, 
   normalizeRole, 
@@ -11,6 +12,7 @@ import {
   CRM_ROLES, 
   roleRouteConfig,
   PERMISSIONS,
+  getRolePermissions,
 } from "@/shared/lib/auth/rbac";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 
@@ -111,7 +113,7 @@ function buildAccess(user: AuthUser | null): RoleAccess {
 
   const resolvedPermissions = user.permissions && user.permissions.length > 0 
     ? user.permissions 
-    : (PERMISSIONS_BY_ROLE[roleKey] || []);
+    : getRolePermissions(roleKey);
     
   if (resolvedPermissions.includes("Help Center") || roleKey === CRM_ROLES.ADMIN) {
     if (!allowedRoutes.includes("/help")) {
@@ -177,7 +179,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(currentUser);
       setStatus("authenticated");
      
-    } catch (_error: unknown) {
+    } catch (error: any) {
+      if (error.message === "NEEDS_ONBOARDING") {
+        if (typeof window !== "undefined" && window.location.pathname !== "/onboarding") {
+          window.location.href = "/onboarding";
+          return;
+        }
+        setStatus("unauthenticated");
+        return;
+      }
       if (typeof window !== "undefined") localStorage.removeItem("has_session");
       setStatus("unauthenticated");
     } finally {
@@ -190,15 +200,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (hasFetched.current) return;
     hasFetched.current = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     refreshUser().finally(() => setIsHydrated(true));
   }, [refreshUser]);
 
   useEffect(() => {
-    const handleAuthExpired = () => logout();
-    window.addEventListener("auth:expired", handleAuthExpired);
-    return () => window.removeEventListener("auth:expired", handleAuthExpired);
-  }, [logout]);
+    const {
+      data: { subscription },
+    } = createClient().auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        logout();
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (!hasFetched.current) {
+          refreshUser().finally(() => setIsHydrated(true));
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [logout, refreshUser]);
 
   const login = useCallback(async (email: string, password: string, staySignedIn?: boolean) => {
     try {
@@ -213,6 +235,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Clear cache to ensure fresh data for the new user
       await queryClient.clear();
+    } catch (error: any) {
+      if (error.message === "NEEDS_ONBOARDING") {
+        if (typeof window !== "undefined" && window.location.pathname !== "/onboarding") {
+          window.location.href = "/onboarding";
+          return;
+        }
+        setStatus("unauthenticated");
+        return;
+      }
+      throw error;
     } finally {
       setLoading(false);
     }

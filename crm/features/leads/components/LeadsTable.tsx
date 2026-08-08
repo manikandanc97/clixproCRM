@@ -30,6 +30,7 @@ import { MeetingForm } from "@/features/forms/MeetingForm";
 import { StageTransitionModal } from "./StageTransitionModal";
 import { ConfirmMoveModal } from "@/features/pipeline/components/ConfirmMoveModal";
 import { WonLostModal, WonLostSubmitData } from "@/features/pipeline/components/WonLostModal";
+import { ConvertLeadModal } from "./ConvertLeadModal";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import { useUpdatePipelineItem } from "@/shared/hooks/use-crm";
 import { updateLead } from "@/shared/lib/api/crm";
@@ -165,6 +166,7 @@ const LeadsTable = ({
   const [stageTransitionLead, setStageTransitionLead] = useState<LeadType | null>(null);
   const [addNoteLead, setAddNoteLead] = useState<string | null>(null);
   const [detailsLeadId, setDetailsLeadId] = useState<string | null>(null);
+  const [convertLead, setConvertLead] = useState<LeadType | null>(null);
   
   const [confirmMoveModal, setConfirmMoveModal] = useState<{ isOpen: boolean; deal: ReturnType<typeof JSON.parse>; targetStage: string | null; originalStage: string | null }>({ isOpen: false, deal: null, targetStage: null, originalStage: null });
   const [wonLostModal, setWonLostModal] = useState<{ isOpen: boolean; type: LeadStatus.WON | LeadStatus.LOST | null; deal: ReturnType<typeof JSON.parse>; originalStage: string | null }>({ isOpen: false, type: null, deal: null, originalStage: null });
@@ -585,8 +587,8 @@ const LeadsTable = ({
               )}
 
               {lead.stage !== LeadStatus.WON && lead.stage !== LeadStatus.LOST && (
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStageChange(lead, "Won"); }} className="gap-2 text-xs text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950 cursor-pointer font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Convert to Customer (Mark Won)
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setConvertLead(lead); }} className="gap-2 text-xs text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950 cursor-pointer font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Convert to Deal (Mark Won)
                 </DropdownMenuItem>
               )}
 
@@ -712,7 +714,10 @@ const LeadsTable = ({
                   {lead.stage === LeadStatus.LOST ? (
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }}>Reopen Lead</DropdownMenuItem>
                   ) : lead.stage !== LeadStatus.WON ? (
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }}>Move Stage</DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setConvertLead(lead); }} className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950 font-medium">Convert to Deal</DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }}>Move Stage</DropdownMenuItem>
+                    </>
                   ) : null}
 
                   <DropdownMenuSeparator />
@@ -1075,6 +1080,12 @@ const LeadsTable = ({
         isOpen={!!detailsLeadId}
         onOpenChange={(open) => !open && setDetailsLeadId(null)}
         leadId={detailsLeadId}
+      />
+
+      <ConvertLeadModal
+        isOpen={!!convertLead}
+        onClose={() => setConvertLead(null)}
+        lead={convertLead}
       />
     </div>
   );

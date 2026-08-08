@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { LeadService } from "@/services";
-import {  requireRole } from "@/lib/auth-utils";
+import { DealService } from "@/services";
+import { requireRole } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
-import { leadSchema } from "@/shared/validations";
 
 export async function PATCH(
   request: Request,
@@ -12,10 +11,9 @@ export async function PATCH(
     const session = await requireRole(["ADMIN", "MANAGER", "SALES"]);
 
     const rawBody = await request.json();
-    const body = leadSchema.partial().parse(rawBody);
     const resolvedParams = await params;
-    const lead = await LeadService.updateLead(session.tenantId, session.userId, resolvedParams.id, body);
+    const deal = await DealService.updateDeal(session.tenantId, resolvedParams.id, rawBody, session.userId);
     
-    return NextResponse.json({ success: true, data: lead }, { status: 200 });
+    return NextResponse.json({ success: true, data: deal }, { status: 200 });
   } catch (error: unknown) { return handleApiError(error); }
 }

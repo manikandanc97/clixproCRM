@@ -62,9 +62,9 @@ export class DashboardService {
     startOfPreviousWeek.setDate(startOfPreviousWeek.getDate() - 7);
 
     // Fetch entity datasets in 5 clean queries instead of 21 concurrent roundtrips
-    const [allLeads, allCustomers, allTasks, recentQuotations, sessions] = await Promise.all([
-      prisma.lead.findMany({
-        where: { tenantId, deletedAt: null },
+    const [allDeals, allCustomers, allTasks, recentQuotations] = await Promise.all([
+      prisma.deal.findMany({
+        where: { tenantId },
         select: { id: true, name: true, stage: true, value: true, createdAt: true, updatedAt: true },
         orderBy: { createdAt: "desc" }
       }),
@@ -81,57 +81,54 @@ export class DashboardService {
         select: { id: true, client: true, createdAt: true },
         orderBy: { createdAt: "desc" },
         take: 5
-      }),
-      prisma.session.findMany({
-        select: { updatedAt: true }
       })
     ]);
 
-    const totalLeads = allLeads.length;
-    const currentMonthLeads = allLeads.filter(l => l.createdAt >= currentStart && l.createdAt < nextStart).length;
-    const previousMonthLeads = allLeads.filter(l => l.createdAt >= previousStart && l.createdAt < currentStart).length;
+    const totalDeals = allDeals.length;
+    const currentMonthDeals = allDeals.filter(d => d.createdAt >= currentStart && d.createdAt < nextStart).length;
+    const previousMonthDeals = allDeals.filter(d => d.createdAt >= previousStart && d.createdAt < currentStart).length;
 
     const currentMonthCustomers = allCustomers.filter(c => c.createdAt >= currentStart && c.createdAt < nextStart).length;
     const previousMonthCustomers = allCustomers.filter(c => c.createdAt >= previousStart && c.createdAt < currentStart).length;
 
-    const wonLeads = allLeads.filter(l => l.stage === "WON");
-    const currentRevenue = wonLeads.filter(l => l.updatedAt >= currentStart && l.updatedAt < nextStart).reduce((sum, l) => sum + toNumber(l.value), 0);
-    const previousRevenue = wonLeads.filter(l => l.updatedAt >= previousStart && l.updatedAt < currentStart).reduce((sum, l) => sum + toNumber(l.value), 0);
+    const wonDeals = allDeals.filter(d => d.stage === "WON");
+    const currentRevenue = wonDeals.filter(d => d.updatedAt >= currentStart && d.updatedAt < nextStart).reduce((sum, d) => sum + toNumber(d.value), 0);
+    const previousRevenue = wonDeals.filter(d => d.updatedAt >= previousStart && d.updatedAt < currentStart).reduce((sum, d) => sum + toNumber(d.value), 0);
 
     const pendingTasks = allTasks.filter(t => t.status !== "COMPLETED");
     const totalPendingTasks = pendingTasks.length;
     const currentMonthPendingTasks = pendingTasks.filter(t => t.createdAt >= currentStart && t.createdAt < nextStart).length;
     const previousMonthPendingTasks = pendingTasks.filter(t => t.createdAt >= previousStart && t.createdAt < currentStart).length;
 
-    const recentLeads = allLeads.slice(0, 5);
+    const recentDeals = allDeals.slice(0, 5);
     const recentCompletedTasks = allTasks.filter(t => t.status === "COMPLETED").sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 5);
-    const currentWeekLeadsData = allLeads.filter(l => l.createdAt >= sevenDaysAgo);
+    const currentWeekDealsData = allDeals.filter(d => d.createdAt >= sevenDaysAgo);
 
     // Calculate Sparkline Data
     const sparklineRevenue = [];
-    const sparklineLeads = [];
+    const sparklineDeals = [];
     for (let i = 6; i >= 0; i--) {
       const dStart = new Date(todayStart);
       dStart.setDate(dStart.getDate() - i);
       const dEnd = new Date(dStart);
       dEnd.setDate(dEnd.getDate() + 1);
       
-      const dayLeads = currentWeekLeadsData.filter(l => l.createdAt >= dStart && l.createdAt < dEnd).length;
-      const dayRevenue = wonLeads.filter(l => l.updatedAt >= dStart && l.updatedAt < dEnd).reduce((sum, l) => sum + toNumber(l.value), 0);
+      const dayDeals = currentWeekDealsData.filter(d => d.createdAt >= dStart && d.createdAt < dEnd).length;
+      const dayRevenue = wonDeals.filter(d => d.updatedAt >= dStart && d.updatedAt < dEnd).reduce((sum, d) => sum + toNumber(d.value), 0);
       
-      sparklineLeads.push({ value: dayLeads });
+      sparklineDeals.push({ value: dayDeals });
       sparklineRevenue.push({ value: dayRevenue });
     }
 
     const dashboardStats = [
-      { title: "Total Leads", value: totalLeads.toLocaleString("en-US"), valueAmount: totalLeads, sparklineData: sparklineLeads, ...calculateTrend(currentMonthLeads, previousMonthLeads) },
+      { title: "Total Deals", value: totalDeals.toLocaleString("en-US"), valueAmount: totalDeals, sparklineData: sparklineDeals, ...calculateTrend(currentMonthDeals, previousMonthDeals) },
       { title: "New Customers", value: currentMonthCustomers.toLocaleString("en-US"), valueAmount: currentMonthCustomers, ...calculateTrend(currentMonthCustomers, previousMonthCustomers) },
       { title: "Revenue", value: formatCurrency(currentRevenue, currency), valueAmount: currentRevenue, sparklineData: sparklineRevenue, ...calculateTrend(currentRevenue, previousRevenue) },
       { title: "Pending Tasks", value: totalPendingTasks.toLocaleString("en-US"), valueAmount: totalPendingTasks, ...calculateTrend(currentMonthPendingTasks, previousMonthPendingTasks) },
     ];
 
     const recentActivities = [
-      ...recentLeads.map(l => ({ id: `lead-${l.id}`, title: `New lead: ${l.name}`, time: l.createdAt })),
+      ...recentDeals.map(d => ({ id: `deal-${d.id}`, title: `New deal: ${d.name}`, time: d.createdAt })),
       ...recentQuotations.map(q => ({ id: `quote-${q.id}`, title: `Quotation: ${q.client}`, time: q.createdAt })),
       ...recentCompletedTasks.map(t => ({ id: `task-${t.id}`, title: `Completed: ${t.title}`, time: t.updatedAt })),
     ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5).map(a => ({
@@ -142,21 +139,21 @@ export class DashboardService {
     const currentYear = new Date().getFullYear();
     const salesChartData = months.map(month => ({ name: month, total: 0 }));
 
-    wonLeads.forEach(lead => {
-      const date = new Date(lead.updatedAt);
+    wonDeals.forEach(deal => {
+      const date = new Date(deal.updatedAt);
       if (date.getFullYear() === currentYear) {
         const monthIndex = date.getMonth();
-        salesChartData[monthIndex].total += toNumber(lead.value);
+        salesChartData[monthIndex].total += toNumber(deal.value);
       }
     });
 
-    const currentWeekLeads = allLeads.filter(l => l.createdAt >= startOfCurrentWeek).length;
-    const previousWeekLeads = allLeads.filter(l => l.createdAt >= startOfPreviousWeek && l.createdAt < startOfCurrentWeek).length;
+    const currentWeekLeads = allDeals.filter(d => d.createdAt >= startOfCurrentWeek).length;
+    const previousWeekLeads = allDeals.filter(d => d.createdAt >= startOfPreviousWeek && d.createdAt < startOfCurrentWeek).length;
 
-    const liveTrafficToday = sessions.filter(s => s.updatedAt >= todayStart).length;
-    const liveTrafficYesterday = sessions.filter(s => s.updatedAt >= yesterdayStart && s.updatedAt < todayStart).length;
-    const activeUsersCurrent = sessions.filter(s => s.updatedAt >= fifteenMinutesAgo).length;
-    const activeUsersPrevious = sessions.filter(s => s.updatedAt >= thirtyMinutesAgo && s.updatedAt < fifteenMinutesAgo).length;
+    const liveTrafficToday = 0;
+    const liveTrafficYesterday = 0;
+    const activeUsersCurrent = 0;
+    const activeUsersPrevious = 0;
 
     const weeklyGrowth = previousWeekLeads > 0 
       ? ((currentWeekLeads - previousWeekLeads) / previousWeekLeads) * 100 

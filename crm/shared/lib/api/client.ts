@@ -25,76 +25,11 @@ client.interceptors.request.use(
   }
 );
 
-let isRefreshing = false;
-let failedQueue: { resolve: (value?: unknown) => void; reject: (reason?: unknown) => void; }[] = [];
-
-const processQueue = (error: Error | null, token: string | null = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
 client.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    
-    if (!originalRequest) {
-      return Promise.reject(error);
-    }
-
-    // Prevent infinite loops if refresh itself fails, or it's a login/logout failure
-    if (
-      originalRequest.url?.includes("/auth/refresh") || 
-      originalRequest.url?.includes("/auth/login") ||
-      originalRequest.url?.includes("/auth/logout")
-    ) {
-      if (originalRequest.url?.includes("/auth/refresh") && error?.response?.status === 401) {
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("has_session");
-          window.dispatchEvent(new CustomEvent("auth:expired"));
-        }
-      }
-      return Promise.reject(error);
-    }
-
-    if (error?.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(() => {
-          return client(originalRequest);
-        }).catch(err => {
-          return Promise.reject(err);
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
-        processQueue(null);
-        return client(originalRequest);
-      } catch (err) {
-        processQueue(err as Error);
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("has_session");
-          window.dispatchEvent(new CustomEvent("auth:expired"));
-        }
-        return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-
+  (error) => {
     return Promise.reject(error);
-  },
+  }
 );
 
 export default client;

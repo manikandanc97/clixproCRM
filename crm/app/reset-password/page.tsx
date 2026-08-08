@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import AuthLayout from "@/features/auth/components/auth-layout";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -13,8 +13,6 @@ import { getApiErrorMessage } from "@/shared/lib/api/error";
 
 function ResetPasswordForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,11 +20,6 @@ function ResetPasswordForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!token) {
-      toast.error("Invalid or missing reset token.");
-      return;
-    }
 
     if (newPassword.length < 6) {
       toast.error("Password must be at least 6 characters long.");
@@ -40,7 +33,7 @@ function ResetPasswordForm() {
 
     try {
       setLoading(true);
-      const response = await resetPassword({ token, newPassword });
+      const response = await resetPassword({ newPassword });
       toast.success(response.message || "Password has been successfully reset.");
       
       // Redirect to login after a short delay

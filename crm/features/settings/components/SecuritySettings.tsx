@@ -47,10 +47,6 @@ const SecuritySettings = () => {
     setPasswordStrength(0);
   };
 
-  const handle2FAToggle = (checked: boolean) => {
-    if (!data) return;
-    mutation.mutate({ ...data, twoFactorEnabled: checked });
-  };
 
   const handleRevokeSession = (sessionId: string) => {
     if (!data) return;
@@ -124,7 +120,7 @@ const SecuritySettings = () => {
           </Button>
         </CRMCard>
 
-        {/* 2FA */}
+        {/* 2FA Managed Externally */}
         <CRMCard>
           <div className="flex items-center gap-2 mb-5">
             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -134,42 +130,16 @@ const SecuritySettings = () => {
               <h3 className="text-sm font-bold tracking-tight text-foreground">Two-Factor Auth</h3>
               <p className="text-[11px] text-muted-foreground font-medium">Add an extra layer of protection.</p>
             </div>
-            {mutation.isPending && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground ml-auto" />}
           </div>
 
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center justify-between p-3.5 rounded-lg bg-primary/5 border border-primary/15">
-              <div>
-                <h4 className="font-semibold text-xs text-foreground tracking-tight">Authenticator App</h4>
-                <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Use Google Authenticator or similar.</p>
-              </div>
-              <Switch 
-                checked={data?.twoFactorEnabled ?? false} 
-                onCheckedChange={handle2FAToggle}
-                disabled={mutation.isPending} 
-              />
-            </div>
-
-            <div className="flex items-center justify-between p-3.5 rounded-lg bg-muted/30 border border-border/50">
-              <div>
-                <h4 className="font-semibold text-xs text-muted-foreground tracking-tight">SMS Verification</h4>
-                <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Receive codes via text message.</p>
-              </div>
-              <Badge variant="outline" className="text-[8px] font-bold uppercase tracking-widest rounded-md bg-muted/50 border-border">
-                Disabled
-              </Badge>
-            </div>
+          <div className="p-3 bg-muted/30 rounded-lg border border-border/50 flex items-start gap-2.5">
+            <Lock className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">
+              Two-Factor Authentication is securely managed by our authentication provider. You can configure it during the sign-in process.
+            </p>
           </div>
-
-          {!(data?.twoFactorEnabled) && (
-            <div className="p-3 bg-warning/8 rounded-lg border border-warning/20 flex items-start gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
-              <p className="text-[10px] text-warning-foreground/80 leading-relaxed font-medium">
-                2FA is not enabled. We strongly recommend enabling it to prevent unauthorized access.
-              </p>
-            </div>
-          )}
         </CRMCard>
+
 
         {/* Active Sessions */}
         <CRMCard>

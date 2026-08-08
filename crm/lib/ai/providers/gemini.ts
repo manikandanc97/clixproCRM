@@ -1,5 +1,5 @@
 import { AIProvider, AIStreamResult, GenerateOptions, StreamOptions } from '../types/provider';
-import { generateText, streamText, embedMany, convertToModelMessages } from 'ai';
+import { generateText, streamText, embedMany } from 'ai';
 import { UIMessage } from '@ai-sdk/react';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 

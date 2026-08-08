@@ -5,21 +5,11 @@ import {
   ChevronRight,
   ChevronsUpDown,
   Building2,
-  LifeBuoy,
-  Book,
-  MessageCircleQuestion,
-  Headphones,
-  Keyboard,
-  Info
+  LifeBuoy
 } from "lucide-react";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+
+
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";

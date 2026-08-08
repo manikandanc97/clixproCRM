@@ -1,6 +1,5 @@
-import { cookies, headers } from "next/headers";
-import jwt from "jsonwebtoken";
-import { env } from "@/lib/env";
+import { headers } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import { ApiError } from "@/lib/api-error";
 import prisma from "@/lib/prisma";
 
@@ -12,32 +11,37 @@ interface AuthSession {
 
 export async function getAuthSession(): Promise<AuthSession | null> {
   try {
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-    const tenantId = headersList.get("x-tenant-id");
-    const role = headersList.get("x-role");
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (userId && tenantId && role) {
-      return { userId, tenantId, role };
+    if (!user) return null;
+
+    // Optional: Allow x-tenant-id override from headers if client specifies it
+    const headersList = await headers();
+    const tenantId = headersList.get("x-tenant-id");
+
+    const userRecord = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        memberships: {
+          include: { role: true },
+        },
+      },
+    });
+
+    if (!userRecord || userRecord.status !== "ACTIVE" || userRecord.memberships.length === 0) {
+      return null;
     }
 
-    // Fallback if headers are not set
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-
-    if (!token) return null;
-
-    const decoded = jwt.verify(
-      token,
-      env.JWT_SECRET
-    ) as AuthSession;
+    const membership = tenantId
+      ? userRecord.memberships.find(m => m.tenantId === tenantId) || userRecord.memberships[0]
+      : userRecord.memberships[0];
 
     return {
-      userId: decoded.userId || (decoded as { id?: string }).id || "",
-      tenantId: decoded.tenantId,
-      role: decoded.role,
+      userId: userRecord.id,
+      tenantId: membership.tenantId,
+      role: membership.role.name,
     };
-   
   } catch (_error) {
     return null;
   }

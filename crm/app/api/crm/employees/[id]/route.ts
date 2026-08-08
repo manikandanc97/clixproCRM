@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-utils";
 import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
 import { handleApiError } from "@/lib/api-error";
 import { employeeSchema } from "@/shared/validations";
 import { Prisma } from "@prisma/client";
@@ -33,10 +32,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       const userData: Prisma.UserUpdateInput = {};
       if (name) userData.name = name;
       if (email) userData.email = email;
-      
-      if (password) {
-        userData.password = await bcrypt.hash(password, 10);
-      }
 
       await tx.user.update({
         where: { id: id },
