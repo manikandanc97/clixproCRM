@@ -17,6 +17,7 @@ const publicApiPaths = [
   "/api/auth/logout",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
+  "/api/ai/chat",
 ];
 
 export async function proxy(request: NextRequest) {

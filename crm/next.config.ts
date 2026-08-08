@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/chat',
+        destination: '/api/ai/chat',
+      },
+    ];
+  },
   async headers() {
     return [
       {

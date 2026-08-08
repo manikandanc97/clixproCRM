@@ -1,0 +1,1 @@
+{"error":{}}\nSTREAM ERROR: messages.some is not a function\nSTREAM ERROR: Invalid prompt: messages must not be empty\nSTREAM ERROR: Invalid prompt: messages must not be empty\nSTREAM ERROR: Invalid prompt: messages must not be empty\nSTREAM ERROR: Invalid prompt: The messages do not match the ModelMessage[] schema.\nSTREAM ERROR: messages.some is not a function\n

@@ -104,7 +104,7 @@ export const quoteSchema = z.object({
   tax: z.number().optional(),
   items: z.array(z.any()).optional(),
   notes: z.string().optional(),
-  status: z.enum(["DRAFT", "SENT", "ACCEPTED", "REJECTED", "EXPIRED"]),
+  status: z.enum(["DRAFT", "SENT", "APPROVED", "REJECTED", "EXPIRED"]),
   validTill: z.union([z.string(), z.date()]).optional(),
 }).strict();
 

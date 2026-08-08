@@ -100,7 +100,7 @@ export class QuotationService {
       });
     }
 
-    const accepted = quotations.filter((q) => q.status === "ACCEPTED");
+    const accepted = quotations.filter((q) => q.status === "APPROVED");
     const sent = quotations.filter((q) => q.status === "SENT");
     return {
       stats: [
