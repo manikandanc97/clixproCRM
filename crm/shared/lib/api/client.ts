@@ -48,8 +48,12 @@ client.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Prevent infinite loops if refresh itself fails or it's a login failure
-    if (originalRequest.url?.includes("/auth/refresh") || originalRequest.url?.includes("/auth/login")) {
+    // Prevent infinite loops if refresh itself fails, or it's a login/logout failure
+    if (
+      originalRequest.url?.includes("/auth/refresh") || 
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/logout")
+    ) {
       if (originalRequest.url?.includes("/auth/refresh") && error?.response?.status === 401) {
         if (typeof window !== "undefined") {
           localStorage.removeItem("has_session");

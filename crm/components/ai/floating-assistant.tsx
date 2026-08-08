@@ -3,6 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, X, Send, ChevronDown, Paperclip, Minimize2, Maximize2, MoreVertical } from 'lucide-react';
+import { TextStreamChatTransport } from 'ai';
 import { WelcomeScreen } from './welcome-screen';
 import { MessageCard } from './message-card';
 
@@ -13,21 +14,23 @@ export default function FloatingAssistant() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendMessage, status, stop, error } = useChat({
-    api: '/api/ai/chat',
-    body: {
-      tenantId: 'dev-tenant-1',
-      userId: 'dev-user-1',
-    },
-    fetch: async (url, options) => {
-      console.log("[DEBUG] useChat fetching URL:", url);
-      console.log("[DEBUG] useChat options:", options);
-      const res = await fetch(url, options);
-      console.log("[DEBUG] useChat response status:", res.status, res.statusText);
-      const clone = res.clone();
-      const text = await clone.text();
-      console.log("[DEBUG] useChat response text length:", text.length, "starts with:", text.substring(0, 100));
-      return res;
-    },
+    transport: new TextStreamChatTransport({
+      api: '/api/ai/chat',
+      body: {
+        tenantId: 'dev-tenant-1',
+        userId: 'dev-user-1',
+      },
+      fetch: async (url: any, options: any) => {
+        console.log("[DEBUG] useChat fetching URL:", url);
+        console.log("[DEBUG] useChat options:", options);
+        const res = await fetch(url, options);
+        console.log("[DEBUG] useChat response status:", res.status, res.statusText);
+        const clone = res.clone();
+        const text = await clone.text();
+        console.log("[DEBUG] useChat response text length:", text.length, "starts with:", text.substring(0, 100));
+        return res;
+      },
+    }),
     onError: (err) => {
       let msg = err.message;
       if (msg.startsWith('<!DOCTYPE html>')) msg = 'Server returned HTML (likely a 404/500 error). Check API route.';

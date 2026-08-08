@@ -146,7 +146,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await clearSessionToken(); // hits /api/auth/logout
     if (typeof window !== "undefined") {
       localStorage.removeItem("has_session");
     }
@@ -154,6 +153,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus("unauthenticated");
     queryClient.clear(); // Clear all cached data on logout
     useCRMStore.getState().reset(); // Reset CRM store
+
+    try {
+      await clearSessionToken(); // hits /api/auth/logout
+    } catch (error) {
+      console.error("Logout API failed", error);
+    }
   }, [queryClient]);
 
   const refreshUser = useCallback(async () => {

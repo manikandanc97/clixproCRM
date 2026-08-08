@@ -45,8 +45,8 @@ export class GeminiProvider implements AIProvider {
       system: options?.system,
       temperature: options?.temperature,
       tools: options?.tools as any,
-      onError: (err) => {
-        require('fs').appendFileSync('stream-error.log', 'STREAM ERROR: ' + (err?.error?.message || err?.message || JSON.stringify(err)) + '\\n');
+      onError: (err: any) => {
+        require('fs').appendFileSync('stream-error.log', 'STREAM ERROR: ' + (err?.error?.message || err?.message || JSON.stringify(err)) + '\n');
       },
       onFinish: async (event) => {
         if (options?.onFinish) {

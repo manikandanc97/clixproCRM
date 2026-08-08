@@ -12,7 +12,7 @@ export function MessageCard({ message }: MessageCardProps) {
   const isUser = message.role === 'user';
   
   // Extract text from parts or fallback to content string
-  const content = message.content || (message.parts?.find(p => p.type === 'text')?.text || '');
+  const content = (message as any).content || (message.parts?.find(p => p.type === 'text') as any)?.text || '';
   const isError = message.role === 'system' && content.includes('Error:');
 
   if (isUser) {
