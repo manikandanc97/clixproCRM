@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { FormModal } from "@/shared/components/form-modal";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -110,6 +110,14 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
   const [progress, setProgress] = useState(0);
   const [summary, setSummary] = useState<{ imported: number, skipped: number, failed: number, failedRows: ReturnType<typeof JSON.parse>[] } | null>(null);
 
+  const [totalProcessed, setTotalProcessed] = useState(0);
+  const [currentImported, setCurrentImported] = useState(0);
+  const [currentSkipped, setCurrentSkipped] = useState(0);
+  const [currentFailed, setCurrentFailed] = useState(0);
+  
+  const cancelRef = useRef(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
   const resetState = () => {
     setStep(1);
     setFile(null);
@@ -123,6 +131,12 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
     setImporting(false);
     setProgress(0);
     setSummary(null);
+    setTotalProcessed(0);
+    setCurrentImported(0);
+    setCurrentSkipped(0);
+    setCurrentFailed(0);
+    cancelRef.current = false;
+    setIsCancelling(false);
   };
 
   const handleClose = () => {
@@ -246,12 +260,22 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
     setImporting(true);
     setStep(4);
     
+    cancelRef.current = false;
+    setIsCancelling(false);
+    setTotalProcessed(0);
+    setCurrentImported(0);
+    setCurrentSkipped(0);
+    setCurrentFailed(0);
+    
     try {
-      const chunkSize = 500;
+      // Dynamically calculate chunk size for smooth progress even on small files
+      // Aim for at least 20 chunks if possible, min 2 records per chunk, max 100
+      const chunkSize = Math.min(100, Math.max(2, Math.ceil(validationResults.valid.length / 20)));
       let totalImported = 0;
       let totalSkipped = 0;
       let totalFailed = 0;
       let allFailedRows: ReturnType<typeof JSON.parse>[] = [];
+      let processedCount = 0;
 
       const chunks = [];
       for (let i = 0; i < validationResults.valid.length; i += chunkSize) {
@@ -259,18 +283,37 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
       }
 
       for (let i = 0; i < chunks.length; i++) {
-        const res = await axios.post("/api/crm/leads/import", {
-          leads: chunks[i],
-          duplicateStrategy
-        });
+        if (cancelRef.current) {
+          break;
+        }
 
-        const data = res.data.data;
-        totalImported += data.imported;
-        totalSkipped += data.skipped;
-        totalFailed += data.failed;
-        allFailedRows = [...allFailedRows, ...data.failedRows];
+        try {
+          const res = await axios.post("/api/crm/leads/import", {
+            leads: chunks[i],
+            duplicateStrategy
+          });
+
+          const data = res.data.data;
+          totalImported += data.imported;
+          totalSkipped += data.skipped;
+          totalFailed += data.failed;
+          allFailedRows = [...allFailedRows, ...data.failedRows];
+        } catch (err: any) {
+          totalFailed += chunks[i].length;
+          const chunkFailedRows = chunks[i].map((row: any) => ({
+             ...row,
+             ErrorReason: err.response?.data?.message || err.message || "Batch API error"
+          }));
+          allFailedRows = [...allFailedRows, ...chunkFailedRows];
+        }
+
+        processedCount += chunks[i].length;
+        setTotalProcessed(processedCount);
+        setCurrentImported(totalImported);
+        setCurrentSkipped(totalSkipped);
+        setCurrentFailed(totalFailed);
         
-        setProgress(Math.round(((i + 1) / chunks.length) * 100));
+        setProgress(Math.round((processedCount / validationResults.valid.length) * 100));
       }
 
       const frontendFailed = validationResults.invalid.map(inv => {
@@ -286,9 +329,13 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
       });
 
       setStep(5);
-      toast.success("Import completed successfully!");
+      if (cancelRef.current) {
+        toast.info("Import cancelled. Showing partial results.");
+      } else {
+        toast.success("Import completed successfully!");
+      }
       if (onSuccess) onSuccess();
-    } catch (error: ReturnType<typeof JSON.parse>) {
+    } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to import leads.");
       setImporting(false);
       setStep(3);
@@ -812,30 +859,56 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-2 text-foreground animate-pulse">Importing Data...</h3>
-                <p className="text-muted-foreground font-medium text-sm text-center max-w-xs">
-                  Please do not close this window while we process your records.
+                <p className="text-muted-foreground font-medium text-sm text-center max-w-xs mb-6">
+                  {totalProcessed} / {validationResults.valid.length} records processed
                 </p>
+                <div className="flex gap-6 text-sm font-semibold mb-8">
+                  <div className="flex flex-col items-center">
+                    <span className="text-emerald-600 dark:text-emerald-400 text-xl font-black">{currentImported}</span>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wider">Imported</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-amber-600 dark:text-amber-400 text-xl font-black">{currentSkipped}</span>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wider">Skipped</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-destructive text-xl font-black">{currentFailed}</span>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wider">Failed</span>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline"
+                  size="lg"
+                  disabled={isCancelling}
+                  onClick={() => {
+                    cancelRef.current = true;
+                    setIsCancelling(true);
+                  }}
+                  className="rounded-xl border-destructive/50 text-destructive hover:bg-destructive/10 font-bold px-8"
+                >
+                  {isCancelling ? "Finishing current batch..." : "Cancel Import"}
+                </Button>
               </motion.div>
             )}
 
             {/* Step 5: Summary */}
             {step === 5 && summary && (
-              <motion.div key="step5" variants={slideVariants} initial="hidden" animate="visible" exit="exit" className="flex flex-col h-full items-center justify-center py-10">
-                <div className="w-full max-w-2xl bg-card rounded-xl border border-border shadow-2xl p-12 relative overflow-hidden">
+              <motion.div key="step5" variants={slideVariants} initial="hidden" animate="visible" exit="exit" className="flex flex-col h-full items-center justify-center py-4">
+                <div className="w-full max-w-2xl bg-card rounded-xl border border-border shadow-xl p-8 relative overflow-hidden">
                   
                   {/* Decorative Background */}
-                  <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-emerald-500/10 to-transparent"></div>
+                  <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-emerald-500/10 to-transparent"></div>
                   
-                  <div className="relative flex flex-col items-center z-10 text-center mb-10">
-                    <div className="w-24 h-24 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/20 mb-6 border-4 border-white dark:border-background relative">
+                  <div className="relative flex flex-col items-center z-10 text-center mb-8">
+                    <div className="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-5 border-4 border-white dark:border-background relative">
                        <div className="absolute inset-0 rounded-full border-4 border-emerald-500/30 animate-ping"></div>
-                       <FileCheck2 className="w-12 h-12 relative z-10" />
+                       <FileCheck2 className="w-10 h-10 relative z-10" />
                     </div>
-                    <h3 className="text-3xl font-black text-foreground tracking-tight mb-3">Import Complete!</h3>
-                    <p className="text-muted-foreground font-medium text-lg">Your data has been successfully processed.</p>
+                    <h3 className="text-2xl font-black text-foreground tracking-tight mb-2">Import Complete!</h3>
+                    <p className="text-muted-foreground font-medium text-base">Your data has been successfully processed.</p>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-4 mb-10 relative z-10">
+                  <div className="grid grid-cols-3 gap-4 mb-8 relative z-10">
                     <div className="p-6 rounded-xl bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/20 text-center shadow-sm">
                       <h4 className="text-4xl font-black text-emerald-600 mb-2">{summary.imported}</h4>
                       <p className="text-[11px] font-bold text-emerald-700/70 uppercase tracking-wider">Imported</p>

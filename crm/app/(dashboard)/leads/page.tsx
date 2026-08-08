@@ -493,7 +493,7 @@ const LeadsPage = () => {
         <LeadForm onSuccess={() => setIsAddModalOpen(false)} onCancel={() => setIsAddModalOpen(false)} />
       </FormModal>
 
-      <BulkImportModal isOpen={isImportModalOpen} onOpenChange={setIsImportModalOpen} onSuccess={() => { setIsImportModalOpen(false); refetch(); }} />
+      <BulkImportModal isOpen={isImportModalOpen} onOpenChange={setIsImportModalOpen} onSuccess={() => { refetch(); }} />
       <LeadDetailsDrawer isOpen={!!detailsLeadId} onOpenChange={(open) => !open && setDetailsLeadId(null)} leadId={detailsLeadId || ""} />
       
       <FormModal title="Edit Lead" description="Update lead details" isOpen={!!editingLead} onOpenChange={(open) => !open && setEditingLead(null)} size="lg">

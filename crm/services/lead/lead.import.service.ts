@@ -31,6 +31,19 @@ export class LeadImportService {
           continue;
         }
 
+        const stageToUse = (row.stage || row.status || defaults.stage).toUpperCase();
+        let priorityToUse = defaults.priority;
+        if (row.priority) {
+          priorityToUse = String(row.priority).toUpperCase() as LeadPriority;
+        }
+        
+        let valueToUse = 0;
+        if (row.valueAmount !== undefined) {
+          valueToUse = parseFloat(String(row.valueAmount).replace(/[^0-9.-]+/g,"")) || 0;
+        } else if (row.value !== undefined) {
+          valueToUse = parseFloat(String(row.value).replace(/[^0-9.-]+/g,"")) || 0;
+        }
+
         const existing = await prisma.lead.findFirst({
           where: { tenantId, email: row.email, deletedAt: null }
         });
@@ -46,9 +59,9 @@ export class LeadImportService {
                 name: row.name,
                 company: row.company || existing.company,
                 phone: row.phone || existing.phone,
-                value: row.valueAmount !== undefined ? row.valueAmount : (row.value !== undefined ? row.value : existing.value),
-                stage: row.stage || existing.stage,
-                priority: row.priority || existing.priority,
+                value: valueToUse,
+                stage: stageToUse as LeadStage,
+                priority: priorityToUse,
                 assignedToId: row.assignedToId || existing.assignedToId,
               }
             });
@@ -61,9 +74,9 @@ export class LeadImportService {
                 company: row.company || "Unknown Company",
                 email: row.email,
                 phone: row.phone,
-                value: row.valueAmount !== undefined ? row.valueAmount : (row.value || 0),
-                stage: row.stage || defaults.stage,
-                priority: row.priority || defaults.priority,
+                value: valueToUse,
+                stage: stageToUse as LeadStage,
+                priority: priorityToUse,
                 assignedToId: row.assignedToId || null,
               }
             });
@@ -77,9 +90,9 @@ export class LeadImportService {
               company: row.company || "Unknown Company",
               email: row.email,
               phone: row.phone,
-              value: row.valueAmount !== undefined ? row.valueAmount : (row.value || 0),
-              stage: row.stage || defaults.stage,
-              priority: row.priority || defaults.priority,
+              value: valueToUse,
+              stage: stageToUse as LeadStage,
+              priority: priorityToUse,
               assignedToId: row.assignedToId || null,
             }
           });
