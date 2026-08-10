@@ -1,0 +1,71 @@
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  IsObject,
+  IsUUID,
+} from 'class-validator';
+import { TaskPriority, TaskStatus } from '@prisma/client';
+
+export class UpdateTaskDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  dueDate?: string;
+
+  @IsOptional()
+  @IsUUID()
+  assignedToId?: string;
+
+  @IsOptional()
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority;
+
+  @IsOptional()
+  @IsEnum(TaskStatus)
+  status?: TaskStatus;
+
+  @IsOptional()
+  @IsString()
+  reminderDate?: string;
+
+  @IsOptional()
+  @IsUUID()
+  relatedLeadId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  relatedCustomerId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  relatedMeetingId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  relatedQuotationId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  relatedDealId?: string;
+
+  @IsOptional()
+  @IsArray()
+  tags?: string[];
+
+  @IsOptional()
+  @IsArray()
+  checklist?: any[];
+
+  @IsOptional()
+  @IsArray()
+  attachments?: any[];
+}

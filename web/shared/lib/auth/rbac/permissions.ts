@@ -1,0 +1,128 @@
+export const PERMISSIONS = {
+  // Dashboard
+  DASHBOARD_VIEW: "dashboard.view",
+
+  // Leads
+  LEADS_CREATE: "leads.create",
+  LEADS_READ: "leads.read",
+  LEADS_READ_ASSIGNED: "leads.read_assigned",
+  LEADS_UPDATE: "leads.update",
+  LEADS_UPDATE_ASSIGNED: "leads.update_assigned",
+  LEADS_DELETE: "leads.delete",
+
+  // Companies
+  COMPANIES_CREATE: "companies.create",
+  COMPANIES_READ: "companies.read",
+  COMPANIES_UPDATE: "companies.update",
+  COMPANIES_DELETE: "companies.delete",
+
+  // Deals
+  DEALS_CREATE: "deals.create",
+  DEALS_READ: "deals.read",
+  DEALS_READ_ASSIGNED: "deals.read_assigned",
+  DEALS_UPDATE: "deals.update",
+  DEALS_UPDATE_ASSIGNED: "deals.update_assigned",
+  DEALS_DELETE: "deals.delete",
+
+  // Customers
+  CUSTOMERS_CREATE: "customers.create",
+  CUSTOMERS_READ: "customers.read",
+  CUSTOMERS_UPDATE: "customers.update",
+  CUSTOMERS_DELETE: "customers.delete",
+
+  // Pipeline
+  PIPELINE_CREATE: "pipeline.create",
+  PIPELINE_READ: "pipeline.read",
+  PIPELINE_UPDATE: "pipeline.update",
+  PIPELINE_DELETE: "pipeline.delete",
+
+  // Tasks
+  TASKS_CREATE: "tasks.create",
+  TASKS_READ: "tasks.read",
+  TASKS_READ_ASSIGNED: "tasks.read_assigned",
+  TASKS_UPDATE: "tasks.update",
+  TASKS_UPDATE_ASSIGNED: "tasks.update_assigned",
+  TASKS_DELETE: "tasks.delete",
+
+  // Quotations
+  QUOTATIONS_CREATE: "quotations.create",
+  QUOTATIONS_READ: "quotations.read",
+  QUOTATIONS_READ_ASSIGNED: "quotations.read_assigned",
+  QUOTATIONS_UPDATE: "quotations.update",
+  QUOTATIONS_UPDATE_ASSIGNED: "quotations.update_assigned",
+  QUOTATIONS_DELETE: "quotations.delete",
+  QUOTATIONS_APPROVE: "quotations.approve",
+
+  // Employees
+  EMPLOYEES_READ: "employees.read",
+  EMPLOYEES_MANAGE: "employees.manage",
+
+  // Roles
+  ROLES_READ: "role_management.read",
+  ROLES_MANAGE: "role_management.manage",
+
+  // Reports & Analytics
+  REPORTS_READ: "reports.read",
+
+  // Settings
+  SETTINGS_READ: "settings.read",
+  SETTINGS_MANAGE: "settings.manage",
+
+  // Support
+  SUPPORT_TICKETS_READ: "support_tickets.read",
+  SUPPORT_TICKETS_MANAGE: "support_tickets.manage",
+
+  // HRM
+  ATTENDANCE_READ: "attendance.read",
+  PERFORMANCE_READ: "performance.read",
+} as const;
+
+export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+export function getRolePermissions(role: string): string[] {
+  switch (role) {
+    case "ADMIN":
+      return Object.values(PERMISSIONS);
+    case "MANAGER":
+      return [
+        PERMISSIONS.DASHBOARD_VIEW,
+        PERMISSIONS.LEADS_CREATE, PERMISSIONS.LEADS_READ, PERMISSIONS.LEADS_UPDATE, PERMISSIONS.LEADS_DELETE,
+        PERMISSIONS.COMPANIES_CREATE, PERMISSIONS.COMPANIES_READ, PERMISSIONS.COMPANIES_UPDATE, PERMISSIONS.COMPANIES_DELETE,
+        PERMISSIONS.DEALS_CREATE, PERMISSIONS.DEALS_READ, PERMISSIONS.DEALS_UPDATE, PERMISSIONS.DEALS_DELETE,
+        PERMISSIONS.CUSTOMERS_CREATE, PERMISSIONS.CUSTOMERS_READ, PERMISSIONS.CUSTOMERS_UPDATE, PERMISSIONS.CUSTOMERS_DELETE,
+        PERMISSIONS.PIPELINE_CREATE, PERMISSIONS.PIPELINE_READ, PERMISSIONS.PIPELINE_UPDATE, PERMISSIONS.PIPELINE_DELETE,
+        PERMISSIONS.TASKS_CREATE, PERMISSIONS.TASKS_READ, PERMISSIONS.TASKS_UPDATE, PERMISSIONS.TASKS_DELETE,
+        PERMISSIONS.QUOTATIONS_CREATE, PERMISSIONS.QUOTATIONS_READ, PERMISSIONS.QUOTATIONS_UPDATE, PERMISSIONS.QUOTATIONS_DELETE, PERMISSIONS.QUOTATIONS_APPROVE,
+        PERMISSIONS.REPORTS_READ,
+        PERMISSIONS.EMPLOYEES_READ, PERMISSIONS.ATTENDANCE_READ, PERMISSIONS.PERFORMANCE_READ,
+        "leads.view",
+      ];
+    case "SALES":
+      return [
+        PERMISSIONS.DASHBOARD_VIEW,
+        PERMISSIONS.LEADS_CREATE, PERMISSIONS.LEADS_READ_ASSIGNED, PERMISSIONS.LEADS_UPDATE_ASSIGNED,
+        PERMISSIONS.COMPANIES_CREATE, PERMISSIONS.COMPANIES_READ, PERMISSIONS.COMPANIES_UPDATE,
+        PERMISSIONS.DEALS_CREATE, PERMISSIONS.DEALS_READ_ASSIGNED, PERMISSIONS.DEALS_UPDATE_ASSIGNED,
+        PERMISSIONS.CUSTOMERS_CREATE, PERMISSIONS.CUSTOMERS_READ, PERMISSIONS.CUSTOMERS_UPDATE,
+        PERMISSIONS.PIPELINE_READ, PERMISSIONS.PIPELINE_UPDATE,
+        PERMISSIONS.TASKS_CREATE, PERMISSIONS.TASKS_READ_ASSIGNED, PERMISSIONS.TASKS_UPDATE_ASSIGNED,
+        PERMISSIONS.QUOTATIONS_CREATE, PERMISSIONS.QUOTATIONS_READ_ASSIGNED, PERMISSIONS.QUOTATIONS_UPDATE_ASSIGNED,
+        "leads.view",
+      ];
+    case "SUPPORT":
+      return [
+        PERMISSIONS.DASHBOARD_VIEW,
+        PERMISSIONS.CUSTOMERS_READ,
+        PERMISSIONS.SUPPORT_TICKETS_READ, PERMISSIONS.SUPPORT_TICKETS_MANAGE,
+        PERMISSIONS.TASKS_READ_ASSIGNED, PERMISSIONS.TASKS_UPDATE_ASSIGNED,
+        "leads.view",
+      ];
+    case "EMPLOYEE":
+    default:
+      return [
+        PERMISSIONS.DASHBOARD_VIEW,
+        PERMISSIONS.TASKS_READ_ASSIGNED, PERMISSIONS.TASKS_UPDATE_ASSIGNED,
+        "leads.view",
+      ];
+  }
+}

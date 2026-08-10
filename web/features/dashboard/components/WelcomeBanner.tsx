@@ -1,0 +1,90 @@
+"use client";
+
+import React from "react";
+import { motion } from "framer-motion";
+import { 
+  ArrowUpRight, 
+  Zap,
+  Sparkles
+} from "lucide-react";
+import { useAuth } from "@/features/auth/components/auth-provider";
+import { Button } from "@/shared/ui/button";
+import Link from "next/link";
+import { PERMISSIONS } from "@/shared/lib/auth/rbac/permissions";
+import { useDashboardData } from "@/shared/hooks/use-dashboard";
+import { Skeleton } from "@/shared/ui/skeleton";
+
+export default function WelcomeBanner() {
+  const { user, access, hasPermission } = useAuth();
+  const { data: dashboardData, isLoading } = useDashboardData();
+
+  const weeklyGrowth = dashboardData?.weeklyGrowth ?? 0;
+  const isPositiveGrowth = weeklyGrowth >= 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="relative overflow-hidden rounded-xl bg-slate-950 p-6 md:p-8 shadow-xl border border-white/5"
+    >
+      {/* Background Gradients */}
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-emerald-500/10 to-transparent pointer-events-none" />
+      <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/20 blur-[80px] rounded-full pointer-events-none" />
+      
+      <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex-1 space-y-4">
+          <div className="flex items-center gap-3">
+            {/* Status Badge */}
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest">
+              <Zap className="w-3 h-3 fill-emerald-400" />
+              System Live
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+              Welcome back, <span className="text-emerald-400 capitalize">{user?.displayName || user?.name || access.roleName}</span>
+            </h1>
+            <div className="text-slate-400 text-base max-w-2xl leading-relaxed">
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  Your revenue grew by <Skeleton className="h-5 w-12 bg-white/10 inline-block align-middle" /> this week. Check your latest insights below.
+                </span>
+              ) : (
+                <>
+                  Your revenue grew by <span className={isPositiveGrowth ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
+                    {isPositiveGrowth ? "+" : ""}{weeklyGrowth}%
+                  </span> this week. Check your latest insights below.
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3 shrink-0">
+          {hasPermission(PERMISSIONS.REPORTS_READ) && (
+            <Button asChild className="rounded-full px-6 h-10 bg-white text-slate-950 hover:bg-slate-200 font-bold transition-all shadow-md">
+              <Link href="/reports" className="flex items-center gap-2 text-sm">
+                View Reports
+                <ArrowUpRight className="w-4 h-4" />
+              </Link>
+            </Button>
+          )}
+          {hasPermission(PERMISSIONS.LEADS_READ) && (
+            <Button asChild variant="outline" className="rounded-full px-6 h-10 border-white/10 bg-white/5 text-white hover:bg-white/10 font-bold transition-all text-sm">
+              <Link href="/leads">
+                Manage Leads
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Decorative Sparkle */}
+      <div className="absolute top-6 right-1/4 opacity-20 animate-pulse pointer-events-none">
+        <Sparkles className="w-5 h-5 text-white" />
+      </div>
+    </motion.div>
+  );
+}

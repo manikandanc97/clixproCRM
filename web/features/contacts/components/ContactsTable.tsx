@@ -1,0 +1,321 @@
+"use client";
+
+import {
+  MoreVertical,
+  Mail,
+  User,
+  Trash2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Phone,
+} from "lucide-react";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { Button } from "@/shared/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/shared/ui/dropdown-menu";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { DataTable } from "@/shared/components/DataTable";
+import { StatusBadge } from "@/shared/components/StatusBadge";
+import { useState } from "react";
+import { formatCurrency } from "@/lib/crm-formatters";
+import { useCurrency } from "@/shared/hooks/use-currency";
+import { cn } from "@/shared/lib/utils";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const ContactsTable = ({ contacts, onEditLead, onEditCustomer, onDeleteLead, onDeleteCustomer }: any) => {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { currency } = useCurrency();
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setSelectedIds(contacts.map((c: any) => c.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const columns = [
+    {
+      header: (
+        <Checkbox
+          checked={selectedIds.length === contacts.length && contacts.length > 0}
+          onCheckedChange={handleSelectAll}
+        />
+      ),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cell: (contact: any) => (
+        <Checkbox
+          checked={selectedIds.includes(contact.id)}
+          onCheckedChange={() => handleSelect(contact.id)}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      className: "w-[50px]",
+    },
+    {
+      header: "Contact",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cell: (contact: any) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="w-9 h-9 rounded-xl border border-border">
+            <AvatarFallback className="font-bold text-[10px] bg-primary/5 text-primary">
+              {contact.name.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-foreground leading-none mb-1 group-hover:text-primary transition-colors">
+              {contact.name}
+            </span>
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              {contact.company}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Type",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cell: (contact: any) => (
+        <span
+          className={cn(
+            "text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border",
+            contact.type === "Customer"
+              ? "bg-indigo-500/10 text-indigo-600 border-indigo-500/20"
+              : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+          )}
+        >
+          {contact.type}
+        </span>
+      ),
+    },
+    {
+      header: "Status",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cell: (contact: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let variant: any = "slate";
+        if (contact.type === "Customer") {
+          variant = contact.status === "ACTIVE" ? "emerald" : contact.status === "PREMIUM" ? "indigo" : "neutral";
+        } else {
+          const s = (contact.status || contact.stage || "").toLowerCase();
+          if (s.includes("new")) variant = "blue";
+          else if (s.includes("contacted")) variant = "amber";
+          else if (s.includes("proposal")) variant = "indigo";
+          else if (s.includes("won")) variant = "emerald";
+          else if (s.includes("lost")) variant = "rose";
+        }
+        return (
+          <StatusBadge
+            status={contact.type === "Customer" ? contact.status : (contact.status || contact.stage)}
+            variant={variant}
+          />
+        );
+      },
+    },
+    {
+      header: "Contact Info",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cell: (contact: any) => (
+        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5 font-medium text-foreground">
+            <Mail className="w-3 h-3" /> {contact.email || "—"}
+          </span>
+          <span className="flex items-center gap-1.5 font-medium text-foreground">
+            <Phone className="w-3 h-3" /> {contact.phone || "—"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Value / Revenue",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cell: (contact: any) => {
+        const val = contact.valueAmount ?? contact.revenueValue ?? 0;
+        return (
+          <span className="text-sm font-bold text-foreground">
+            {val > 0 ? formatCurrency(val, currency) : "—"}
+          </span>
+        );
+      },
+    },
+    {
+      header: "Last Activity",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cell: (contact: any) => {
+        const dateStr = contact.lastActivity || contact.lastContact || contact.updatedAt || contact.createdAt;
+        let formattedDate = "—";
+        if (dateStr) {
+          try {
+            formattedDate = new Intl.DateTimeFormat("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }).format(new Date(dateStr));
+          } catch {}
+        }
+        return <span className="text-xs text-muted-foreground">{formattedDate}</span>;
+      },
+    },
+    {
+      header: "Actions",
+      headerClassName: "text-right",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cell: (contact: any) => (
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary">
+            <Mail className="w-3.5 h-3.5" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
+                <MoreVertical className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => {
+                  if (contact.type === "Lead") onEditLead?.(contact.raw);
+                  else onEditCustomer?.(contact.raw);
+                }}
+              >
+                <User className="w-3.5 h-3.5 mr-2" /> Edit {contact.type}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-rose-600 focus:text-rose-600"
+                onClick={() => {
+                  if (confirm(`Are you sure you want to delete this ${contact.type.toLowerCase()}?`)) {
+                    if (contact.type === "Lead") onDeleteLead?.(contact.raw.id);
+                    else onDeleteCustomer?.(contact.raw.id);
+                  }
+                }}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+      className: "text-right",
+    },
+  ];
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(12);
+
+  const totalPages = Math.ceil(contacts.length / rowsPerPage);
+  const paginatedContacts = contacts.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  return (
+    <div className="flex-auto flex flex-col min-h-0 relative">
+      <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-auto max-h-[calc(100vh-360px)]">
+        <DataTable
+          data={paginatedContacts}
+          columns={columns}
+          wrapperClassName="flex-auto overflow-auto relative"
+          rowClassName="h-16 hover:bg-muted/30 transition-colors"
+          emptyTitle="No contacts found"
+          emptyDescription="No contacts match the current search or filters."
+        />
+      </div>
+
+      {contacts.length > 10 && (
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0">
+          <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
+            Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–
+            <span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, contacts.length)}</span> of{" "}
+            <span className="font-bold text-foreground">{new Intl.NumberFormat().format(contacts.length)}</span> Contacts
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold">
+                    {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[4rem]">
+                  {[12, 24, 48, 96].map((size) => (
+                    <DropdownMenuItem
+                      key={size}
+                      onClick={() => {
+                        setRowsPerPage(size);
+                        setCurrentPage(1);
+                      }}
+                      className="font-medium text-sm cursor-pointer hover:bg-muted"
+                    >
+                      {size}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
+                Page {currentPage}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
