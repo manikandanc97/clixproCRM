@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import { CompanyService } from "@/services";
-import { requireRole } from "@/lib/auth-utils";
+import { requireRole, getAuthSession } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/api-error";
 import { paginationSchema } from "@/shared/validations";
 
 export async function GET(req: Request) {
   try {
-    // const session = await getAuthSession();
-    // if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-    
-    // TEMPORARY MOCK FOR DEBUGGING
-    const session = { tenantId: "176eb722-aa34-4bff-9f13-ae64bc86b89c", userId: "mock", role: "ADMIN" };
+    const session = await getAuthSession();
+    if (!session) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
 
     const url = new URL(req.url);
