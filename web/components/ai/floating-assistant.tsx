@@ -6,6 +6,7 @@ import { Bot, X, Send, Paperclip, Minimize2, Maximize2, MoreVertical } from 'luc
 import { DefaultChatTransport } from 'ai';
 import { WelcomeScreen } from './welcome-screen';
 import { MessageCard } from './message-card';
+import client from '@/shared/lib/api/client';
 
 export default function FloatingAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,15 +16,37 @@ export default function FloatingAssistant() {
 
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({
-      api: '/api/ai/chat',
+      api: '/ai/chat',
       body: {
         tenantId: 'dev-tenant-1',
         userId: 'dev-user-1',
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fetch: async (url: any, options: any) => {
-        console.log("[DEBUG] useChat fetching URL:", url);
-        return fetch(url, options);
+        console.log("[DEBUG] useChat fetching URL with client:", url);
+        try {
+          const response = await client.request({
+            url,
+            method: options.method,
+            data: options.body ? JSON.parse(options.body as string) : undefined,
+            headers: options.headers,
+            responseType: 'stream'
+          });
+          return new Response(response.data, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers as any
+          });
+        } catch (err: any) {
+          if (err.response) {
+            return new Response(err.response.data, {
+              status: err.response.status,
+              statusText: err.response.statusText,
+              headers: err.response.headers as any
+            });
+          }
+          throw err;
+        }
       }
     }),
     onError: (err) => {

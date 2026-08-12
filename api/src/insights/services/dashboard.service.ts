@@ -315,4 +315,14 @@ export class DashboardService {
       revenueTarget,
     };
   }
+
+  async getRevenueGrowth(tenantId: string, filter: string) {
+    // Basic implementation to return revenue growth data
+    // The frontend fetches this to cache it for the dashboard
+    return {
+      growth: 0,
+      trend: "stable",
+      data: []
+    };
+  }
 }

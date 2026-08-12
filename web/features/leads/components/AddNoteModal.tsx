@@ -6,6 +6,7 @@ import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { useCRMStore } from "@/shared/store/useCRMStore";
+import { useAuth } from "@/features/auth/components/auth-provider";
 import { NoteType } from "@/shared/types/lead";
 import { toast } from "sonner";
 import { Paperclip, User } from "lucide-react";
@@ -23,6 +24,7 @@ export function AddNoteModal({ isOpen, onOpenChange, leadId }: AddNoteModalProps
   const [isPinned, setIsPinned] = useState(false);
   
   const { leads, updateLead } = useCRMStore();
+  const { user } = useAuth();
 
   const handleSave = () => {
     if (!leadId) return;
@@ -37,8 +39,8 @@ export function AddNoteModal({ isOpen, onOpenChange, leadId }: AddNoteModalProps
     const newNote: NoteType = {
       id: `note-${new Date().getTime()}`,
       leadId,
-      userId: "user-1", // mock user
-      createdBy: "Current User", // mock user
+      userId: user?.id || "unknown",
+      createdBy: user?.name || user?.email || "Current User",
       message,
       title: title || undefined,
       isPinned,

@@ -16,15 +16,20 @@ export class AuditLogsController {
     @Req() req: any,
     @Query('page') page: string,
     @Query('limit') limit: string,
-    @Query('search') search: string
+    @Query('search') search: string,
   ) {
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 20;
-    const result = await this.auditLogsService.getAuditLogs(req.tenantId, pageNum, limitNum, search || '');
-    return { 
-      success: true, 
+    const result = await this.auditLogsService.getAuditLogs(
+      req.tenantId,
+      pageNum,
+      limitNum,
+      search || '',
+    );
+    return {
+      success: true,
       data: result.logs,
-      meta: result.meta
+      meta: result.meta,
     };
   }
 }

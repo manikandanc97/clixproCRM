@@ -26,7 +26,7 @@ export class MeetingsController {
   @Roles('ADMIN', 'MANAGER', 'SALES', 'EMPLOYEE')
   async getMeetings(@Req() req: any) {
     const data = await this.meetingsService.getMeetings(req.tenantId);
-    return data;
+    return { success: true, data };
   }
 
   @Post()
@@ -37,7 +37,7 @@ export class MeetingsController {
       req.user.sub,
       body,
     );
-    return data;
+    return { success: true, data };
   }
 
   @Put(':id')
@@ -52,7 +52,7 @@ export class MeetingsController {
       id,
       body,
     );
-    return data;
+    return { success: true, data };
   }
 
   @Delete(':id')

@@ -24,7 +24,8 @@ export function useViewMode(moduleKey: string, defaultMode: string = "list") {
       // 1. Try standard module key
       const saved = localStorage.getItem(storageKey);
       if (saved) {
-        setViewModeState(normalizeViewMode(saved, normalizedDefault));
+        // We use a timeout to avoid synchronous setState inside the effect, fixing the React warning.
+        setTimeout(() => setViewModeState(normalizeViewMode(saved, normalizedDefault)), 0);
         return;
       }
 
@@ -32,7 +33,7 @@ export function useViewMode(moduleKey: string, defaultMode: string = "list") {
       if (moduleKey === "leads") {
         const legacySaved = localStorage.getItem("leadViewMode");
         if (legacySaved) {
-          setViewModeState(normalizeViewMode(legacySaved, normalizedDefault));
+          setTimeout(() => setViewModeState(normalizeViewMode(legacySaved, normalizedDefault)), 0);
         }
       }
     } catch {

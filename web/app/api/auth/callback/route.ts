@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import prisma from '@/lib/prisma'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -16,16 +15,20 @@ export async function GET(request: Request) {
     }
 
     if (session?.user) {
-      // Check if user exists in ClixProCRM Prisma database
-      const userRecord = await prisma.user.findUnique({
-        where: { id: session.user.id }
-      })
-
-      if (userRecord) {
-        // User exists in Prisma, redirect to dashboard
-        return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
-      } else {
-        // User does not exist in Prisma, needs onboarding
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+        const res = await fetch(`${apiUrl}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        
+        if (res.ok) {
+          return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+        } else {
+          return NextResponse.redirect(`${requestUrl.origin}/onboarding`)
+        }
+      } catch (err) {
         return NextResponse.redirect(`${requestUrl.origin}/onboarding`)
       }
     }

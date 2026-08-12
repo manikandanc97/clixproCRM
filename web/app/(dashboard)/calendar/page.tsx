@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import client from "@/shared/lib/api/client";
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, addDays, subDays } from "date-fns";
 import { CalendarDays, Users, Phone, CheckSquare } from "lucide-react";
 import { CalendarHeader } from "@/features/calendar/components/CalendarHeader";
@@ -43,9 +44,8 @@ export default function CalendarPage() {
         end = addDays(currentDate, 30);
       }
 
-      const res = await fetch(`/api/crm/calendar?start=${start.toISOString()}&end=${end.toISOString()}`);
-      if (!res.ok) throw new Error("Failed to fetch events");
-      const data = await res.json();
+      const res = await client.get(`/crm/calendar?start=${start.toISOString()}&end=${end.toISOString()}`);
+      const data = res.data?.data || res.data;
       setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
@@ -82,8 +82,7 @@ export default function CalendarPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/crm/calendar/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      await client.delete(`/crm/calendar/${id}`);
       toast.success("Event deleted");
       setSelectedEvent(null);
       fetchEvents();

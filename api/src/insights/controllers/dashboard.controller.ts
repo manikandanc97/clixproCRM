@@ -25,4 +25,17 @@ export class DashboardController {
     );
     return { success: true, data };
   }
+
+  @Get('revenue-growth')
+  async getRevenueGrowth(
+    @Req() req: AuthenticatedRequest,
+    @Query('filter') filter = 'Year',
+  ) {
+    const tenantId = req.tenantId;
+    const data = await this.dashboardService.getRevenueGrowth(
+      tenantId,
+      filter,
+    );
+    return { success: true, data };
+  }
 }

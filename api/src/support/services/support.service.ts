@@ -24,7 +24,7 @@ export class SupportService {
     priority: string,
     description: string,
     diagnostics: any,
-    attachments: { filename: string; content: Buffer }[]
+    attachments: { filename: string; content: Buffer }[],
   ) {
     const year = new Date().getFullYear();
     const randomNum = Math.floor(Math.random() * 999999)
@@ -34,13 +34,13 @@ export class SupportService {
 
     const totalSize = attachments.reduce(
       (acc, curr) => acc + curr.content.length,
-      0
+      0,
     );
     const maxSize = 25 * 1024 * 1024;
 
     if (totalSize > maxSize) {
       this.logger.warn(
-        `Attachments total size (${totalSize} bytes) exceeds SMTP limit of 25MB.`
+        `Attachments total size (${totalSize} bytes) exceeds SMTP limit of 25MB.`,
       );
     }
 
@@ -57,8 +57,8 @@ export class SupportService {
             priority === 'Critical'
               ? '#ef4444'
               : priority === 'High'
-              ? '#f97316'
-              : '#eab308'
+                ? '#f97316'
+                : '#eab308'
           }; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${priority}</span></p>
           
           <div style="margin: 20px 0; padding: 15px; background-color: #f8fafc; border-radius: 4px; white-space: pre-wrap;">

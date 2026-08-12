@@ -39,13 +39,8 @@ export class TasksController {
       userId: req.user.sub,
       role: req.user.role,
     });
-    // TaskQueryService returns an object `{ stats, dashboardStats, tasks, pagination }` natively, we wrap it in `{ success, data }` or just return it.
-    // Wait, let's verify Next.js response. Next.js does: NextResponse.json(data). So it's direct!
-    // But other modules wrap it. Next.js tasks usually return directly or wrapped. Let me verify later if we need `{ success: true, ...data }`.
-    // Actually, looking at the dashboard it probably expects `{ stats, tasks }` at the root, or Next.js route wrapped it.
-    // I will return it directly to be safe, or if it expects success: true, I'll wrap it. Let's wrap in {success: true, data} as the standard.
-    // Let me check if Next.js does NextResponse.json(tasks) or NextResponse.json({ success: true, data: tasks }).
-    return data;
+    // TaskQueryService returns an object `{ stats, dashboardStats, tasks, pagination }` natively
+    return { success: true, data };
   }
 
   @Post()
@@ -56,7 +51,7 @@ export class TasksController {
       req.user.sub,
       body,
     );
-    return data;
+    return { success: true, data };
   }
 
   @Get('dashboard')
@@ -151,7 +146,7 @@ export class TasksController {
     if (!data) {
       throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
     }
-    return data;
+    return { success: true, data };
   }
 
   @Put(':id')
@@ -167,7 +162,7 @@ export class TasksController {
       id,
       body,
     );
-    return data;
+    return { success: true, data };
   }
 
   @Delete(':id')
@@ -178,6 +173,6 @@ export class TasksController {
       req.user.sub,
       id,
     );
-    return data;
+    return { success: true, data };
   }
 }

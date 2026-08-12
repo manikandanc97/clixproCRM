@@ -20,7 +20,10 @@ export class WorkspaceController {
   @Patch()
   @Roles('ADMIN')
   async updateWorkspace(@Req() req: any, @Body() data: any) {
-    const updated = await this.workspaceService.updateWorkspace(req.tenantId, data);
+    const updated = await this.workspaceService.updateWorkspace(
+      req.tenantId,
+      data,
+    );
     return { success: true, data: updated };
   }
 }

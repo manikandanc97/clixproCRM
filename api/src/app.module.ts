@@ -16,6 +16,8 @@ import { WorkspaceModule } from './workspace/workspace.module';
 import { AdminModule } from './admin/admin.module';
 import { SystemModule } from './system/system.module';
 import { SupportModule } from './support/support.module';
+import { AiModule } from './ai/ai.module';
+import { CustomersModule } from './customers/customers.module';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { SupportModule } from './support/support.module';
     AdminModule,
     SystemModule,
     SupportModule,
+    AiModule,
+    CustomersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

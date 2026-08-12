@@ -14,10 +14,6 @@ import { RolesService } from './services/roles.service';
     RolesController,
     RoleManagementController,
   ],
-  providers: [
-    DepartmentsService,
-    EmployeesService,
-    RolesService,
-  ],
+  providers: [DepartmentsService, EmployeesService, RolesService],
 })
 export class AdminModule {}

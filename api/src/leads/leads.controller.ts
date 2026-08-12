@@ -68,20 +68,35 @@ export class LeadsController {
     const identifier = `bulk_delete_${ip}`;
     const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.BULK_DELETE);
     if (!rateLimit.allowed) {
-      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      const retryAfterSeconds = Math.ceil(
+        (rateLimit.resetTime - Date.now()) / 1000,
+      );
       req.res?.setHeader('Retry-After', retryAfterSeconds.toString());
       throw new HttpException(
-        { success: false, error: { code: 'TOO_MANY_REQUESTS', message: 'Too many requests. Please try again later.' } },
-        HttpStatus.TOO_MANY_REQUESTS
+        {
+          success: false,
+          error: {
+            code: 'TOO_MANY_REQUESTS',
+            message: 'Too many requests. Please try again later.',
+          },
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
       );
     }
     await incrementRateLimit(identifier, RATE_LIMITS.BULK_DELETE);
 
     if (!body.ids || !Array.isArray(body.ids)) {
-      throw new HttpException({ success: false, message: 'Invalid request. Expected array of ids.' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        { success: false, message: 'Invalid request. Expected array of ids.' },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    await this.leadsService.bulkDeleteLeads(req.tenantId, req.user.sub, body.ids);
+    await this.leadsService.bulkDeleteLeads(
+      req.tenantId,
+      req.user.sub,
+      body.ids,
+    );
     return { success: true, data: { count: body.ids.length } };
   }
 
@@ -143,21 +158,38 @@ export class LeadsController {
 
   @Post(':id/attachments')
   @Roles('ADMIN', 'MANAGER', 'SALES')
-  async createLeadAttachment(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+  async createLeadAttachment(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
     const ip = getClientIp(req);
     const identifier = `upload_${ip}`;
     const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.FILE_UPLOAD);
     if (!rateLimit.allowed) {
-      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
+      const retryAfterSeconds = Math.ceil(
+        (rateLimit.resetTime - Date.now()) / 1000,
+      );
       req.res?.setHeader('Retry-After', retryAfterSeconds.toString());
       throw new HttpException(
-        { success: false, error: { code: 'TOO_MANY_REQUESTS', message: 'Too many requests. Please try again later.' } },
-        HttpStatus.TOO_MANY_REQUESTS
+        {
+          success: false,
+          error: {
+            code: 'TOO_MANY_REQUESTS',
+            message: 'Too many requests. Please try again later.',
+          },
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
       );
     }
     await incrementRateLimit(identifier, RATE_LIMITS.FILE_UPLOAD);
 
-    const data = await this.leadsService.createLeadAttachment(req.tenantId, id, req.user.sub, body);
+    const data = await this.leadsService.createLeadAttachment(
+      req.tenantId,
+      id,
+      req.user.sub,
+      body,
+    );
     return { success: true, data };
   }
 
@@ -169,8 +201,17 @@ export class LeadsController {
 
   @Post(':id/notes')
   @Roles('ADMIN', 'MANAGER', 'SALES')
-  async createLeadNote(@Req() req: any, @Param('id') id: string, @Body() body: any) {
-    const data = await this.leadsService.createLeadNote(req.tenantId, id, req.user.sub, body);
+  async createLeadNote(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    const data = await this.leadsService.createLeadNote(
+      req.tenantId,
+      id,
+      req.user.sub,
+      body,
+    );
     return { success: true, data };
   }
 
@@ -182,8 +223,18 @@ export class LeadsController {
 
   @Post(':id/timeline')
   @Roles('ADMIN', 'MANAGER', 'SALES')
-  async createTimelineEvent(@Req() req: any, @Param('id') id: string, @Body() body: any) {
-    const data = await this.leadsService.createTimelineEvent(req.tenantId, id, body.action, body.description, req.user.sub);
+  async createTimelineEvent(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    const data = await this.leadsService.createTimelineEvent(
+      req.tenantId,
+      id,
+      body.action,
+      body.description,
+      req.user.sub,
+    );
     return { success: true, data };
   }
 
@@ -195,15 +246,22 @@ export class LeadsController {
 
   @Post(':id/meetings')
   @Roles('ADMIN', 'MANAGER', 'SALES')
-  async createLeadMeeting(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+  async createLeadMeeting(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
     const meetingData = {
       ...body,
       leadId: id,
     };
-    const data = await this.meetingsService.createMeeting(req.tenantId, req.user.sub, meetingData);
+    const data = await this.meetingsService.createMeeting(
+      req.tenantId,
+      req.user.sub,
+      meetingData,
+    );
     return { success: true, data };
   }
-
 
   @Post(':id/convert')
   @Roles('ADMIN', 'MANAGER', 'SALES')

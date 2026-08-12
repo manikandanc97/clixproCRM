@@ -34,7 +34,7 @@ export class LeadsService {
   ) {
     const currency = await this.getTenantCurrency(tenantId);
     const page = Math.max(1, query.page || 1);
-    const limit = Math.max(1, Math.min(query.limit || 10, 100));
+    const limit = Math.max(1, Math.min(query.limit || 1000, 10000));
     const skip = (page - 1) * limit;
     const search = query.search || '';
     const stageQuery = query.stage || query.status || '';
@@ -223,7 +223,12 @@ export class LeadsService {
           select: { id: true, name: true, email: true },
         },
         _count: {
-          select: { notes: true, meetings: true, attachments: true, timelineEvents: true },
+          select: {
+            notes: true,
+            meetings: true,
+            attachments: true,
+            timelineEvents: true,
+          },
         },
       },
     });
@@ -353,9 +358,21 @@ export class LeadsService {
       if (stageChanged) {
         let description = `Moved from ${existingLead.stage} to ${data.stage}`;
         if (data.stage === 'WON') {
-          description += '. Revenue: ' + (data.actualRevenue || data.value || existingLead.value || 0) + '. Reason: ' + (data.wonReason || 'Not specified') + '. ' + (data.notes ? 'Notes: ' + data.notes : '');
+          description +=
+            '. Revenue: ' +
+            (data.actualRevenue || data.value || existingLead.value || 0) +
+            '. Reason: ' +
+            (data.wonReason || 'Not specified') +
+            '. ' +
+            (data.notes ? 'Notes: ' + data.notes : '');
         } else if (data.stage === 'LOST') {
-          description += '. Reason: ' + (data.lostReason || 'Not specified') + '. Competitor: ' + (data.competitor || 'None') + '. ' + (data.notes ? 'Notes: ' + data.notes : '');
+          description +=
+            '. Reason: ' +
+            (data.lostReason || 'Not specified') +
+            '. Competitor: ' +
+            (data.competitor || 'None') +
+            '. ' +
+            (data.notes ? 'Notes: ' + data.notes : '');
         }
 
         await tx.timelineEvent.create({
@@ -414,13 +431,23 @@ export class LeadsService {
     return this.prisma.attachment.findMany({
       where: { tenantId, leadId },
       include: {
-        user: { select: { name: true, email: true, id: true } }
+        user: { select: { name: true, email: true, id: true } },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  async createLeadAttachment(tenantId: string, leadId: string, userId: string, data: { fileName: string, fileUrl: string, fileSize: number, fileType: string }) {
+  async createLeadAttachment(
+    tenantId: string,
+    leadId: string,
+    userId: string,
+    data: {
+      fileName: string;
+      fileUrl: string;
+      fileSize: number;
+      fileType: string;
+    },
+  ) {
     const attachment = await this.prisma.attachment.create({
       data: {
         tenantId,
@@ -429,21 +456,21 @@ export class LeadsService {
         fileName: data.fileName,
         fileUrl: data.fileUrl,
         fileSize: data.fileSize,
-        fileType: data.fileType
+        fileType: data.fileType,
       },
       include: {
-        user: { select: { name: true, email: true, id: true } }
-      }
+        user: { select: { name: true, email: true, id: true } },
+      },
     });
-    
+
     await this.prisma.timelineEvent.create({
       data: {
         tenantId,
         leadId,
         action: 'Attachment Added',
         description: `Uploaded ${data.fileName}`,
-        userId
-      }
+        userId,
+      },
     });
 
     return attachment;
@@ -453,23 +480,28 @@ export class LeadsService {
     return this.prisma.note.findMany({
       where: { tenantId, leadId },
       include: {
-        user: { select: { name: true, email: true, id: true } }
+        user: { select: { name: true, email: true, id: true } },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  async createLeadNote(tenantId: string, leadId: string, userId: string, data: { content: string }) {
+  async createLeadNote(
+    tenantId: string,
+    leadId: string,
+    userId: string,
+    data: { content: string },
+  ) {
     const note = await this.prisma.note.create({
       data: {
         tenantId,
         leadId,
         userId,
-        message: data.content
+        message: data.content,
       },
       include: {
-        user: { select: { name: true, email: true, id: true } }
-      }
+        user: { select: { name: true, email: true, id: true } },
+      },
     });
 
     await this.prisma.timelineEvent.create({
@@ -478,8 +510,8 @@ export class LeadsService {
         leadId,
         action: 'Note Added',
         description: 'A new note was added',
-        userId
-      }
+        userId,
+      },
     });
 
     return note;
@@ -489,21 +521,27 @@ export class LeadsService {
     return this.prisma.timelineEvent.findMany({
       where: { tenantId, leadId },
       include: {
-        user: { select: { name: true, email: true, id: true } }
+        user: { select: { name: true, email: true, id: true } },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  async createTimelineEvent(tenantId: string, leadId: string, action: string, description: string, userId: string) {
+  async createTimelineEvent(
+    tenantId: string,
+    leadId: string,
+    action: string,
+    description: string,
+    userId: string,
+  ) {
     return this.prisma.timelineEvent.create({
       data: {
         tenantId,
         leadId,
         userId,
         action,
-        description
-      }
+        description,
+      },
     });
   }
 
@@ -514,16 +552,16 @@ export class LeadsService {
         data: {
           deletedAt: new Date(),
           updatedById: userId,
-          lastActivityAt: new Date()
-        }
+          lastActivityAt: new Date(),
+        },
       });
 
-      const timelineEvents = ids.map(id => ({
+      const timelineEvents = ids.map((id) => ({
         tenantId,
         leadId: id,
         action: 'Lead Deleted',
         description: 'Lead was softly deleted (Bulk)',
-        userId
+        userId,
       }));
 
       if (timelineEvents.length > 0) {

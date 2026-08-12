@@ -10,12 +10,7 @@ const publicPaths = [
 ];
 
 const publicApiPaths = [
-  "/api/auth/register",
-  "/api/auth/forgot-password",
-  "/api/auth/reset-password",
   "/api/auth/callback",
-  "/api/auth/onboarding",
-  "/api/ai/chat",
 ];
 
 export async function middleware(request: NextRequest) {

@@ -14,7 +14,7 @@ export class DealsService {
 
   async getDeals(tenantId: string, page = 1, limit = 10, search = '') {
     page = Math.max(1, page);
-    limit = Math.max(1, Math.min(limit, 100));
+    limit = Math.max(1, Math.min(limit, 10000));
     const skip = (page - 1) * limit;
 
     const where: Prisma.DealWhereInput = { tenantId, deletedAt: null };

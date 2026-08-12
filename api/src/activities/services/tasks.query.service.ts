@@ -30,7 +30,7 @@ export class TasksQueryService {
     options: TaskQueryDto & { userId: string; role: string },
   ) {
     const page = Math.max(1, options.page || 1);
-    const limit = Math.max(1, Math.min(options.limit || 20, 100));
+    const limit = Math.max(1, Math.min(options.limit || 1000, 10000));
     const skip = (page - 1) * limit;
 
     // 1. Sync overdue tasks

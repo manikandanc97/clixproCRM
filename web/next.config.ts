@@ -11,24 +11,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/chat',
-        destination: '/api/ai/chat',
-      },
-      // Proxy all CRM API requests to NestJS
-      {
-        source: '/api/crm/:path*',
-        destination: 'http://localhost:4000/api/crm/:path*',
-      },
-      // Proxy Support Ticket requests to NestJS
-      {
-        source: '/api/support/:path*',
-        destination: 'http://localhost:4000/api/support/:path*',
-      },
-    ];
-  },
+
   async headers() {
     return [
       {
@@ -36,7 +19,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:4000 https:;",
           },
           {
             key: 'Strict-Transport-Security',

@@ -10,17 +10,22 @@ export class DepartmentsService {
       where: { tenantId },
       include: {
         _count: {
-          select: { users: true }
-        }
+          select: { users: true },
+        },
       },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
     return departments;
   }
 
-  async createDepartment(tenantId: string, userId: string, name: string, description?: string) {
+  async createDepartment(
+    tenantId: string,
+    userId: string,
+    name: string,
+    description?: string,
+  ) {
     const existing = await this.prisma.department.findFirst({
-      where: { tenantId, name }
+      where: { tenantId, name },
     });
 
     if (existing) {
@@ -31,8 +36,8 @@ export class DepartmentsService {
       data: {
         tenantId,
         name,
-        description
-      }
+        description,
+      },
     });
 
     await this.prisma.auditLog.create({
@@ -41,16 +46,22 @@ export class DepartmentsService {
         userId,
         action: 'CREATE_DEPARTMENT',
         module: 'Employees',
-        details: { name: department.name }
-      }
+        details: { name: department.name },
+      },
     });
 
     return department;
   }
 
-  async updateDepartment(tenantId: string, departmentId: string, userId: string, name?: string, description?: string) {
+  async updateDepartment(
+    tenantId: string,
+    departmentId: string,
+    userId: string,
+    name?: string,
+    description?: string,
+  ) {
     const existing = await this.prisma.department.findFirst({
-      where: { tenantId, id: departmentId }
+      where: { tenantId, id: departmentId },
     });
 
     if (!existing) {
@@ -59,16 +70,19 @@ export class DepartmentsService {
 
     if (name && name !== existing.name) {
       const duplicate = await this.prisma.department.findFirst({
-        where: { tenantId, name }
+        where: { tenantId, name },
       });
       if (duplicate) {
-        throw new HttpException('Department name already in use', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Department name already in use',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
 
     const updatedDepartment = await this.prisma.department.update({
       where: { id: departmentId },
-      data: { name, description }
+      data: { name, description },
     });
 
     await this.prisma.auditLog.create({
@@ -77,21 +91,25 @@ export class DepartmentsService {
         userId,
         action: 'UPDATE_DEPARTMENT',
         module: 'Employees',
-        details: { departmentId, name: updatedDepartment.name }
-      }
+        details: { departmentId, name: updatedDepartment.name },
+      },
     });
 
     return updatedDepartment;
   }
 
-  async deleteDepartment(tenantId: string, departmentId: string, userId: string) {
+  async deleteDepartment(
+    tenantId: string,
+    departmentId: string,
+    userId: string,
+  ) {
     const existing = await this.prisma.department.findFirst({
       where: { tenantId, id: departmentId },
       include: {
         _count: {
-          select: { users: true }
-        }
-      }
+          select: { users: true },
+        },
+      },
     });
 
     if (!existing) {
@@ -99,11 +117,14 @@ export class DepartmentsService {
     }
 
     if (existing._count.users > 0) {
-      throw new HttpException('Cannot delete department with assigned users', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Cannot delete department with assigned users',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     await this.prisma.department.delete({
-      where: { id: departmentId }
+      where: { id: departmentId },
     });
 
     await this.prisma.auditLog.create({
@@ -112,8 +133,8 @@ export class DepartmentsService {
         userId,
         action: 'DELETE_DEPARTMENT',
         module: 'Employees',
-        details: { departmentName: existing.name }
-      }
+        details: { departmentName: existing.name },
+      },
     });
 
     return true;

@@ -18,6 +18,7 @@ import { useAuth } from "@/features/auth/components/auth-provider";
 import ReactMarkdown from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Card, CardContent } from "@/shared/ui/card";
+import client from "@/shared/lib/api/client";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 const MAX_FILES = 10;
@@ -113,16 +114,9 @@ export function SupportTicketForm() {
         formData.append("attachments", file);
       });
 
-      const response = await fetch("/api/support/ticket", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await client.post("/support/ticket", formData);
 
-      if (!response.ok) {
-        throw new Error("Failed to submit ticket");
-      }
-
-      const result = await response.json();
+      const result = response.data?.data || response.data;
       setSuccessData({
         id: result.ticketId,
         time: result.estimatedResponseTime || "Within 24 hours",

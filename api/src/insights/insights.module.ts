@@ -8,7 +8,12 @@ import { ReportsService } from './services/reports.service';
 import { AiInsightsController } from './controllers/ai-insights.controller';
 
 @Module({
-  controllers: [DashboardController, AnalyticsController, ReportsController, AiInsightsController],
+  controllers: [
+    DashboardController,
+    AnalyticsController,
+    ReportsController,
+    AiInsightsController,
+  ],
   providers: [DashboardService, AnalyticsService, ReportsService],
 })
 export class InsightsModule {}

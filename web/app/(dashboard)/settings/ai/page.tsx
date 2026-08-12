@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Bot, Save, Loader2, Sparkles, Database, Shield, Zap } from 'lucide-react';
+import client from '@/shared/lib/api/client';
 
 export default function AISettingsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -10,21 +11,17 @@ export default function AISettingsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch('/api/ai/settings')
-      .then(res => res.json())
-      .then(data => {
-        if (data.config) setConfig(data.config);
+    client.get('/ai/settings')
+      .then(res => {
+        const data = res.data?.data || res.data;
+        if (data?.config) setConfig(data.config);
         setLoading(false);
       });
   }, []);
 
   const handleSave = async () => {
     setSaving(true);
-    await fetch('/api/ai/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config),
-    });
+    await client.put('/ai/settings', config);
     setSaving(false);
   };
 

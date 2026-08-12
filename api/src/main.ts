@@ -17,7 +17,7 @@ async function bootstrap() {
   await app.register(require('@fastify/multipart'), {
     limits: {
       fileSize: 25 * 1024 * 1024, // 25MB
-    }
+    },
   });
 
   app.enableCors({

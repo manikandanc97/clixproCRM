@@ -55,41 +55,44 @@ export class InvoicesService {
     userId: string,
     data: CreateInvoiceDto,
   ) {
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Atomically allocate the next invoice number for this tenant
-      const invoiceNumber = await this.allocateInvoiceNumber(tenantId, tx);
+    return this.prisma.$transaction(
+      async (tx) => {
+        // 1. Atomically allocate the next invoice number for this tenant
+        const invoiceNumber = await this.allocateInvoiceNumber(tenantId, tx);
 
-      // 2. Create the invoice
-      const invoice = await tx.invoice.create({
-        data: {
-          tenantId,
-          customerId: data.customerId,
-          dealId: data.dealId || null,
-          invoiceNumber,
-          amount: data.amount,
-          status: data.status || 'DRAFT',
-          dueDate: data.dueDate ? new Date(data.dueDate) : null,
-        },
-      });
-
-      // 3. Audit log
-      await tx.auditLog.create({
-        data: {
-          tenantId,
-          userId,
-          action: 'INVOICE_CREATED',
-          module: 'INVOICES',
-          details: {
-            invoiceId: invoice.id,
+        // 2. Create the invoice
+        const invoice = await tx.invoice.create({
+          data: {
+            tenantId,
+            customerId: data.customerId,
+            dealId: data.dealId || null,
             invoiceNumber,
             amount: data.amount,
-            customerId: data.customerId,
+            status: data.status || 'DRAFT',
+            dueDate: data.dueDate ? new Date(data.dueDate) : null,
           },
-        },
-      });
+        });
 
-      return invoice;
-    }, { timeout: 30000 }); // 30 second timeout for remote DB (Supabase over PgBouncer)
+        // 3. Audit log
+        await tx.auditLog.create({
+          data: {
+            tenantId,
+            userId,
+            action: 'INVOICE_CREATED',
+            module: 'INVOICES',
+            details: {
+              invoiceId: invoice.id,
+              invoiceNumber,
+              amount: data.amount,
+              customerId: data.customerId,
+            },
+          },
+        });
+
+        return invoice;
+      },
+      { timeout: 30000 },
+    ); // 30 second timeout for remote DB (Supabase over PgBouncer)
   }
 
   async updateInvoice(
@@ -118,7 +121,7 @@ export class InvoicesService {
 
   async getInvoices(tenantId: string, page = 1, limit = 20) {
     page = Math.max(1, page);
-    limit = Math.max(1, Math.min(limit, 100));
+    limit = Math.max(1, Math.min(limit, 10000));
     const skip = (page - 1) * limit;
 
     const where: Prisma.InvoiceWhereInput = { tenantId };
@@ -183,7 +186,9 @@ export class InvoicesService {
   }
 
   async getInvoiceById(tenantId: string, id: string) {
-    const invoice = await this.prisma.invoice.findFirst({ where: { id, tenantId } });
+    const invoice = await this.prisma.invoice.findFirst({
+      where: { id, tenantId },
+    });
     if (!invoice) return null;
     return {
       ...invoice,

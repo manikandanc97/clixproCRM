@@ -10,15 +10,11 @@ export class RolesService {
       where: { tenantId },
       include: {
         _count: {
-          select: { users: true, permissions: true }
+          select: { users: true, permissions: true },
         },
-        permissions: true
+        permissions: true,
       },
-      orderBy: [
-        { isSystem: 'desc' },
-        { priority: 'desc' },
-        { name: 'asc' }
-      ]
+      orderBy: [{ isSystem: 'desc' }, { priority: 'desc' }, { name: 'asc' }],
     });
     return roles;
   }
@@ -27,11 +23,14 @@ export class RolesService {
     const { name, description, color, priority, permissions } = data;
 
     const existing = await this.prisma.role.findFirst({
-      where: { tenantId, name }
+      where: { tenantId, name },
     });
 
     if (existing) {
-      throw new HttpException({ success: false, message: 'Role name already exists' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        { success: false, message: 'Role name already exists' },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const role = await this.prisma.$transaction(async (tx) => {
@@ -42,17 +41,17 @@ export class RolesService {
           description,
           color,
           priority: priority || 0,
-          isSystem: false
-        }
+          isSystem: false,
+        },
       });
 
       if (permissions && Array.isArray(permissions) && permissions.length > 0) {
         await tx.rolePermission.createMany({
-          data: permissions.map(module => ({
+          data: permissions.map((module) => ({
             roleId: newRole.id,
             module,
-            hasAccess: true
-          }))
+            hasAccess: true,
+          })),
         });
       }
 
@@ -65,32 +64,62 @@ export class RolesService {
         userId,
         action: 'CREATE_ROLE',
         module: 'Roles',
-        details: { roleName: role.name }
-      }
+        details: { roleName: role.name },
+      },
     });
 
     return role;
   }
 
-  async updateRole(tenantId: string, userId: string, roleId: string, currentUserRole: string, parsedData: any, reqIp: string, userAgent: string) {
+  async updateRole(
+    tenantId: string,
+    userId: string,
+    roleId: string,
+    currentUserRole: string,
+    parsedData: any,
+    reqIp: string,
+    userAgent: string,
+  ) {
     const existingRole = await this.prisma.role.findFirst({
-      where: { tenantId, id: roleId }
+      where: { tenantId, id: roleId },
     });
 
     if (!existingRole) {
-      throw new HttpException({ success: false, message: 'Role not found' }, HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        { success: false, message: 'Role not found' },
+        HttpStatus.NOT_FOUND,
+      );
     }
 
-    if (existingRole.name.toUpperCase() === 'SUPER ADMIN' && currentUserRole !== 'SUPER ADMIN') {
-      throw new HttpException({ success: false, message: 'Only Super Admin can modify the Super Admin role' }, HttpStatus.FORBIDDEN);
+    if (
+      existingRole.name.toUpperCase() === 'SUPER ADMIN' &&
+      currentUserRole !== 'SUPER ADMIN'
+    ) {
+      throw new HttpException(
+        {
+          success: false,
+          message: 'Only Super Admin can modify the Super Admin role',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
 
-    if (existingRole.isSystem && parsedData.name && parsedData.name !== existingRole.name) {
-      throw new HttpException({ success: false, message: 'Cannot rename system roles' }, HttpStatus.BAD_REQUEST);
+    if (
+      existingRole.isSystem &&
+      parsedData.name &&
+      parsedData.name !== existingRole.name
+    ) {
+      throw new HttpException(
+        { success: false, message: 'Cannot rename system roles' },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     if (existingRole.isSystem && parsedData.isActive === false) {
-      throw new HttpException({ success: false, message: 'Cannot disable system roles' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        { success: false, message: 'Cannot disable system roles' },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const updatedRole = await this.prisma.$transaction(async (tx) => {
@@ -101,13 +130,15 @@ export class RolesService {
           description: parsedData.description,
           color: parsedData.color,
           priority: parsedData.priority,
-          isActive: existingRole.isSystem ? true : (parsedData.isActive ?? true),
-        }
+          isActive: existingRole.isSystem
+            ? true
+            : (parsedData.isActive ?? true),
+        },
       });
 
       if (parsedData.permissions && Array.isArray(parsedData.permissions)) {
         await tx.rolePermission.deleteMany({
-          where: { roleId }
+          where: { roleId },
         });
 
         if (parsedData.permissions.length > 0) {
@@ -115,8 +146,8 @@ export class RolesService {
             data: parsedData.permissions.map((module: string) => ({
               roleId: role.id,
               module,
-              hasAccess: true
-            }))
+              hasAccess: true,
+            })),
           });
         }
       }
@@ -133,36 +164,54 @@ export class RolesService {
         details: { roleName: updatedRole.name },
         ipAddress: reqIp,
         userAgent,
-      }
+      },
     });
 
     return updatedRole;
   }
 
-  async deleteRole(tenantId: string, userId: string, roleId: string, reqIp: string, userAgent: string) {
+  async deleteRole(
+    tenantId: string,
+    userId: string,
+    roleId: string,
+    reqIp: string,
+    userAgent: string,
+  ) {
     const existingRole = await this.prisma.role.findFirst({
       where: { tenantId, id: roleId },
       include: {
         _count: {
-          select: { users: true }
-        }
-      }
+          select: { users: true },
+        },
+      },
     });
 
     if (!existingRole) {
-      throw new HttpException({ success: false, message: 'Role not found' }, HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        { success: false, message: 'Role not found' },
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     if (existingRole.isSystem) {
-      throw new HttpException({ success: false, message: 'Cannot delete system roles' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        { success: false, message: 'Cannot delete system roles' },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     if (existingRole._count.users > 0) {
-      throw new HttpException({ success: false, message: 'Cannot delete role because it is assigned to users' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        {
+          success: false,
+          message: 'Cannot delete role because it is assigned to users',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     await this.prisma.role.delete({
-      where: { id: roleId }
+      where: { id: roleId },
     });
 
     await this.prisma.auditLog.create({
@@ -174,32 +223,47 @@ export class RolesService {
         details: { roleName: existingRole.name },
         ipAddress: reqIp,
         userAgent,
-      }
+      },
     });
 
     return true;
   }
 
-  async duplicateRole(tenantId: string, userId: string, roleId: string, reqIp: string, userAgent: string) {
+  async duplicateRole(
+    tenantId: string,
+    userId: string,
+    roleId: string,
+    reqIp: string,
+    userAgent: string,
+  ) {
     const existingRole = await this.prisma.role.findFirst({
       where: { tenantId, id: roleId },
       include: {
-        permissions: true
-      }
+        permissions: true,
+      },
     });
 
     if (!existingRole) {
-      throw new HttpException({ success: false, message: 'Role not found' }, HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        { success: false, message: 'Role not found' },
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     const newRoleName = `${existingRole.name} (Copy)`;
 
     const duplicateNameExists = await this.prisma.role.findFirst({
-      where: { tenantId, name: newRoleName }
+      where: { tenantId, name: newRoleName },
     });
 
     if (duplicateNameExists) {
-      throw new HttpException({ success: false, message: 'A copy of this role already exists. Rename it first.' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        {
+          success: false,
+          message: 'A copy of this role already exists. Rename it first.',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const newRole = await this.prisma.$transaction(async (tx) => {
@@ -210,8 +274,8 @@ export class RolesService {
           description: existingRole.description,
           color: existingRole.color,
           priority: existingRole.priority,
-          isSystem: false
-        }
+          isSystem: false,
+        },
       });
 
       if (existingRole.permissions.length > 0) {
@@ -220,7 +284,7 @@ export class RolesService {
             roleId: createdRole.id,
             module: rp.module,
             hasAccess: rp.hasAccess,
-          }))
+          })),
         });
       }
 
@@ -236,7 +300,7 @@ export class RolesService {
         details: { originalRole: existingRole.name, newRole: newRole.name },
         ipAddress: reqIp,
         userAgent,
-      }
+      },
     });
 
     return newRole;
@@ -252,17 +316,19 @@ export class RolesService {
       customRoles,
       totalPermissions,
       totalDepartments,
-      auditEvents
+      auditEvents,
     ] = await Promise.all([
       this.prisma.tenantUser.count({ where: { tenantId } }),
       this.prisma.tenantUser.count({ where: { tenantId, status: 'ACTIVE' } }),
-      this.prisma.tenantUser.count({ where: { tenantId, status: { not: 'ACTIVE' } } }),
+      this.prisma.tenantUser.count({
+        where: { tenantId, status: { not: 'ACTIVE' } },
+      }),
       this.prisma.invitation.count({ where: { tenantId, status: 'PENDING' } }),
       this.prisma.role.count({ where: { tenantId } }),
       this.prisma.role.count({ where: { tenantId, isSystem: false } }),
       this.prisma.rolePermission.count({ where: { role: { tenantId } } }),
       this.prisma.department.count({ where: { tenantId } }),
-      this.prisma.auditLog.count({ where: { tenantId } })
+      this.prisma.auditLog.count({ where: { tenantId } }),
     ]);
 
     return {
@@ -270,19 +336,19 @@ export class RolesService {
         total: totalUsers,
         active: activeUsers,
         disabled: disabledUsers,
-        pendingInvites
+        pendingInvites,
       },
       roles: {
         total: totalRoles,
         custom: customRoles,
-        permissions: totalPermissions
+        permissions: totalPermissions,
       },
       departments: {
-        total: totalDepartments
+        total: totalDepartments,
       },
       audit: {
-        events: auditEvents
-      }
+        events: auditEvents,
+      },
     };
   }
 }

@@ -6,7 +6,9 @@ export class WorkspaceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getWorkspace(tenantId: string) {
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     return {
       name: tenant?.name || 'ClixProCRM Workspace',
       taxId: tenant?.taxId || '',

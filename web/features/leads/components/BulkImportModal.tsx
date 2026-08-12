@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadSampleTemplate, downloadFailedRows, parseFile, IMPORT_TEMPLATE_HEADERS } from "@/lib/bulk-import-utils";
-import axios from "axios";
+import client from "@/shared/lib/api/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -290,7 +290,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ isOpen, onOpen
         }
 
         try {
-          const res = await axios.post("/api/crm/leads/import", {
+          const res = await client.post("/crm/leads/import", {
             leads: chunks[i],
             duplicateStrategy
           });

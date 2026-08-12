@@ -20,7 +20,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/features/auth/components/auth-provider";
 import { Checkbox } from "@/shared/ui/checkbox";
-
+import client from "@/shared/lib/api/client";
 
 import {
   Dialog,
@@ -92,16 +92,15 @@ export function RoleList() {
   const { data, isLoading } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      const res = await fetch("/api/crm/roles");
-      if (!res.ok) throw new Error("Failed to load roles");
-      return res.json();
+      const res = await client.get("/crm/roles");
+      return res.data;
     }
   });
 
   // Save permissions mutation
   const saveMutation = useMutation({
     mutationFn: async ({ id, isNew, name }: { id: string; isNew: boolean, name?: string }) => {
-      const url = isNew ? `/api/crm/roles` : `/api/crm/roles/${id}`;
+      const url = isNew ? `/crm/roles` : `/crm/roles/${id}`;
       const method = isNew ? 'POST' : 'PUT';
       
       const payload: { permissions: string[]; name?: string; description?: string } = { permissions: editPermissions };
@@ -110,14 +109,12 @@ export function RoleList() {
         payload.description = "";
       }
 
-      const res = await fetch(url, {
+      const res = await client.request({
+        url,
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        data: payload
       });
-      const data = await res.json() as { message?: string };
-      if (!res.ok) throw new Error(data.message || "Failed to save role");
-      return data;
+      return res.data;
     },
     onSuccess: () => {
       toast.success("Role saved successfully");
@@ -132,14 +129,8 @@ export function RoleList() {
   // Rename mutation
   const renameMutation = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const res = await fetch(`/api/crm/roles/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-      });
-      const data = await res.json() as { message?: string };
-      if (!res.ok) throw new Error(data.message || "Failed to rename role");
-      return data;
+      const res = await client.put(`/crm/roles/${id}`, { name });
+      return res.data;
     },
     onSuccess: () => {
       toast.success("Role renamed successfully");
@@ -153,10 +144,8 @@ export function RoleList() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/crm/roles/${id}`, { method: 'DELETE' });
-      const data = await res.json() as { message?: string };
-      if (!res.ok) throw new Error(data.message || "Failed to delete role");
-      return data;
+      const res = await client.delete(`/crm/roles/${id}`);
+      return res.data;
     },
     onSuccess: () => {
       toast.success("Role deleted successfully");
@@ -169,7 +158,7 @@ export function RoleList() {
 
   if (isLoading) return <RoleManagementSkeleton />;
 
-  const roles: Role[] = data?.data || [];
+  const roles: Role[] = Array.isArray(data) ? data : (data?.roles || data?.data || []);
   const filteredRoles = roles.filter((r) => {
     return r?.name?.toLowerCase().includes(debouncedSearch.toLowerCase());
   });

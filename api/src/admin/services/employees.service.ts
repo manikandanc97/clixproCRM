@@ -9,9 +9,9 @@ export class EmployeesService {
 
   async getEmployees(tenantId: string, page = 1, limit = 10) {
     page = Math.max(1, page);
-    limit = Math.max(1, Math.min(limit, 100));
+    limit = Math.max(1, Math.min(limit, 10000));
     const skip = (page - 1) * limit;
-    
+
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         where: { memberships: { some: { tenantId } } },
@@ -25,22 +25,34 @@ export class EmployeesService {
         skip,
         take: limit,
       }),
-      this.prisma.user.count({ where: { memberships: { some: { tenantId } } } }),
+      this.prisma.user.count({
+        where: { memberships: { some: { tenantId } } },
+      }),
     ]);
 
     return {
-      employees: users.map(u => ({ 
-        id: u.id, 
-        name: u.name || 'Unknown User', 
-        email: u.email, 
-        role: u.memberships[0]?.role?.name || 'EMPLOYEE', 
+      employees: users.map((u) => ({
+        id: u.id,
+        name: u.name || 'Unknown User',
+        email: u.email,
+        role: u.memberships[0]?.role?.name || 'EMPLOYEE',
         status: u.status,
         createdAt: u.createdAt.toISOString(),
       })),
       stats: [
-        { title: 'Total Employees', value: users.length.toString(), change: '+1', positive: true },
-        { title: 'Active Staff', value: users.length.toString(), change: '+1', positive: true },
-        { title: 'On Leave', value: '0', change: '0', positive: true }
+        {
+          title: 'Total Employees',
+          value: users.length.toString(),
+          change: '+1',
+          positive: true,
+        },
+        {
+          title: 'Active Staff',
+          value: users.length.toString(),
+          change: '+1',
+          positive: true,
+        },
+        { title: 'On Leave', value: '0', change: '0', positive: true },
       ],
       activities: [],
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
@@ -49,22 +61,24 @@ export class EmployeesService {
 
   async inviteEmployee(tenantId: string, email: string, roleName: string) {
     const normalizedEmail = email.toLowerCase().trim();
-    
+
     const existingTenantUser = await this.prisma.tenantUser.findFirst({
       where: {
         tenantId,
-        user: { email: normalizedEmail }
-      }
+        user: { email: normalizedEmail },
+      },
     });
 
     if (existingTenantUser) {
       throw new Error('User is already an employee in this workspace');
     }
 
-    let roleObj = await this.prisma.role.findFirst({ where: { tenantId, name: roleName } });
+    let roleObj = await this.prisma.role.findFirst({
+      where: { tenantId, name: roleName },
+    });
     if (!roleObj) {
       roleObj = await this.prisma.role.create({
-        data: { name: roleName, tenantId, isSystem: true }
+        data: { name: roleName, tenantId, isSystem: true },
       });
     }
 
@@ -75,7 +89,13 @@ export class EmployeesService {
     const invitation = await this.prisma.invitation.upsert({
       where: { tenantId_email: { tenantId, email: normalizedEmail } },
       update: { roleId: roleObj.id, token, expiresAt, status: 'PENDING' },
-      create: { tenantId, email: normalizedEmail, roleId: roleObj.id, token, expiresAt },
+      create: {
+        tenantId,
+        email: normalizedEmail,
+        roleId: roleObj.id,
+        token,
+        expiresAt,
+      },
     });
 
     return {
@@ -87,9 +107,17 @@ export class EmployeesService {
     };
   }
 
-  async updateEmployee(tenantId: string, userId: string, actorRole: string, data: { name?: string; email?: string; role?: string }) {
+  async updateEmployee(
+    tenantId: string,
+    userId: string,
+    actorRole: string,
+    data: { name?: string; email?: string; role?: string },
+  ) {
     if (data.role === 'ADMIN' && actorRole !== 'ADMIN') {
-      throw new HttpException('Only ADMIN can assign the ADMIN role', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'Only ADMIN can assign the ADMIN role',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const existingUser = await this.prisma.tenantUser.findFirst({
@@ -102,7 +130,10 @@ export class EmployeesService {
     }
 
     if (existingUser.role.name === 'ADMIN' && actorRole !== 'ADMIN') {
-      throw new HttpException('Only an ADMIN can modify an ADMIN', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'Only an ADMIN can modify an ADMIN',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -123,12 +154,17 @@ export class EmployeesService {
             where: { tenantId, role: { name: 'ADMIN' }, status: 'ACTIVE' },
           });
           if (adminCount <= 1) {
-            throw new HttpException('Cannot demote the last active ADMIN.', HttpStatus.BAD_REQUEST);
+            throw new HttpException(
+              'Cannot demote the last active ADMIN.',
+              HttpStatus.BAD_REQUEST,
+            );
           }
         }
 
         let finalRoleId: string = data.role;
-        const roleObj = await tx.role.findFirst({ where: { tenantId, name: data.role } });
+        const roleObj = await tx.role.findFirst({
+          where: { tenantId, name: data.role },
+        });
         if (roleObj) finalRoleId = roleObj.id;
 
         await tx.tenantUser.update({
@@ -141,7 +177,12 @@ export class EmployeesService {
     return { id: userId };
   }
 
-  async patchEmployeeStatus(tenantId: string, userId: string, actorRole: string, status: string) {
+  async patchEmployeeStatus(
+    tenantId: string,
+    userId: string,
+    actorRole: string,
+    status: string,
+  ) {
     const existingUser = await this.prisma.tenantUser.findFirst({
       where: { userId, tenantId },
       include: { role: true },
@@ -152,7 +193,10 @@ export class EmployeesService {
     }
 
     if (existingUser.role.name === 'ADMIN' && actorRole !== 'ADMIN') {
-      throw new HttpException('Only an ADMIN can deactivate an ADMIN', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'Only an ADMIN can deactivate an ADMIN',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     if (existingUser.role.name === 'ADMIN' && status === 'INACTIVE') {
@@ -160,7 +204,10 @@ export class EmployeesService {
         where: { tenantId, role: { name: 'ADMIN' }, status: 'ACTIVE' },
       });
       if (adminCount <= 1) {
-        throw new HttpException('Cannot deactivate the last active ADMIN.', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Cannot deactivate the last active ADMIN.',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
 
@@ -183,7 +230,10 @@ export class EmployeesService {
     }
 
     if (existingUser.role.name === 'ADMIN' && actorRole !== 'ADMIN') {
-      throw new HttpException('Only an ADMIN can delete an ADMIN', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'Only an ADMIN can delete an ADMIN',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     if (existingUser.role.name === 'ADMIN') {
@@ -191,18 +241,39 @@ export class EmployeesService {
         where: { tenantId, role: { name: 'ADMIN' }, status: 'ACTIVE' },
       });
       if (adminCount <= 1) {
-        throw new HttpException('Cannot delete the last active ADMIN.', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Cannot delete the last active ADMIN.',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
 
-    const [leadsCount, dealsCount, tasksCount, customersCount] = await Promise.all([
-      this.prisma.lead.count({ where: { OR: [{ createdById: userId }, { assignedToId: userId }], tenantId } }),
-      this.prisma.deal.count({ where: { ownerId: userId, tenantId } }),
-      this.prisma.task.count({ where: { OR: [{ createdById: userId }, { assignedToId: userId }], tenantId } }),
-      this.prisma.customer.count({ where: { assignedToId: userId, tenantId } }),
-    ]);
+    const [leadsCount, dealsCount, tasksCount, customersCount] =
+      await Promise.all([
+        this.prisma.lead.count({
+          where: {
+            OR: [{ createdById: userId }, { assignedToId: userId }],
+            tenantId,
+          },
+        }),
+        this.prisma.deal.count({ where: { ownerId: userId, tenantId } }),
+        this.prisma.task.count({
+          where: {
+            OR: [{ createdById: userId }, { assignedToId: userId }],
+            tenantId,
+          },
+        }),
+        this.prisma.customer.count({
+          where: { assignedToId: userId, tenantId },
+        }),
+      ]);
 
-    if (leadsCount > 0 || dealsCount > 0 || tasksCount > 0 || customersCount > 0) {
+    if (
+      leadsCount > 0 ||
+      dealsCount > 0 ||
+      tasksCount > 0 ||
+      customersCount > 0
+    ) {
       throw new HttpException(
         'Cannot delete employee with historical CRM activity. Please DEACTIVATE the employee instead to preserve data.',
         HttpStatus.BAD_REQUEST,
