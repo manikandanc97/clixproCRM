@@ -49,27 +49,7 @@ export function MessageCard({ message }: MessageCardProps) {
         <div className={`flex flex-col gap-2 ${isError ? 'w-full' : ''} min-w-[200px]`}>
           <div className={`crm-card rounded-2xl rounded-tl-sm p-4 text-sm leading-relaxed overflow-hidden ${isError ? 'border-destructive/30 bg-destructive/5 text-destructive' : ''}`}>
             
-            {/* Tool Invocations Rendering */}
-            {toolInvocations.map((tool: any, idx: number) => (
-              <div key={idx} className="mb-3 p-3 bg-muted/40 border border-border rounded-xl text-xs flex flex-col gap-2">
-                <div className="flex items-center gap-2 font-semibold text-foreground">
-                  <Zap className="w-3.5 h-3.5 text-warning animate-pulse" />
-                  {tool.toolName.replace(/([A-Z])/g, ' $1').trim()}
-                </div>
-                {tool.hasResult || 'result' in tool ? (
-                  <div className="text-success font-medium ml-5">
-                    ✓ Task completed
-                  </div>
-                ) : (
-                  <div className="text-primary font-medium ml-5 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></span>
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                    Working...
-                  </div>
-                )}
-              </div>
-            ))}
+            {/* Tool Invocations Rendering (Hidden per user request) */}
 
             {isError ? (
               <div className="font-medium text-destructive">{content}</div>
