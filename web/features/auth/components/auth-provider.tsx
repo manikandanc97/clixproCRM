@@ -125,7 +125,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      if (typeof window !== "undefined" && !localStorage.getItem("has_session")) {
+      let hasSessionLocal = typeof window !== "undefined" ? localStorage.getItem("has_session") : null;
+      
+      // Fix for OAuth login: Check if Supabase has a session even if localStorage doesn't
+      const { data: { session } } = await createClient().auth.getSession();
+      if (session && !hasSessionLocal) {
+        if (typeof window !== "undefined") localStorage.setItem("has_session", "1");
+        hasSessionLocal = "1";
+      }
+
+      if (typeof window !== "undefined" && !hasSessionLocal) {
         setStatus("unauthenticated");
         return;
       }

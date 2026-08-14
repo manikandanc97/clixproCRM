@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
     if (session?.user) {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api';
         const res = await fetch(`${apiUrl}/auth/me`, {
           headers: {
             'Authorization': `Bearer ${session.access_token}`
@@ -25,11 +25,14 @@ export async function GET(request: Request) {
         
         if (res.ok) {
           return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
-        } else {
+        } else if (res.status === 403) {
           return NextResponse.redirect(`${requestUrl.origin}/onboarding`)
+        } else {
+          return NextResponse.redirect(`${requestUrl.origin}/login?error=auth_failed`)
         }
       } catch (err) {
-        return NextResponse.redirect(`${requestUrl.origin}/onboarding`)
+        console.error('API connection error during callback:', err);
+        return NextResponse.redirect(`${requestUrl.origin}/login?error=server_error`)
       }
     }
   }

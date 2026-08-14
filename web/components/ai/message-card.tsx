@@ -17,6 +17,14 @@ export function MessageCard({ message }: MessageCardProps) {
   const content = (message as any).content || (message.parts?.find(p => p.type === 'text') as any)?.text || '';
   const isError = message.role === 'system' && content.includes('Error:');
 
+  // Compatibility for AI SDK v4 which uses parts instead of toolInvocations
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const toolInvocations = message.toolInvocations || message.parts?.filter((p: any) => p.type === 'tool-invocation' || p.type?.startsWith('tool-') || p.type === 'dynamic-tool').map((p: any) => ({
+    toolName: p.toolName || (p.type?.startsWith('tool-') ? p.type.replace('tool-', '') : 'unknown'),
+    hasResult: 'output' in p || 'result' in p || p.state === 'output-available' || p.state === 'output-error',
+    ...p
+  })) || [];
+
   if (isUser) {
     return (
       <div className="flex justify-end mb-4 group">
@@ -31,24 +39,24 @@ export function MessageCard({ message }: MessageCardProps) {
 
   return (
     <div className="flex justify-start mb-6 group">
-      <div className="flex gap-3 max-w-[90%]">
+      <div className="flex gap-3 max-w-[90%] w-full">
         <div className="flex-shrink-0 mt-1">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isError ? 'bg-destructive/10 text-destructive' : 'bg-gradient-premium text-primary-foreground'} shadow-sm`}>
             {isError ? <AlertCircle className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
           </div>
         </div>
         
-        <div className={`flex flex-col gap-2 ${isError ? 'w-full' : ''}`}>
+        <div className={`flex flex-col gap-2 ${isError ? 'w-full' : ''} min-w-[200px]`}>
           <div className={`crm-card rounded-2xl rounded-tl-sm p-4 text-sm leading-relaxed overflow-hidden ${isError ? 'border-destructive/30 bg-destructive/5 text-destructive' : ''}`}>
             
             {/* Tool Invocations Rendering */}
-            {message.toolInvocations?.map((tool, idx) => (
+            {toolInvocations.map((tool: any, idx: number) => (
               <div key={idx} className="mb-3 p-3 bg-muted/40 border border-border rounded-xl text-xs flex flex-col gap-2">
                 <div className="flex items-center gap-2 font-semibold text-foreground">
                   <Zap className="w-3.5 h-3.5 text-warning animate-pulse" />
                   {tool.toolName.replace(/([A-Z])/g, ' $1').trim()}
                 </div>
-                {'result' in tool ? (
+                {tool.hasResult || 'result' in tool ? (
                   <div className="text-success font-medium ml-5">
                     ✓ Task completed
                   </div>
@@ -65,13 +73,13 @@ export function MessageCard({ message }: MessageCardProps) {
 
             {isError ? (
               <div className="font-medium text-destructive">{content}</div>
-            ) : (
+            ) : content ? (
               <div className="prose prose-slate dark:prose-invert max-w-none prose-sm prose-p:leading-relaxed prose-pre:bg-muted prose-pre:border prose-pre:border-border">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {content}
                 </ReactMarkdown>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

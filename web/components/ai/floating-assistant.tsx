@@ -14,8 +14,8 @@ export default function FloatingAssistant() {
   const [isExpanded, setIsExpanded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status, error } = useChat({
-    transport: new DefaultChatTransport({
+  const transport = React.useMemo(() => {
+    return new DefaultChatTransport({
       api: '/ai/chat',
       body: {
         tenantId: 'dev-tenant-1',
@@ -23,32 +23,53 @@ export default function FloatingAssistant() {
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fetch: async (url: any, options: any) => {
-        console.log("[DEBUG] useChat fetching URL with client:", url);
+        console.log("[DEBUG] useChat fetching URL with native fetch:", url);
+        
         try {
-          const response = await client.request({
-            url,
-            method: options.method,
-            data: options.body ? JSON.parse(options.body as string) : undefined,
-            headers: options.headers,
-            responseType: 'stream'
-          });
-          return new Response(response.data, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers as any
-          });
-        } catch (err: any) {
-          if (err.response) {
-            return new Response(err.response.data, {
-              status: err.response.status,
-              statusText: err.response.statusText,
-              headers: err.response.headers as any
-            });
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000/api";
+          const fullUrl = url.startsWith('http') ? url : `${API_URL}${url.startsWith('/') ? url : `/${url}`}`;
+
+          const headers = new Headers(options.headers || {});
+          
+          if (typeof window !== "undefined") {
+            const currency = localStorage.getItem("orbit_currency") || "USD";
+            headers.set("X-Currency", currency);
+            
+            const { createClient } = await import('@/lib/supabase/client');
+            const supabase = createClient();
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session?.access_token) {
+              headers.set('Authorization', `Bearer ${session.access_token}`);
+            }
           }
+
+          const response = await fetch(fullUrl, {
+            method: options.method,
+            body: options.body,
+            headers: headers,
+          });
+
+          // Create a clone to read the body for debugging without consuming the original
+          const clonedRes = response.clone();
+          const text = await clonedRes.text().catch(() => 'could not read body');
+          console.log(`[DEBUG] fetch response: ${response.status} ${response.statusText}`, text);
+
+          if (!response.ok) {
+             console.error("[DEBUG] fetch response NOT ok. URL:", fullUrl, "Status:", response.status, "Body:", text);
+          }
+
+          return response;
+        } catch (err: any) {
+          console.error("[DEBUG] useChat native fetch error:", err);
           throw err;
         }
       }
-    }),
+    });
+  }, []);
+
+  const { messages, sendMessage, status, error } = useChat({
+    transport,
     onError: (err) => {
       let msg = err.message;
       if (msg.startsWith('<!DOCTYPE html>')) msg = 'Server returned HTML (likely a 404/500 error). Check API route.';
