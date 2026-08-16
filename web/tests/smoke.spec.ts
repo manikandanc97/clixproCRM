@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test.describe('Final Runtime Smoke Tests', () => {
   const results: any[] = [];
@@ -94,7 +94,7 @@ test.describe('Final Runtime Smoke Tests', () => {
       }
 
       const failingApiCall = apiErrors.find(a => a.url.includes(mod.url) || a.url.includes('api/'));
-      let endpoint = failingApiCall ? failingApiCall.url : `/api${mod.url}`;
+      const endpoint = failingApiCall ? failingApiCall.url : `/api${mod.url}`;
       
       if (failingApiCall && failingApiCall.status >= 500) {
          result = 'FAIL';

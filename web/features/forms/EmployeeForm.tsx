@@ -4,7 +4,8 @@ import React, { useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form } from "@/shared/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
 import { FormInput, FormSelect } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
 import { FormSubmitButton } from "@/shared/components/form-submit-button";
@@ -12,23 +13,32 @@ import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createEmployee, updateEmployee } from "@/shared/lib/api/crm";
 import { toast } from "sonner";
+import { Key } from "lucide-react";
 
-const employeeSchema = z.object({
+const basePasswordSchema = z.string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[!@#$%^&*(),.?":{}|<>_\+\-\=]/, "Password must contain at least one special character");
+
+const employeeSchemaCreate = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character")
-    .optional()
-    .or(z.literal("")),
+  password: basePasswordSchema,
   role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
 });
 
-type EmployeeFormValues = z.infer<typeof employeeSchema>;
+const employeeSchemaEdit = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: basePasswordSchema.optional().or(z.literal("")),
+  role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
+});
+
+type EmployeeFormValues = z.infer<typeof employeeSchemaEdit>;
 
 interface EmployeeInitialData {
   id?: string;
@@ -82,7 +92,8 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
   });
 
   const form = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeSchema),
+    resolver: zodResolver(isEditing ? employeeSchemaEdit : employeeSchemaCreate),
+    mode: "onChange",
     defaultValues: {
       name: initialData?.name || "",
       email: initialData?.email || "",
@@ -105,6 +116,29 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
       });
     }
   }, [initialData, form]);
+
+  const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyz";
+    const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const nums = "0123456789";
+    const special = "!@#$%^&*";
+    
+    let password = "";
+    password += chars[Math.floor(Math.random() * chars.length)];
+    password += upper[Math.floor(Math.random() * upper.length)];
+    password += nums[Math.floor(Math.random() * nums.length)];
+    password += special[Math.floor(Math.random() * special.length)];
+    
+    const all = chars + upper + nums + special;
+    for (let i = 0; i < 10; i++) {
+      password += all[Math.floor(Math.random() * all.length)];
+    }
+    
+    password = password.split('').sort(() => 0.5 - Math.random()).join('');
+    
+    form.setValue("password", password, { shouldValidate: true, shouldDirty: true });
+    toast.success("Enterprise password generated");
+  };
 
   const onSubmit: SubmitHandler<EmployeeFormValues> = async (data) => {
     if (isEditing) {
@@ -145,7 +179,30 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
           />
         </div>
         
-        <FormInput name="password" label="Temporary Password" placeholder="••••••••" />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Temporary Password</FormLabel>
+              <div className="flex items-center gap-2">
+                <FormControl>
+                  <Input type="text" placeholder="••••••••" className="flex-1" {...field} />
+                </FormControl>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={generatePassword} 
+                  className="shrink-0 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary"
+                >
+                  <Key className="w-4 h-4 mr-2" />
+                  Generate Password
+                </Button>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

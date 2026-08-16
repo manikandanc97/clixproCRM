@@ -33,11 +33,23 @@ export type GlobalSearchResult = {
 };
 
 async function unwrapResponse<T>(request: Promise<{ data: ApiResponseType<T> }>) {
-  const response = await request;
-  if (!response.data?.success || response.data.data == null) {
-    throw new Error(response.data?.message || "Invalid API response.");
+  try {
+    const response = await request;
+    if (!response.data?.success || response.data.data === undefined) {
+      throw new Error(response.data?.message || "Invalid API response.");
+    }
+    return response.data.data;
+  } catch (error: any) {
+    const msg = error.response?.data?.message;
+    if (msg) {
+      if (typeof msg === 'string') {
+        throw new Error(msg);
+      } else if (typeof msg === 'object') {
+        throw new Error(msg.message || JSON.stringify(msg));
+      }
+    }
+    throw error;
   }
-  return response.data.data;
 }
 
 function ensureArray<T>(value: T[] | null | undefined): T[] {
@@ -78,6 +90,22 @@ export async function fetchDashboardData(timeframe: string = "month") {
 
 export function fetchRevenueGrowth(filter: string = "Year") {
   return unwrapResponse<ReturnType<typeof JSON.parse>>(client.get(`/crm/dashboard/revenue-growth?filter=${encodeURIComponent(filter)}`));
+}
+
+/**
+ * Fetch personal dashboard metrics for the currently authenticated user.
+ * Returns only records assigned to or owned by this user — no org-wide data.
+ */
+export function fetchEmployeeDashboardData() {
+  return unwrapResponse<{
+    myTasks: number;
+    myTodayMeetings: number;
+    myUpcomingMeetings: number;
+    myLeads: number;
+    myDeals: number;
+    myActivities: number;
+    recentActivities: { id: string; title: string; time: string; type: string }[];
+  }>(client.get("/crm/dashboard/employee"));
 }
 
 export function fetchCustomersData() {

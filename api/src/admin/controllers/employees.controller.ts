@@ -56,11 +56,11 @@ export class EmployeesController {
   @Post()
   @Roles('ADMIN', 'MANAGER')
   async inviteEmployee(@Req() req: any, @Body() body: any) {
-    const { email, role } = body;
+    const { email, role, name, password } = body;
 
-    if (!email || !role) {
+    if (!email || !role || !name) {
       throw new HttpException(
-        { success: false, message: 'Email and role are required' },
+        { success: false, message: 'Name, email, and role are required' },
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -77,12 +77,13 @@ export class EmployeesController {
         req.tenantId,
         email,
         role,
+        name,
+        password
       );
       return {
         success: true,
         data,
-        message:
-          'Invitation generated successfully. The employee must sign up to accept it.',
+        message: 'Employee created successfully.',
       };
     } catch (error: any) {
       throw new HttpException(

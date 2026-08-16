@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
+import { SYSTEM_ROLE_PERMISSIONS } from '../common/role-permissions.constants';
 
 @Injectable()
 export class AuthService {
@@ -122,9 +123,39 @@ export class AuthService {
         data: { name: data.companyName, slug },
       });
 
-      const role = await tx.role.create({
-        data: { name: 'ADMIN', tenantId: tenant.id, isSystem: true },
-      });
+      // Seed all 4 standard system roles with their canonical permission sets.
+      // ADMIN role is created first so we can link the registering user to it.
+      const STANDARD_ROLES = ['ADMIN', 'MANAGER', 'SALES', 'EMPLOYEE'] as const;
+      const createdRoles: Record<string, any> = {};
+
+      for (const roleName of STANDARD_ROLES) {
+        const r = await tx.role.create({
+          data: {
+            name: roleName,
+            tenantId: tenant.id,
+            isSystem: true,
+            priority: roleName === 'ADMIN' ? 100
+              : roleName === 'MANAGER' ? 70
+              : roleName === 'SALES' ? 40
+              : 10,
+          },
+        });
+
+        const moduleList = SYSTEM_ROLE_PERMISSIONS[roleName] || [];
+        if (moduleList.length > 0) {
+          await tx.rolePermission.createMany({
+            data: moduleList.map((module: string) => ({
+              roleId: r.id,
+              module,
+              hasAccess: true,
+            })),
+          });
+        }
+
+        createdRoles[roleName] = r;
+      }
+
+      const adminRole = createdRoles['ADMIN'];
 
       let user = await tx.user.findUnique({ where: { id: data.userId } });
       if (!user) {
@@ -136,7 +167,6 @@ export class AuthService {
           },
         });
       } else if (!user.name && data.name) {
-        // Just in case existing user had no name, update it
         user = await tx.user.update({
           where: { id: user.id },
           data: { name: data.name }
@@ -147,7 +177,7 @@ export class AuthService {
         data: {
           tenantId: tenant.id,
           userId: user.id,
-          roleId: role.id,
+          roleId: adminRole.id,
         },
       });
 

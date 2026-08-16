@@ -6,7 +6,6 @@ import { Bot, X, Send, Paperclip, Minimize2, Maximize2, MoreVertical } from 'luc
 import { DefaultChatTransport } from 'ai';
 import { WelcomeScreen } from './welcome-screen';
 import { MessageCard } from './message-card';
-import client from '@/shared/lib/api/client';
 
 export default function FloatingAssistant() {
   const [isOpen, setIsOpen] = useState(false);

@@ -325,4 +325,135 @@ export class DashboardService {
       data: []
     };
   }
+
+  /**
+   * Employee-scoped dashboard data.
+   * Returns ONLY records that belong to / are assigned to the calling user.
+   * No organisation-wide metrics are exposed.
+   */
+  async getEmployeeDashboardData(tenantId: string, userId: string) {
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+
+    const sevenDaysAgo = new Date(todayStart);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+
+    const [
+      myPendingTasks,
+      myTodayMeetings,
+      myUpcomingMeetings,
+      myAssignedLeads,
+      myAssignedDeals,
+      myRecentActivities,
+    ] = await Promise.all([
+      // Tasks assigned to this user that are not completed
+      this.prisma.task.count({
+        where: {
+          tenantId,
+          assignedToId: userId,
+          deletedAt: null,
+          status: { notIn: ['COMPLETED', 'CANCELLED'] },
+        },
+      }),
+
+      // Today's meetings for this user
+      this.prisma.meeting.count({
+        where: {
+          tenantId,
+          assignedToId: userId,
+          startTime: { gte: todayStart, lt: todayEnd },
+        },
+      }),
+
+      // All upcoming meetings (including today)
+      this.prisma.meeting.count({
+        where: {
+          tenantId,
+          assignedToId: userId,
+          startTime: { gte: now },
+        },
+      }),
+
+      // Leads assigned to this user
+      this.prisma.lead.count({
+        where: {
+          tenantId,
+          assignedToId: userId,
+          deletedAt: null,
+        },
+      }),
+
+      // Deals owned by this user
+      this.prisma.deal.count({
+        where: {
+          tenantId,
+          ownerId: userId,
+          deletedAt: null,
+          stage: { notIn: ['WON', 'LOST'] },
+        },
+      }),
+
+      // Recent activities: completed tasks, recent leads, recent deals for this user
+      Promise.all([
+        this.prisma.task.findMany({
+          where: {
+            tenantId,
+            assignedToId: userId,
+            status: 'COMPLETED',
+            deletedAt: null,
+          },
+          select: { id: true, title: true, updatedAt: true },
+          orderBy: { updatedAt: 'desc' },
+          take: 5,
+        }),
+        this.prisma.lead.findMany({
+          where: {
+            tenantId,
+            assignedToId: userId,
+            deletedAt: null,
+            createdAt: { gte: sevenDaysAgo },
+          },
+          select: { id: true, name: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        }),
+      ]),
+    ]);
+
+    const [recentTasks, recentLeads] = myRecentActivities;
+
+    const recentActivities = [
+      ...recentTasks.map((t) => ({
+        id: `task-${t.id}`,
+        title: `Completed: ${t.title}`,
+        time: t.updatedAt,
+        type: 'task',
+      })),
+      ...recentLeads.map((l) => ({
+        id: `lead-${l.id}`,
+        title: `Lead assigned: ${l.name}`,
+        time: l.createdAt,
+        type: 'lead',
+      })),
+    ]
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      .slice(0, 5)
+      .map((a) => ({
+        ...a,
+        time: formatRelativeDate(a.time, { fallback: 'Just now' }),
+      }));
+
+    return {
+      myTasks: myPendingTasks,
+      myTodayMeetings,
+      myUpcomingMeetings,
+      myLeads: myAssignedLeads,
+      myDeals: myAssignedDeals,
+      myActivities: recentTasks.length + recentLeads.length,
+      recentActivities,
+    };
+  }
 }

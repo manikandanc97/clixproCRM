@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Bot, Zap, AlertCircle } from 'lucide-react';
+import { Bot, AlertCircle } from 'lucide-react';
 import { UIMessage } from '@ai-sdk/react';
 
 interface MessageCardProps {

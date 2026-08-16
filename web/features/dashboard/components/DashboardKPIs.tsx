@@ -20,6 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/ui/tooltip";
+import EmployeeDashboardKPIs from "./EmployeeDashboardKPIs";
 
 const TOP_KPI_IDS = ["revenue", "newLeads", "activeDeals", "winRate"];
 
@@ -29,6 +30,14 @@ export default function DashboardKPIs() {
   const leadsQuery = useLeads();
   const pipelineQuery = usePipeline();
   const { formatCurrency, currency } = useCurrency();
+
+  // ─── Employee role: render personal dashboard cards instead ──────────────
+  // This prevents the org-wide KPI cards from showing for Employee users
+  // and removes the "No dashboard metrics authorized" empty state.
+  const normalizedRole = user?.role?.toUpperCase();
+  if (normalizedRole === CRM_ROLES.EMPLOYEE) {
+    return <EmployeeDashboardKPIs />;
+  }
 
   // Extract query data safely
   const dashboardData = dashboardQuery.data;
@@ -136,19 +145,26 @@ export default function DashboardKPIs() {
     formatCurrency, currency
   ]);
 
-  // RBAC & KPI Layout Protection: Limit to the 4 primary cards while honoring user allowed dashboardWidgets
-  // Admin role ALWAYS bypasses widget permission checks
+  // RBAC & KPI Layout Protection:
+  // Admin bypasses widget permission checks entirely.
+  // All other roles must have the widget ID in their dashboardWidgets list.
   const accessibleKpis = useMemo(() => {
     return kpiConfigs
       .filter(kpi => TOP_KPI_IDS.includes(kpi.id))
-      .filter(kpi => access.roleName === "Admin" || user?.role === CRM_ROLES.ADMIN || access.dashboardWidgets.includes(kpi.id));
+      .filter(kpi =>
+        user?.role === CRM_ROLES.ADMIN ||
+        access.roleName === "Admin" ||
+        access.dashboardWidgets.includes(kpi.id)
+      );
   }, [kpiConfigs, access.roleName, access.dashboardWidgets, user?.role]);
 
-  // Handle empty state gracefully if no metrics are allowed for the role
+  // Graceful empty state (should never be reached for well-configured roles)
   if (accessibleKpis.length === 0) {
     return (
       <div className="py-10 text-center border border-dashed border-border rounded-xl bg-card">
-        <p className="text-sm text-muted-foreground font-medium">No dashboard metrics authorized for your account role.</p>
+        <p className="text-sm text-muted-foreground font-medium">
+          No dashboard metrics configured for your role.
+        </p>
       </div>
     );
   }

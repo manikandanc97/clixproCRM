@@ -56,11 +56,38 @@ type AuthContextState = {
 const AuthContext = createContext<AuthContextState | null>(null);
 
 const WIDGETS_BY_ROLE: Record<string, string[]> = {
-  [CRM_ROLES.ADMIN]: ["revenue", "newLeads", "activeDeals", "winRate", "salesChart", "upcomingMeetings", "hotLeads", "teamPerformance", "leadFunnel", "revenueTracker", "recentActivities", "pendingFollowups", "aiInsights", "calendarWidget"],
-  [CRM_ROLES.MANAGER]: ["salesChart", "upcomingMeetings", "hotLeads", "teamPerformance", "leadFunnel", "recentActivities", "pendingFollowups", "calendarWidget"],
-  [CRM_ROLES.SALES]: ["salesChart", "upcomingMeetings", "hotLeads", "leadFunnel", "recentActivities", "pendingFollowups", "calendarWidget"],
-  [CRM_ROLES.SUPPORT]: ["upcomingMeetings", "recentActivities", "pendingFollowups", "calendarWidget"],
-  [CRM_ROLES.EMPLOYEE]: ["upcomingMeetings", "recentActivities", "pendingFollowups", "calendarWidget"],
+  [CRM_ROLES.ADMIN]: [
+    // Org-wide KPI cards
+    "revenue", "newLeads", "activeDeals", "winRate",
+    // Widgets
+    "salesChart", "upcomingMeetings", "hotLeads", "teamPerformance",
+    "leadFunnel", "revenueTracker", "recentActivities", "pendingFollowups",
+    "aiInsights", "calendarWidget", "revenueChart", "revenueTarget",
+    "recentCustomers",
+  ],
+  [CRM_ROLES.MANAGER]: [
+    // Team-scoped KPI cards (org-wide metrics visible to managers)
+    "revenue", "newLeads", "activeDeals", "winRate",
+    // Widgets
+    "salesChart", "upcomingMeetings", "hotLeads", "teamPerformance",
+    "leadFunnel", "recentActivities", "pendingFollowups", "calendarWidget",
+    "revenueChart", "revenueTarget",
+  ],
+  [CRM_ROLES.SALES]: [
+    // Own KPI cards
+    "revenue", "activeDeals", "winRate",
+    // Widgets
+    "salesChart", "upcomingMeetings", "hotLeads", "leadFunnel",
+    "recentActivities", "pendingFollowups", "calendarWidget",
+  ],
+  [CRM_ROLES.SUPPORT]: [
+    "upcomingMeetings", "recentActivities", "pendingFollowups", "calendarWidget",
+  ],
+  // Employee: personal widgets only — no org-wide KPI cards
+  [CRM_ROLES.EMPLOYEE]: [
+    "myTasks", "myMeetings", "myLeads", "myDeals", "myActivities",
+    "upcomingMeetings", "pendingFollowups", "calendarWidget",
+  ],
 };
 
 function buildAccess(user: AuthUser | null): RoleAccess {

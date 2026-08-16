@@ -9,7 +9,8 @@ import {
   User,
   Edit2,
   Trash2,
-  Power
+  Power,
+  Loader2
 } from "lucide-react";
 import { 
   CRMPageContainer, 
@@ -406,8 +407,10 @@ export default function EmployeesPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
+            <Button 
+              disabled={deleteMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
                 deleteMutation.mutate(selectedEmployee?.id, {
                   onSuccess: () => {
                     toast.success("Employee deleted permanently");
@@ -415,10 +418,17 @@ export default function EmployeesPage() {
                   }
                 });
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
             >
-              {deleteMutation.isPending ? "Deleting..." : "Delete Employee"}
-            </AlertDialogAction>
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Employee"
+              )}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
