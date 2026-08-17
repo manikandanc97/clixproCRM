@@ -4,7 +4,42 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+
+// In-memory token cache for authenticated users (60s TTL)
+interface CachedTokenUser {
+  user: User;
+  expiresAt: number;
+}
+
+const tokenUserCache = new Map<string, CachedTokenUser>();
+let cachedSupabaseClient: SupabaseClient | null = null;
+
+function getSupabaseClient(): SupabaseClient {
+  if (cachedSupabaseClient) return cachedSupabaseClient;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase environment variables are missing');
+  }
+
+  cachedSupabaseClient = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return cachedSupabaseClient;
+}
+
+// Periodically clean expired tokens to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of tokenUserCache.entries()) {
+    if (val.expiresAt <= now) {
+      tokenUserCache.delete(key);
+    }
+  }
+}, 60000).unref?.();
 
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
@@ -37,20 +72,21 @@ export class SupabaseAuthGuard implements CanActivate {
       throw new UnauthorizedException('Authentication token is missing');
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase environment variables are missing');
+    const now = Date.now();
+    const cached = tokenUserCache.get(token);
+    if (cached && cached.expiresAt > now) {
+      request.user = cached.user;
+      return true;
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = getSupabaseClient();
     const {
       data: { user },
       error,
     } = await supabase.auth.getUser(token);
 
     if (error || !user) {
+      tokenUserCache.delete(token);
       throw new UnauthorizedException(
         'Invalid or expired authentication token',
       );
@@ -59,7 +95,15 @@ export class SupabaseAuthGuard implements CanActivate {
     if (user && !(user as any).sub) {
       (user as any).sub = user.id;
     }
+
+    // Cache valid user for 60 seconds
+    tokenUserCache.set(token, {
+      user,
+      expiresAt: now + 60000,
+    });
+
     request.user = user;
     return true;
   }
 }
+

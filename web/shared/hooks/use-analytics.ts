@@ -5,13 +5,14 @@ import { fetchAnalyticsData } from "@/shared/lib/api/crm";
 import { useAuth } from "@/features/auth/components/auth-provider";
 
 export function useAnalytics(filter?: string) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
     queryKey: ["analytics", filter],
     queryFn: () => fetchAnalyticsData(filter),
-    enabled: isAuthenticated ,
-    refetchInterval: 5 * 60 * 1000,
-    staleTime: 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 

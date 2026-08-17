@@ -27,8 +27,8 @@ export function useDashboardData(timeframeProp?: string) {
     queryKey: ["dashboardData", timeframe],
     queryFn: () => fetchDashboardData(timeframe),
     enabled: isHydrated && isAuthenticated,
-    refetchInterval: 30 * 1000, // 30 seconds
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000,
     retry: 1,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
@@ -41,8 +41,9 @@ export function useRevenueGrowth(filter: string = "Year") {
     queryKey: ["revenueGrowth", filter],
     queryFn: () => fetchRevenueGrowth(filter),
     enabled: isHydrated && isAuthenticated,
-    refetchInterval: 60 * 1000,
-    staleTime: 60 * 1000,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -51,22 +52,22 @@ export function useHotLeads() {
   return useQuery({
     queryKey: ["hotLeads"],
     queryFn: fetchHotLeads,
-    enabled: isHydrated && isAuthenticated ,
-    refetchInterval: 5 * 60 * 1000,
-    staleTime: 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
-
-
 
 export function useMeetings() {
   const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
     queryKey: ["meetings"],
     queryFn: fetchMeetings,
-    enabled: isHydrated && isAuthenticated ,
-    refetchInterval: 5 * 60 * 1000,
-    staleTime: 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -75,9 +76,9 @@ export function useNotifications() {
   return useQuery({
     queryKey: ["notifications"],
     queryFn: fetchNotifications,
-    enabled: isHydrated && isAuthenticated ,
-    refetchInterval: 5 * 60 * 1000,
-    staleTime: 30 * 1000, // Notifications can be slightly more frequent
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
     refetchOnWindowFocus: false,
   });
@@ -108,9 +109,10 @@ export function useAiInsights() {
   return useQuery({
     queryKey: ["aiInsights"],
     queryFn: fetchAiInsights,
-    enabled: isHydrated && isAuthenticated ,
-    refetchInterval: 10 * 60 * 1000, // AI insights change slowly
+    enabled: isHydrated && isAuthenticated,
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -121,8 +123,10 @@ export function useLeads() {
   return useQuery({
     queryKey: ["leads"],
     queryFn: fetchLeadsData,
-    enabled: isHydrated && isAuthenticated ,
-    staleTime: 5 * 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -131,8 +135,10 @@ export function useTasks() {
   return useQuery({
     queryKey: ["tasks"],
     queryFn: () => fetchTasksData(),
-    enabled: isHydrated && isAuthenticated ,
-    staleTime: 5 * 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -141,8 +147,10 @@ export function usePipeline() {
   return useQuery({
     queryKey: ["pipeline"],
     queryFn: fetchPipelineData,
-    enabled: isHydrated && isAuthenticated ,
-    staleTime: 5 * 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -151,15 +159,17 @@ export function useCustomers() {
   return useQuery({
     queryKey: ["customers"],
     queryFn: fetchCustomersData,
-    enabled: isHydrated && isAuthenticated ,
-    staleTime: 5 * 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
 /**
- * Hook to initialize all dashboard-related data in one go.
- * This ensures that even if specific components aren't mounted yet,
- * the core CRM data is being fetched and cached.
+ * Hook to manage core dashboard data initialization.
+ * Only fetches primary dashboard summary data while allowing individual
+ * widgets to own their respective server state cleanly.
  */
 export function useDashboardInitializer(timeframeProp?: string) {
   const storeTimeframe = useCRMStore((state) => state.activeTimeframe);
@@ -168,26 +178,14 @@ export function useDashboardInitializer(timeframeProp?: string) {
   
   // Primary dashboard data
   const dashboard = useDashboardData(timeframe);
-  
-  // Trigger secondary data fetches in parallel
-  useRevenueGrowth();
-  useHotLeads();
-  useMeetings();
-  useNotifications();
-  useAiInsights();
-  useLeads();
-  useTasks();
-  usePipeline();
-  useCustomers();
-  
-  // Critical: We are only "initializing" if auth is still reading from storage,
-  // OR if we are authenticated but the primary dashboard data hasn't arrived yet.
+
   const isInitializing = isAuthInitializing || (isAuthenticated && dashboard.isLoading && !dashboard.data);
 
   return {
     isAuthenticated,
     isAuthInitializing,
     isInitializing,
+    dashboard,
   };
 }
 
@@ -198,6 +196,8 @@ export function useGlobalSearch(query: string) {
     queryFn: () => SearchService.fetchGlobalSearch(query),
     enabled: isHydrated && isAuthenticated && query.length >= 2,
     staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: 1,
+    refetchOnWindowFocus: false,
   });
 }

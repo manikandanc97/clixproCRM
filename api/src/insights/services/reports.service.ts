@@ -6,6 +6,7 @@ import {
   toNumber,
   formatPercentage,
 } from '../../common/utils/crm-formatters.util';
+import { getCachedTenantCurrency } from '../../common/utils/tenant-cache.util';
 
 export interface ReportFilters {
   startDate?: string;
@@ -20,11 +21,7 @@ export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
   private async getTenantCurrency(tenantId: string): Promise<string> {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { currency: true },
-    });
-    return tenant?.currency || 'USD';
+    return getCachedTenantCurrency(this.prisma, tenantId);
   }
 
   async getReports(tenantId: string, filters: ReportFilters = {}) {

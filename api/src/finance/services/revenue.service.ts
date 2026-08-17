@@ -120,21 +120,22 @@ export class RevenueService {
       leadWhere.assignedToId = filters.employee;
     }
 
-    const currentRevenueAgg = await this.prisma.lead.aggregate({
-      _sum: { value: true },
-      where: {
-        ...leadWhere,
-        updatedAt: { gte: start, lte: end },
-      },
-    });
-
-    const previousRevenueAgg = await this.prisma.lead.aggregate({
-      _sum: { value: true },
-      where: {
-        ...leadWhere,
-        updatedAt: { gte: prevStart, lte: prevEnd },
-      },
-    });
+    const [currentRevenueAgg, previousRevenueAgg] = await Promise.all([
+      this.prisma.lead.aggregate({
+        _sum: { value: true },
+        where: {
+          ...leadWhere,
+          updatedAt: { gte: start, lte: end },
+        },
+      }),
+      this.prisma.lead.aggregate({
+        _sum: { value: true },
+        where: {
+          ...leadWhere,
+          updatedAt: { gte: prevStart, lte: prevEnd },
+        },
+      }),
+    ]);
 
     const currentRevenue = Number(currentRevenueAgg._sum.value || 0);
     const previousRevenue = Number(previousRevenueAgg._sum.value || 0);

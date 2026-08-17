@@ -30,14 +30,16 @@ export class TasksQueryService {
     options: TaskQueryDto & { userId: string; role: string },
   ) {
     const page = Math.max(1, options.page || 1);
-    const limit = Math.max(1, Math.min(options.limit || 1000, 10000));
+    const limit = Math.max(1, Math.min(options.limit || 50, 10000));
     const skip = (page - 1) * limit;
 
-    // 1. Sync overdue tasks
-    await this.syncOverdueTasks(tenantId);
-
-    // 2. Build where clause with RBAC & Tenant scoping
     const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+
+    // 1. Build where clause with RBAC & Tenant scoping
     const where: Prisma.TaskWhereInput = {
       tenantId,
       deletedAt: null,
@@ -49,23 +51,27 @@ export class TasksQueryService {
       if (userRole !== 'ADMIN' && userRole !== 'SUPER ADMIN') {
         const tenantUser = await this.prisma.tenantUser.findFirst({
           where: { tenantId, userId: options.userId },
+          select: { id: true, departmentId: true },
         });
 
-        const subordinates = await this.prisma.tenantUser.findMany({
-          where: { tenantId, reportingManagerId: tenantUser?.id },
-          select: { userId: true },
-        });
+        const [subordinates, teamUsers] = await Promise.all([
+          tenantUser
+            ? this.prisma.tenantUser.findMany({
+                where: { tenantId, reportingManagerId: tenantUser.id },
+                select: { userId: true },
+              })
+            : Promise.resolve([]),
+          tenantUser?.departmentId
+            ? this.prisma.tenantUser.findMany({
+                where: { tenantId, departmentId: tenantUser.departmentId },
+                select: { userId: true },
+              })
+            : Promise.resolve([]),
+        ]);
+
         const subordinateUserIds = subordinates.map((s) => s.userId);
         const managerScopeUserIds = [options.userId, ...subordinateUserIds];
-
-        let teamUserIds: string[] = [];
-        if (tenantUser?.departmentId) {
-          const teamUsers = await this.prisma.tenantUser.findMany({
-            where: { tenantId, departmentId: tenantUser.departmentId },
-            select: { userId: true },
-          });
-          teamUserIds = teamUsers.map((u) => u.userId);
-        }
+        const teamUserIds = teamUsers.map((u) => u.userId);
 
         where.OR = [
           { assignedToId: { in: managerScopeUserIds } },
@@ -141,7 +147,7 @@ export class TasksQueryService {
       { createdAt: 'desc' },
     ];
 
-    const [tasks, total] = await Promise.all([
+    const [tasks, total, statsRaw] = await Promise.all([
       this.prisma.task.findMany({
         where,
         skip,
@@ -157,44 +163,57 @@ export class TasksQueryService {
           },
           relatedMeeting: { select: { id: true, title: true } },
           relatedQuotation: {
-            select: { id: true, quoteNumber: true, client: true, amount: true },
+            select: {
+              id: true,
+              quoteNumber: true,
+              client: true,
+              amount: true,
+            },
           },
         },
       }),
       this.prisma.task.count({ where }),
+      this.prisma.$queryRaw<
+        Array<{
+          total_count: number;
+          pending_count: number;
+          in_progress_count: number;
+          completed_count: number;
+          blocked_count: number;
+          overdue_count: number;
+          due_today_count: number;
+        }>
+      >`
+        SELECT
+          COUNT(*)::int as total_count,
+          COUNT(CASE WHEN "status" = 'PENDING'::"TaskStatus" THEN 1 END)::int as pending_count,
+          COUNT(CASE WHEN "status" = 'IN_PROGRESS'::"TaskStatus" THEN 1 END)::int as in_progress_count,
+          COUNT(CASE WHEN "status" = 'COMPLETED'::"TaskStatus" THEN 1 END)::int as completed_count,
+          COUNT(CASE WHEN "status" = 'BLOCKED'::"TaskStatus" THEN 1 END)::int as blocked_count,
+          COUNT(CASE WHEN "dueDate" < ${now} AND "status" NOT IN ('COMPLETED'::"TaskStatus", 'CANCELLED'::"TaskStatus") THEN 1 END)::int as overdue_count,
+          COUNT(CASE WHEN "dueDate" >= ${todayStart} AND "dueDate" < ${todayEnd} THEN 1 END)::int as due_today_count
+        FROM "Task"
+        WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL
+      `,
     ]);
 
-    // Dashboard metrics for stats bar
-    // NOTE: This could be an N+1 or high memory query as tenant scales. Future optimization: convert to SQL GROUP BY
-    const allActiveTasks = await this.prisma.task.findMany({
-      where: { tenantId, deletedAt: null },
-      select: {
-        id: true,
-        status: true,
-        dueDate: true,
-        updatedAt: true,
-        createdAt: true,
-      },
-    });
+    const taskSummary = statsRaw[0] || {
+      total_count: 0,
+      pending_count: 0,
+      in_progress_count: 0,
+      completed_count: 0,
+      blocked_count: 0,
+      overdue_count: 0,
+      due_today_count: 0,
+    };
 
-    const completedCount = allActiveTasks.filter(
-      (t: any) => t.status === 'COMPLETED',
-    ).length;
-    const pendingCount = allActiveTasks.filter(
-      (t: any) => t.status === 'PENDING',
-    ).length;
-    const inProgressCount = allActiveTasks.filter(
-      (t: any) => t.status === 'IN_PROGRESS',
-    ).length;
-    const overdueCount = allActiveTasks.filter(
-      (t: any) =>
-        t.status === 'OVERDUE' ||
-        (t.dueDate &&
-          t.dueDate < now &&
-          t.status !== 'COMPLETED' &&
-          t.status !== 'CANCELLED'),
-    ).length;
-    const totalCount = allActiveTasks.length;
+    const completedCount = Number(taskSummary.completed_count || 0);
+    const pendingCount = Number(taskSummary.pending_count || 0);
+    const inProgressCount = Number(taskSummary.in_progress_count || 0);
+    const blockedCount = Number(taskSummary.blocked_count || 0);
+    const overdueCount = Number(taskSummary.overdue_count || 0);
+    const dueTodayCount = Number(taskSummary.due_today_count || 0);
+    const totalCount = Number(taskSummary.total_count || 0);
 
     const taskStats = [
       {
@@ -333,13 +352,8 @@ export class TasksQueryService {
         inProgress: inProgressCount,
         completed: completedCount,
         overdue: overdueCount,
-        blocked: allActiveTasks.filter((t: any) => t.status === 'BLOCKED')
-          .length,
-        dueToday: allActiveTasks.filter(
-          (t: any) =>
-            t.dueDate &&
-            new Date(t.dueDate).toDateString() === now.toDateString(),
-        ).length,
+        blocked: blockedCount,
+        dueToday: dueTodayCount,
         completionRate:
           totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
       },

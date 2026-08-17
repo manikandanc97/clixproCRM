@@ -69,32 +69,140 @@ export class AnalyticsService {
       createdAt: { gte: previousStart, lt: currentStart },
     };
 
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const currentYear = new Date().getFullYear();
+    const startOfYear = new Date(currentYear, 0, 1);
+
     const [
-      leadsCount,
-      previousLeadsCount,
-      tasksCount,
-      previousTasksCount,
-      customersCount,
-      previousCustomersCount,
+      summaryRaw,
       stageCounts,
       revenueTargetRecord,
+      sparklinesRaw,
+      leadsGrowthRaw,
+      revenueWonRaw,
     ] = await Promise.all([
-      this.prisma.lead.count({ where: currentLeadsWhere }),
-      this.prisma.lead.count({ where: previousLeadsWhere }),
-      this.prisma.task.count({ where: currentTasksWhere }),
-      this.prisma.task.count({ where: previousTasksWhere }),
-      this.prisma.customer.count({ where: currentCustomersWhere }),
-      this.prisma.customer.count({ where: previousCustomersWhere }),
+      // 1. Consolidated Summary Counts
+      this.prisma.$queryRaw<
+        Array<{
+          leads_count: number;
+          prev_leads_count: number;
+          tasks_count: number;
+          prev_tasks_count: number;
+          customers_count: number;
+          prev_customers_count: number;
+        }>
+      >`
+        SELECT
+          (SELECT COUNT(*)::int FROM "Lead" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${currentStart} AND "createdAt" <= ${now}) as leads_count,
+          (SELECT COUNT(*)::int FROM "Lead" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_leads_count,
+          (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${currentStart} AND "createdAt" <= ${now}) as tasks_count,
+          (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_tasks_count,
+          (SELECT COUNT(*)::int FROM "Customer" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${currentStart} AND "createdAt" <= ${now}) as customers_count,
+          (SELECT COUNT(*)::int FROM "Customer" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_customers_count
+      `,
+
+      // 2. Stage breakdown
       this.prisma.lead.groupBy({
         by: ['stage'],
         where: leadsBaseWhere,
         _count: { id: true },
       }),
+
+      // 3. Target record
       this.prisma.revenueTarget.findFirst({
         where: { tenantId, isActive: true },
         orderBy: { createdAt: 'desc' },
       }),
+
+      // 4. 7-Day Sparkline aggregates
+      this.prisma.$queryRaw<
+        Array<{
+          day_date: Date;
+          task_count: number;
+          lead_count: number;
+          customer_count: number;
+        }>
+      >`
+        SELECT
+          d.day_date,
+          COALESCE(t.cnt, 0)::int as task_count,
+          COALESCE(l.cnt, 0)::int as lead_count,
+          COALESCE(c.cnt, 0)::int as customer_count
+        FROM (
+          SELECT generate_series(${sevenDaysAgo}::date, ${now}::date, '1 day'::interval)::date as day_date
+        ) d
+        LEFT JOIN (
+          SELECT DATE_TRUNC('day', "createdAt")::date as dd, COUNT(*) as cnt
+          FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${sevenDaysAgo}
+          GROUP BY DATE_TRUNC('day', "createdAt")::date
+        ) t ON t.dd = d.day_date
+        LEFT JOIN (
+          SELECT DATE_TRUNC('day', "createdAt")::date as dd, COUNT(*) as cnt
+          FROM "Lead" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${sevenDaysAgo}
+          GROUP BY DATE_TRUNC('day', "createdAt")::date
+        ) l ON l.dd = d.day_date
+        LEFT JOIN (
+          SELECT DATE_TRUNC('day', "createdAt")::date as dd, COUNT(*) as cnt
+          FROM "Customer" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${sevenDaysAgo}
+          GROUP BY DATE_TRUNC('day', "createdAt")::date
+        ) c ON c.dd = d.day_date
+        ORDER BY d.day_date ASC
+      `,
+
+      // 5. Monthly Lead Creation for Current Year
+      this.prisma.$queryRaw<
+        Array<{
+          month_index: number;
+          count: number;
+        }>
+      >`
+        SELECT
+          (EXTRACT(MONTH FROM "createdAt")::int - 1) as month_index,
+          COUNT(*)::int as count
+        FROM "Lead"
+        WHERE "tenantId" = ${tenantId}
+          AND "deletedAt" IS NULL
+          AND "createdAt" >= ${startOfYear}
+        GROUP BY (EXTRACT(MONTH FROM "createdAt")::int - 1)
+      `,
+
+      // 6. Monthly Won Revenue for Current Year
+      this.prisma.$queryRaw<
+        Array<{
+          month_index: number;
+          revenue: number;
+        }>
+      >`
+        SELECT
+          (EXTRACT(MONTH FROM "updatedAt")::int - 1) as month_index,
+          COALESCE(SUM("value"), 0)::float as revenue
+        FROM "Lead"
+        WHERE "tenantId" = ${tenantId}
+          AND "deletedAt" IS NULL
+          AND "stage" = 'WON'::"LeadStage"
+          AND "updatedAt" >= ${startOfYear}
+        GROUP BY (EXTRACT(MONTH FROM "updatedAt")::int - 1)
+      `,
     ]);
+
+    const summary = summaryRaw[0] || {
+      leads_count: 0,
+      prev_leads_count: 0,
+      tasks_count: 0,
+      prev_tasks_count: 0,
+      customers_count: 0,
+      prev_customers_count: 0,
+    };
+
+    const leadsCount = Number(summary.leads_count || 0);
+    const previousLeadsCount = Number(summary.prev_leads_count || 0);
+    const tasksCount = Number(summary.tasks_count || 0);
+    const previousTasksCount = Number(summary.prev_tasks_count || 0);
+    const customersCount = Number(summary.customers_count || 0);
+    const previousCustomersCount = Number(summary.prev_customers_count || 0);
 
     const stageMap = new Map(stageCounts.map((s) => [s.stage, s._count.id]));
     const newCount = stageMap.get('NEW') ?? 0;
@@ -114,51 +222,15 @@ export class AnalyticsService {
       return { change: `${sign}${pct.toFixed(1)}%`, positive: pct >= 0 };
     }
 
-    const buildSparkline = async (
-      model: 'lead' | 'task' | 'customer',
-      baseWhere:
-        | Prisma.LeadWhereInput
-        | Prisma.TaskWhereInput
-        | Prisma.CustomerWhereInput,
-    ): Promise<{ value: number }[]> => {
-      const days = Array.from({ length: 7 }, (_, i) => {
-        const dayStart = new Date(now);
-        dayStart.setDate(now.getDate() - (6 - i));
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(dayStart);
-        dayEnd.setHours(23, 59, 59, 999);
-        return { dayStart, dayEnd };
-      });
+    const tasksSparkline: { value: number }[] = [];
+    const leadsSparkline: { value: number }[] = [];
+    const customersSparkline: { value: number }[] = [];
 
-      const counts = await Promise.all(
-        days.map(({ dayStart, dayEnd }) => {
-          const where = {
-            ...baseWhere,
-            createdAt: { gte: dayStart, lte: dayEnd },
-          };
-          if (model === 'lead')
-            return this.prisma.lead.count({
-              where: where as Prisma.LeadWhereInput,
-            });
-          if (model === 'task')
-            return this.prisma.task.count({
-              where: where as Prisma.TaskWhereInput,
-            });
-          return this.prisma.customer.count({
-            where: where as Prisma.CustomerWhereInput,
-          });
-        }),
-      );
-
-      return counts.map((value) => ({ value }));
-    };
-
-    const [tasksSparkline, leadsSparkline, customersSparkline] =
-      await Promise.all([
-        buildSparkline('task', tasksBaseWhere),
-        buildSparkline('lead', leadsBaseWhere),
-        buildSparkline('customer', customersBaseWhere),
-      ]);
+    for (const r of sparklinesRaw) {
+      tasksSparkline.push({ value: Number(r.task_count || 0) });
+      leadsSparkline.push({ value: Number(r.lead_count || 0) });
+      customersSparkline.push({ value: Number(r.customer_count || 0) });
+    }
 
     const pipelineStages = [
       { stage: 'New Lead', count: newCount, value: 0 },
@@ -166,14 +238,6 @@ export class AnalyticsService {
       { stage: 'Proposal Sent', count: proposalCount, value: 0 },
       { stage: 'Won', count: wonCount, value: 0 },
     ];
-
-    const currentYear = new Date().getFullYear();
-    const startOfYear = new Date(currentYear, 0, 1);
-
-    const leadsThisYear = await this.prisma.lead.findMany({
-      where: { ...leadsBaseWhere, createdAt: { gte: startOfYear } },
-      select: { stage: true, createdAt: true, updatedAt: true, value: true },
-    });
 
     const months = [
       'Jan',
@@ -195,6 +259,11 @@ export class AnalyticsService {
       social: 0,
       referral: 0,
     }));
+    for (const lg of leadsGrowthRaw) {
+      if (lg.month_index >= 0 && lg.month_index < 12) {
+        leadsGrowth[lg.month_index].direct = Number(lg.count || 0);
+      }
+    }
 
     const annualTarget = revenueTargetRecord
       ? toNumber(revenueTargetRecord.value)
@@ -205,17 +274,11 @@ export class AnalyticsService {
       target: monthlyTarget,
       revenue: 0,
     }));
-
-    leadsThisYear.forEach((lead) => {
-      const date = new Date(lead.createdAt);
-      leadsGrowth[date.getMonth()].direct++;
-      if (lead.stage === 'WON') {
-        const wonDate = new Date(lead.updatedAt);
-        if (wonDate.getFullYear() === currentYear) {
-          revenueOverview[wonDate.getMonth()].revenue += toNumber(lead.value);
-        }
+    for (const rw of revenueWonRaw) {
+      if (rw.month_index >= 0 && rw.month_index < 12) {
+        revenueOverview[rw.month_index].revenue = Number(rw.revenue || 0);
       }
-    });
+    }
 
     const totalQualified = wonCount + lostCount;
     const winRate =
@@ -540,15 +603,24 @@ export class AnalyticsService {
   }
 
   async getAiInsights(tenantId: string) {
-    const leads = await this.prisma.lead.findMany({
-      where: { tenantId, stage: 'NEW', deletedAt: null },
-      take: 3,
-      orderBy: { createdAt: 'desc' },
-    });
-    const tasks = await this.prisma.task.findMany({
-      where: { tenantId, status: 'PENDING', dueDate: { lt: new Date() } },
-      take: 2,
-    });
+    const [leads, tasks] = await Promise.all([
+      this.prisma.lead.findMany({
+        where: { tenantId, stage: 'NEW', deletedAt: null },
+        take: 3,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, company: true },
+      }),
+      this.prisma.task.findMany({
+        where: {
+          tenantId,
+          status: 'PENDING',
+          dueDate: { lt: new Date() },
+          deletedAt: null,
+        },
+        take: 2,
+        select: { id: true, title: true },
+      }),
+    ]);
 
     const recommendations = [
       ...leads.map((l) => ({

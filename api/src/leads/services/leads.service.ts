@@ -15,26 +15,22 @@ import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { CreateLeadDto } from '../dto/create-lead.dto';
 import { ConvertLeadDto } from '../dto/convert-lead.dto';
 import { UpdateLeadDto } from '../dto/update-lead.dto';
+import { getCachedTenantCurrency } from '../../common/utils/tenant-cache.util';
 
 @Injectable()
 export class LeadsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private async getTenantCurrency(tenantId: string): Promise<string> {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { currency: true },
-    });
-    return tenant?.currency || 'USD';
+    return getCachedTenantCurrency(this.prisma, tenantId);
   }
 
   async getLeads(
     tenantId: string,
     query: PaginationQueryDto & { stage?: string; status?: string },
   ) {
-    const currency = await this.getTenantCurrency(tenantId);
     const page = Math.max(1, query.page || 1);
-    const limit = Math.max(1, Math.min(query.limit || 1000, 10000));
+    const limit = Math.max(1, Math.min(query.limit || 50, 10000));
     const skip = (page - 1) * limit;
     const search = query.search || '';
     const stageQuery = query.stage || query.status || '';
@@ -47,7 +43,8 @@ export class LeadsService {
       where.stage = stageQuery as LeadStage;
     }
 
-    const [leads, total] = await Promise.all([
+    const [currency, leads, total] = await Promise.all([
+      this.getTenantCurrency(tenantId),
       this.prisma.lead.findMany({
         where,
         orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
@@ -84,17 +81,10 @@ export class LeadsService {
       this.prisma.lead.count({ where }),
     ]);
 
-    const emails = leads.map((l) => l.email).filter(Boolean);
-    const customers = await this.prisma.customer.findMany({
-      where: { tenantId, email: { in: emails }, deletedAt: null },
-      select: { id: true, email: true },
-    });
-    const customerMap = new Map(customers.map((c) => [c.email, c.id]));
-
     return {
       summary: { total },
       leads: leads.map((lead) => {
-        const customerId = lead.email ? customerMap.get(lead.email) : undefined;
+        const customerId = lead.customerId;
         return {
           id: lead.id,
           name: lead.name,
@@ -113,7 +103,7 @@ export class LeadsService {
           createdAt: lead.createdAt,
           updatedAt: lead.updatedAt,
           customerId,
-          isConverted: !!customerId || lead.stage === 'WON',
+          isConverted: !!customerId || lead.isConverted || lead.stage === 'WON',
           notesCount: lead._count?.notes || 0,
           meetingsCount: lead._count?.meetings || 0,
           upcomingMeeting:
@@ -125,13 +115,15 @@ export class LeadsService {
   }
 
   async getHotLeads(tenantId: string) {
-    const currency = await this.getTenantCurrency(tenantId);
-    const leads = await this.prisma.lead.findMany({
-      where: { tenantId, stage: 'NEW', deletedAt: null },
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, company: true, value: true },
-    });
+    const [currency, leads] = await Promise.all([
+      this.getTenantCurrency(tenantId),
+      this.prisma.lead.findMany({
+        where: { tenantId, stage: 'NEW', deletedAt: null },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, name: true, company: true, value: true },
+      }),
+    ]);
     return leads.map((l) => ({
       id: l.id,
       name: l.name,

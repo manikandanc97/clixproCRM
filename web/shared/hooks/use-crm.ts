@@ -57,68 +57,74 @@ import { toast } from "sonner";
 import { useAuth } from "@/features/auth/components/auth-provider";
 
 export function useCustomers() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
     queryKey: ["customers"],
     queryFn: fetchCustomersData,
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
 export function useCompanies() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
     queryKey: ["companies"],
     queryFn: fetchCompaniesData,
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
 export function useDeals() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
     queryKey: ["deals"],
     queryFn: fetchDealsData,
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
 export function useLeads() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
     queryKey: ["leads"],
     queryFn: fetchLeadsData,
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
 export function usePipeline() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
     queryKey: ["pipeline"],
     queryFn: fetchPipelineData,
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
+    enabled: isHydrated && isAuthenticated,
+    staleTime: 3 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
 export function useTasks(params?: Record<string, ReturnType<typeof JSON.parse>>) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   return useQuery({
-    queryKey: ["tasks", params],
+    queryKey: params && Object.keys(params).length > 0 ? ["tasks", params] : ["tasks"],
     queryFn: () => fetchTasksData(params),
-    enabled: isAuthenticated,
+    enabled: isHydrated && isAuthenticated,
     staleTime: 3 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 

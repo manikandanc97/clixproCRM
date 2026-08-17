@@ -130,6 +130,8 @@ model Customer {
 
   @@index([tenantId, status])
   @@index([tenantId, deletedAt])
+  @@index([tenantId, deletedAt, createdAt])
+  @@index([tenantId, assignedToId, deletedAt])
   @@index([assignedToId])
 }
 
@@ -174,6 +176,8 @@ model Lead {
   @@index([tenantId, stage])
   @@index([tenantId, deletedAt])
   @@index([tenantId, stage, deletedAt])
+  @@index([tenantId, deletedAt, createdAt])
+  @@index([tenantId, assignedToId, deletedAt])
   @@index([assignedToId])
   @@index([customerId])
   @@index([createdAt])
@@ -223,6 +227,10 @@ model Task {
   @@index([tenantId, dueDate])
   @@index([tenantId, deletedAt])
   @@index([tenantId, status, deletedAt])
+  @@index([tenantId, deletedAt, dueDate])
+  @@index([tenantId, assignedToId, deletedAt])
+  @@index([tenantId, deletedAt, createdAt])
+  @@index([tenantId, deletedAt, status, createdAt])
   @@index([assignedToId])
   @@index([createdById])
   @@index([relatedLeadId])
@@ -414,6 +422,9 @@ model Meeting {
   deal         Deal?      @relation("MeetingDeal", fields: [dealId], references: [id])
 
   @@index([tenantId])
+  @@index([tenantId, startTime, endTime])
+  @@index([tenantId, ownerId])
+  @@index([tenantId, assignedToId])
   @@index([assignedToId])
   @@index([leadId])
   @@index([customerId])
@@ -435,6 +446,7 @@ model Notification {
   @@index([userId])
   @@index([tenantId, userId])
   @@index([tenantId, isRead])
+  @@index([tenantId, userId, createdAt])
 }
 
 model RevenueTarget {
@@ -740,6 +752,10 @@ model Deal {
   @@index([tenantId])
   @@index([tenantId, deletedAt])
   @@index([tenantId, stage])
+  @@index([tenantId, deletedAt, stage])
+  @@index([tenantId, deletedAt, stage, updatedAt])
+  @@index([tenantId, deletedAt, createdAt])
+  @@index([tenantId, ownerId, deletedAt])
   @@index([companyId])
   @@index([customerId])
   @@index([ownerId])

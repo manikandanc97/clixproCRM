@@ -8,17 +8,14 @@ import {
   toNumber,
   formatPercentage,
 } from '../../common/utils/crm-formatters.util';
+import { getCachedTenantCurrency } from '../../common/utils/tenant-cache.util';
 
 @Injectable()
 export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
   private async getTenantCurrency(tenantId: string): Promise<string> {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { currency: true },
-    });
-    return tenant?.currency || 'INR';
+    return getCachedTenantCurrency(this.prisma, tenantId);
   }
 
   async getDashboardData(tenantId: string, timeframe = 'month') {
@@ -62,172 +59,187 @@ export class DashboardService {
     const startOfCurrentYear = new Date(currentYear, 0, 1);
 
     const [
-      totalDealsCount,
-      currentPeriodDealsCount,
-      previousPeriodDealsCount,
-      currentPeriodRevenue,
-      previousPeriodRevenue,
-      currentPeriodCustomers,
-      previousPeriodCustomers,
-      pendingTasksTotal,
-      currentPeriodPendingTasks,
-      previousPeriodPendingTasks,
+      statsRaw,
+      monthlySalesRaw,
+      sparklineDealsRaw,
+      sparklineRevenueRaw,
       recentDeals,
       recentQuotations,
       recentCompletedTasks,
       revenueTargetData,
-      weekWonDeals,
-      weekNewDeals,
-      yearWonDeals,
     ] = await Promise.all([
-      this.prisma.deal.count({ where: { tenantId, deletedAt: null } }),
-      this.prisma.deal.count({
-        where: {
-          tenantId,
-          deletedAt: null,
-          createdAt: { gte: currentStart, lt: nextStart },
-        },
-      }),
-      this.prisma.deal.count({
-        where: {
-          tenantId,
-          deletedAt: null,
-          createdAt: { gte: previousStart, lt: currentStart },
-        },
-      }),
-      this.prisma.deal.aggregate({
-        where: {
-          tenantId,
-          deletedAt: null,
-          stage: 'WON',
-          updatedAt: { gte: currentStart, lt: nextStart },
-        },
-        _sum: { value: true },
-      }),
-      this.prisma.deal.aggregate({
-        where: {
-          tenantId,
-          deletedAt: null,
-          stage: 'WON',
-          updatedAt: { gte: previousStart, lt: currentStart },
-        },
-        _sum: { value: true },
-      }),
-      this.prisma.customer.count({
-        where: {
-          tenantId,
-          deletedAt: null,
-          createdAt: { gte: currentStart, lt: nextStart },
-        },
-      }),
-      this.prisma.customer.count({
-        where: {
-          tenantId,
-          deletedAt: null,
-          createdAt: { gte: previousStart, lt: currentStart },
-        },
-      }),
-      this.prisma.task.count({
-        where: { tenantId, deletedAt: null, status: { not: 'COMPLETED' } },
-      }),
-      this.prisma.task.count({
-        where: {
-          tenantId,
-          deletedAt: null,
-          status: { not: 'COMPLETED' },
-          createdAt: { gte: currentStart, lt: nextStart },
-        },
-      }),
-      this.prisma.task.count({
-        where: {
-          tenantId,
-          deletedAt: null,
-          status: { not: 'COMPLETED' },
-          createdAt: { gte: previousStart, lt: currentStart },
-        },
-      }),
+      // 1. Consolidated Key Metric Counts & Sums in a Single DB Query
+      this.prisma.$queryRaw<
+        Array<{
+          total_deals: number;
+          current_period_deals: number;
+          prev_period_deals: number;
+          current_period_revenue: number;
+          prev_period_revenue: number;
+          current_period_customers: number;
+          prev_period_customers: number;
+          pending_tasks_total: number;
+          current_period_pending_tasks: number;
+          prev_period_pending_tasks: number;
+        }>
+      >`
+        SELECT
+          (SELECT COUNT(*)::int FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL) as total_deals,
+          (SELECT COUNT(*)::int FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${currentStart} AND "createdAt" < ${nextStart}) as current_period_deals,
+          (SELECT COUNT(*)::int FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_period_deals,
+          (SELECT COALESCE(SUM("value"), 0)::float FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "stage" = 'WON'::"DealStage" AND "updatedAt" >= ${currentStart} AND "updatedAt" < ${nextStart}) as current_period_revenue,
+          (SELECT COALESCE(SUM("value"), 0)::float FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "stage" = 'WON'::"DealStage" AND "updatedAt" >= ${previousStart} AND "updatedAt" < ${currentStart}) as prev_period_revenue,
+          (SELECT COUNT(*)::int FROM "Customer" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${currentStart} AND "createdAt" < ${nextStart}) as current_period_customers,
+          (SELECT COUNT(*)::int FROM "Customer" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_period_customers,
+          (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "status" != 'COMPLETED'::"TaskStatus") as pending_tasks_total,
+          (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "status" != 'COMPLETED'::"TaskStatus" AND "createdAt" >= ${currentStart} AND "createdAt" < ${nextStart}) as current_period_pending_tasks,
+          (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "status" != 'COMPLETED'::"TaskStatus" AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_period_pending_tasks
+      `,
+
+      // 2. Aggregated Year-to-Date Won Deals Sales Chart by Month
+      this.prisma.$queryRaw<
+        Array<{
+          month_index: number;
+          total: number;
+        }>
+      >`
+        SELECT 
+          (EXTRACT(MONTH FROM "updatedAt")::int - 1) as month_index,
+          COALESCE(SUM("value"), 0)::float as total
+        FROM "Deal"
+        WHERE "tenantId" = ${tenantId} 
+          AND "deletedAt" IS NULL 
+          AND "stage" = 'WON'::"DealStage" 
+          AND "updatedAt" >= ${startOfCurrentYear}
+        GROUP BY (EXTRACT(MONTH FROM "updatedAt")::int - 1)
+      `,
+
+      // 3. Sparkline Deal Counts (Last 7 Days)
+      this.prisma.$queryRaw<
+        Array<{
+          day_date: Date;
+          deal_count: number;
+        }>
+      >`
+        SELECT
+          DATE_TRUNC('day', "createdAt")::date as day_date,
+          COUNT(*)::int as deal_count
+        FROM "Deal"
+        WHERE "tenantId" = ${tenantId} 
+          AND "deletedAt" IS NULL 
+          AND "createdAt" >= ${sevenDaysAgo}
+        GROUP BY DATE_TRUNC('day', "createdAt")::date
+      `,
+
+      // 4. Sparkline Won Revenue (Last 7 Days)
+      this.prisma.$queryRaw<
+        Array<{
+          day_date: Date;
+          revenue: number;
+        }>
+      >`
+        SELECT
+          DATE_TRUNC('day', "updatedAt")::date as day_date,
+          COALESCE(SUM("value"), 0)::float as revenue
+        FROM "Deal"
+        WHERE "tenantId" = ${tenantId} 
+          AND "deletedAt" IS NULL 
+          AND "stage" = 'WON'::"DealStage" 
+          AND "updatedAt" >= ${sevenDaysAgo}
+        GROUP BY DATE_TRUNC('day', "updatedAt")::date
+      `,
+
+      // 5. Recent Deals (take 5)
       this.prisma.deal.findMany({
         where: { tenantId, deletedAt: null },
         select: { id: true, name: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 5,
       }),
+
+      // 6. Recent Quotations (take 5)
       this.prisma.quotation.findMany({
         where: { tenantId, deletedAt: null },
         select: { id: true, client: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 5,
       }),
+
+      // 7. Recent Completed Tasks (take 5)
       this.prisma.task.findMany({
         where: { tenantId, deletedAt: null, status: 'COMPLETED' },
         select: { id: true, title: true, updatedAt: true },
         orderBy: { updatedAt: 'desc' },
         take: 5,
       }),
+
+      // 8. Active Revenue Target
       this.prisma.revenueTarget.findFirst({
         where: { tenantId, isActive: true },
         orderBy: { createdAt: 'desc' },
         select: { value: true },
       }),
-      this.prisma.deal.findMany({
-        where: {
-          tenantId,
-          deletedAt: null,
-          stage: 'WON',
-          updatedAt: { gte: sevenDaysAgo },
-        },
-        select: { value: true, updatedAt: true },
-      }),
-      this.prisma.deal.findMany({
-        where: { tenantId, deletedAt: null, createdAt: { gte: sevenDaysAgo } },
-        select: { createdAt: true },
-      }),
-      this.prisma.deal.findMany({
-        where: {
-          tenantId,
-          deletedAt: null,
-          stage: 'WON',
-          updatedAt: { gte: startOfCurrentYear },
-        },
-        select: { value: true, updatedAt: true },
-      }),
     ]);
 
-    const currentRevenue = toNumber(currentPeriodRevenue._sum.value);
-    const previousRevenue = toNumber(previousPeriodRevenue._sum.value);
+    const stats = statsRaw[0] || {
+      total_deals: 0,
+      current_period_deals: 0,
+      prev_period_deals: 0,
+      current_period_revenue: 0,
+      prev_period_revenue: 0,
+      current_period_customers: 0,
+      prev_period_customers: 0,
+      pending_tasks_total: 0,
+      current_period_pending_tasks: 0,
+      prev_period_pending_tasks: 0,
+    };
+
+    const currentRevenue = Number(stats.current_period_revenue || 0);
+    const previousRevenue = Number(stats.prev_period_revenue || 0);
+
+    // Build 7-day sparklines efficiently from grouped data
+    const dealsDayMap = new Map<string, number>();
+    for (const r of sparklineDealsRaw) {
+      const dStr = new Date(r.day_date).toISOString().split('T')[0];
+      dealsDayMap.set(dStr, Number(r.deal_count || 0));
+    }
+
+    const revenueDayMap = new Map<string, number>();
+    for (const r of sparklineRevenueRaw) {
+      const dStr = new Date(r.day_date).toISOString().split('T')[0];
+      revenueDayMap.set(dStr, Number(r.revenue || 0));
+    }
 
     const sparklineDeals: { value: number }[] = [];
     const sparklineRevenue: { value: number }[] = [];
     for (let i = 6; i >= 0; i--) {
-      const dStart = new Date(todayStart);
-      dStart.setDate(dStart.getDate() - i);
-      const dEnd = new Date(dStart);
-      dEnd.setDate(dEnd.getDate() + 1);
+      const d = new Date(todayStart);
+      d.setDate(d.getDate() - i);
+      const dStr = d.toISOString().split('T')[0];
 
-      const dayDeals = weekNewDeals.filter(
-        (d) => d.createdAt >= dStart && d.createdAt < dEnd,
-      ).length;
-      const dayRevenue = weekWonDeals
-        .filter((d) => d.updatedAt >= dStart && d.updatedAt < dEnd)
-        .reduce((sum, d) => sum + toNumber(d.value), 0);
-
-      sparklineDeals.push({ value: dayDeals });
-      sparklineRevenue.push({ value: dayRevenue });
+      sparklineDeals.push({ value: dealsDayMap.get(dStr) || 0 });
+      sparklineRevenue.push({ value: revenueDayMap.get(dStr) || 0 });
     }
 
     const dashboardStats = [
       {
         title: 'Total Deals',
-        value: totalDealsCount.toLocaleString('en-US'),
-        valueAmount: totalDealsCount,
+        value: Number(stats.total_deals || 0).toLocaleString('en-US'),
+        valueAmount: Number(stats.total_deals || 0),
         sparklineData: sparklineDeals,
-        ...calculateTrend(currentPeriodDealsCount, previousPeriodDealsCount),
+        ...calculateTrend(
+          Number(stats.current_period_deals || 0),
+          Number(stats.prev_period_deals || 0),
+        ),
       },
       {
         title: 'New Customers',
-        value: currentPeriodCustomers.toLocaleString('en-US'),
-        valueAmount: currentPeriodCustomers,
-        ...calculateTrend(currentPeriodCustomers, previousPeriodCustomers),
+        value: Number(stats.current_period_customers || 0).toLocaleString('en-US'),
+        valueAmount: Number(stats.current_period_customers || 0),
+        ...calculateTrend(
+          Number(stats.current_period_customers || 0),
+          Number(stats.prev_period_customers || 0),
+        ),
       },
       {
         title: 'Revenue',
@@ -238,11 +250,11 @@ export class DashboardService {
       },
       {
         title: 'Pending Tasks',
-        value: pendingTasksTotal.toLocaleString('en-US'),
-        valueAmount: pendingTasksTotal,
+        value: Number(stats.pending_tasks_total || 0).toLocaleString('en-US'),
+        valueAmount: Number(stats.pending_tasks_total || 0),
         ...calculateTrend(
-          currentPeriodPendingTasks,
-          previousPeriodPendingTasks,
+          Number(stats.current_period_pending_tasks || 0),
+          Number(stats.prev_period_pending_tasks || 0),
         ),
       },
     ];
@@ -286,10 +298,11 @@ export class DashboardService {
       'Dec',
     ];
     const salesChartData = months.map((month) => ({ name: month, total: 0 }));
-    yearWonDeals.forEach((deal) => {
-      const monthIndex = new Date(deal.updatedAt).getMonth();
-      salesChartData[monthIndex].total += toNumber(deal.value);
-    });
+    for (const row of monthlySalesRaw) {
+      if (row.month_index >= 0 && row.month_index < 12) {
+        salesChartData[row.month_index].total = Number(row.total || 0);
+      }
+    }
 
     const targetValue = revenueTargetData
       ? toNumber(revenueTargetData.value)

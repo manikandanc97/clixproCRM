@@ -10,6 +10,14 @@ export class NotificationsService {
       where: { tenantId, userId },
       take: 20,
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        message: true,
+        isRead: true,
+        createdAt: true,
+        type: true,
+      },
     });
 
     return {

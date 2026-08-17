@@ -7,11 +7,37 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
 import { SYSTEM_ROLE_PERMISSIONS } from '../common/role-permissions.constants';
 
+interface CachedUserProfile {
+  data: any;
+  expiresAt: number;
+}
+
+const meProfileCache = new Map<string, CachedUserProfile>();
+
+export function invalidateGetMeCache(userId?: string) {
+  if (userId) {
+    for (const key of meProfileCache.keys()) {
+      if (key.startsWith(userId)) {
+        meProfileCache.delete(key);
+      }
+    }
+  } else {
+    meProfileCache.clear();
+  }
+}
+
 @Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMe(userId: string, tenantId: string, email?: string) {
+    const cacheKey = `${userId}:${tenantId || ''}`;
+    const now = Date.now();
+    const cached = meProfileCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      return cached.data;
+    }
+
     let user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -58,7 +84,7 @@ export class AuthService {
       .filter((rp: any) => rp.hasAccess)
       .map((rp: any) => rp.module);
 
-    return {
+    const result = {
       user: {
         id: user.id,
         name: user.name,
@@ -70,9 +96,17 @@ export class AuthService {
         permissions,
       },
     };
+
+    meProfileCache.set(cacheKey, {
+      data: result,
+      expiresAt: now + 30000, // 30s TTL
+    });
+
+    return result;
   }
 
   async updateMe(userId: string, data: any) {
+    invalidateGetMeCache(userId);
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {

@@ -5,13 +5,15 @@ import { CRMCard, EmptyState } from "@/shared/components/crm";
 import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { CheckSquare, ArrowRight, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { useTasks } from "@/shared/hooks/use-crm";
+import { useTasks } from "@/shared/hooks/use-dashboard";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
+import { TasksDataType } from "@/shared/types/task";
 
-export default function PendingFollowups() {
+export default function PendingFollowups({ data: initialData }: { data?: TasksDataType }) {
   const router = useRouter();
-  const { data } = useTasks();
+  const { data: fetchedData } = useTasks();
+  const data = initialData ?? fetchedData;
   const allTasks = data?.tasks ?? [];
   const pendingTasks = allTasks.filter(t => t.status !== "COMPLETED").slice(0, 4);
 

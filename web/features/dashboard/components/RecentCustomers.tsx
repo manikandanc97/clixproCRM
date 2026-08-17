@@ -5,13 +5,14 @@ import { CRMCard, EmptyState } from "@/shared/components/crm";
 import { CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Users, ArrowUpRight } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { useCustomers } from "@/shared/hooks/use-crm";
+import { useCustomers } from "@/shared/hooks/use-dashboard";
 import { useRouter } from "next/navigation";
-import { CustomerType } from "@/shared/types/customer";
+import { CustomerType, CustomersDataType } from "@/shared/types/customer";
 
-export default function RecentCustomers() {
+export default function RecentCustomers({ data: initialData }: { data?: CustomersDataType }) {
   const router = useRouter();
-  const { data, isLoading } = useCustomers();
+  const { data: fetchedData, isLoading } = useCustomers();
+  const data = initialData ?? fetchedData;
   // Ensure customers is an array and get the top 5 most recent based on createdAt if available, else just take first 5
   const allCustomers: CustomerType[] = Array.isArray(data?.customers) ? data.customers : (Array.isArray(data) ? data : []);
   const recentCustomers = [...allCustomers]

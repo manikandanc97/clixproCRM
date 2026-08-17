@@ -196,57 +196,64 @@ export class MeetingsService {
     
     const managedUsers = role === 'MANAGER' ? await this.getManagedUsers(tenantId, userId) : [];
 
-    // @ts-ignore
-    const meetings = await this.prisma.meeting.findMany({
-      where: {
-        tenantId,
-        startTime: { gte: start },
-        endTime: { lte: end },
-        OR: [
-           { ownerId: userId },
-           { assignedToId: userId },
-           { visibility: 'ORGANIZATION' },
-           { visibility: 'TEAM', ownerId: { in: managedUsers } },
-           ...(role === 'ADMIN' || role === 'SUPER ADMIN' ? [{ id: { not: '' } }] : [])
-        ]
-      },
-      orderBy: { startTime: 'asc' },
-      select: {
-        id: true,
-        title: true,
-        startTime: true,
-        endTime: true,
-        location: true,
-        isOnline: true,
-        status: true,
-        type: true,
-        visibility: true,
-        ownerId: true,
-        assignedTo: { select: { id: true, name: true } }
-      },
-    });
-
-    const tasks = await this.prisma.task.findMany({
-      where: {
-        tenantId,
-        dueDate: { gte: start, lte: end },
-        deletedAt: null,
-        OR: [
-           { assignedToId: userId },
-           { createdById: userId },
-           ...(role === 'MANAGER' ? [{ assignedToId: { in: managedUsers } }] : []),
-           ...(role === 'ADMIN' || role === 'SUPER ADMIN' ? [{ id: { not: '' } }] : [])
-        ]
-      },
-      select: {
-        id: true,
-        title: true,
-        dueDate: true,
-        status: true,
-        priority: true,
-        assignedTo: { select: { id: true, name: true } }
-      }
-    });
+    // Fetch meetings and calendar-dated tasks in parallel
+    const [meetings, tasks] = await Promise.all([
+      this.prisma.meeting.findMany({
+        where: {
+          tenantId,
+          startTime: { gte: start },
+          endTime: { lte: end },
+          OR: [
+            { ownerId: userId },
+            { assignedToId: userId },
+            { visibility: 'ORGANIZATION' },
+            { visibility: 'TEAM', ownerId: { in: managedUsers } },
+            ...(role === 'ADMIN' || role === 'SUPER ADMIN'
+              ? [{ id: { not: '' } }]
+              : []),
+          ],
+        },
+        orderBy: { startTime: 'asc' },
+        select: {
+          id: true,
+          title: true,
+          startTime: true,
+          endTime: true,
+          location: true,
+          isOnline: true,
+          status: true,
+          type: true,
+          visibility: true,
+          ownerId: true,
+          assignedTo: { select: { id: true, name: true } },
+        },
+      }),
+      this.prisma.task.findMany({
+        where: {
+          tenantId,
+          dueDate: { gte: start, lte: end },
+          deletedAt: null,
+          OR: [
+            { assignedToId: userId },
+            { createdById: userId },
+            ...(role === 'MANAGER'
+              ? [{ assignedToId: { in: managedUsers } }]
+              : []),
+            ...(role === 'ADMIN' || role === 'SUPER ADMIN'
+              ? [{ id: { not: '' } }]
+              : []),
+          ],
+        },
+        select: {
+          id: true,
+          title: true,
+          dueDate: true,
+          status: true,
+          priority: true,
+          assignedTo: { select: { id: true, name: true } },
+        },
+      }),
+    ]);
 
     const mappedMeetings = meetings.map((m: any) => ({
       id: m.id,

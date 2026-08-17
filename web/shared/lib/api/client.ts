@@ -1,4 +1,4 @@
-import axios, { InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { createClient } from "@/lib/supabase/client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000/api";
@@ -39,5 +39,35 @@ client.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// In-flight GET request deduplication:
+// If multiple components or hooks trigger a GET request to the exact same URL + params concurrently,
+// share the existing in-flight Promise and clear it immediately upon completion.
+const inFlightGetRequests = new Map<string, Promise<any>>();
+const originalGet = client.get.bind(client);
+
+client.get = function <T = any, R = AxiosResponse<T>, D = any>(
+  url: string,
+  config?: AxiosRequestConfig<D>
+): Promise<R> {
+  if (typeof window === "undefined") {
+    return originalGet(url, config);
+  }
+
+  const currency = localStorage.getItem("orbit_currency") || "INR";
+  const paramKey = config?.params ? JSON.stringify(config.params) : "";
+  const dedupeKey = `GET:${url}:${currency}:${paramKey}`;
+
+  if (inFlightGetRequests.has(dedupeKey)) {
+    return inFlightGetRequests.get(dedupeKey) as Promise<R>;
+  }
+
+  const promise = originalGet<T, R, D>(url, config).finally(() => {
+    inFlightGetRequests.delete(dedupeKey);
+  });
+
+  inFlightGetRequests.set(dedupeKey, promise);
+  return promise;
+};
 
 export default client;

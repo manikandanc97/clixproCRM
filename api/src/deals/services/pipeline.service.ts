@@ -8,30 +8,36 @@ import {
   formatDate,
   formatPercentage,
 } from '../../common/utils/crm-formatters.util';
+import { getCachedTenantCurrency } from '../../common/utils/tenant-cache.util';
 
 @Injectable()
 export class PipelineService {
   constructor(private readonly prisma: PrismaService) {}
 
   private async getTenantCurrency(tenantId: string): Promise<string> {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { currency: true },
-    });
-    return tenant?.currency || 'INR';
+    return getCachedTenantCurrency(this.prisma, tenantId);
   }
 
   async getPipeline(tenantId: string) {
-    const currency = await this.getTenantCurrency(tenantId);
-
-    const deals = await this.prisma.deal.findMany({
-      where: { tenantId, deletedAt: null },
-      orderBy: [{ stage: 'asc' }, { updatedAt: 'desc' }],
-      include: {
-        company: true,
-        customer: true,
-      },
-    });
+    const [currency, deals] = await Promise.all([
+      this.getTenantCurrency(tenantId),
+      this.prisma.deal.findMany({
+        where: { tenantId, deletedAt: null },
+        orderBy: [{ stage: 'asc' }, { updatedAt: 'desc' }],
+        select: {
+          id: true,
+          name: true,
+          value: true,
+          stage: true,
+          probability: true,
+          expectedCloseDate: true,
+          createdAt: true,
+          updatedAt: true,
+          company: { select: { name: true } },
+          customer: { select: { name: true } },
+        },
+      }),
+    ]);
 
     const openDeals = deals.filter(
       (deal) => !['WON', 'LOST'].includes(deal.stage),
