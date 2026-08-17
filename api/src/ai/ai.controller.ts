@@ -15,12 +15,19 @@ export class AiController {
       const model = body.model || 'gemini-flash-latest';
       const tenantId = body.tenantId || req.headers['x-tenant-id'];
 
-      const streamResult = await this.aiService.generateStream(messages, model, tenantId);
+      const streamResult = await this.aiService.generateStream(
+        messages,
+        model,
+        tenantId,
+      );
 
       const origin = req.headers.origin || '*';
       res.raw.setHeader('Access-Control-Allow-Origin', origin);
       res.raw.setHeader('Access-Control-Allow-Credentials', 'true');
-      res.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-tenant-id');
+      res.raw.setHeader(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, x-tenant-id',
+      );
 
       // pipeUIMessageStreamToResponse might be synchronous or return a Promise
       const pipePromise = streamResult.pipeUIMessageStreamToResponse(res.raw);
@@ -32,7 +39,10 @@ export class AiController {
       }
     } catch (e: any) {
       console.error('[AI CHAT ERROR] Unhandled controller error:', e);
-      res.status(500).send({ error: e.message || 'Internal Controller Error', stack: e.stack });
+      res.status(500).send({
+        error: e.message || 'Internal Controller Error',
+        stack: e.stack,
+      });
     }
   }
 }

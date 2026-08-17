@@ -102,10 +102,19 @@ export class TasksService {
 
   async updateTask(
     tenantId: string,
-    userId: string,
+    user: any,
     id: string,
     data: UpdateTaskDto,
   ) {
+    const userId = user.id || user.sub;
+    const roleName = user.role?.name?.toUpperCase() || '';
+    const isSuperAdminOrAdmin =
+      roleName === 'SUPER ADMIN' || roleName === 'ADMIN' || user.role?.isSystem;
+
+    // Evaluate if user has explicit update permission (simulate frontend PERMISSIONS.TASKS_UPDATE)
+    // Actually, in the backend we just check if they are ADMIN or MANAGER for full edit
+    const hasFullEditAccess = isSuperAdminOrAdmin || roleName === 'MANAGER';
+
     return this.prisma.$transaction(async (tx: any) => {
       const existing = await tx.task.findUnique({
         where: { id, tenantId },
@@ -116,6 +125,36 @@ export class TasksService {
           { success: false, message: 'Task not found' },
           HttpStatus.NOT_FOUND,
         );
+      }
+
+      const isOwner = existing.assignedToId === userId;
+
+      if (!hasFullEditAccess && !isOwner) {
+        throw new HttpException(
+          {
+            success: false,
+            message: 'Forbidden: You do not have permission to edit this task.',
+          },
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
+      if (!hasFullEditAccess && isOwner) {
+        // Owner (Sales/Employee) can only edit specific fields: status, description, progress, checklist, etc.
+        // They cannot change owner (assignedToId) or title
+        if (
+          data.assignedToId !== undefined &&
+          data.assignedToId !== existing.assignedToId
+        ) {
+          throw new HttpException(
+            {
+              success: false,
+              message:
+                'Forbidden: You do not have permission to reassign this task.',
+            },
+            HttpStatus.FORBIDDEN,
+          );
+        }
       }
 
       if (data.assignedToId && data.assignedToId !== existing.assignedToId) {
@@ -196,7 +235,34 @@ export class TasksService {
         },
       });
 
-      // Audit Log
+      // Assignment Audit Log
+      if (
+        data.assignedToId !== undefined &&
+        data.assignedToId !== existing.assignedToId
+      ) {
+        let action = 'TASK_ASSIGNED';
+        if (data.assignedToId === null) {
+          action = 'TASK_UNASSIGNED';
+        } else if (existing.assignedToId) {
+          action = 'TASK_REASSIGNED';
+        }
+
+        await tx.auditLog.create({
+          data: {
+            tenantId,
+            userId,
+            action,
+            module: 'TASKS',
+            details: {
+              taskId: updatedTask.id,
+              previousAssigneeId: existing.assignedToId,
+              assignedToId: data.assignedToId,
+            },
+          },
+        });
+      }
+
+      // Generic Update Audit Log
       await tx.auditLog.create({
         data: {
           tenantId,
@@ -287,9 +353,38 @@ export class TasksService {
     });
   }
 
-  async deleteTask(tenantId: string, userId: string, id: string) {
+  async deleteTask(tenantId: string, user: any, id: string) {
+    const userId = user.id || user.sub;
+    const roleName = user.role?.name?.toUpperCase() || '';
+    const isSuperAdminOrAdmin =
+      roleName === 'SUPER ADMIN' || roleName === 'ADMIN' || user.role?.isSystem;
+
+    // Only Admin and Manager can delete tasks
+    const hasDeleteAccess = isSuperAdminOrAdmin || roleName === 'MANAGER';
+
+    if (!hasDeleteAccess) {
+      throw new HttpException(
+        {
+          success: false,
+          message: 'Forbidden: You do not have permission to delete tasks.',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     return this.prisma.$transaction(async (tx: any) => {
-      const task = await tx.task.update({
+      const task = await tx.task.findUnique({
+        where: { id, tenantId },
+      });
+
+      if (!task) {
+        throw new HttpException(
+          { success: false, message: 'Task not found' },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const deletedTask = await tx.task.update({
         where: { id, tenantId },
         data: { deletedAt: new Date() },
       });
@@ -300,23 +395,172 @@ export class TasksService {
           userId,
           action: 'TASK_DELETED',
           module: 'TASKS',
-          details: { taskId: id, title: task.title },
+          details: { taskId: id, title: deletedTask.title },
         },
       });
 
-      if (task.relatedLeadId) {
+      if (deletedTask.relatedLeadId) {
         await tx.timelineEvent.create({
           data: {
             tenantId,
-            leadId: task.relatedLeadId,
+            leadId: deletedTask.relatedLeadId,
             userId,
             action: 'Task Deleted',
-            description: `Task "${task.title}" was deleted.`,
+            description: `Task "${deletedTask.title}" was deleted.`,
           },
         });
       }
 
-      return task;
+      return deletedTask;
     });
+  }
+
+  async addTimelineEvent(
+    tenantId: string,
+    user: any,
+    id: string,
+    body: { action: string; description?: string; metadata?: any },
+  ) {
+    const userId = user.id || user.sub;
+
+    const task = await this.prisma.task.findUnique({
+      where: { id, tenantId },
+    });
+
+    if (!task) {
+      throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
+    }
+
+    const event = await this.prisma.timelineEvent.create({
+      data: {
+        tenantId,
+        taskId: id,
+        userId,
+        action: body.action,
+        description: body.description || '',
+        metadata: body.metadata || {},
+      },
+    });
+
+    if (body.action === 'BLOCKER_REPORTED') {
+      await this.prisma.task.update({
+        where: { id, tenantId },
+        data: { status: 'BLOCKED' },
+      });
+    }
+
+    return event;
+  }
+
+  async updateProgress(
+    tenantId: string,
+    user: any,
+    id: string,
+    progress: number,
+  ) {
+    const userId = user.id || user.sub;
+
+    const task = await this.prisma.task.findUnique({
+      where: { id, tenantId },
+    });
+
+    if (!task) {
+      throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
+    }
+
+    const updatedTask = await this.prisma.task.update({
+      where: { id, tenantId },
+      data: { progress },
+    });
+
+    await this.prisma.timelineEvent.create({
+      data: {
+        tenantId,
+        taskId: id,
+        userId,
+        action: 'PROGRESS_UPDATED',
+        description: `Updated progress to ${progress}%`,
+        metadata: { previousProgress: task.progress, newProgress: progress },
+      },
+    });
+
+    return updatedTask;
+  }
+
+  async completeTask(tenantId: string, user: any, id: string, note?: string) {
+    const userId = user.id || user.sub;
+
+    const task = await this.prisma.task.findUnique({
+      where: { id, tenantId },
+    });
+
+    if (!task) {
+      throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (task.status === 'COMPLETED') {
+      throw new HttpException(
+        'Task is already completed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const updatedTask = await this.prisma.task.update({
+      where: { id, tenantId },
+      data: {
+        status: 'COMPLETED',
+        progress: 100,
+        completedAt: new Date(),
+        completedById: userId,
+      },
+    });
+
+    await this.prisma.timelineEvent.create({
+      data: {
+        tenantId,
+        taskId: id,
+        userId,
+        action: 'TASK_COMPLETED',
+        description: note || 'Task was marked as completed',
+        metadata: { note },
+      },
+    });
+
+    return updatedTask;
+  }
+
+  async resolveBlocker(tenantId: string, user: any, id: string) {
+    const userId = user.id || user.sub;
+
+    const task = await this.prisma.task.findUnique({
+      where: { id, tenantId },
+    });
+
+    if (!task) {
+      throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (task.status !== 'BLOCKED') {
+      throw new HttpException('Task is not blocked', HttpStatus.BAD_REQUEST);
+    }
+
+    const updatedTask = await this.prisma.task.update({
+      where: { id, tenantId },
+      data: {
+        status: 'IN_PROGRESS',
+      },
+    });
+
+    await this.prisma.timelineEvent.create({
+      data: {
+        tenantId,
+        taskId: id,
+        userId,
+        action: 'BLOCKER_RESOLVED',
+        description: 'Blocker was resolved',
+      },
+    });
+
+    return updatedTask;
   }
 }

@@ -434,6 +434,13 @@ export class TasksQueryService {
         relatedQuotation: {
           select: { id: true, quoteNumber: true, client: true, amount: true },
         },
+        timelineEvents: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        attachmentsList: true,
       },
     });
 
@@ -467,12 +474,64 @@ export class TasksQueryService {
         : [],
       isOverdue: isTaskOverdue,
       progress:
-        totalChecklist > 0
-          ? Math.round((completedChecklist / totalChecklist) * 100)
-          : task.status === 'COMPLETED'
-            ? 100
-            : 0,
+        task.progress > 0
+          ? task.progress
+          : totalChecklist > 0
+            ? Math.round((completedChecklist / totalChecklist) * 100)
+            : task.status === 'COMPLETED'
+              ? 100
+              : 0,
       subtaskCount: { total: totalChecklist, completed: completedChecklist },
     };
+  }
+  async getTaskHistory(tenantId: string, taskId: string) {
+    const logs = await this.prisma.auditLog.findMany({
+      where: {
+        tenantId,
+        module: 'TASKS',
+        details: { path: ['taskId'], equals: taskId },
+        action: {
+          in: [
+            'TASK_CREATED',
+            'TASK_ASSIGNED',
+            'TASK_REASSIGNED',
+            'TASK_UNASSIGNED',
+          ],
+        },
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const userIds = new Set<string>();
+    logs.forEach((log) => {
+      const details = (log.details as any) || {};
+      if (details.assignedToId) userIds.add(details.assignedToId);
+      if (details.previousAssigneeId) userIds.add(details.previousAssigneeId);
+    });
+
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: Array.from(userIds) } },
+      select: { id: true, name: true },
+    });
+    const userMap = new Map(users.map((u) => [u.id, u.name]));
+
+    return logs.map((log) => {
+      const details = (log.details as any) || {};
+      return {
+        id: log.id,
+        action: log.action,
+        actor: log.user ? log.user.name : 'System',
+        assignedTo: details.assignedToId
+          ? userMap.get(details.assignedToId)
+          : null,
+        previousAssignee: details.previousAssigneeId
+          ? userMap.get(details.previousAssigneeId)
+          : null,
+        createdAt: log.createdAt.toISOString(),
+      };
+    });
   }
 }

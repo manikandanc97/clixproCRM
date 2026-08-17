@@ -1,4 +1,12 @@
-import { Controller, Get, Patch, Post, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SupabaseAuthGuard } from './supabase.guard';
 
@@ -10,7 +18,11 @@ export class AuthController {
   @Get('me')
   async getMe(@Req() req: any) {
     const userId = req.user.id || req.user.sub;
-    const result = await this.authService.getMe(userId, req.tenantId, req.user.email);
+    const result = await this.authService.getMe(
+      userId,
+      req.tenantId,
+      req.user.email,
+    );
     return { success: true, data: result };
   }
 
@@ -25,7 +37,11 @@ export class AuthController {
   @Post('onboarding')
   async onboarding(@Req() req: any, @Body() body: any) {
     const { companyName } = body;
-    const name = req.user.user_metadata?.name || req.user.user_metadata?.full_name || req.user.email?.split('@')[0] || 'User';
+    const name =
+      req.user.user_metadata?.name ||
+      req.user.user_metadata?.full_name ||
+      req.user.email?.split('@')[0] ||
+      'User';
     const email = req.user.email;
     const ip = req.ip || req.headers['x-forwarded-for'];
     const userAgent = req.headers['user-agent'];
@@ -34,11 +50,14 @@ export class AuthController {
       const userId = req.user.id || req.user.sub;
       const result = await this.authService.register(
         { userId, name, email, companyName },
-        { ip: typeof ip === 'string' ? ip : undefined, userAgent }
+        { ip: typeof ip === 'string' ? ip : undefined, userAgent },
       );
       return { success: true, data: result, message: 'Onboarding successful' };
     } catch (error: any) {
-      require('fs').writeFileSync('onboarding-error.log', error.stack || error.message);
+      require('fs').writeFileSync(
+        'onboarding-error.log',
+        error.stack || error.message,
+      );
       throw error;
     }
   }

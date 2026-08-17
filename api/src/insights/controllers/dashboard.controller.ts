@@ -33,10 +33,7 @@ export class DashboardController {
     @Query('filter') filter = 'Year',
   ) {
     const tenantId = req.tenantId;
-    const data = await this.dashboardService.getRevenueGrowth(
-      tenantId,
-      filter,
-    );
+    const data = await this.dashboardService.getRevenueGrowth(tenantId, filter);
     return { success: true, data };
   }
 

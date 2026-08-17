@@ -77,8 +77,19 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   const { currency, setCurrency } = useCRMStore();
   const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    // Close the AlertDialog BEFORE running logout.
+    // Radix AlertDialog adds body-level styles (pointer-events: none, overflow: hidden
+    // via react-remove-scroll / focus guards) when open. logout() synchronously sets
+    // auth status to "unauthenticated", which causes ProtectedRoute to unmount this
+    // entire dashboard subtree — including the open AlertDialog — before Radix can
+    // clean up those body styles. The leaked styles block all interactions on /login.
+    setShowLogoutConfirm(false);
+
+    // Yield a frame so Radix can run its cleanup (remove body styles, focus guards).
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    await logout();
     router.push("/login");
   };
 

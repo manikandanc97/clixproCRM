@@ -38,6 +38,8 @@ import {
 } from "@/shared/components/crm";
 import { cn } from "@/shared/lib/utils";
 import { useUpdateTask, useDeleteTask } from "@/shared/hooks/use-crm";
+import { useAuth } from "@/features/auth/components/auth-provider";
+import { PERMISSIONS } from "@/shared/lib/auth/rbac/permissions";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -51,12 +53,20 @@ interface TasksTableProps {
 const TasksTable = ({ tasks, onTaskClick, onScheduleMeeting, onEditTask }: TasksTableProps) => {
   const { mutate: updateTask } = useUpdateTask();
   const { mutate: deleteTask } = useDeleteTask();
+  const { hasPermission, user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<TaskType | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const canEditTask = (task: TaskType) => 
+    hasPermission(PERMISSIONS.TASKS_UPDATE) || 
+    (hasPermission(PERMISSIONS.TASKS_UPDATE_ASSIGNED) && task.assignedToId === user?.id) ||
+    (hasPermission(PERMISSIONS.TASKS_UPDATE_ASSIGNED) && task.createdById === user?.id);
+  
+  const canDeleteTask = hasPermission(PERMISSIONS.TASKS_DELETE);
 
   const totalPages = Math.ceil(tasks.length / rowsPerPage);
   const paginatedTasks = tasks.slice(
@@ -231,19 +241,19 @@ const TasksTable = ({ tasks, onTaskClick, onScheduleMeeting, onEditTask }: Tasks
                 <CRMTableCell className="px-4">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6 border border-border/60">
-                      <AvatarFallback className="bg-primary/10 text-[9px] font-bold text-primary">
-                        {"U"}
+                      <AvatarFallback className="bg-primary/10 text-[9px] font-bold text-primary uppercase">
+                        {task.assignedTo?.name ? task.assignedTo.name.charAt(0) : "U"}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-[11px] font-semibold text-foreground">
-                      Unassigned
+                      {task.assignedTo?.name || "Unassigned"}
                     </span>
                   </div>
                 </CRMTableCell>
                 
                 <CRMTableCell className="px-4 text-center">
                   <span className="text-[10px] font-medium text-muted-foreground">
-                    {task.lastActivity ?? "Today"}
+                    {task.lastActivity ?? (task.updatedAt ? new Date(task.updatedAt).toLocaleDateString() : "Today")}
                   </span>
                 </CRMTableCell>
 
@@ -258,42 +268,50 @@ const TasksTable = ({ tasks, onTaskClick, onScheduleMeeting, onEditTask }: Tasks
                       <DropdownMenuItem onClick={() => onTaskClick(task)} className="gap-2 rounded-lg py-2 text-xs font-medium cursor-pointer">
                         <Eye className="h-4 w-4" /> View
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => onEditTask?.(task)}
-                        className="gap-2 rounded-lg py-2 text-xs font-medium cursor-pointer"
-                      >
-                        <Pencil className="h-4 w-4" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setUpdatingTaskId(task.id);
-                          updateTask(
-                            { id: task.id, data: { status: task.status === "COMPLETED" ? "PENDING" : "COMPLETED" } },
-                            { onSettled: () => setUpdatingTaskId(null) }
-                          );
-                        }} 
-                        className="gap-2 rounded-lg py-2 text-xs font-medium cursor-pointer"
-                        disabled={updatingTaskId === task.id}
-                      >
-                        {updatingTaskId === task.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        ) : (
-                          <CheckCircle2 className="h-4 w-4" /> 
-                        )}
-                        {task.status === "COMPLETED" ? "Reopen Task" : "Mark Complete"}
-                      </DropdownMenuItem>
+                      {canEditTask(task) && (
+                        <>
+                          <DropdownMenuItem 
+                            onClick={() => onEditTask?.(task)}
+                            className="gap-2 rounded-lg py-2 text-xs font-medium cursor-pointer"
+                          >
+                            <Pencil className="h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setUpdatingTaskId(task.id);
+                              updateTask(
+                                { id: task.id, data: { status: task.status === "COMPLETED" ? "PENDING" : "COMPLETED" } },
+                                { onSettled: () => setUpdatingTaskId(null) }
+                              );
+                            }} 
+                            className="gap-2 rounded-lg py-2 text-xs font-medium cursor-pointer"
+                            disabled={updatingTaskId === task.id}
+                          >
+                            {updatingTaskId === task.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4" /> 
+                            )}
+                            {task.status === "COMPLETED" ? "Reopen Task" : "Mark Complete"}
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       <DropdownMenuItem onClick={() => onScheduleMeeting?.(task)} className="gap-2 rounded-lg py-2 text-xs font-medium cursor-pointer">
                         <Calendar className="h-4 w-4" /> Schedule Meeting
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        variant="destructive" 
-                        className="gap-2 rounded-lg py-2 text-xs font-medium cursor-pointer"
-                        onClick={() => setTaskToDelete(task)}
-                      >
-                        <Trash2 className="h-4 w-4" /> Delete
-                      </DropdownMenuItem>
+                      {canDeleteTask && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            variant="destructive" 
+                            className="gap-2 rounded-lg py-2 text-xs font-medium cursor-pointer"
+                            onClick={() => setTaskToDelete(task)}
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CRMTableCell>

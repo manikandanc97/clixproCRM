@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 export class EmployeesService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   async getEmployees(tenantId: string, page = 1, limit = 10) {
@@ -64,7 +64,13 @@ export class EmployeesService {
     };
   }
 
-  async inviteEmployee(tenantId: string, email: string, roleName: string, name?: string, password?: string) {
+  async inviteEmployee(
+    tenantId: string,
+    email: string,
+    roleName: string,
+    name?: string,
+    password?: string,
+  ) {
     const normalizedEmail = email.toLowerCase().trim();
 
     const existingTenantUser = await this.prisma.tenantUser.findFirst({
@@ -75,7 +81,10 @@ export class EmployeesService {
     });
 
     if (existingTenantUser) {
-      throw new HttpException('User is already an employee in this workspace', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'User is already an employee in this workspace',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     let roleObj = await this.prisma.role.findFirst({
@@ -92,11 +101,13 @@ export class EmployeesService {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     let authUserId: string = randomUUID();
-    
+
     if (password) {
       const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-      const serviceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
-      
+      const serviceRoleKey = this.configService.get<string>(
+        'SUPABASE_SERVICE_ROLE_KEY',
+      );
+
       if (!supabaseUrl || !serviceRoleKey) {
         throw new HttpException(
           'Employee creation requires SUPABASE_SERVICE_ROLE_KEY to be configured. Please add it to your .env file from Supabase Dashboard → Settings → API → service_role key.',
@@ -111,7 +122,7 @@ export class EmployeesService {
           password: password,
           email_confirm: true,
         });
-        
+
         if (error) {
           const isAlreadyExists =
             error.message.toLowerCase().includes('already') ||
@@ -120,9 +131,11 @@ export class EmployeesService {
 
           if (isAlreadyExists) {
             // User already exists in Supabase auth — fetch their UUID and update password
-            const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+            const { data: listData } = await supabase.auth.admin.listUsers({
+              perPage: 1000,
+            });
             const existingAuthUser = listData?.users?.find(
-              (u: any) => u.email?.toLowerCase() === normalizedEmail
+              (u: any) => u.email?.toLowerCase() === normalizedEmail,
             );
             if (existingAuthUser) {
               authUserId = existingAuthUser.id;
@@ -156,14 +169,16 @@ export class EmployeesService {
     }
 
     // Find or create DB user, ensuring their ID matches the Supabase auth UUID
-    let user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+    let user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
     if (!user) {
       user = await this.prisma.user.create({
         data: {
           id: authUserId,
           email: normalizedEmail,
           name: name || 'New Employee',
-        }
+        },
       });
     } else {
       // If DB user ID doesn't match Supabase auth UUID, update it so login works
@@ -190,8 +205,8 @@ export class EmployeesService {
         tenantId,
         userId: user.id,
         roleId: roleObj.id,
-        status: 'ACTIVE'
-      }
+        status: 'ACTIVE',
+      },
     });
 
     const invitation = await this.prisma.invitation.upsert({

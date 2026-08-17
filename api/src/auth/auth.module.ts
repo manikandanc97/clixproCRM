@@ -10,7 +10,19 @@ import { PrismaModule } from '../prisma/prisma.module';
 @Module({
   imports: [PrismaModule],
   controllers: [AuthController],
-  providers: [AuthService, SupabaseAuthGuard, TenantGuard, RolesGuard, PermissionsGuard],
-  exports: [AuthService, SupabaseAuthGuard, TenantGuard, RolesGuard, PermissionsGuard],
+  providers: [
+    AuthService,
+    SupabaseAuthGuard,
+    TenantGuard,
+    RolesGuard,
+    PermissionsGuard,
+  ],
+  exports: [
+    AuthService,
+    SupabaseAuthGuard,
+    TenantGuard,
+    RolesGuard,
+    PermissionsGuard,
+  ],
 })
 export class AuthModule {}

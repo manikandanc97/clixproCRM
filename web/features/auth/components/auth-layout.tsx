@@ -20,7 +20,7 @@ export default function AuthLayout({
   return (
     <div className="relative flex justify-center items-center bg-background px-4 min-h-screen overflow-hidden">
       {/* Animated gradient mesh background */}
-      <div className="absolute inset-0 gradient-mesh" />
+      <div className="absolute inset-0 gradient-mesh pointer-events-none" />
 
       {/* Floating decorative elements */}
       <div className="top-20 left-20 absolute bg-primary/5 blur-3xl rounded-full w-64 h-64 animate-float pointer-events-none" />

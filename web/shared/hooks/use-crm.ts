@@ -16,6 +16,7 @@ import {
   fetchQuotationsData,
   fetchEmployees,
   fetchReportsData,
+  fetchTaskHistory,
   createLead,
   updateLead,
   deleteLead,
@@ -46,7 +47,10 @@ import {
   createInvoice,
   updateInvoice,
   updateInvoiceStatus,
-  deleteInvoice
+  deleteInvoice,
+  createTaskTimelineEvent,
+  updateTaskProgressAPI,
+  resolveTaskBlocker
 } from "@/shared/lib/api/crm";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -135,6 +139,16 @@ export function useTaskBoard(search?: string) {
     queryFn: () => fetchTaskBoard(search),
     enabled: isAuthenticated,
     staleTime: 3 * 60 * 1000,
+  });
+}
+
+export function useTaskHistory(taskId: string) {
+  const { isAuthenticated } = useAuth();
+  return useQuery({
+    queryKey: ["tasks-history", taskId],
+    queryFn: () => fetchTaskHistory(taskId),
+    enabled: isAuthenticated && !!taskId,
+    staleTime: 1 * 60 * 1000,
   });
 }
 
@@ -522,6 +536,9 @@ export function useCreateTask() {
     mutationFn: createTask,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-board"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -540,6 +557,9 @@ export function useUpdateTask() {
     mutationFn: ({ id, data }: { id: string; data: Partial<import('@/shared/types/task').TaskType> }) => updateTask(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-board"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -587,7 +607,68 @@ export function useUpdateTaskStatus() {
       toast.success("Task status updated");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update status");
+      toast.error(error.message || "Failed to update task status");
+    },
+  });
+}
+
+export function useCompleteTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, note }: { id: string; note?: string }) => completeTask(id, note),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-board"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Task marked as completed");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to complete task");
+    },
+  });
+}
+
+export function useAddTaskTimelineEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { action: string; description?: string; metadata?: any } }) => createTaskTimelineEvent(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Event added successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to add event");
+    },
+  });
+}
+
+export function useUpdateTaskProgress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, progress }: { id: string; progress: number }) => updateTaskProgressAPI(id, progress),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update progress");
+    },
+  });
+}
+
+export function useResolveTaskBlocker() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => resolveTaskBlocker(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Blocker resolved successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to resolve blocker");
     },
   });
 }
@@ -599,6 +680,9 @@ export function useAssignTask() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks-board"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Task reassigned successfully");
     },
     onError: (error: Error) => {
@@ -607,25 +691,7 @@ export function useAssignTask() {
   });
 }
 
-export function useCompleteTask() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => completeTask(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["tasks-board"] });
-      queryClient.invalidateQueries({ queryKey: ["tasks-calendar"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      queryClient.invalidateQueries({ queryKey: ["deals"] });
-      toast.success("Task marked as completed");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to complete task");
-    },
-  });
-}
+
 
 export function useCreateQuotation() {
   const queryClient = useQueryClient();

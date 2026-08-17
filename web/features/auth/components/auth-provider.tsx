@@ -129,34 +129,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  // Guard: prevents refreshUser() from running during/after an explicit logout.
+  // Without this, a stale getSession() result during signOut can restore auth state.
+  const isLoggingOut = useRef(false);
+  const hasFetched = useRef(false);
 
-  useEffect(() => {
-    return () => {};
-  }, []);
-
-  const logout = useCallback(async () => {
+  /**
+   * cleanupAuthState — clears all React auth state without calling signOut().
+   * Used by the SIGNED_OUT event handler to avoid a feedback loop:
+   *   logout() → clearSessionToken() → signOut() → SIGNED_OUT → logout() → ...
+   */
+  const cleanupAuthState = useCallback(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("has_session");
+
+      // Defense-in-depth: remove any body-level styles that Radix dialogs may have
+      // leaked if they were unmounted during the auth state transition without
+      // proper cleanup (e.g., AlertDialog was open when ProtectedRoute unmounted
+      // the dashboard tree). These inline styles block interactions on /login.
+      document.body.style.removeProperty("pointer-events");
+      document.body.style.removeProperty("overflow");
     }
     setUser(null);
     setStatus("unauthenticated");
-    queryClient.clear(); // Clear all cached data on logout
-    useCRMStore.getState().reset(); // Reset CRM store
+    setLoading(false);           // Prevent stuck loading state after logout
+    setIsHydrated(true);         // Keep hydrated so login page renders immediately (not initializing)
+    hasFetched.current = false;  // Allow SIGNED_IN event to re-run refreshUser on next login
+    queryClient.clear();
+    useCRMStore.getState().reset();
+  }, [queryClient]);
 
+  const logout = useCallback(async () => {
+    if (isLoggingOut.current) return; // prevent re-entrant calls
+    isLoggingOut.current = true;
+
+    // 1. Clean up React state immediately
+    cleanupAuthState();
+
+    // 2. Call API to sign out (this fires the SIGNED_OUT event,
+    //    which is handled by cleanupAuthState — not logout() — to break the loop)
     try {
       await clearSessionToken(); // hits /api/auth/logout
     } catch (error) {
       console.error("Logout API failed", error);
+    } finally {
+      isLoggingOut.current = false;
     }
-  }, [queryClient]);
+  }, [cleanupAuthState]);
 
   const refreshUser = useCallback(async () => {
+    // Do not run if a logout is in progress.
+    // Without this guard, getSession() can return a stale Supabase session
+    // (not yet invalidated in client cache) and restore has_session / auth state
+    // in the middle of a signOut flow.
+    if (isLoggingOut.current) return;
+
     try {
       let hasSessionLocal = typeof window !== "undefined" ? localStorage.getItem("has_session") : null;
       
-      // Fix for OAuth login: Check if Supabase has a session even if localStorage doesn't
+      // Fix for OAuth login: Check if Supabase has a session even if localStorage doesn't.
+      // Only do this when NOT in a logged-out state to prevent re-hydration after signOut.
       const { data: { session } } = await createClient().auth.getSession();
-      if (session && !hasSessionLocal) {
+      if (session && !hasSessionLocal && !isLoggingOut.current) {
         if (typeof window !== "undefined") localStorage.setItem("has_session", "1");
         hasSessionLocal = "1";
       }
@@ -165,8 +199,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setStatus("unauthenticated");
         return;
       }
+
+      // Double-check logout guard after the async getSession() call
+      if (isLoggingOut.current) return;
+
       setLoading(true);
       const currentUser = await fetchCurrentUser();
+
+      // Final guard: if logout happened while fetchCurrentUser was in flight, discard result
+      if (isLoggingOut.current) return;
+
       if (!currentUser) {
         if (typeof window !== "undefined") localStorage.removeItem("has_session");
         setStatus("unauthenticated");
@@ -192,7 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const hasFetched = useRef(false);
+
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -204,11 +246,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const {
       data: { subscription },
-    } = createClient().auth.onAuthStateChange((event, _session) => {
+    } = createClient().auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
-        logout();
+        // Use cleanupAuthState (not logout) to avoid the feedback loop:
+        //   logout() → clearSessionToken() → signOut() → SIGNED_OUT → logout() → ...
+        // Supabase has already signed out at this point; we only need to clean React state.
+        cleanupAuthState();
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (!hasFetched.current) {
+        // Only run refreshUser if:
+        // 1. We haven't fetched yet (e.g. OAuth redirect, page reload with existing session)
+        // 2. We're not currently logging out
+        // The login() function sets hasFetched.current = true before calling signInWithPassword,
+        // so this branch is skipped during the normal email/password login flow — preventing
+        // a duplicate fetchCurrentUser race with login()'s own setUser() call.
+        if (!hasFetched.current && !isLoggingOut.current && session) {
+          hasFetched.current = true;
           refreshUser().finally(() => setIsHydrated(true));
         }
       }
@@ -217,11 +269,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [logout, refreshUser]);
+  }, [cleanupAuthState, refreshUser]);
 
   const login = useCallback(async (email: string, password: string, staySignedIn?: boolean) => {
     try {
       setLoading(true);
+      // Mark as fetched BEFORE calling signInWithPassword.
+      // This prevents the onAuthStateChange(SIGNED_IN) handler from running a competing
+      // refreshUser() at the same time as login()'s own fetchCurrentUser call.
+      hasFetched.current = true;
       const response = await loginUser({ email, password, staySignedIn });
       
       if (typeof window !== "undefined") {
@@ -234,6 +290,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await queryClient.clear();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+      // If login fails, reset hasFetched so a retry can proceed cleanly
+      hasFetched.current = false;
       if (error.message === "NEEDS_ONBOARDING") {
         if (typeof window !== "undefined" && window.location.pathname !== "/onboarding") {
           window.location.href = "/onboarding";
@@ -267,7 +325,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return Boolean(access.permissions.includes(permission));
       },
     };
-  }, [status, user, login, logout, refreshUser, loading, isHydrated]);
+  }, [status, user, login, logout, refreshUser, loading, isHydrated, cleanupAuthState]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

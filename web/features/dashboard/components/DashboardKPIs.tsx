@@ -31,14 +31,6 @@ export default function DashboardKPIs() {
   const pipelineQuery = usePipeline();
   const { formatCurrency, currency } = useCurrency();
 
-  // ─── Employee role: render personal dashboard cards instead ──────────────
-  // This prevents the org-wide KPI cards from showing for Employee users
-  // and removes the "No dashboard metrics authorized" empty state.
-  const normalizedRole = user?.role?.toUpperCase();
-  if (normalizedRole === CRM_ROLES.EMPLOYEE) {
-    return <EmployeeDashboardKPIs />;
-  }
-
   // Extract query data safely
   const dashboardData = dashboardQuery.data;
   const leadsData = leadsQuery.data;
@@ -157,6 +149,14 @@ export default function DashboardKPIs() {
         access.dashboardWidgets.includes(kpi.id)
       );
   }, [kpiConfigs, access.roleName, access.dashboardWidgets, user?.role]);
+
+  // ─── Employee role: render personal dashboard cards instead ──────────────
+  // This prevents the org-wide KPI cards from showing for Employee users
+  // and removes the "No dashboard metrics authorized" empty state.
+  const normalizedRole = user?.role?.toUpperCase();
+  if (normalizedRole === CRM_ROLES.EMPLOYEE) {
+    return <EmployeeDashboardKPIs />;
+  }
 
   // Graceful empty state (should never be reached for well-configured roles)
   if (accessibleKpis.length === 0) {

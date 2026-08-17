@@ -78,7 +78,7 @@ export class EmployeesController {
         email,
         role,
         name,
-        password
+        password,
       );
       return {
         success: true,

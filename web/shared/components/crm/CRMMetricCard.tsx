@@ -2,7 +2,7 @@
 
 import React from "react";
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { Area, AreaChart } from "recharts";
+import { Area, AreaChart, YAxis } from "recharts";
 import { cn } from "@/shared/lib/utils";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { ChartContainer } from "../charts/ChartContainer";
@@ -226,6 +226,7 @@ export const CRMMetricCard = ({
   const isDown = trend === "down";
   
   const chartData = sparklineData && sparklineData.length > 0 ? sparklineData : [{ value: 0 }, { value: 0 }, { value: 0 }];
+  const isFlat = chartData.every(d => d.value === chartData[0]?.value);
 
   return (
     <motion.div
@@ -352,6 +353,7 @@ export const CRMMetricCard = ({
               className="w-full h-full"
             >
               <AreaChart data={chartData}>
+                <YAxis hide domain={[0, isFlat ? (dataMax: number) => (dataMax || 1) * 100 : 'dataMax']} />
                 <defs>
                   <linearGradient
                     id={t.gradientId}

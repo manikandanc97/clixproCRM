@@ -1,4 +1,8 @@
-import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
 import { SYSTEM_ROLE_PERMISSIONS } from '../common/role-permissions.constants';
@@ -81,14 +85,18 @@ export class AuthService {
 
   async register(
     data: { userId: string; name: string; email: string; companyName: string },
-    reqInfo: { ip?: string; userAgent?: string }
+    reqInfo: { ip?: string; userAgent?: string },
   ) {
-    const existingUser = await this.prisma.user.findUnique({ 
+    const existingUser = await this.prisma.user.findUnique({
       where: { id: data.userId },
-      include: { memberships: true }
+      include: { memberships: true },
     });
 
-    if (existingUser && existingUser.memberships && existingUser.memberships.length > 0) {
+    if (
+      existingUser &&
+      existingUser.memberships &&
+      existingUser.memberships.length > 0
+    ) {
       throw new BadRequestException('User already completed onboarding');
     }
 
@@ -96,24 +104,29 @@ export class AuthService {
     if (!existingUser) {
       const existingEmailUser = await this.prisma.user.findUnique({
         where: { email: data.email },
-        include: { memberships: true }
+        include: { memberships: true },
       });
 
       if (existingEmailUser) {
-        if (existingEmailUser.memberships && existingEmailUser.memberships.length > 0) {
+        if (
+          existingEmailUser.memberships &&
+          existingEmailUser.memberships.length > 0
+        ) {
           throw new BadRequestException('User already completed onboarding');
         }
         // Update their ID to the new Supabase UUID so the transaction can safely use findUnique below
         await this.prisma.user.update({
           where: { id: existingEmailUser.id },
-          data: { id: data.userId }
+          data: { id: data.userId },
         });
       }
     }
 
     let slug = data.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    
-    const existingTenant = await this.prisma.tenant.findUnique({ where: { slug } });
+
+    const existingTenant = await this.prisma.tenant.findUnique({
+      where: { slug },
+    });
     if (existingTenant) {
       slug = `${slug}-${crypto.randomBytes(3).toString('hex')}`;
     }
@@ -134,10 +147,14 @@ export class AuthService {
             name: roleName,
             tenantId: tenant.id,
             isSystem: true,
-            priority: roleName === 'ADMIN' ? 100
-              : roleName === 'MANAGER' ? 70
-              : roleName === 'SALES' ? 40
-              : 10,
+            priority:
+              roleName === 'ADMIN'
+                ? 100
+                : roleName === 'MANAGER'
+                  ? 70
+                  : roleName === 'SALES'
+                    ? 40
+                    : 10,
           },
         });
 
@@ -169,7 +186,7 @@ export class AuthService {
       } else if (!user.name && data.name) {
         user = await tx.user.update({
           where: { id: user.id },
-          data: { name: data.name }
+          data: { name: data.name },
         });
       }
 
@@ -189,7 +206,7 @@ export class AuthService {
           module: 'Authentication',
           ipAddress: reqInfo.ip || null,
           userAgent: reqInfo.userAgent || null,
-        }
+        },
       });
 
       return { user, tenant };

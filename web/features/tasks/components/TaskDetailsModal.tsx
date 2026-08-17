@@ -19,6 +19,13 @@ import {
   Sparkles,
   Tag,
   X,
+  UserPlus,
+  UserMinus,
+  UserCog,
+  MessageSquare,
+  FileText,
+  HelpCircle,
+  ShieldAlert,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
@@ -26,8 +33,25 @@ import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Progress } from "@/shared/ui/progress";
 import { ActivityTimeline } from "@/shared/components/crm";
 import { cn } from "@/shared/lib/utils";
+import { Textarea } from "@/shared/ui/textarea";
 
-import { useUpdateTask } from "@/shared/hooks/use-crm";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
+import { 
+  useUpdateTask, 
+  useEmployees, 
+  useTaskHistory,
+  useAddTaskTimelineEvent,
+  useUpdateTaskProgress,
+  useCompleteTask,
+  useResolveTaskBlocker
+} from "@/shared/hooks/use-crm";
+import { useAuth } from "@/features/auth/components/auth-provider";
+import { PERMISSIONS } from "@/shared/lib/auth/rbac/permissions";
 
 interface TaskDetailsModalProps {
   task: TaskType | null;
@@ -43,9 +67,29 @@ const TaskDetailsModal = ({
   onScheduleMeeting,
 }: TaskDetailsModalProps) => {
   const { mutate: updateTask } = useUpdateTask();
+  const { data: employeesData } = useEmployees();
+  const { data: historyData } = useTaskHistory(task?.id || "");
+  const { mutate: addTaskTimelineEvent } = useAddTaskTimelineEvent();
+  const { mutate: updateTaskProgress } = useUpdateTaskProgress();
+  const { mutate: completeTask } = useCompleteTask();
+  const { mutate: resolveBlocker } = useResolveTaskBlocker();
+  
+  const { hasPermission, user } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [composerType, setComposerType] = useState<"UPDATE" | "NOTE" | "QUESTION" | "BLOCKER">("UPDATE");
+  const [composerContent, setComposerContent] = useState("");
+  const [isSubmittingEvent, setIsSubmittingEvent] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completionNote, setCompletionNote] = useState("");
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
 
   if (!task) return null;
+
+  const canEditTask = hasPermission(PERMISSIONS.TASKS_UPDATE) || 
+                      (hasPermission(PERMISSIONS.TASKS_UPDATE_ASSIGNED) && task.assignedToId === user?.id) ||
+                      (hasPermission(PERMISSIONS.TASKS_UPDATE_ASSIGNED) && task.createdById === user?.id);
+  const canReassign = hasPermission(PERMISSIONS.TASKS_UPDATE);
 
   const isCompleted = task?.status === "COMPLETED";
   const statusTone = isCompleted
@@ -54,37 +98,137 @@ const TaskDetailsModal = ({
       ? "text-blue-600 bg-blue-500/10 border-blue-500/20"
       : "text-amber-600 bg-amber-500/10 border-amber-500/20";
 
-  const activityItems = [
-    {
-      id: `${task.id}-activity-1`,
+  const activityItems = [];
+  
+  if (historyData && historyData.length > 0) {
+    historyData.forEach((log: any) => {
+      if (log.action === "TASK_CREATED") {
+        activityItems.push({
+          id: log.id,
+          title: "Task created",
+          description: `Created by ${log.actor}.`,
+          time: new Date(log.createdAt).toLocaleString(),
+          icon: Sparkles,
+          iconBg: "bg-primary/10",
+          iconColor: "text-primary",
+        });
+      } else if (log.action === "TASK_ASSIGNED") {
+        activityItems.push({
+          id: log.id,
+          title: "Task assigned",
+          description: `Assigned to ${log.assignedTo || 'Unknown'} by ${log.actor}.`,
+          time: new Date(log.createdAt).toLocaleString(),
+          icon: UserPlus,
+          iconBg: "bg-blue-500/10",
+          iconColor: "text-blue-600",
+        });
+      } else if (log.action === "TASK_REASSIGNED") {
+        activityItems.push({
+          id: log.id,
+          title: "Task reassigned",
+          description: `Reassigned from ${log.previousAssignee || 'Unknown'} to ${log.assignedTo || 'Unknown'} by ${log.actor}.`,
+          time: new Date(log.createdAt).toLocaleString(),
+          icon: UserCog,
+          iconBg: "bg-amber-500/10",
+          iconColor: "text-amber-600",
+        });
+      } else if (log.action === "TASK_UNASSIGNED") {
+        activityItems.push({
+          id: log.id,
+          title: "Task unassigned",
+          description: `Unassigned from ${log.previousAssignee || 'Unknown'} by ${log.actor}.`,
+          time: new Date(log.createdAt).toLocaleString(),
+          icon: UserMinus,
+          iconBg: "bg-rose-500/10",
+          iconColor: "text-rose-600",
+        });
+      }
+    });
+  } else if (task.createdAt) {
+    activityItems.push({
+      id: `${task.id}-created`,
       title: "Task created",
-      description: `Assigned to ${"Unassigned"} under ${task.category ?? "General"} workspace.`,
-      time: "Recently",
+      description: `Task was created.`,
+      time: new Date(task.createdAt).toLocaleString(),
       icon: Sparkles,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
-    },
-    {
-      id: `${task.id}-activity-2`,
-      title: "Progress updated",
-      description: `${task.progress}% completion tracked against ${task.estimatedTime ?? "4h"} estimate.`,
-      time: task.lastActivity ?? "2h ago",
+    });
+  }
+
+  if (task.updatedAt && task.updatedAt !== task.createdAt) {
+    activityItems.push({
+      id: `${task.id}-updated`,
+      title: "Task updated",
+      description: `Task was recently modified.`,
+      time: new Date(task.updatedAt).toLocaleString(),
       icon: Clock,
       iconBg: "bg-blue-500/10",
       iconColor: "text-blue-600",
-    },
-    {
-      id: `${task.id}-activity-3`,
-      title: isCompleted ? "Task completed" : "Next milestone",
-      description: isCompleted
-        ? "All checkpoints marked complete and ready for reporting."
-        : `Due on ${task.dueDate}. ${task.isOverdue ? "This item needs urgent attention." : "On track with current pace."}`,
-      time: "Now",
-      icon: isCompleted ? CheckCircle2 : AlertCircle,
-      iconBg: isCompleted ? "bg-emerald-500/10" : "bg-amber-500/10",
-      iconColor: isCompleted ? "text-emerald-600" : "text-amber-600",
-    },
-  ];
+    });
+  }
+
+  // Include new timelineEvents from Task
+  if (task.timelineEvents && task.timelineEvents.length > 0) {
+    task.timelineEvents.forEach((event: any) => {
+      let icon = MessageSquare;
+      let title = "Update";
+      let iconColor = "text-primary";
+      let iconBg = "bg-primary/10";
+
+      if (event.action === "NOTE") {
+        icon = FileText;
+        title = "Note";
+        iconColor = "text-muted-foreground";
+        iconBg = "bg-muted";
+      } else if (event.action === "QUESTION") {
+        icon = HelpCircle;
+        title = "Question";
+        iconColor = "text-amber-600";
+        iconBg = "bg-amber-500/10";
+      } else if (event.action === "BLOCKER_REPORTED") {
+        icon = ShieldAlert;
+        title = "Blocker Reported";
+        iconColor = "text-rose-600";
+        iconBg = "bg-rose-500/10";
+      } else if (event.action === "BLOCKER_RESOLVED") {
+        icon = CheckCircle2;
+        title = "Blocker Resolved";
+        iconColor = "text-emerald-600";
+        iconBg = "bg-emerald-500/10";
+      } else if (event.action === "PROGRESS_UPDATED") {
+        icon = CheckCircle2;
+        title = "Progress Updated";
+        iconColor = "text-blue-600";
+        iconBg = "bg-blue-500/10";
+      } else if (event.action === "TASK_COMPLETED") {
+        icon = Sparkles;
+        title = "Completed";
+        iconColor = "text-emerald-600";
+        iconBg = "bg-emerald-500/10";
+      }
+
+      activityItems.push({
+        id: event.id,
+        title,
+        description: event.description,
+        time: new Date(event.createdAt).toLocaleString(),
+        icon,
+        iconBg,
+        iconColor,
+      });
+    });
+  }
+
+  // Sort activity items by time descending (newest first)
+  activityItems.sort((a, b) => {
+    if (a.time === "Now") return -1;
+    if (b.time === "Now") return 1;
+    return new Date(b.time).getTime() - new Date(a.time).getTime();
+  });
+
+  // Removed fake "Next milestone" and fallback "Task completed" events as per requirements
+  // The backend now generates actual TASK_COMPLETED timeline events.
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -130,31 +274,64 @@ const TaskDetailsModal = ({
             {task.title}
           </DialogTitle>
           <DialogDescription className="mt-2 text-sm text-muted-foreground">
-            Managed by {"Unassigned"} • Last updated{" "}
-            {task.lastActivity ?? "recently"}
+            Managed by {task.assignedTo?.name || "Unassigned"} • Last updated{" "}
+            {task.updatedAt ? new Date(task.updatedAt).toLocaleDateString() : "recently"}
           </DialogDescription>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/80 px-3 py-2">
-              <Avatar className="h-7 w-7 border border-border/60">
-                <AvatarFallback className="bg-primary/10 text-[10px] font-bold text-primary">
-                  {"Unassigned"
-                    .split(" ")
-                    .filter(Boolean)
-                    .map((name) => name[0])
-                    .join("")
-                    .slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col leading-tight">
-                <span className="text-xs font-semibold text-foreground">
-                  {"Unassigned"}
-                </span>
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Owner
-                </span>
-              </div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild disabled={!canReassign}>
+                <div className={cn(
+                  "flex items-center gap-2 rounded-lg border border-border/60 bg-background/80 px-3 py-2 transition-colors",
+                  canReassign ? "cursor-pointer hover:bg-muted/50" : "opacity-80"
+                )}>
+                  <Avatar className="h-7 w-7 border border-border/60">
+                    <AvatarFallback className="bg-primary/10 text-[10px] font-bold text-primary uppercase">
+                      {task.assignedTo?.name ? task.assignedTo.name.charAt(0) : "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-xs font-semibold text-foreground flex items-center gap-1">
+                      {task.assignedTo?.name || "Unassigned"}
+                      {isAssigning && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Owner
+                    </span>
+                  </div>
+                </div>
+              </DropdownMenuTrigger>
+              {canReassign && (
+                <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setIsAssigning(true);
+                    updateTask(
+                      { id: task.id, data: { assignedToId: null } as any },
+                      { onSettled: () => setIsAssigning(false) }
+                    );
+                  }}
+                  className="text-muted-foreground"
+                >
+                  Unassign
+                </DropdownMenuItem>
+                {employeesData?.employees?.map((emp: any) => (
+                  <DropdownMenuItem 
+                    key={emp.id}
+                    onClick={() => {
+                      setIsAssigning(true);
+                      updateTask(
+                        { id: task.id, data: { assignedToId: emp.id || emp.userId } as any },
+                        { onSettled: () => setIsAssigning(false) }
+                      );
+                    }}
+                  >
+                    {emp.name}
+                  </DropdownMenuItem>
+                ))}
+                </DropdownMenuContent>
+              )}
+            </DropdownMenu>
             <div className="rounded-lg border border-border/60 bg-background/80 px-3 py-2 text-xs font-medium text-muted-foreground">
               Priority:{" "}
               <span className="font-semibold text-foreground">
@@ -190,8 +367,18 @@ const TaskDetailsModal = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                     <span>Completion</span>
-                    <span className="font-semibold text-foreground">
+                    <span className="font-semibold text-foreground flex items-center gap-3">
                       {task.progress}%
+                      {!isCompleted && canEditTask && (
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="100" 
+                          value={task.progress} 
+                          onChange={(e) => updateTaskProgress({ id: task.id, progress: parseInt(e.target.value, 10) })}
+                          className="w-24 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                      )}
                     </span>
                   </div>
                   <Progress
@@ -237,13 +424,118 @@ const TaskDetailsModal = ({
               </section>
 
               <section className="rounded-xl border border-border/60 bg-card p-4">
-                <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Activity Timeline
-                </h3>
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Collaboration Workspace
+                  </h3>
+                </div>
+
+                {!isCompleted && canEditTask && (
+                  <div className="mb-6 rounded-lg border border-border/50 bg-background/50 p-3">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Button
+                        variant={composerType === "UPDATE" ? "secondary" : "ghost"}
+                        size="sm"
+                        className="h-7 px-3 text-xs"
+                        onClick={() => setComposerType("UPDATE")}
+                      >
+                        <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
+                        Update
+                      </Button>
+                      <Button
+                        variant={composerType === "NOTE" ? "secondary" : "ghost"}
+                        size="sm"
+                        className="h-7 px-3 text-xs"
+                        onClick={() => setComposerType("NOTE")}
+                      >
+                        <FileText className="mr-1.5 h-3.5 w-3.5" />
+                        Note
+                      </Button>
+                      <Button
+                        variant={composerType === "QUESTION" ? "secondary" : "ghost"}
+                        size="sm"
+                        className="h-7 px-3 text-xs"
+                        onClick={() => setComposerType("QUESTION")}
+                      >
+                        <HelpCircle className="mr-1.5 h-3.5 w-3.5" />
+                        Question
+                      </Button>
+                      <Button
+                        variant={composerType === "BLOCKER" ? "secondary" : "ghost"}
+                        size="sm"
+                        className="h-7 px-3 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        onClick={() => setComposerType("BLOCKER")}
+                      >
+                        <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
+                        Blocker
+                      </Button>
+                    </div>
+                    
+                    <Textarea
+                      placeholder={
+                        composerType === "UPDATE" ? "What's the status?" :
+                        composerType === "NOTE" ? "Add an internal note..." :
+                        composerType === "QUESTION" ? "Ask a question..." :
+                        "Describe what is blocking you..."
+                      }
+                      value={composerContent}
+                      onChange={(e) => setComposerContent(e.target.value)}
+                      className="min-h-[80px] resize-none text-sm"
+                    />
+                    
+                    <div className="mt-3 flex justify-end">
+                      <Button
+                        size="sm"
+                        disabled={!composerContent.trim() || isSubmittingEvent}
+                        onClick={() => {
+                          setIsSubmittingEvent(true);
+                          const action = composerType === "BLOCKER" ? "BLOCKER_REPORTED" : composerType;
+                          addTaskTimelineEvent(
+                            { id: task.id, data: { action, description: composerContent } },
+                            { 
+                              onSettled: () => setIsSubmittingEvent(false),
+                              onSuccess: () => setComposerContent("")
+                            }
+                          );
+                        }}
+                      >
+                        {isSubmittingEvent && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                        Post {composerType.toLowerCase()}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <ActivityTimeline items={activityItems} className="space-y-6" />
               </section>
 
-              {task.isOverdue && (
+              {task.status === "BLOCKED" && canEditTask && (
+                <section className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="mt-0.5 h-4 w-4 text-rose-600" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-rose-700">
+                          Task is blocked
+                        </h4>
+                        <p className="mt-1 text-xs text-rose-700/80">
+                          Work cannot continue until the blocker is resolved.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                      onClick={() => resolveBlocker(task.id)}
+                    >
+                      Resolve Blocker
+                    </Button>
+                  </div>
+                </section>
+              )}
+
+              {task.isOverdue && task.status !== "BLOCKED" && (
                 <section className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4">
                   <div className="flex items-start gap-3">
                     <AlertCircle className="mt-0.5 h-4 w-4 text-rose-600" />
@@ -277,13 +569,17 @@ const TaskDetailsModal = ({
               <Button
                 variant={isCompleted ? "outline" : "default"}
                 className="h-10 w-full min-w-0 px-2 text-xs font-semibold sm:w-auto sm:px-5"
-                disabled={isUpdating}
+                disabled={isUpdating || !canEditTask}
                 onClick={() => {
-                  setIsUpdating(true);
-                  updateTask(
-                    { id: task.id, data: { status: isCompleted ? "PENDING" : "COMPLETED" } },
-                    { onSettled: () => setIsUpdating(false) }
-                  );
+                  if (isCompleted) {
+                    setIsUpdating(true);
+                    updateTask(
+                      { id: task.id, data: { status: "PENDING" } },
+                      { onSettled: () => setIsUpdating(false) }
+                    );
+                  } else {
+                    setShowCompletionDialog(true);
+                  }
                 }}
               >
                 {isUpdating ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
@@ -294,6 +590,37 @@ const TaskDetailsModal = ({
             </div>
           </div>
         </footer>
+        
+        {showCompletionDialog && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+            <div className="w-full max-w-sm rounded-xl border border-border/60 bg-card p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
+              <h3 className="text-lg font-semibold text-foreground mb-2">Complete Task</h3>
+              <p className="text-sm text-muted-foreground mb-4">Add an optional note about what was accomplished.</p>
+              <Textarea
+                placeholder="What was done? (Optional)"
+                value={completionNote}
+                onChange={(e) => setCompletionNote(e.target.value)}
+                className="mb-4 min-h-[80px] resize-none text-sm"
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setShowCompletionDialog(false)}>Cancel</Button>
+                <Button size="sm" disabled={isCompleting} onClick={() => {
+                  setIsCompleting(true);
+                  completeTask({ id: task.id, note: completionNote }, {
+                    onSettled: () => setIsCompleting(false),
+                    onSuccess: () => {
+                      setShowCompletionDialog(false);
+                      setCompletionNote("");
+                    }
+                  });
+                }}>
+                  {isCompleting && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                  Confirm Completion
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

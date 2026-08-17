@@ -75,6 +75,7 @@ model User {
   aiConversations    AiConversation[]
   ownedCompanies     Company[]
   ownedDeals         Deal[]           @relation("DealOwner")
+  completedTasks     Task[]           @relation("TaskCompletedBy")
 }
 
 model TenantUser {
@@ -198,16 +199,23 @@ model Task {
   relatedMeetingId   String?
   relatedQuotationId String?
   reminderDate       DateTime?
-  tags               String[]     @default([])
-  assignedTo         User?        @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
-  createdBy          User?        @relation("TaskCreatedBy", fields: [createdById], references: [id])
-  relatedCustomer    Customer?    @relation("TaskCustomer", fields: [relatedCustomerId], references: [id])
-  relatedLead        Lead?        @relation("TaskLead", fields: [relatedLeadId], references: [id])
-  relatedMeeting     Meeting?     @relation("TaskMeeting", fields: [relatedMeetingId], references: [id])
-  relatedQuotation   Quotation?   @relation("TaskQuotation", fields: [relatedQuotationId], references: [id])
-  tenant             Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tags               String[]        @default([])
+  progress           Int             @default(0)
+  completedById      String?
+  
+  assignedTo         User?           @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  createdBy          User?           @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  completedBy        User?           @relation("TaskCompletedBy", fields: [completedById], references: [id])
+  relatedCustomer    Customer?       @relation("TaskCustomer", fields: [relatedCustomerId], references: [id])
+  relatedLead        Lead?           @relation("TaskLead", fields: [relatedLeadId], references: [id])
+  relatedMeeting     Meeting?        @relation("TaskMeeting", fields: [relatedMeetingId], references: [id])
+  relatedQuotation   Quotation?      @relation("TaskQuotation", fields: [relatedQuotationId], references: [id])
+  tenant             Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   relatedDealId      String?
-  relatedDeal        Deal?        @relation("TaskDeal", fields: [relatedDealId], references: [id])
+  relatedDeal        Deal?           @relation("TaskDeal", fields: [relatedDealId], references: [id])
+  
+  timelineEvents     TimelineEvent[] @relation("TimelineTask")
+  attachmentsList    Attachment[]    @relation("TaskAttachment")
 
   @@index([tenantId, status])
   @@index([tenantId, dueDate])
@@ -469,9 +477,13 @@ model TimelineEvent {
   dealId      String?
   companyId   String?
   customerId  String?
+  taskId      String?
+  metadata    Json?
+  
   deal        Deal?     @relation("TimelineDeal", fields: [dealId], references: [id], onDelete: Cascade)
   company     Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   customer    Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  task        Task?     @relation("TimelineTask", fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([leadId])
@@ -482,7 +494,8 @@ model TimelineEvent {
 model Attachment {
   id        String   @id @default(uuid())
   tenantId  String
-  leadId    String
+  leadId    String?
+  taskId    String?
   userId    String
   fileName  String
   fileUrl   String
@@ -491,7 +504,9 @@ model Attachment {
   version   Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  lead      Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  task      Task?    @relation("TaskAttachment", fields: [taskId], references: [id], onDelete: Cascade)
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user      User     @relation("AttachmentUploader", fields: [userId], references: [id])
 

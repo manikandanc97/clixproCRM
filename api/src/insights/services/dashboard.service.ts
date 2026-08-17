@@ -321,8 +321,8 @@ export class DashboardService {
     // The frontend fetches this to cache it for the dashboard
     return {
       growth: 0,
-      trend: "stable",
-      data: []
+      trend: 'stable',
+      data: [],
     };
   }
 

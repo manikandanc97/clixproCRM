@@ -37,6 +37,8 @@ import {
 import { Loader2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useState } from "react";
+import { useAuth } from "@/features/auth/components/auth-provider";
+import { PERMISSIONS } from "@/shared/lib/auth/rbac/permissions";
 
 interface TaskKanbanCardProps {
   task: TaskType;
@@ -47,9 +49,18 @@ interface TaskKanbanCardProps {
 }
 
 export const TaskKanbanCard = ({ task, onClick, isOverlay, onScheduleMeeting, onEditTask }: TaskKanbanCardProps) => {
-  const [isUpdating, setIsUpdating] = useState(false);
+  const { mutate: deleteTask } = useDeleteTask();
+  const { mutate: updateTask } = useUpdateTask();
+  const { hasPermission, user } = useAuth();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const canEditTask = hasPermission(PERMISSIONS.TASKS_UPDATE) || 
+    (hasPermission(PERMISSIONS.TASKS_UPDATE_ASSIGNED) && task.assignedToId === user?.id) ||
+    (hasPermission(PERMISSIONS.TASKS_UPDATE_ASSIGNED) && task.createdById === user?.id);
+  
+  const canDeleteTask = hasPermission(PERMISSIONS.TASKS_DELETE);
   
   const {
     setNodeRef,
@@ -70,9 +81,6 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay, onScheduleMeeting, on
     transition,
     transform: CSS.Translate.toString(transform),
   };
-
-  const { mutate: deleteTask } = useDeleteTask();
-  const { mutate: updateTask } = useUpdateTask();
 
   if (isDragging) {
     return (
@@ -124,30 +132,34 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay, onScheduleMeeting, on
             >
               <Eye className="w-3.5 h-3.5" /> View
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditTask?.(task);
-              }}
-              className="rounded-lg gap-2 font-semibold text-xs cursor-pointer"
-            >
-              <Pencil className="w-3.5 h-3.5" /> Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsUpdating(true);
-                updateTask(
-                  { id: task.id, data: { status: task.status === "COMPLETED" ? "PENDING" : "COMPLETED" } },
-                  { onSettled: () => setIsUpdating(false) }
-                );
-              }}
-              className="rounded-lg gap-2 font-semibold text-xs cursor-pointer"
-              disabled={isUpdating}
-            >
-              {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-              {task.status === "COMPLETED" ? "Reopen Task" : "Mark Complete"}
-            </DropdownMenuItem>
+            {canEditTask && (
+              <>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditTask?.(task);
+                  }}
+                  className="rounded-lg gap-2 font-semibold text-xs cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5" /> Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsUpdating(true);
+                    updateTask(
+                      { id: task.id, data: { status: task.status === "COMPLETED" ? "PENDING" : "COMPLETED" } },
+                      { onSettled: () => setIsUpdating(false) }
+                    );
+                  }}
+                  className="rounded-lg gap-2 font-semibold text-xs cursor-pointer"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {task.status === "COMPLETED" ? "Reopen Task" : "Mark Complete"}
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
@@ -157,15 +169,17 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay, onScheduleMeeting, on
             >
               <Calendar className="w-3.5 h-3.5" /> Schedule Meeting
             </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDeleteConfirm(true);
-              }}
-              className="rounded-lg gap-2 font-semibold text-xs cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Delete
-            </DropdownMenuItem>
+            {canDeleteTask && (
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteConfirm(true);
+                }}
+                className="rounded-lg gap-2 font-semibold text-xs cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -221,8 +235,8 @@ export const TaskKanbanCard = ({ task, onClick, isOverlay, onScheduleMeeting, on
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
         <div className="flex items-center -space-x-1.5">
           <Avatar className="w-6 h-6 border-2 border-card shadow-sm rounded-lg">
-            <AvatarFallback className="text-[8px] font-bold bg-muted text-muted-foreground">
-              {"Unassigned".split(' ').map((n: string) => n[0]).join('')}
+            <AvatarFallback className="text-[8px] font-bold bg-muted text-muted-foreground uppercase">
+              {task.assignedTo?.name ? task.assignedTo.name.charAt(0) : "U"}
             </AvatarFallback>
           </Avatar>
           {task.collaborators?.slice(0, 2).map((c: { id: string; name: string }) => (

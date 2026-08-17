@@ -362,19 +362,35 @@ export function createTask(data: Partial<TaskType>) {
 }
 
 export function updateTask(id: string, data: Partial<TaskType>) {
-  return unwrapResponse<TaskType>(client.patch(`/crm/tasks/${id}`, data));
+  return unwrapResponse<TaskType>(client.put(`/crm/tasks/${id}`, data));
 }
 
 export function updateTaskStatus(id: string, status: string) {
-  return unwrapResponse<TaskType>(client.patch(`/crm/tasks/${id}/status`, { status }));
+  return unwrapResponse<TaskType>(client.put(`/crm/tasks/${id}`, { status }));
 }
 
 export function assignTask(id: string, assignedToId: string) {
-  return unwrapResponse<TaskType>(client.patch(`/crm/tasks/${id}/assign`, { assignedToId }));
+  return unwrapResponse<TaskType>(client.put(`/crm/tasks/${id}`, { assignedToId }));
 }
 
-export function completeTask(id: string) {
-  return unwrapResponse<TaskType>(client.patch(`/crm/tasks/${id}/complete`, {}));
+export function completeTask(id: string, note?: string) {
+  return unwrapResponse<TaskType>(client.post(`/crm/tasks/${id}/complete`, { note }));
+}
+
+export function createTaskTimelineEvent(id: string, data: { action: string; description?: string; metadata?: any }) {
+  return unwrapResponse<any>(client.post(`/crm/tasks/${id}/timeline`, data));
+}
+
+export function updateTaskProgressAPI(id: string, progress: number) {
+  return unwrapResponse<any>(client.patch(`/crm/tasks/${id}/progress`, { progress }));
+}
+
+export function resolveTaskBlocker(id: string) {
+  return unwrapResponse<any>(client.post(`/crm/tasks/${id}/blockers/resolve`));
+}
+
+export function fetchTaskHistory(id: string) {
+  return unwrapResponse<any[]>(client.get(`/crm/tasks/${id}/history`));
 }
 
 export function deleteTask(id: string) {

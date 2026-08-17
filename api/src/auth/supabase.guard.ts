@@ -56,6 +56,9 @@ export class SupabaseAuthGuard implements CanActivate {
       );
     }
 
+    if (user && !(user as any).sub) {
+      (user as any).sub = user.id;
+    }
     request.user = user;
     return true;
   }
