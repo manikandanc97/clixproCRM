@@ -143,7 +143,10 @@ export class TasksController {
   @Get(':id')
   @Permissions('Tasks')
   async getTaskById(@Req() req: any, @Param('id') id: string) {
-    const data = await this.tasksQueryService.getTaskById(req.tenantId, id);
+    const data = await this.tasksQueryService.getTaskById(req.tenantId, id, {
+      userId: req.user.id || req.user.sub,
+      role: req.user.role,
+    });
     if (!data) {
       throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
     }

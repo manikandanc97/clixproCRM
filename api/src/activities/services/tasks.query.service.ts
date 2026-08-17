@@ -47,11 +47,41 @@ export class TasksQueryService {
     if (options.role && options.userId) {
       const userRole = options.role.toUpperCase();
       if (userRole !== 'ADMIN' && userRole !== 'SUPER ADMIN') {
+        const tenantUser = await this.prisma.tenantUser.findFirst({
+          where: { tenantId, userId: options.userId },
+        });
+
+        const subordinates = await this.prisma.tenantUser.findMany({
+          where: { tenantId, reportingManagerId: tenantUser?.id },
+          select: { userId: true },
+        });
+        const subordinateUserIds = subordinates.map((s) => s.userId);
+        const managerScopeUserIds = [options.userId, ...subordinateUserIds];
+
+        let teamUserIds: string[] = [];
+        if (tenantUser?.departmentId) {
+          const teamUsers = await this.prisma.tenantUser.findMany({
+            where: { tenantId, departmentId: tenantUser.departmentId },
+            select: { userId: true },
+          });
+          teamUserIds = teamUsers.map((u) => u.userId);
+        }
+
         where.OR = [
-          { assignedToId: options.userId },
-          { createdById: options.userId },
-          { assignedToId: null },
+          { assignedToId: { in: managerScopeUserIds } },
+          { createdById: { in: managerScopeUserIds } },
+          { visibility: 'ORGANIZATION' },
         ];
+
+        if (teamUserIds.length > 0) {
+          where.OR.push({
+            visibility: 'TEAM',
+            OR: [
+              { assignedToId: { in: teamUserIds } },
+              { createdById: { in: teamUserIds } },
+            ],
+          });
+        }
       }
     }
 
@@ -419,9 +449,52 @@ export class TasksQueryService {
     return csvRows.join('\n');
   }
 
-  async getTaskById(tenantId: string, id: string) {
+  async getTaskById(tenantId: string, id: string, options?: { userId: string; role: string }) {
+    const where: Prisma.TaskWhereInput = { id, tenantId, deletedAt: null };
+
+    if (options?.role && options?.userId) {
+      const userRole = options.role.toUpperCase();
+      if (userRole !== 'ADMIN' && userRole !== 'SUPER ADMIN') {
+        const tenantUser = await this.prisma.tenantUser.findFirst({
+          where: { tenantId, userId: options.userId },
+        });
+
+        const subordinates = await this.prisma.tenantUser.findMany({
+          where: { tenantId, reportingManagerId: tenantUser?.id },
+          select: { userId: true },
+        });
+        const subordinateUserIds = subordinates.map((s) => s.userId);
+        const managerScopeUserIds = [options.userId, ...subordinateUserIds];
+
+        let teamUserIds: string[] = [];
+        if (tenantUser?.departmentId) {
+          const teamUsers = await this.prisma.tenantUser.findMany({
+            where: { tenantId, departmentId: tenantUser.departmentId },
+            select: { userId: true },
+          });
+          teamUserIds = teamUsers.map((u) => u.userId);
+        }
+
+        where.OR = [
+          { assignedToId: { in: managerScopeUserIds } },
+          { createdById: { in: managerScopeUserIds } },
+          { visibility: 'ORGANIZATION' },
+        ];
+
+        if (teamUserIds.length > 0) {
+          where.OR.push({
+            visibility: 'TEAM',
+            OR: [
+              { assignedToId: { in: teamUserIds } },
+              { createdById: { in: teamUserIds } },
+            ],
+          });
+        }
+      }
+    }
+
     const task = await this.prisma.task.findFirst({
-      where: { id, tenantId, deletedAt: null },
+      where,
       include: {
         assignedTo: { select: { id: true, name: true, email: true } },
         relatedLead: {

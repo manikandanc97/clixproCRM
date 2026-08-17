@@ -18,7 +18,7 @@ export class DashboardService {
       where: { id: tenantId },
       select: { currency: true },
     });
-    return tenant?.currency || 'USD';
+    return tenant?.currency || 'INR';
   }
 
   async getDashboardData(tenantId: string, timeframe = 'month') {

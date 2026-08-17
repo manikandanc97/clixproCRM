@@ -31,7 +31,7 @@ export default function FloatingAssistant() {
           const headers = new Headers(options.headers || {});
           
           if (typeof window !== "undefined") {
-            const currency = localStorage.getItem("orbit_currency") || "USD";
+            const currency = localStorage.getItem("orbit_currency") || "INR";
             headers.set("X-Currency", currency);
             
             const { createClient } = await import('@/lib/supabase/client');

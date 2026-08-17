@@ -35,6 +35,7 @@ export class TasksService {
           createdById: userId,
           priority: data.priority || 'MEDIUM',
           status: data.status || 'PENDING',
+          visibility: data.visibility || 'PRIVATE',
           reminderDate: data.reminderDate ? new Date(data.reminderDate) : null,
           relatedLeadId: data.relatedLeadId || null,
           relatedCustomerId: data.relatedCustomerId || null,
@@ -200,6 +201,7 @@ export class TasksService {
           }),
           ...(data.priority !== undefined && { priority: data.priority }),
           status: targetStatus,
+          ...(data.visibility !== undefined && { visibility: data.visibility }),
           ...(data.reminderDate !== undefined && {
             reminderDate: data.reminderDate
               ? new Date(data.reminderDate)

@@ -16,7 +16,7 @@ const client = axios.create({
 client.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     if (typeof window !== "undefined") {
-      const currency = localStorage.getItem("orbit_currency") || "USD";
+      const currency = localStorage.getItem("orbit_currency") || "INR";
       config.headers["X-Currency"] = currency;
       
       const supabase = createClient();

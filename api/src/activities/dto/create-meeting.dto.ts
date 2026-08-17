@@ -6,6 +6,7 @@ import {
   IsUUID,
   IsNumber,
   IsObject,
+  IsIn,
 } from 'class-validator';
 
 export class CreateMeetingDto {
@@ -77,4 +78,12 @@ export class CreateMeetingDto {
   @IsOptional()
   @IsBoolean()
   isLog?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  ownerId?: string;
+
+  @IsOptional()
+  @IsIn(['PRIVATE', 'TEAM', 'ORGANIZATION'])
+  visibility?: 'PRIVATE' | 'TEAM' | 'ORGANIZATION';
 }

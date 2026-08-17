@@ -7,39 +7,107 @@ export class CalendarService {
 
   async getCalendarEvents(
     tenantId: string,
+    user: any,
     startParam: string,
     endParam: string,
   ) {
     const start = new Date(startParam);
     const end = new Date(endParam);
+    const userId = user.sub || user.id;
+    const userRole = (user.role || '').toUpperCase();
+
+    const meetingWhere: any = {
+      tenantId,
+      startTime: { gte: start },
+      endTime: { lte: end },
+    };
+    
+    const taskWhere: any = {
+      tenantId,
+      dueDate: { gte: start, lte: end },
+    };
+    
+    const leadWhere: any = {
+      tenantId,
+      expectedCloseDate: { gte: start, lte: end },
+    };
+
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER ADMIN') {
+      const tenantUser = await this.prisma.tenantUser.findFirst({
+        where: { tenantId, userId },
+      });
+
+      const subordinates = await this.prisma.tenantUser.findMany({
+        where: { tenantId, reportingManagerId: tenantUser?.id },
+        select: { userId: true },
+      });
+      const subordinateUserIds = subordinates.map((s) => s.userId);
+      const managerScopeUserIds = [userId, ...subordinateUserIds];
+
+      let teamUserIds: string[] = [];
+      if (tenantUser?.departmentId) {
+        const teamUsers = await this.prisma.tenantUser.findMany({
+          where: { tenantId, departmentId: tenantUser.departmentId },
+          select: { userId: true },
+        });
+        teamUserIds = teamUsers.map((u) => u.userId);
+      }
+
+      taskWhere.OR = [
+        { assignedToId: { in: managerScopeUserIds } },
+        { createdById: { in: managerScopeUserIds } },
+        { visibility: 'ORGANIZATION' },
+      ];
+
+      if (teamUserIds.length > 0) {
+        taskWhere.OR.push({
+          visibility: 'TEAM',
+          OR: [
+            { assignedToId: { in: teamUserIds } },
+            { createdById: { in: teamUserIds } },
+          ],
+        });
+      }
+
+      meetingWhere.OR = [
+        { assignedToId: { in: managerScopeUserIds } },
+        { ownerId: { in: managerScopeUserIds } },
+        { visibility: 'ORGANIZATION' },
+      ];
+
+      if (teamUserIds.length > 0) {
+        meetingWhere.OR.push({
+          visibility: 'TEAM',
+          OR: [
+            { assignedToId: { in: teamUserIds } },
+            { ownerId: { in: teamUserIds } },
+          ],
+        });
+      }
+
+      leadWhere.OR = [
+        { assignedToId: { in: managerScopeUserIds } },
+        { createdById: { in: managerScopeUserIds } },
+      ];
+    }
 
     // Fetch Meetings, Tasks, and Leads for the given timeframe
     const [meetings, tasks, leads] = await Promise.all([
       this.prisma.meeting.findMany({
-        where: {
-          tenantId,
-          startTime: { gte: start },
-          endTime: { lte: end },
-        },
+        where: meetingWhere,
         include: {
           assignedTo: { select: { id: true, name: true } },
           lead: { select: { id: true, name: true, company: true } },
         },
       }),
       this.prisma.task.findMany({
-        where: {
-          tenantId,
-          dueDate: { gte: start, lte: end },
-        },
+        where: taskWhere,
         include: {
           assignedTo: { select: { id: true, name: true } },
         },
       }),
       this.prisma.lead.findMany({
-        where: {
-          tenantId,
-          expectedCloseDate: { gte: start, lte: end },
-        },
+        where: leadWhere,
         include: {
           assignedTo: { select: { id: true, name: true } },
         },

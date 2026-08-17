@@ -1,17 +1,16 @@
 import { useCRMStore } from "@/shared/store/useCRMStore";
 
 const CURRENCY_FORMATS: Record<string, { locale: string; currency: string }> = {
-  USD: { locale: "en-US", currency: "USD" },
   INR: { locale: "en-IN", currency: "INR" },
 };
 
 function getSupportedCurrency(value?: string | null): string {
-  const currency = String(value || "USD").toUpperCase();
-  return CURRENCY_FORMATS[currency] ? currency : "USD";
+  const currency = String(value || "INR").toUpperCase();
+  return CURRENCY_FORMATS[currency] ? currency : "INR";
 }
 
 export function useCurrency() {
-  const currency = useCRMStore((state) => state.currency) || "USD";
+  const currency = useCRMStore((state) => state.currency) || "INR";
 
   const formatCurrency = (value: number | string | undefined | null) => {
     const numValue = Number(value || 0);
@@ -26,7 +25,7 @@ export function useCurrency() {
     }).format(numValue);
   };
 
-  const currencySymbol = currency === "INR" ? "₹" : "$";
+  const currencySymbol = "₹";
   const currencyCode = currency;
 
   return { currency, formatCurrency, currencySymbol, currencyCode };

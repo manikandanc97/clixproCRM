@@ -63,10 +63,7 @@ const FONTS: { label: string; value: FontFamily }[] = [
   { label: "Plus Jakarta", value: "jakarta" },
 ];
 
-const CURRENCIES = [
-  { label: "USD ($)", value: "USD" },
-  { label: "INR (₹)", value: "INR" },
-];
+
 
 export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -75,7 +72,6 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   const router = useRouter();
   const { logout, hasPermission } = useAuth();
   const { currency, setCurrency } = useCRMStore();
-  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
 
   const handleLogout = async () => {
     // Close the AlertDialog BEFORE running logout.
@@ -219,27 +215,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
             </DropdownMenuPortal>
           </DropdownMenuSub>
 
-          {/* Currency Selector Submenu */}
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="py-2.5 rounded-xl group">
-              <CurrencyIcon className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              <span className="font-semibold text-sm">Currency</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent className="w-48 rounded-xl p-1.5 shadow-elevated border-border bg-popover/95 backdrop-blur-xl">
-                {CURRENCIES.map((item) => (
-                  <DropdownMenuItem 
-                    key={item.value} 
-                    onClick={() => setCurrency(item.value)}
-                    className="rounded-lg flex items-center justify-between"
-                  >
-                    <span className="text-sm font-medium">{item.label}</span>
-                    {currency === item.value && <Check className="h-4 w-4 text-primary" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
+
         </DropdownMenuGroup>
         
         <DropdownMenuSeparator />

@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -24,8 +25,17 @@ export class MeetingsController {
 
   @Get()
   @Roles('ADMIN', 'MANAGER', 'SALES', 'EMPLOYEE')
-  async getMeetings(@Req() req: any) {
-    const data = await this.meetingsService.getMeetings(req.tenantId);
+  async getMeetings(
+    @Req() req: any,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const data = await this.meetingsService.getMeetings(
+      req.tenantId,
+      req.user,
+      startDate,
+      endDate,
+    );
     return { success: true, data };
   }
 
@@ -34,7 +44,7 @@ export class MeetingsController {
   async createMeeting(@Req() req: any, @Body() body: CreateMeetingDto) {
     const data = await this.meetingsService.createMeeting(
       req.tenantId,
-      req.user.sub,
+      req.user,
       body,
     );
     return { success: true, data };
@@ -49,6 +59,7 @@ export class MeetingsController {
   ) {
     const data = await this.meetingsService.updateMeeting(
       req.tenantId,
+      req.user,
       id,
       body,
     );
@@ -56,9 +67,9 @@ export class MeetingsController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'MANAGER', 'SALES', 'EMPLOYEE')
   async deleteMeeting(@Req() req: any, @Param('id') id: string) {
-    await this.meetingsService.deleteMeeting(req.tenantId, id);
-    return { success: true, message: 'Meeting deleted successfully' };
+    await this.meetingsService.deleteMeeting(req.tenantId, req.user, id);
+    return { success: true, message: 'Meeting deleted or cancelled successfully' };
   }
 }

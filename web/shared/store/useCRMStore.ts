@@ -89,7 +89,7 @@ export const useCRMStore = create<CRMState>()(
       leadViewMode: getInitialLeadViewMode(),
       accentColor: 'emerald',
       fontFamily: 'sans',
-      currency: 'USD',
+      currency: 'INR',
 
       setLeads: (leads) => set({ leads }),
       updateLead: (id, updates) => set((state) => ({
@@ -153,7 +153,7 @@ export const useCRMStore = create<CRMState>()(
             leadViewMode: state?.leadViewMode ?? 'cards',
             accentColor: state?.accentColor ?? 'emerald',
             fontFamily: state?.fontFamily ?? 'sans',
-            currency: state?.currency ?? 'USD',
+            currency: state?.currency ?? 'INR',
           };
         }
         

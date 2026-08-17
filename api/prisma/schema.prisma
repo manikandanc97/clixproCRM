@@ -76,6 +76,7 @@ model User {
   ownedCompanies     Company[]
   ownedDeals         Deal[]           @relation("DealOwner")
   completedTasks     Task[]           @relation("TaskCompletedBy")
+  ownedMeetings      Meeting[]        @relation("MeetingOwner")
 }
 
 model TenantUser {
@@ -187,6 +188,7 @@ model Task {
   dueDate            DateTime?
   priority           TaskPriority @default(MEDIUM)
   status             TaskStatus   @default(PENDING)
+  visibility         EventVisibility @default(PRIVATE)
   deletedAt          DateTime?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
@@ -393,7 +395,16 @@ model Meeting {
   reminderAt   DateTime?
   customerId   String?
   quotationId  String?
+  ownerId      String?
+  visibility   EventVisibility @default(PRIVATE)
+  cancelledBy  String?
+  cancelledAt  DateTime?
+  cancellationReason String?
+  oldStartAt   DateTime?
+  oldEndAt     DateTime?
+  
   assignedTo   User?      @relation("MeetingAssignedTo", fields: [assignedToId], references: [id])
+  owner        User?      @relation("MeetingOwner", fields: [ownerId], references: [id])
   customer     Customer?  @relation(fields: [customerId], references: [id])
   lead         Lead?      @relation(fields: [leadId], references: [id])
   quotation    Quotation? @relation(fields: [quotationId], references: [id])
@@ -579,6 +590,12 @@ enum TargetPeriod {
   QUARTERLY
   YEARLY
   CUSTOM
+}
+
+enum EventVisibility {
+  PRIVATE
+  TEAM
+  ORGANIZATION
 }
 
 model TenantAiConfig {

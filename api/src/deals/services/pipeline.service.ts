@@ -18,7 +18,7 @@ export class PipelineService {
       where: { id: tenantId },
       select: { currency: true },
     });
-    return tenant?.currency || 'USD';
+    return tenant?.currency || 'INR';
   }
 
   async getPipeline(tenantId: string) {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Building2, Hash, Globe, MapPin, DollarSign, IndianRupee, Save, Loader2 } from "lucide-react";
+import { Building2, Hash, Globe, MapPin, IndianRupee, Save, Loader2 } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import {
@@ -26,7 +26,7 @@ const WorkspaceSettings = () => {
   const mutation = useUpdateWorkspace();
   const { currency } = useCurrency();
   const setStoreCurrency = useCRMStore((state) => state.setCurrency);
-  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
+  const CurrencyIcon = IndianRupee;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -75,7 +75,7 @@ const WorkspaceSettings = () => {
   const hasChanges = 
     formData.name !== (workspace?.name || "") ||
     formData.taxId !== (workspace?.taxId || "") ||
-    formData.currency !== (workspace?.currency || "USD") ||
+    formData.currency !== (workspace?.currency || "INR") ||
     formData.timezone !== (workspace?.timezone || "utc") ||
     formData.address !== (workspace?.address || "") ||
     formData.logo !== (workspace?.logo || null);
@@ -184,7 +184,6 @@ const WorkspaceSettings = () => {
                     <SelectValue placeholder="Select Currency" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-border">
-                    <SelectItem value="USD" className="text-xs font-medium">USD – US Dollar</SelectItem>
                     <SelectItem value="INR" className="text-xs font-medium">INR – Indian Rupee</SelectItem>
                   </SelectContent>
                 </Select>

@@ -38,11 +38,7 @@ export const TASK_STATUS_LABELS: Record<string, string> = {
 
 
 const CURRENCY_FORMATS: Record<string, { locale: string; currency: string }> = {
-  USD: { locale: "en-US", currency: "USD" },
   INR: { locale: "en-IN", currency: "INR" },
-  EUR: { locale: "en-IE", currency: "EUR" },
-  GBP: { locale: "en-GB", currency: "GBP" },
-  AED: { locale: "en-AE", currency: "AED" },
 };
 
 const longDateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -56,12 +52,12 @@ export function toNumber(value: unknown): number {
 }
 
 function getSupportedCurrency(value?: string | null): string {
-  const currency = String(value || "USD").toUpperCase();
-  return CURRENCY_FORMATS[currency] ? currency : "USD";
+  const currency = String(value || "INR").toUpperCase();
+  return CURRENCY_FORMATS[currency] ? currency : "INR";
 }
 
 export function formatCurrency(value: unknown, currency?: string): string {
-  const globalCurrency = useCRMStore.getState().currency || "USD";
+  const globalCurrency = useCRMStore.getState().currency || "INR";
   const selectedCurrency = getSupportedCurrency(currency || globalCurrency);
   const format = CURRENCY_FORMATS[selectedCurrency];
 

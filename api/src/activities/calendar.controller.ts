@@ -39,6 +39,7 @@ export class CalendarController {
     }
     const data = await this.calendarService.getCalendarEvents(
       req.tenantId,
+      req.user,
       start,
       end,
     );

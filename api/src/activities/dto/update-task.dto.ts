@@ -6,7 +6,7 @@ import {
   IsObject,
   IsUUID,
 } from 'class-validator';
-import { TaskPriority, TaskStatus } from '@prisma/client';
+import { TaskPriority, TaskStatus, EventVisibility } from '@prisma/client';
 
 export class UpdateTaskDto {
   @IsOptional()
@@ -68,4 +68,8 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsArray()
   attachments?: any[];
+
+  @IsOptional()
+  @IsEnum(EventVisibility)
+  visibility?: EventVisibility;
 }
