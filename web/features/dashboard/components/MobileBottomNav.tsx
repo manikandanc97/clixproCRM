@@ -8,8 +8,8 @@ import { getRoleMenu } from "@/shared/lib/auth/rbac";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const { user } = useAuth();
-  const navItems = getRoleMenu(user?.role)
+  const { user, access } = useAuth();
+  const navItems = getRoleMenu(user?.role, access.permissions)
     .flatMap((group) => group.items)
     .slice(0, 4)
     .map((item) => ({

@@ -85,6 +85,7 @@ export interface TaskType {
   collaborators?: { id: string; name: string }[];
   aiPriorityScore?: number;
   aiSummary?: string;
+  timelineEvents?: any[];
 }
 
 export interface TaskDashboardStats {

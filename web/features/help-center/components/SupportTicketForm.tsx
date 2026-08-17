@@ -10,8 +10,6 @@ import { Textarea } from "@/shared/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Label } from "@/shared/ui/label";
 import { FileUploader, FileWithPreview } from "./FileUploader";
-import { ScreenCapture } from "./ScreenCapture";
-import { VideoRecorder } from "./VideoRecorder";
 import { toast } from "sonner";
 import { CheckCircle2, Copy, Plus, Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/components/auth-provider";
@@ -135,16 +133,6 @@ export function SupportTicketForm() {
       navigator.clipboard.writeText(successData.id);
       toast.success("Ticket ID copied to clipboard!");
     }
-  };
-
-  const handleCapture = (file: File) => {
-    const fileWithPreview = Object.assign(file, {
-      preview: URL.createObjectURL(file),
-      id: Math.random().toString(36).substring(7),
-      progress: 100,
-      status: "success" as const,
-    });
-    setFiles((prev) => [...prev, fileWithPreview]);
   };
 
   if (successData) {
@@ -277,11 +265,6 @@ export function SupportTicketForm() {
             <div>
               <h3 className="text-lg font-medium">Attachments</h3>
               <p className="text-sm text-muted-foreground">Upload screenshots, videos, or logs to help us resolve the issue faster.</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ScreenCapture onCapture={handleCapture} />
-              <VideoRecorder onRecord={handleCapture} />
             </div>
             
             <FileUploader 

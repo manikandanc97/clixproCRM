@@ -116,7 +116,7 @@ export class RolesController {
     }
     await incrementRateLimit(identifier, RATE_LIMITS.ADMIN);
 
-    const currentUserRole = req.userRole?.toUpperCase() || 'UNKNOWN';
+    const currentUserRole = req.userRole?.name?.toUpperCase() || 'UNKNOWN';
     if (currentUserRole === 'EMPLOYEE') {
       throw new HttpException(
         { success: false, message: 'Unauthorized to edit roles' },

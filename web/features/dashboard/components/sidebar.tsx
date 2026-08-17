@@ -25,11 +25,12 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
   const { isCollapsed, toggleSidebar } = useSidebar();
   const { user, access } = useAuth();
 
-  const menuGroups = getRoleMenu(user?.role);
+  const menuGroups = getRoleMenu(user?.role, access.permissions);
   const roleName = access.roleName;
 
   // On mobile, force uncollapsed
   const collapsedState = isMobile ? false : isCollapsed;
+  const hasHelpAccess = access.permissions.includes("Help Center") || user?.role?.toUpperCase() === "ADMIN";
 
   return (
     <div className="flex flex-col h-full relative">
@@ -188,27 +189,29 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
       </TooltipProvider>
 
       {/* Help Center Item at Bottom */}
-      <div className="mt-auto p-3 border-t border-sidebar-border bg-sidebar shrink-0">
-        {collapsedState ? (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href="/help" className={`flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-300 outline-none ${pathname === '/help' ? 'text-sidebar-primary bg-sidebar-primary/10 shadow-sm' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/40'}`}>
-                  <LifeBuoy className="w-5 h-5" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={12} className="bg-slate-900 text-white border-none rounded-lg px-3 py-1.5 font-semibold text-xs shadow-xl">
-                Help Center
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ) : (
-          <Link href="/help" className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-all duration-300 text-[13.5px] font-medium outline-none ${pathname === '/help' ? 'text-sidebar-primary bg-sidebar-primary/10 shadow-sm font-bold' : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40'}`}>
-            <LifeBuoy className="w-[18px] h-[18px] transition-colors" />
-            <span className="flex-1 text-left truncate">Help Center</span>
-          </Link>
-        )}
-      </div>
+      {hasHelpAccess && (
+        <div className="mt-auto p-3 border-t border-sidebar-border bg-sidebar shrink-0">
+          {collapsedState ? (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/help" className={`flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-300 outline-none ${pathname === '/help' ? 'text-sidebar-primary bg-sidebar-primary/10 shadow-sm' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/40'}`}>
+                    <LifeBuoy className="w-5 h-5" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={12} className="bg-slate-900 text-white border-none rounded-lg px-3 py-1.5 font-semibold text-xs shadow-xl">
+                  Help Center
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <Link href="/help" className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-all duration-300 text-[13.5px] font-medium outline-none ${pathname === '/help' ? 'text-sidebar-primary bg-sidebar-primary/10 shadow-sm font-bold' : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40'}`}>
+              <LifeBuoy className="w-[18px] h-[18px] transition-colors" />
+              <span className="flex-1 text-left truncate">Help Center</span>
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }
