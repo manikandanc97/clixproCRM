@@ -44,6 +44,7 @@ setInterval(() => {
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const t0 = performance.now();
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
     let token = '';
@@ -76,25 +77,34 @@ export class SupabaseAuthGuard implements CanActivate {
     const cached = tokenUserCache.get(token);
     if (cached && cached.expiresAt > now) {
       request.user = cached.user;
+      const dur = performance.now() - t0;
+      console.log(`[PROFILE: SupabaseAuthGuard] Token CACHED hit in ${dur.toFixed(2)} ms`);
       return true;
     }
 
+    const tApi0 = performance.now();
     const supabase = getSupabaseClient();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(token);
+    const { data, error } = await (supabase.auth as any).getClaims(token);
+    const tApi1 = performance.now();
 
-    if (error || !user) {
+    if (error || !data?.claims) {
       tokenUserCache.delete(token);
       throw new UnauthorizedException(
-        'Invalid or expired authentication token',
+        error?.message || 'Invalid or expired authentication token',
       );
     }
 
-    if (user && !(user as any).sub) {
-      (user as any).sub = user.id;
-    }
+    const claims: any = data.claims;
+    const user: any = {
+      id: claims.sub,
+      sub: claims.sub,
+      email: claims.email,
+      user_metadata: claims.user_metadata || {},
+      app_metadata: claims.app_metadata || {},
+      role: claims.role,
+      aud: claims.aud,
+      ...claims,
+    };
 
     // Cache valid user for 60 seconds
     tokenUserCache.set(token, {
@@ -103,6 +113,8 @@ export class SupabaseAuthGuard implements CanActivate {
     });
 
     request.user = user;
+    const totalDur = performance.now() - t0;
+    console.log(`[PROFILE: SupabaseAuthGuard] Verified claims in ${(tApi1 - tApi0).toFixed(2)} ms (Total guard: ${totalDur.toFixed(2)} ms)`);
     return true;
   }
 }

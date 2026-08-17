@@ -31,7 +31,7 @@ export class TasksQueryService {
   ) {
     const page = Math.max(1, options.page || 1);
     const limit = Math.max(1, Math.min(options.limit || 50, 10000));
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
     const now = new Date();
     const todayStart = new Date(now);
@@ -39,11 +39,10 @@ export class TasksQueryService {
     const todayEnd = new Date(todayStart);
     todayEnd.setDate(todayEnd.getDate() + 1);
 
-    // 1. Build where clause with RBAC & Tenant scoping
-    const where: Prisma.TaskWhereInput = {
-      tenantId,
-      deletedAt: null,
-    };
+    const whereConditions: Prisma.Sql[] = [
+      Prisma.sql`t."tenantId" = ${tenantId}`,
+      Prisma.sql`t."deletedAt" IS NULL`,
+    ];
 
     // Role-based visibility scoping
     if (options.role && options.userId) {
@@ -73,117 +72,151 @@ export class TasksQueryService {
         const managerScopeUserIds = [options.userId, ...subordinateUserIds];
         const teamUserIds = teamUsers.map((u) => u.userId);
 
-        where.OR = [
-          { assignedToId: { in: managerScopeUserIds } },
-          { createdById: { in: managerScopeUserIds } },
-          { visibility: 'ORGANIZATION' },
+        const rbacOrConditions: Prisma.Sql[] = [
+          Prisma.sql`t."assignedToId" IN (${Prisma.join(managerScopeUserIds)})`,
+          Prisma.sql`t."createdById" IN (${Prisma.join(managerScopeUserIds)})`,
+          Prisma.sql`t."visibility" = 'ORGANIZATION'`,
         ];
 
         if (teamUserIds.length > 0) {
-          where.OR.push({
-            visibility: 'TEAM',
-            OR: [
-              { assignedToId: { in: teamUserIds } },
-              { createdById: { in: teamUserIds } },
-            ],
-          });
+          rbacOrConditions.push(
+            Prisma.sql`(t."visibility" = 'TEAM' AND (t."assignedToId" IN (${Prisma.join(teamUserIds)}) OR t."createdById" IN (${Prisma.join(teamUserIds)})))`,
+          );
         }
+
+        whereConditions.push(Prisma.sql`(${Prisma.join(rbacOrConditions, ' OR ')})`);
       }
     }
 
     if (options.search && options.search.trim() !== '') {
       const search = options.search.trim();
-      const searchCondition: Prisma.TaskWhereInput[] = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { tags: { hasSome: [search] } },
-      ];
-      if (where.OR) {
-        where.AND = [{ OR: searchCondition }];
-      } else {
-        where.OR = searchCondition;
-      }
+      const searchPattern = `%${search}%`;
+      whereConditions.push(
+        Prisma.sql`(t."title" ILIKE ${searchPattern} OR t."description" ILIKE ${searchPattern} OR ${search} = ANY(t."tags"))`,
+      );
     }
 
     if (options.status && options.status !== 'all') {
-      where.status = options.status.toUpperCase() as TaskStatus;
+      whereConditions.push(
+        Prisma.sql`t."status" = ${options.status.toUpperCase()}::"TaskStatus"`,
+      );
     }
 
     if (options.priority && options.priority !== 'all') {
-      where.priority = options.priority.toUpperCase() as TaskPriority;
+      whereConditions.push(
+        Prisma.sql`t."priority" = ${options.priority.toUpperCase()}::"TaskPriority"`,
+      );
     }
 
     if (options.assignedToId && options.assignedToId !== 'all') {
-      where.assignedToId =
-        options.assignedToId === 'unassigned' ? null : options.assignedToId;
+      if (options.assignedToId === 'unassigned') {
+        whereConditions.push(Prisma.sql`t."assignedToId" IS NULL`);
+      } else {
+        whereConditions.push(Prisma.sql`t."assignedToId" = ${options.assignedToId}`);
+      }
     }
 
     if (options.createdById) {
-      where.createdById = options.createdById;
+      whereConditions.push(Prisma.sql`t."createdById" = ${options.createdById}`);
     }
 
     if (options.relatedLeadId) {
-      where.relatedLeadId = options.relatedLeadId;
+      whereConditions.push(Prisma.sql`t."relatedLeadId" = ${options.relatedLeadId}`);
     }
 
     if (options.relatedCustomerId) {
-      where.relatedCustomerId = options.relatedCustomerId;
+      whereConditions.push(Prisma.sql`t."relatedCustomerId" = ${options.relatedCustomerId}`);
     }
 
     if (options.tags && options.tags.length > 0) {
-      where.tags = { hasSome: options.tags };
+      whereConditions.push(Prisma.sql`t."tags" && ARRAY[${Prisma.join(options.tags)}]::text[]`);
     }
 
-    if (options.startDate || options.endDate) {
-      where.dueDate = {};
-      if (options.startDate) where.dueDate.gte = new Date(options.startDate);
-      if (options.endDate) where.dueDate.lte = new Date(options.endDate);
+    if (options.startDate) {
+      whereConditions.push(Prisma.sql`t."dueDate" >= ${new Date(options.startDate)}`);
+    }
+    if (options.endDate) {
+      whereConditions.push(Prisma.sql`t."dueDate" <= ${new Date(options.endDate)}`);
     }
 
-    const sortField = options.sortBy || 'dueDate';
-    const sortOrder = options.sortOrder || 'asc';
-    const orderBy: Prisma.TaskOrderByWithRelationInput[] = [
-      { [sortField]: sortOrder },
-      { createdAt: 'desc' },
-    ];
+    const whereSql = Prisma.join(whereConditions, ' AND ');
 
-    const [tasks, total, statsRaw] = await Promise.all([
-      this.prisma.task.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          assignedTo: { select: { id: true, name: true, email: true } },
-          relatedLead: {
-            select: { id: true, name: true, company: true, email: true },
-          },
-          relatedCustomer: {
-            select: { id: true, name: true, company: true, email: true },
-          },
-          relatedMeeting: { select: { id: true, title: true } },
-          relatedQuotation: {
-            select: {
-              id: true,
-              quoteNumber: true,
-              client: true,
-              amount: true,
-            },
-          },
-        },
-      }),
-      this.prisma.task.count({ where }),
-      this.prisma.$queryRaw<
-        Array<{
-          total_count: number;
-          pending_count: number;
-          in_progress_count: number;
-          completed_count: number;
-          blocked_count: number;
-          overdue_count: number;
-          due_today_count: number;
-        }>
-      >`
+    let orderSql: Prisma.Sql;
+    const isDesc = options.sortOrder === 'desc';
+    switch (options.sortBy) {
+      case 'createdAt':
+        orderSql = isDesc ? Prisma.sql`t."createdAt" DESC` : Prisma.sql`t."createdAt" ASC`;
+        break;
+      case 'title':
+        orderSql = isDesc ? Prisma.sql`t."title" DESC, t."createdAt" DESC` : Prisma.sql`t."title" ASC, t."createdAt" DESC`;
+        break;
+      case 'priority':
+        orderSql = isDesc ? Prisma.sql`t."priority" DESC, t."createdAt" DESC` : Prisma.sql`t."priority" ASC, t."createdAt" DESC`;
+        break;
+      case 'status':
+        orderSql = isDesc ? Prisma.sql`t."status" DESC, t."createdAt" DESC` : Prisma.sql`t."status" ASC, t."createdAt" DESC`;
+        break;
+      default:
+        orderSql = isDesc
+          ? Prisma.sql`t."dueDate" DESC NULLS LAST, t."createdAt" DESC`
+          : Prisma.sql`t."dueDate" ASC NULLS LAST, t."createdAt" DESC`;
+        break;
+    }
+
+    const rawResult = await this.prisma.$queryRaw<Array<{
+      tasks_json: any;
+      filtered_count: number;
+      total_count: number;
+      pending_count: number;
+      in_progress_count: number;
+      completed_count: number;
+      blocked_count: number;
+      overdue_count: number;
+      due_today_count: number;
+    }>>`
+      WITH filtered_tasks AS (
+        SELECT
+          t."id",
+          t."tenantId",
+          t."title",
+          t."description",
+          t."status",
+          t."priority",
+          t."dueDate",
+          t."reminderDate",
+          t."assignedToId",
+          t."createdById",
+          t."relatedLeadId",
+          t."relatedCustomerId",
+          t."relatedMeetingId",
+          t."relatedQuotationId",
+          t."tags",
+          t."checklist",
+          t."attachments",
+          t."completedAt",
+          t."deletedAt",
+          t."createdAt",
+          t."updatedAt",
+          t."progress",
+          CASE WHEN u.id IS NOT NULL THEN json_build_object('id', u.id, 'name', u.name, 'email', u.email) ELSE NULL END AS "assignedTo",
+          CASE WHEN l.id IS NOT NULL THEN json_build_object('id', l.id, 'name', l.name, 'company', l.company, 'email', l.email) ELSE NULL END AS "relatedLead",
+          CASE WHEN c.id IS NOT NULL THEN json_build_object('id', c.id, 'name', c.name, 'company', c.company, 'email', c.email) ELSE NULL END AS "relatedCustomer",
+          CASE WHEN m.id IS NOT NULL THEN json_build_object('id', m.id, 'title', m.title) ELSE NULL END AS "relatedMeeting",
+          CASE WHEN q.id IS NOT NULL THEN json_build_object('id', q.id, 'quoteNumber', q."quoteNumber", 'client', q.client, 'amount', q.amount::float) ELSE NULL END AS "relatedQuotation"
+        FROM "Task" t
+        LEFT JOIN "User" u ON t."assignedToId" = u.id
+        LEFT JOIN "Lead" l ON t."relatedLeadId" = l.id
+        LEFT JOIN "Customer" c ON t."relatedCustomerId" = c.id
+        LEFT JOIN "Meeting" m ON t."relatedMeetingId" = m.id
+        LEFT JOIN "Quotation" q ON t."relatedQuotationId" = q.id
+        WHERE ${whereSql}
+        ORDER BY ${orderSql}
+        LIMIT ${limit} OFFSET ${offset}
+      ),
+      filtered_count AS (
+        SELECT COUNT(*)::int as count FROM "Task" t WHERE ${whereSql}
+      ),
+      stats AS (
         SELECT
           COUNT(*)::int as total_count,
           COUNT(CASE WHEN "status" = 'PENDING'::"TaskStatus" THEN 1 END)::int as pending_count,
@@ -194,10 +227,23 @@ export class TasksQueryService {
           COUNT(CASE WHEN "dueDate" >= ${todayStart} AND "dueDate" < ${todayEnd} THEN 1 END)::int as due_today_count
         FROM "Task"
         WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL
-      `,
-    ]);
+      )
+      SELECT
+        (SELECT COALESCE(json_agg(ft.*), '[]'::json) FROM filtered_tasks ft) AS tasks_json,
+        fc.count as filtered_count,
+        s.total_count,
+        s.pending_count,
+        s.in_progress_count,
+        s.completed_count,
+        s.blocked_count,
+        s.overdue_count,
+        s.due_today_count
+      FROM filtered_count fc, stats s;
+    `;
 
-    const taskSummary = statsRaw[0] || {
+    const row = rawResult[0] || {
+      tasks_json: [],
+      filtered_count: 0,
       total_count: 0,
       pending_count: 0,
       in_progress_count: 0,
@@ -207,13 +253,15 @@ export class TasksQueryService {
       due_today_count: 0,
     };
 
-    const completedCount = Number(taskSummary.completed_count || 0);
-    const pendingCount = Number(taskSummary.pending_count || 0);
-    const inProgressCount = Number(taskSummary.in_progress_count || 0);
-    const blockedCount = Number(taskSummary.blocked_count || 0);
-    const overdueCount = Number(taskSummary.overdue_count || 0);
-    const dueTodayCount = Number(taskSummary.due_today_count || 0);
-    const totalCount = Number(taskSummary.total_count || 0);
+    const tasksList: any[] = row.tasks_json || [];
+    const total = Number(row.filtered_count || 0);
+    const totalCount = Number(row.total_count || 0);
+    const completedCount = Number(row.completed_count || 0);
+    const pendingCount = Number(row.pending_count || 0);
+    const inProgressCount = Number(row.in_progress_count || 0);
+    const blockedCount = Number(row.blocked_count || 0);
+    const overdueCount = Number(row.overdue_count || 0);
+    const dueTodayCount = Number(row.due_today_count || 0);
 
     const taskStats = [
       {
@@ -245,7 +293,7 @@ export class TasksQueryService {
       },
     ];
 
-    const formattedTasks = tasks.map((task: any) => {
+    const formattedTasks = tasksList.map((task: any) => {
       const checklistArray = Array.isArray(task.checklist)
         ? (task.checklist as any[])
         : [];
@@ -258,10 +306,11 @@ export class TasksQueryService {
           ? Math.round((completedChecklist / totalChecklist) * 100)
           : task.status === 'COMPLETED'
             ? 100
-            : 0;
+            : (task.progress || 0);
+      const dueDateObj = task.dueDate ? new Date(task.dueDate) : null;
       const isTaskOverdue = Boolean(
-        task.dueDate &&
-        task.dueDate < now &&
+        dueDateObj &&
+        dueDateObj < now &&
         task.status !== 'COMPLETED' &&
         task.status !== 'CANCELLED',
       );
@@ -279,9 +328,9 @@ export class TasksQueryService {
             : task.status,
         priority: task.priority,
         dueDate: formatRelativeDate(task.dueDate, { fallback: 'No due date' }),
-        dueDateValue: task.dueDate ? task.dueDate.toISOString() : null,
+        dueDateValue: dueDateObj ? dueDateObj.toISOString() : null,
         reminderDate: task.reminderDate
-          ? task.reminderDate.toISOString()
+          ? new Date(task.reminderDate).toISOString()
           : null,
         assignedToId: task.assignedToId,
         createdById: task.createdById,
@@ -295,10 +344,10 @@ export class TasksQueryService {
           ? (task.attachments as any[])
           : [],
 
-        completedAt: task.completedAt ? task.completedAt.toISOString() : null,
-        deletedAt: task.deletedAt ? task.deletedAt.toISOString() : null,
-        createdAt: task.createdAt.toISOString(),
-        updatedAt: task.updatedAt.toISOString(),
+        completedAt: task.completedAt ? new Date(task.completedAt).toISOString() : null,
+        deletedAt: task.deletedAt ? new Date(task.deletedAt).toISOString() : null,
+        createdAt: new Date(task.createdAt).toISOString(),
+        updatedAt: new Date(task.updatedAt).toISOString(),
 
         assignedTo: task.assignedTo
           ? {
@@ -327,13 +376,13 @@ export class TasksQueryService {
             }
           : null,
         relatedMeeting: task.relatedMeeting
-          ? { id: task.relatedMeeting.id, name: task.relatedMeeting.title }
+          ? { id: task.relatedMeeting.id, name: task.relatedMeeting.title || task.relatedMeeting.name }
           : null,
         relatedQuotation: task.relatedQuotation
           ? {
               id: task.relatedQuotation.id,
-              name: task.relatedQuotation.quoteNumber,
-              company: task.relatedQuotation.client,
+              name: task.relatedQuotation.quoteNumber || task.relatedQuotation.name,
+              company: task.relatedQuotation.client || task.relatedQuotation.company,
               amount: Number(task.relatedQuotation.amount),
             }
           : null,

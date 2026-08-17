@@ -46,46 +46,118 @@ export class ContactsService implements OnModuleInit {
   async getCustomers(tenantId: string, query: PaginationQueryDto) {
     const page = Math.max(1, query.page || 1);
     const limit = Math.max(1, Math.min(query.limit || 1000, 10000));
-    const search = query.search || '';
-    const skip = (page - 1) * limit;
+    const search = query.search?.trim();
+    const offset = (page - 1) * limit;
 
-    const where: Prisma.CustomerWhereInput = { tenantId, deletedAt: null };
+    const whereConditions: Prisma.Sql[] = [
+      Prisma.sql`c."tenantId" = ${tenantId}`,
+      Prisma.sql`c."deletedAt" IS NULL`,
+    ];
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { company: { contains: search, mode: 'insensitive' } },
-      ];
+      const searchPattern = `%${search}%`;
+      whereConditions.push(
+        Prisma.sql`(c."name" ILIKE ${searchPattern} OR c."email" ILIKE ${searchPattern} OR c."company" ILIKE ${searchPattern})`,
+      );
     }
 
-    const [customers, total] = await Promise.all([
-      this.prisma.customer.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          _count: {
-            select: { deals: { where: { status: { not: 'LOST' } } } },
-          },
-          deals: {
-            select: { value: true, stage: true },
-          },
-        },
-      }),
-      this.prisma.customer.count({ where }),
-    ]);
+    const whereSql = Prisma.join(whereConditions, ' AND ');
 
-    const mappedCustomers = customers.map((c) => {
-      const dealsRevenue = c.deals
-        .filter((d) => d.stage !== 'LOST')
-        .reduce((sum, d) => sum + Number(d.value || 0), 0);
+    const rawCustomers = await this.prisma.$queryRaw<Array<{
+      id: string;
+      tenantId: string;
+      assignedToId: string | null;
+      name: string;
+      company: string;
+      email: string | null;
+      status: CustomerStatus;
+      revenue: number | string;
+      lastContactAt: Date | null;
+      deletedAt: Date | null;
+      createdAt: Date;
+      updatedAt: Date;
+      leadId: string | null;
+      companyId: string | null;
+      deals_count: number;
+      deals_revenue: number;
+      full_count: number;
+    }>>`
+      SELECT
+        c."id",
+        c."tenantId",
+        c."assignedToId",
+        c."name",
+        c."company",
+        c."email",
+        c."status",
+        c."revenue"::float as revenue,
+        c."lastContactAt",
+        c."deletedAt",
+        c."createdAt",
+        c."updatedAt",
+        c."leadId",
+        c."companyId",
+        COALESCE(d.deals_count, 0)::int as deals_count,
+        COALESCE(d.deals_revenue, 0)::float as deals_revenue,
+        COUNT(*) OVER()::int as full_count
+      FROM "Customer" c
+      LEFT JOIN (
+        SELECT
+          "customerId",
+          COUNT(*)::int as deals_count,
+          COALESCE(SUM("value"), 0)::float as deals_revenue
+        FROM "Deal"
+        WHERE "stage" <> 'LOST'::"DealStage" AND "deletedAt" IS NULL
+        GROUP BY "customerId"
+      ) d ON c."id" = d."customerId"
+      WHERE ${whereSql}
+      ORDER BY c."createdAt" DESC
+      LIMIT ${limit} OFFSET ${offset};
+    `;
+
+    let total = 0;
+    if (rawCustomers.length > 0) {
+      total = Number(rawCustomers[0].full_count);
+    } else if (offset > 0) {
+      // If beyond range on page > 1, get actual count
+      total = await this.prisma.customer.count({
+        where: {
+          tenantId,
+          deletedAt: null,
+          ...(search
+            ? {
+                OR: [
+                  { name: { contains: search, mode: 'insensitive' } },
+                  { email: { contains: search, mode: 'insensitive' } },
+                  { company: { contains: search, mode: 'insensitive' } },
+                ],
+              }
+            : {}),
+        },
+      });
+    }
+
+    const mappedCustomers = rawCustomers.map((c) => {
+      const dealsRevenue = Number(c.deals_revenue || 0);
+      const baseRevenue = Number(c.revenue || 0);
 
       return {
-        ...c,
-        dealsCount: c._count.deals,
-        revenueValue: dealsRevenue > 0 ? dealsRevenue : Number(c.revenue || 0),
+        id: c.id,
+        tenantId: c.tenantId,
+        assignedToId: c.assignedToId,
+        name: c.name,
+        company: c.company,
+        email: c.email,
+        status: c.status,
+        revenue: c.revenue,
+        lastContactAt: c.lastContactAt,
+        deletedAt: c.deletedAt,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        leadId: c.leadId,
+        companyId: c.companyId,
+        dealsCount: Number(c.deals_count || 0),
+        revenueValue: dealsRevenue > 0 ? dealsRevenue : baseRevenue,
       };
     });
 

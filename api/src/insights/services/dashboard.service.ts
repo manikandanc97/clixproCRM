@@ -19,7 +19,9 @@ export class DashboardService {
   }
 
   async getDashboardData(tenantId: string, timeframe = 'month') {
+    const tStart = performance.now();
     const currency = await this.getTenantCurrency(tenantId);
+    const tCurr = performance.now();
 
     const now = new Date();
     let currentStart = new Date(now);
@@ -58,6 +60,9 @@ export class DashboardService {
     const currentYear = new Date().getFullYear();
     const startOfCurrentYear = new Date(currentYear, 0, 1);
 
+    const qTimings: Record<string, number> = {};
+
+    const tQueriesStart = performance.now();
     const [
       statsRaw,
       monthlySalesRaw,
@@ -69,117 +74,158 @@ export class DashboardService {
       revenueTargetData,
     ] = await Promise.all([
       // 1. Consolidated Key Metric Counts & Sums in a Single DB Query
-      this.prisma.$queryRaw<
-        Array<{
-          total_deals: number;
-          current_period_deals: number;
-          prev_period_deals: number;
-          current_period_revenue: number;
-          prev_period_revenue: number;
-          current_period_customers: number;
-          prev_period_customers: number;
-          pending_tasks_total: number;
-          current_period_pending_tasks: number;
-          prev_period_pending_tasks: number;
-        }>
-      >`
-        SELECT
-          (SELECT COUNT(*)::int FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL) as total_deals,
-          (SELECT COUNT(*)::int FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${currentStart} AND "createdAt" < ${nextStart}) as current_period_deals,
-          (SELECT COUNT(*)::int FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_period_deals,
-          (SELECT COALESCE(SUM("value"), 0)::float FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "stage" = 'WON'::"DealStage" AND "updatedAt" >= ${currentStart} AND "updatedAt" < ${nextStart}) as current_period_revenue,
-          (SELECT COALESCE(SUM("value"), 0)::float FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "stage" = 'WON'::"DealStage" AND "updatedAt" >= ${previousStart} AND "updatedAt" < ${currentStart}) as prev_period_revenue,
-          (SELECT COUNT(*)::int FROM "Customer" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${currentStart} AND "createdAt" < ${nextStart}) as current_period_customers,
-          (SELECT COUNT(*)::int FROM "Customer" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_period_customers,
-          (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "status" != 'COMPLETED'::"TaskStatus") as pending_tasks_total,
-          (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "status" != 'COMPLETED'::"TaskStatus" AND "createdAt" >= ${currentStart} AND "createdAt" < ${nextStart}) as current_period_pending_tasks,
-          (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "status" != 'COMPLETED'::"TaskStatus" AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_period_pending_tasks
-      `,
+      (async () => {
+        const t0 = performance.now();
+        const res = await this.prisma.$queryRaw<
+          Array<{
+            total_deals: number;
+            current_period_deals: number;
+            prev_period_deals: number;
+            current_period_revenue: number;
+            prev_period_revenue: number;
+            current_period_customers: number;
+            prev_period_customers: number;
+            pending_tasks_total: number;
+            current_period_pending_tasks: number;
+            prev_period_pending_tasks: number;
+          }>
+        >`
+          SELECT
+            (SELECT COUNT(*)::int FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL) as total_deals,
+            (SELECT COUNT(*)::int FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${currentStart} AND "createdAt" < ${nextStart}) as current_period_deals,
+            (SELECT COUNT(*)::int FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_period_deals,
+            (SELECT COALESCE(SUM("value"), 0)::float FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "stage" = 'WON'::"DealStage" AND "updatedAt" >= ${currentStart} AND "updatedAt" < ${nextStart}) as current_period_revenue,
+            (SELECT COALESCE(SUM("value"), 0)::float FROM "Deal" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "stage" = 'WON'::"DealStage" AND "updatedAt" >= ${previousStart} AND "updatedAt" < ${currentStart}) as prev_period_revenue,
+            (SELECT COUNT(*)::int FROM "Customer" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${currentStart} AND "createdAt" < ${nextStart}) as current_period_customers,
+            (SELECT COUNT(*)::int FROM "Customer" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_period_customers,
+            (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "status" != 'COMPLETED'::"TaskStatus") as pending_tasks_total,
+            (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "status" != 'COMPLETED'::"TaskStatus" AND "createdAt" >= ${currentStart} AND "createdAt" < ${nextStart}) as current_period_pending_tasks,
+            (SELECT COUNT(*)::int FROM "Task" WHERE "tenantId" = ${tenantId} AND "deletedAt" IS NULL AND "status" != 'COMPLETED'::"TaskStatus" AND "createdAt" >= ${previousStart} AND "createdAt" < ${currentStart}) as prev_period_pending_tasks
+        `;
+        qTimings['Q1_statsRaw'] = performance.now() - t0;
+        return res;
+      })(),
 
       // 2. Aggregated Year-to-Date Won Deals Sales Chart by Month
-      this.prisma.$queryRaw<
-        Array<{
-          month_index: number;
-          total: number;
-        }>
-      >`
-        SELECT 
-          (EXTRACT(MONTH FROM "updatedAt")::int - 1) as month_index,
-          COALESCE(SUM("value"), 0)::float as total
-        FROM "Deal"
-        WHERE "tenantId" = ${tenantId} 
-          AND "deletedAt" IS NULL 
-          AND "stage" = 'WON'::"DealStage" 
-          AND "updatedAt" >= ${startOfCurrentYear}
-        GROUP BY (EXTRACT(MONTH FROM "updatedAt")::int - 1)
-      `,
+      (async () => {
+        const t0 = performance.now();
+        const res = await this.prisma.$queryRaw<
+          Array<{
+            month_index: number;
+            total: number;
+          }>
+        >`
+          SELECT 
+            (EXTRACT(MONTH FROM "updatedAt")::int - 1) as month_index,
+            COALESCE(SUM("value"), 0)::float as total
+          FROM "Deal"
+          WHERE "tenantId" = ${tenantId} 
+            AND "deletedAt" IS NULL 
+            AND "stage" = 'WON'::"DealStage" 
+            AND "updatedAt" >= ${startOfCurrentYear}
+          GROUP BY (EXTRACT(MONTH FROM "updatedAt")::int - 1)
+        `;
+        qTimings['Q2_monthlySalesRaw'] = performance.now() - t0;
+        return res;
+      })(),
 
       // 3. Sparkline Deal Counts (Last 7 Days)
-      this.prisma.$queryRaw<
-        Array<{
-          day_date: Date;
-          deal_count: number;
-        }>
-      >`
-        SELECT
-          DATE_TRUNC('day', "createdAt")::date as day_date,
-          COUNT(*)::int as deal_count
-        FROM "Deal"
-        WHERE "tenantId" = ${tenantId} 
-          AND "deletedAt" IS NULL 
-          AND "createdAt" >= ${sevenDaysAgo}
-        GROUP BY DATE_TRUNC('day', "createdAt")::date
-      `,
+      (async () => {
+        const t0 = performance.now();
+        const res = await this.prisma.$queryRaw<
+          Array<{
+            day_date: Date;
+            deal_count: number;
+          }>
+        >`
+          SELECT
+            DATE_TRUNC('day', "createdAt")::date as day_date,
+            COUNT(*)::int as deal_count
+          FROM "Deal"
+          WHERE "tenantId" = ${tenantId} 
+            AND "deletedAt" IS NULL 
+            AND "createdAt" >= ${sevenDaysAgo}
+          GROUP BY DATE_TRUNC('day', "createdAt")::date
+        `;
+        qTimings['Q3_sparklineDealsRaw'] = performance.now() - t0;
+        return res;
+      })(),
 
       // 4. Sparkline Won Revenue (Last 7 Days)
-      this.prisma.$queryRaw<
-        Array<{
-          day_date: Date;
-          revenue: number;
-        }>
-      >`
-        SELECT
-          DATE_TRUNC('day', "updatedAt")::date as day_date,
-          COALESCE(SUM("value"), 0)::float as revenue
-        FROM "Deal"
-        WHERE "tenantId" = ${tenantId} 
-          AND "deletedAt" IS NULL 
-          AND "stage" = 'WON'::"DealStage" 
-          AND "updatedAt" >= ${sevenDaysAgo}
-        GROUP BY DATE_TRUNC('day', "updatedAt")::date
-      `,
+      (async () => {
+        const t0 = performance.now();
+        const res = await this.prisma.$queryRaw<
+          Array<{
+            day_date: Date;
+            revenue: number;
+          }>
+        >`
+          SELECT
+            DATE_TRUNC('day', "updatedAt")::date as day_date,
+            COALESCE(SUM("value"), 0)::float as revenue
+          FROM "Deal"
+          WHERE "tenantId" = ${tenantId} 
+            AND "deletedAt" IS NULL 
+            AND "stage" = 'WON'::"DealStage" 
+            AND "updatedAt" >= ${sevenDaysAgo}
+          GROUP BY DATE_TRUNC('day', "updatedAt")::date
+        `;
+        qTimings['Q4_sparklineRevenueRaw'] = performance.now() - t0;
+        return res;
+      })(),
 
       // 5. Recent Deals (take 5)
-      this.prisma.deal.findMany({
-        where: { tenantId, deletedAt: null },
-        select: { id: true, name: true, createdAt: true },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-      }),
+      (async () => {
+        const t0 = performance.now();
+        const res = await this.prisma.deal.findMany({
+          where: { tenantId, deletedAt: null },
+          select: { id: true, name: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        });
+        qTimings['Q5_recentDeals'] = performance.now() - t0;
+        return res;
+      })(),
 
       // 6. Recent Quotations (take 5)
-      this.prisma.quotation.findMany({
-        where: { tenantId, deletedAt: null },
-        select: { id: true, client: true, createdAt: true },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-      }),
+      (async () => {
+        const t0 = performance.now();
+        const res = await this.prisma.quotation.findMany({
+          where: { tenantId, deletedAt: null },
+          select: { id: true, client: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        });
+        qTimings['Q6_recentQuotations'] = performance.now() - t0;
+        return res;
+      })(),
 
       // 7. Recent Completed Tasks (take 5)
-      this.prisma.task.findMany({
-        where: { tenantId, deletedAt: null, status: 'COMPLETED' },
-        select: { id: true, title: true, updatedAt: true },
-        orderBy: { updatedAt: 'desc' },
-        take: 5,
-      }),
+      (async () => {
+        const t0 = performance.now();
+        const res = await this.prisma.task.findMany({
+          where: { tenantId, deletedAt: null, status: 'COMPLETED' },
+          select: { id: true, title: true, updatedAt: true },
+          orderBy: { updatedAt: 'desc' },
+          take: 5,
+        });
+        qTimings['Q7_recentCompletedTasks'] = performance.now() - t0;
+        return res;
+      })(),
 
       // 8. Active Revenue Target
-      this.prisma.revenueTarget.findFirst({
-        where: { tenantId, isActive: true },
-        orderBy: { createdAt: 'desc' },
-        select: { value: true },
-      }),
+      (async () => {
+        const t0 = performance.now();
+        const res = await this.prisma.revenueTarget.findFirst({
+          where: { tenantId, isActive: true },
+          orderBy: { createdAt: 'desc' },
+          select: { value: true },
+        });
+        qTimings['Q8_revenueTargetData'] = performance.now() - t0;
+        return res;
+      })(),
     ]);
+    const tQueriesEnd = performance.now();
 
     const stats = statsRaw[0] || {
       total_deals: 0,
@@ -315,6 +361,26 @@ export class DashboardService {
       change: formatPercentage(targetChange / 100),
       positive: targetChange >= 100,
     };
+
+    const tEnd = performance.now();
+    const currencyTime = tCurr - tStart;
+    const queriesTotal = tQueriesEnd - tQueriesStart;
+    const businessLogicTime = tEnd - tQueriesEnd;
+    const totalServiceTime = tEnd - tStart;
+
+    console.log('\n[PROFILE: DashboardService.getDashboardData]');
+    console.log(`- Tenant currency resolution: ${currencyTime.toFixed(2)} ms`);
+    console.log(`- Q1 statsRaw: ${(qTimings['Q1_statsRaw'] || 0).toFixed(2)} ms`);
+    console.log(`- Q2 monthlySalesRaw: ${(qTimings['Q2_monthlySalesRaw'] || 0).toFixed(2)} ms`);
+    console.log(`- Q3 sparklineDealsRaw: ${(qTimings['Q3_sparklineDealsRaw'] || 0).toFixed(2)} ms`);
+    console.log(`- Q4 sparklineRevenueRaw: ${(qTimings['Q4_sparklineRevenueRaw'] || 0).toFixed(2)} ms`);
+    console.log(`- Q5 recentDeals: ${(qTimings['Q5_recentDeals'] || 0).toFixed(2)} ms`);
+    console.log(`- Q6 recentQuotations: ${(qTimings['Q6_recentQuotations'] || 0).toFixed(2)} ms`);
+    console.log(`- Q7 recentCompletedTasks: ${(qTimings['Q7_recentCompletedTasks'] || 0).toFixed(2)} ms`);
+    console.log(`- Q8 revenueTargetData: ${(qTimings['Q8_revenueTargetData'] || 0).toFixed(2)} ms`);
+    console.log(`- All 8 Queries (Promise.all elapsed): ${queriesTotal.toFixed(2)} ms`);
+    console.log(`- In-Memory Business Logic / Formatting: ${businessLogicTime.toFixed(2)} ms`);
+    console.log(`- Total DashboardService Duration: ${totalServiceTime.toFixed(2)} ms\n`);
 
     return {
       stats: dashboardStats,
