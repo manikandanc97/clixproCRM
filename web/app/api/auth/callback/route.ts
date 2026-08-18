@@ -7,6 +7,8 @@ export async function GET(request: Request) {
   const errorParam = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')
 
+  const isPopupParam = requestUrl.searchParams.get('popup') === '1' || requestUrl.searchParams.get('popup') === 'true';
+
   const sendResponse = (isSuccess: boolean, errorMessage?: string) => {
     const escapedErrorMessage = (errorMessage || 'An error occurred during authentication. You can close this window and try again.')
       .replace(/\\/g, '\\\\')
@@ -118,18 +120,18 @@ export async function GET(request: Request) {
     <script>
       (function() {
         var isSuccess = ${isSuccess ? 'true' : 'false'};
+        var isPopupUrlParam = ${isPopupParam ? 'true' : 'false'};
         var messageType = isSuccess ? 'CLIXPROCRM_GOOGLE_AUTH_SUCCESS' : 'CLIXPROCRM_GOOGLE_AUTH_ERROR';
-        var isPopup = false;
+        var isPopup = isPopupUrlParam || (window.name === 'clixprocrm_google_auth') || (window.opener && window.opener !== window) || (window.innerWidth < 650 && window.innerHeight < 800);
 
-        // 1. PostMessage to opener
+        // 1. PostMessage to opener if available
         try {
           if (window.opener && window.opener !== window) {
-            isPopup = true;
             window.opener.postMessage({ type: messageType }, window.location.origin);
           }
         } catch (e) {}
 
-        // 2. BroadcastChannel
+        // 2. BroadcastChannel across same-origin tabs/windows
         try {
           if (typeof BroadcastChannel !== 'undefined') {
             var channel = new BroadcastChannel('clixprocrm_google_auth_channel');
@@ -146,27 +148,34 @@ export async function GET(request: Request) {
           }));
         } catch (e) {}
 
-        // Attempt to close popup automatically
-        setTimeout(function() {
-          try {
-            window.close();
-          } catch (e) {}
-
+        if (isPopup) {
+          // In popup mode, attempt to close popup and never navigate popup to dashboard
           setTimeout(function() {
-            var statusEl = document.getElementById('status-text');
-            var btnEl = document.getElementById('close-btn');
-            if (statusEl) {
-              statusEl.innerText = isSuccess ? 'You are now signed in. You may close this window.' : 'You can close this window and try again.';
-            }
-            if (btnEl) {
-              btnEl.style.display = 'inline-block';
-            }
-            // If in main tab and success, navigate to dashboard
-            if (!isPopup && isSuccess) {
+            try {
+              window.close();
+            } catch (e) {}
+
+            setTimeout(function() {
+              var statusEl = document.getElementById('status-text');
+              var btnEl = document.getElementById('close-btn');
+              if (statusEl) {
+                statusEl.innerText = isSuccess ? 'You are now signed in. You may close this window.' : 'You can close this window and try again.';
+              }
+              if (btnEl) {
+                btnEl.style.display = 'inline-block';
+              }
+            }, 300);
+          }, 200);
+        } else {
+          // Direct navigation fallback (non-popup mode only)
+          setTimeout(function() {
+            if (isSuccess) {
               window.location.replace('/dashboard');
+            } else {
+              window.location.replace('/login?error=' + encodeURIComponent('${escapedErrorMessage}'));
             }
           }, 300);
-        }, 200);
+        }
       })();
     </script>
   </body>

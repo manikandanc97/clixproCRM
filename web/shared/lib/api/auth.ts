@@ -196,14 +196,15 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     popup = window.open(
       "about:blank",
       "clixprocrm_google_auth",
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no`
+      `width=${width},height=${height},left=${left},top=${top},popup=1,toolbar=no,menubar=no,location=no,status=no,scrollbars=yes,resizable=yes`
     );
   } catch {
     popup = null;
   }
 
   const supabase = createClient();
-  const callbackUrl = getAuthRedirectUrl("/api/auth/callback");
+  const popupCallbackUrl = getAuthRedirectUrl("/api/auth/callback?popup=1");
+  const directCallbackUrl = getAuthRedirectUrl("/api/auth/callback");
 
   // If popup is blocked by browser, smoothly fallback to standard full-page redirect flow
   if (!popup || popup.closed || typeof popup.closed === "undefined") {
@@ -211,7 +212,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: callbackUrl,
+        redirectTo: directCallbackUrl,
       },
     });
 
@@ -244,7 +245,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: callbackUrl,
+        redirectTo: popupCallbackUrl,
         skipBrowserRedirect: true,
       },
     });
