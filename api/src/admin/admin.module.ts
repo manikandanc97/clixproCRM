@@ -6,6 +6,7 @@ import { RoleManagementController } from './controllers/role-management.controll
 import { DepartmentsService } from './services/departments.service';
 import { EmployeesService } from './services/employees.service';
 import { RolesService } from './services/roles.service';
+import { RoleStatsService } from './services/role-stats.service';
 
 @Module({
   controllers: [
@@ -14,6 +15,6 @@ import { RolesService } from './services/roles.service';
     RolesController,
     RoleManagementController,
   ],
-  providers: [DepartmentsService, EmployeesService, RolesService],
+  providers: [DepartmentsService, EmployeesService, RolesService, RoleStatsService],
 })
 export class AdminModule {}

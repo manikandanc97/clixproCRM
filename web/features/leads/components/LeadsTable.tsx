@@ -20,20 +20,15 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { FormModal } from "@/shared/components/form-modal";
-import { LeadForm } from "@/features/forms/LeadForm";
-import { TaskForm } from "@/features/forms/TaskForm";
-import { CustomerForm } from "@/features/forms/CustomerForm";
-import { MeetingForm } from "@/features/forms/MeetingForm";
-import { StageTransitionModal } from "./StageTransitionModal";
-import { ConfirmMoveModal } from "@/features/pipeline/components/ConfirmMoveModal";
-import { WonLostModal, WonLostSubmitData } from "@/features/pipeline/components/WonLostModal";
-import { ConvertLeadModal } from "./ConvertLeadModal";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import { useUpdateLead } from "@/shared/hooks/use-crm";
 import { updateLead } from "@/shared/lib/api/crm";
 import { LEAD_STATUS_LABELS } from "@/lib/crm-formatters";
 import { useRouter } from "next/navigation";
+import { WonLostSubmitData } from "@/features/pipeline/components/WonLostModal";
+import { LeadBulkActionToolbar } from "./LeadBulkActionToolbar";
+import { LeadMobileCards } from "./LeadMobileCards";
+import { LeadModalsHost } from "./LeadModalsHost";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -673,117 +668,21 @@ const LeadsTable = ({
       </div>
 
       {/* Mobile Card View */}
-      <div className="grid grid-cols-1 gap-4 md:hidden flex-auto overflow-y-auto pr-1">
-        {paginatedLeads.map((lead) => (
-          <div key={lead.id} className="bg-card rounded-xl border border-border shadow-sm p-4 space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <Checkbox 
-                  checked={selectedIds.includes(lead.id)}
-                  onCheckedChange={() => toggleSelect(lead.id)}
-                />
-                <Avatar className="w-10 h-10 rounded-full border shadow-sm">
-                  <AvatarFallback className="bg-primary/5 text-primary font-bold text-xs">
-                    {lead.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-bold text-sm text-foreground">{lead.name}</p>
-                  <p className="text-xs text-muted-foreground font-medium">{lead.company}</p>
-                </div>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingLead(lead); }}>Edit Lead</DropdownMenuItem>
-                  
-                  {lead.stage === LeadStatus.WON && (
-                    <>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if(lead.customerId) router.push(`/customers/${lead.customerId}`); else toast.error("Customer ID not found"); }}>View Customer</DropdownMenuItem>
-                      {lead.isConverted && (
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setConvertLead(lead); }} className="text-emerald-600 focus:text-emerald-700 font-medium">View Deal Conversion</DropdownMenuItem>
-                      )}
-                    </>
-                  )}
-
-                  {lead.stage === LeadStatus.LOST ? (
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }}>Reopen Lead</DropdownMenuItem>
-                  ) : lead.stage !== LeadStatus.WON ? (
-                    <>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setConvertLead(lead); }} className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950 font-medium">Convert to Deal</DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setStageTransitionLead(lead); }}>Move Stage</DropdownMenuItem>
-                    </>
-                  ) : null}
-
-                  <DropdownMenuSeparator />
-
-                  {lead.stage !== LeadStatus.LOST && (
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setTaskLead(lead); }}>Create Task</DropdownMenuItem>
-                  )}
-                  
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setMeetingLead(lead); }}>Schedule Meeting</DropdownMenuItem>
-                  
-                  {lead.stage !== LeadStatus.LOST && (
-                    <>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Email Draft", lead.name, lead); }}>Send Email</DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(e, "Call Initiated", lead.name, lead); }}>Call</DropdownMenuItem>
-                    </>
-                  )}
-
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDeletingLead(lead); }} variant="destructive">Delete Lead</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3 bg-muted/30 p-3 rounded-lg border border-border/50">
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Stage</span>
-                <div>
-                  <StatusBadge status={lead.status} variant={statusVariantMap[lead.stage] || "slate"} />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Value</span>
-                <p className="text-sm font-bold text-foreground">{lead.valueAmount ? formatCurrency(lead.valueAmount) : formatCurrency(Number(String(lead.value).replace(/[^0-9.-]+/g,"")))}</p>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Priority</span>
-                <div>
-                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", getPriorityColor(lead.priority))}>
-                    {lead.priority || "Low"}
-                  </Badge>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Next Follow-up</span>
-                {lead.stage === LeadStatus.WON ? (
-                  <p className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Completed
-                  </p>
-                ) : (
-                  <p className={cn("text-xs font-medium", isOverdue(lead.followUpAt) ? "text-rose-600" : "text-foreground")}>
-                    {lead.followUp}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 pt-2 border-t border-border/50">
-              <Button variant="outline" size="sm" className="flex-1 gap-2 h-9 text-xs" onClick={(e) => handleAction(e, "Email Draft", lead.name, lead)}>
-                <Mail className="w-3.5 h-3.5" /> Email
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1 gap-2 h-9 text-xs" onClick={(e) => handleAction(e, "Call Initiated", lead.name, lead)}>
-                <Phone className="w-3.5 h-3.5" /> Call
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <LeadMobileCards
+        leads={paginatedLeads}
+        selectedIds={selectedIds}
+        statusVariantMap={statusVariantMap}
+        getPriorityColor={getPriorityColor}
+        isOverdue={isOverdue}
+        onToggleSelect={toggleSelect}
+        onEditLead={setEditingLead}
+        onConvertLead={setConvertLead}
+        onStageTransitionLead={setStageTransitionLead}
+        onCreateTask={setTaskLead}
+        onScheduleMeeting={setMeetingLead}
+        onDeleteLead={setDeletingLead}
+        onAction={handleAction}
+      />
 
       {/* Pagination */}
       {sortedLeads.length > 10 && (
@@ -865,226 +764,48 @@ const LeadsTable = ({
       )}
 
       {/* Bulk Action Toolbar */}
-      <AnimatePresence>
-        {selectedIds.length > 0 && (
-          <motion.div
-            initial={{ y: 50, opacity: 0, x: "-50%" }}
-            animate={{ y: 0, opacity: 1, x: "-50%" }}
-            exit={{ y: 50, opacity: 0, x: "-50%" }}
-            className="fixed bottom-8 left-1/2 z-50 w-[90%] md:w-auto"
-          >
-            <div className="bg-foreground text-background rounded-xl px-6 py-4 shadow-premium flex flex-col md:flex-row items-center gap-4 md:gap-6 border border-border/10 backdrop-blur-xl">
-               <div className="flex items-center gap-3 md:pr-6 md:border-r border-background/20 w-full md:w-auto justify-between md:justify-start">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-xs shadow-sm">
-                      {selectedIds.length}
-                    </div>
-                    <span className="text-xs font-bold whitespace-nowrap">Leads Selected</span>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="h-8 w-8 p-0 md:hidden text-muted hover:text-background">
-                    <X className="w-4 h-4" />
-                  </Button>
-               </div>
-               <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-                 <Button variant="ghost" size="sm" className="text-background/70 hover:text-background hover:bg-background/10 h-9 whitespace-nowrap" onClick={(e) => handleAction(e, "Bulk Email", `${selectedIds.length} Leads`)}>
-                   <Mail className="size-4 mr-2" /> Email
-                 </Button>
-                 <Button variant="ghost" size="sm" className="text-background/70 hover:text-background hover:bg-background/10 h-9 whitespace-nowrap" onClick={(e) => handleAction(e, "Bulk Update Stage", `${selectedIds.length} Leads`)}>
-                   <Edit2 className="size-4 mr-2" /> Update Stage
-                 </Button>
-                 <Button variant="ghost" size="sm" className="hover:bg-background/10 h-9 whitespace-nowrap text-rose-400 hover:text-rose-300" onClick={() => setIsBulkDeleting(true)}>
-                   <Trash2 className="size-4 mr-2" /> Delete
-                 </Button>
-                 <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="h-9 w-9 p-0 hidden md:flex text-muted hover:text-background">
-                   <X className="size-4" />
-                 </Button>
-               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <FormModal
-        title="Edit Lead"
-        description="Update the details of this lead."
-        isOpen={!!editingLead}
-        onOpenChange={(open) => !open && setEditingLead(null)}
-        size="lg"
-      >
-        {editingLead && (
-          <LeadForm 
-            initialData={editingLead}
-            onSuccess={() => setEditingLead(null)} 
-            onCancel={() => setEditingLead(null)} 
-          />
-        )}
-      </FormModal>
-
-      <FormModal
-        title="Create Task"
-        description={`Create a new task for ${taskLead?.name}.`}
-        isOpen={!!taskLead}
-        onOpenChange={(open) => !open && setTaskLead(null)}
-        size="md"
-      >
-        {taskLead && (
-          <TaskForm 
-            onSuccess={() => setTaskLead(null)} 
-            onCancel={() => setTaskLead(null)} 
-          />
-        )}
-      </FormModal>
-
-      <FormModal
-        title="Meeting"
-        description={`Schedule or log a meeting with ${meetingLead?.name}.`}
-        isOpen={!!meetingLead}
-        onOpenChange={(open) => !open && setMeetingLead(null)}
-        size="md"
-      >
-        {meetingLead && (
-          <MeetingForm 
-            defaultLeadId={meetingLead.id}
-            onSuccess={() => setMeetingLead(null)} 
-            onCancel={() => setMeetingLead(null)} 
-          />
-        )}
-      </FormModal>
-
-      <FormModal
-        title="Convert to Customer"
-        description={`Convert ${customerLead?.name} to a customer.`}
-        isOpen={!!customerLead}
-        onOpenChange={(open) => !open && setCustomerLead(null)}
-        size="lg"
-      >
-        {customerLead && (
-          <CustomerForm 
-            initialData={{
-              name: customerLead.name,
-              company: customerLead.company,
-              email: customerLead.email,
-              status: "ACTIVE",
-              revenueValue: customerLead.valueAmount || 0,
-              createdAt: customerLead.createdAt,
-              updatedAt: customerLead.updatedAt,
-            } as ReturnType<typeof JSON.parse>}
-            onSuccess={async () => {
-              // Mark lead as Won
-              try {
-                await updateLead(customerLead.id, { stage: LeadStatus.WON });
-                queryClient.invalidateQueries({ queryKey: ["leads"] });
-                queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-                toast.success(`${customerLead.name} has been marked as Won.`);
-              } catch {
-                toast.error("Failed to update lead status to Won.");
-              }
-              setCustomerLead(null);
-            }}
-            onCancel={() => setCustomerLead(null)} 
-          />
-        )}
-      </FormModal>
-
-      <StageTransitionModal
-        isOpen={!!stageTransitionLead}
-        onClose={() => setStageTransitionLead(null)}
-        lead={stageTransitionLead}
-        onSelectTargetStage={(lead, targetStage) => {
-          setStageTransitionLead(null);
-          setTimeout(() => handleStageChange(stageTransitionLead!, targetStage), 150);
-        }}
+      <LeadBulkActionToolbar
+        selectedIds={selectedIds}
+        onClearSelection={() => setSelectedIds([])}
+        onBulkEmail={() => handleAction({} as any, "Bulk Email", `${selectedIds.length} Leads`)}
+        onBulkUpdateStage={() => handleAction({} as any, "Bulk Update Stage", `${selectedIds.length} Leads`)}
+        onBulkDelete={() => setIsBulkDeleting(true)}
       />
 
-      <ConfirmMoveModal 
-        isOpen={confirmMoveModal.isOpen}
-        deal={confirmMoveModal.deal}
-        targetStage={confirmMoveModal.targetStage}
-        onClose={() => setConfirmMoveModal(prev => ({ ...prev, isOpen: false }))}
-        onSubmit={handleConfirmMoveSubmit}
-        isLoading={isUpdating}
-      />
-
-      <WonLostModal 
-        isOpen={wonLostModal.isOpen}
-        type={wonLostModal.type}
-        deal={wonLostModal.deal}
-        onClose={() => setWonLostModal(prev => ({ ...prev, isOpen: false }))}
-        onSubmit={handleWonLostSubmit}
-        isLoading={isUpdating}
-      />
-
-      <AlertDialog open={!!deletingLead} onOpenChange={(open) => !open && setDeletingLead(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the lead <strong>{deletingLead?.name}</strong>. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              variant="destructive" 
-              onClick={() => {
-                if (deletingLead) {
-                  handleDelete(deletingLead.id, deletingLead.name);
-                  setDeletingLead(null);
-                }
-              }}
-            >
-              Delete Lead
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={isBulkDeleting} onOpenChange={(open) => !isDeletingBulk && setIsBulkDeleting(open)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedIds.length} Leads?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to permanently delete {selectedIds.length} selected leads? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingBulk}>Cancel</AlertDialogCancel>
-            <Button 
-              variant="destructive" 
-              onClick={async () => {
-                await handleBulkDelete(selectedIds);
-                setIsBulkDeleting(false);
-              }}
-              disabled={isDeletingBulk}
-            >
-              {isDeletingBulk ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Deleting...
-                </>
-              ) : (
-                "Delete Leads"
-              )}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AddNoteModal 
-        isOpen={!!addNoteLead} 
-        onOpenChange={(open) => !open && setAddNoteLead(null)} 
-        leadId={addNoteLead} 
-      />
-      
-      <LeadDetailsDrawer
-        isOpen={!!detailsLeadId}
-        onOpenChange={(open) => !open && setDetailsLeadId(null)}
-        leadId={detailsLeadId}
-      />
-
-      <ConvertLeadModal
-        isOpen={!!convertLead}
-        onClose={() => setConvertLead(null)}
-        lead={convertLead}
+      {/* Modals & Dialogs Host */}
+      <LeadModalsHost
+        editingLead={editingLead}
+        setEditingLead={setEditingLead}
+        taskLead={taskLead}
+        setTaskLead={setTaskLead}
+        meetingLead={meetingLead}
+        setMeetingLead={setMeetingLead}
+        customerLead={customerLead}
+        setCustomerLead={setCustomerLead}
+        stageTransitionLead={stageTransitionLead}
+        setStageTransitionLead={setStageTransitionLead}
+        confirmMoveModal={confirmMoveModal}
+        setConfirmMoveModal={setConfirmMoveModal}
+        wonLostModal={wonLostModal}
+        setWonLostModal={setWonLostModal}
+        isUpdating={isUpdating}
+        deletingLead={deletingLead}
+        setDeletingLead={setDeletingLead}
+        isBulkDeleting={isBulkDeleting}
+        setIsBulkDeleting={setIsBulkDeleting}
+        isDeletingBulk={isDeletingBulk}
+        selectedIds={selectedIds}
+        addNoteLead={addNoteLead}
+        setAddNoteLead={setAddNoteLead}
+        detailsLeadId={detailsLeadId}
+        setDetailsLeadId={setDetailsLeadId}
+        convertLead={convertLead}
+        setConvertLead={setConvertLead}
+        handleStageChange={handleStageChange}
+        handleConfirmMoveSubmit={handleConfirmMoveSubmit}
+        handleWonLostSubmit={handleWonLostSubmit}
+        handleDelete={handleDelete}
+        handleBulkDelete={handleBulkDelete}
       />
     </div>
   );

@@ -1,24 +1,41 @@
 import { Controller, Post, Body, Res, UseGuards, Req } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { AiService } from './ai.service';
+import { AiSecurityService } from './ai-security.service';
 import { SupabaseAuthGuard } from '../auth/supabase.guard';
+import { TenantGuard } from '../auth/tenant.guard';
 
-@UseGuards(SupabaseAuthGuard)
+@UseGuards(SupabaseAuthGuard, TenantGuard)
 @Controller('ai')
 export class AiController {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly aiSecurityService: AiSecurityService,
+  ) {}
 
   @Post('chat')
   async chat(@Body() body: any, @Res() res: FastifyReply, @Req() req: any) {
     try {
       const messages = body.messages || [];
-      const model = body.model || 'gemini-flash-latest';
-      const tenantId = body.tenantId || req.headers['x-tenant-id'];
+      const model = body.model || 'gemini-1.5-flash';
+
+      // Tenant and User resolution STRICTLY from authenticated guards
+      const tenantId = req.tenantId;
+      const userId = req.user?.id || req.user?.sub;
+      const userRole = req.userRole;
+
+      // Build full RBAC and hierarchy security context
+      const securityContext =
+        await this.aiSecurityService.buildSecurityContext(
+          userId,
+          tenantId,
+          userRole,
+        );
 
       const streamResult = await this.aiService.generateStream(
         messages,
         model,
-        tenantId,
+        securityContext,
       );
 
       const origin = req.headers.origin || '*';
@@ -29,7 +46,7 @@ export class AiController {
         'Content-Type, Authorization, x-tenant-id',
       );
 
-      // pipeUIMessageStreamToResponse might be synchronous or return a Promise
+      // Pipe UI message stream to response
       const pipePromise = streamResult.pipeUIMessageStreamToResponse(res.raw);
       if (pipePromise && pipePromise.catch) {
         pipePromise.catch((error: any) => {

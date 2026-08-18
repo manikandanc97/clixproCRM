@@ -4,134 +4,52 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma, LeadStage } from '@prisma/client';
-import {
-  formatCurrency,
-  getStatusLabel,
-  toNumber,
-  LEAD_STATUS_LABELS,
-} from '../../common/utils/crm-formatters.util';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { CreateLeadDto } from '../dto/create-lead.dto';
 import { ConvertLeadDto } from '../dto/convert-lead.dto';
 import { UpdateLeadDto } from '../dto/update-lead.dto';
-import { getCachedTenantCurrency } from '../../common/utils/tenant-cache.util';
+import { LeadsQueryService } from './leads.query.service';
+import { LeadsConvertService } from './leads.convert.service';
 
+/**
+ * @file leads/services/leads.service.ts
+ * Leads core CRUD service.
+ * Query & formatting logic is in leads.query.service.ts.
+ * Conversion logic is in leads.convert.service.ts.
+ */
 @Injectable()
 export class LeadsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly leadsQueryService: LeadsQueryService,
+    private readonly leadsConvertService: LeadsConvertService,
+  ) {}
 
-  private async getTenantCurrency(tenantId: string): Promise<string> {
-    return getCachedTenantCurrency(this.prisma, tenantId);
-  }
+  // ─── Query Delegation ───────────────────────────────────────────────────────
 
   async getLeads(
     tenantId: string,
     query: PaginationQueryDto & { stage?: string; status?: string },
   ) {
-    const page = Math.max(1, query.page || 1);
-    const limit = Math.max(1, Math.min(query.limit || 50, 10000));
-    const skip = (page - 1) * limit;
-    const search = query.search || '';
-    const stageQuery = query.stage || query.status || '';
-
-    const where: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
-    if (search) {
-      where.name = { contains: search, mode: 'insensitive' };
-    }
-    if (stageQuery) {
-      where.stage = stageQuery as LeadStage;
-    }
-
-    const [currency, leads, total] = await Promise.all([
-      this.getTenantCurrency(tenantId),
-      this.prisma.lead.findMany({
-        where,
-        orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          name: true,
-          company: true,
-          email: true,
-          phone: true,
-          source: true,
-          stage: true,
-          priority: true,
-          assignedToId: true,
-          value: true,
-          expectedCloseDate: true,
-          tags: true,
-          isConverted: true,
-          convertedAt: true,
-          customerId: true,
-          lastActivityAt: true,
-          createdAt: true,
-          updatedAt: true,
-          _count: { select: { notes: true, meetings: true } },
-          meetings: {
-            where: { startTime: { gte: new Date() } },
-            orderBy: { startTime: 'asc' },
-            take: 1,
-            select: { startTime: true, title: true },
-          },
-        },
-      }),
-      this.prisma.lead.count({ where }),
-    ]);
-
-    return {
-      summary: { total },
-      leads: leads.map((lead) => {
-        const customerId = lead.customerId;
-        return {
-          id: lead.id,
-          name: lead.name,
-          company: lead.company,
-          email: lead.email,
-          phone: lead.phone,
-          source: lead.source,
-          stage: lead.stage,
-          status: getStatusLabel(LEAD_STATUS_LABELS, lead.stage),
-          priority: lead.priority,
-          value: formatCurrency(lead.value, currency),
-          valueAmount: toNumber(lead.value),
-          expectedCloseDate: lead.expectedCloseDate,
-          tags: lead.tags,
-          lastActivityAt: lead.lastActivityAt,
-          createdAt: lead.createdAt,
-          updatedAt: lead.updatedAt,
-          customerId,
-          isConverted: !!customerId || lead.isConverted || lead.stage === 'WON',
-          notesCount: lead._count?.notes || 0,
-          meetingsCount: lead._count?.meetings || 0,
-          upcomingMeeting:
-            lead.meetings && lead.meetings.length > 0 ? lead.meetings[0] : null,
-        };
-      }),
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
+    return this.leadsQueryService.getLeads(tenantId, query);
   }
 
   async getHotLeads(tenantId: string) {
-    const [currency, leads] = await Promise.all([
-      this.getTenantCurrency(tenantId),
-      this.prisma.lead.findMany({
-        where: { tenantId, stage: 'NEW', deletedAt: null },
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        select: { id: true, name: true, company: true, value: true },
-      }),
-    ]);
-    return leads.map((l) => ({
-      id: l.id,
-      name: l.name,
-      company: l.company,
-      score: 90,
-      value: formatCurrency(toNumber(l.value), currency),
-    }));
+    return this.leadsQueryService.getHotLeads(tenantId);
   }
+
+  // ─── Conversion Delegation ──────────────────────────────────────────────────
+
+  async convertLead(
+    tenantId: string,
+    userId: string,
+    leadId: string,
+    data: ConvertLeadDto,
+  ) {
+    return this.leadsConvertService.convertLead(tenantId, userId, leadId, data);
+  }
+
+  // ─── Core CRUD Operations ───────────────────────────────────────────────────
 
   async createLead(tenantId: string, userId: string, data: CreateLeadDto) {
     return this.prisma.$transaction(async (tx) => {
@@ -563,138 +481,5 @@ export class LeadsService {
       return leads;
     });
   }
-
-  async convertLead(
-    tenantId: string,
-    userId: string,
-    leadId: string,
-    data: ConvertLeadDto,
-  ) {
-    const lead = await this.prisma.lead.findUnique({
-      where: { id: leadId, tenantId, deletedAt: null },
-    });
-
-    if (!lead) throw new NotFoundException('Lead not found');
-    if (lead.isConverted)
-      throw new BadRequestException('Lead is already converted');
-
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Resolve Company
-      let finalCompanyId = data.companyId;
-      if (!finalCompanyId && data.companyName) {
-        const existingCompany = await tx.company.findFirst({
-          where: {
-            tenantId,
-            name: { equals: data.companyName, mode: 'insensitive' },
-          },
-        });
-        if (existingCompany) {
-          finalCompanyId = existingCompany.id;
-        } else {
-          const newCompany = await tx.company.create({
-            data: {
-              tenantId,
-              name: data.companyName,
-              ownerId: data.ownerId || userId,
-              status: 'ACTIVE',
-            },
-          });
-          finalCompanyId = newCompany.id;
-        }
-      }
-
-      // 2. Resolve Customer
-      let finalCustomerId = data.customerId;
-      if (!finalCustomerId && data.customerName) {
-        if (data.customerEmail) {
-          const existing = await tx.customer.findFirst({
-            where: { tenantId, email: data.customerEmail, deletedAt: null },
-          });
-          if (existing) finalCustomerId = existing.id;
-        }
-
-        if (!finalCustomerId) {
-          const existingByName = await tx.customer.findFirst({
-            where: {
-              tenantId,
-              name: { equals: data.customerName, mode: 'insensitive' },
-              company: { equals: data.companyName || '', mode: 'insensitive' },
-              deletedAt: null,
-            },
-          });
-          if (existingByName) finalCustomerId = existingByName.id;
-        }
-
-        if (!finalCustomerId) {
-          const newCustomer = await tx.customer.create({
-            data: {
-              tenantId,
-              name: data.customerName,
-              email: data.customerEmail || lead.email,
-              companyId: finalCompanyId,
-              company: data.companyName || lead.company || '',
-              revenue: data.createDeal ? data.dealValue || lead.value : 0,
-              status: 'ACTIVE',
-              assignedToId: data.ownerId || userId,
-            },
-          });
-          finalCustomerId = newCustomer.id;
-        }
-      }
-
-      // 3. Create Deal
-      let deal = null;
-      if (data.createDeal) {
-        deal = await tx.deal.create({
-          data: {
-            tenantId,
-            name: data.dealName || `${lead.name} Deal`,
-            companyId: finalCompanyId,
-            customerId: finalCustomerId,
-            value: data.dealValue || lead.value,
-            stage: data.dealStage || 'NEW',
-            probability:
-              data.probability !== undefined ? Number(data.probability) : 20,
-            expectedCloseDate: data.expectedCloseDate
-              ? new Date(data.expectedCloseDate)
-              : null,
-            ownerId: data.ownerId || userId,
-            leadId: lead.id,
-            source: lead.source,
-            status: 'OPEN',
-          },
-        });
-      }
-
-      // 4. Update Lead
-      await tx.lead.update({
-        where: { id: lead.id },
-        data: {
-          isConverted: true,
-          convertedAt: new Date(),
-          customerId: finalCustomerId,
-          companyId: finalCompanyId,
-          stage: 'WON',
-        },
-      });
-
-      // 5. Timeline Event
-      await tx.timelineEvent.create({
-        data: {
-          tenantId,
-          action: 'LEAD_CONVERTED',
-          description: deal
-            ? `Lead converted to Deal: ${deal.name}`
-            : `Lead converted to Customer`,
-          userId: userId,
-          leadId: lead.id,
-          dealId: deal?.id,
-          companyId: finalCompanyId,
-          customerId: finalCustomerId,
-        },
-      });
-
-      return { deal, customerId: finalCustomerId, companyId: finalCompanyId };
-    });
-  }
 }
+

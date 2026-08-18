@@ -1,37 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Plus, Pencil, Trash2, ShieldCheck, AlertTriangle, X } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
-import { 
+import React, { useState, useMemo } from "react";
+import {
+  Shield,
+  ShieldCheck,
+  Users,
+  Plus,
+} from "lucide-react";
+import {
+  CRMMetricsGrid,
+  CRMMetricCard,
+  CRMToolbar,
   DataTable,
   CRMTableHeader,
   CRMTableBody,
   CRMTableRow,
-  CRMTableCell,
   CRMTableHeaderCell,
 } from "@/shared/components/crm";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
 import { toast } from "sonner";
 import { RoleManagementSkeleton } from "../RoleManagementSkeleton";
-import { Badge } from "@/shared/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/features/auth/components/auth-provider";
-import { Checkbox } from "@/shared/ui/checkbox";
 import client from "@/shared/lib/api/client";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/shared/ui/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
-import { navLibrary, roleMenuConfig } from "@/shared/lib/auth/rbac/menu-config";
+import { RoleEditorModal } from "./RoleEditorModal";
+import { RoleDetailsDialog } from "./RoleDetailsDialog";
+import { RoleDeleteDialog } from "./RoleDeleteDialog";
+import { RoleTableRows } from "./RoleTableRows";
 
 interface RolePermission {
   module: string;
@@ -41,551 +37,391 @@ interface RolePermission {
 interface Role {
   id: string;
   name: string;
+  description?: string | null;
   isSystem: boolean;
   isActive: boolean;
-  color: string | null;
+  color?: string | null;
+  priority?: number;
   permissions: RolePermission[];
-  _count?: { users: number; permissions: number };
+  _count?: { users: number; permissions: number; invitations?: number };
 }
 
-const usedTitles = new Set<string>();
-Object.values(roleMenuConfig).forEach(navGroups => {
-  navGroups.forEach(group => {
-    group.items.forEach(item => {
-      usedTitles.add(item.title);
-    });
-  });
-});
+const ROLE_SYSTEM_COLORS: Record<string, string> = {
+  "SUPER ADMIN": "#6366f1", // Indigo
+  ADMIN: "#3b82f6",         // Royal Blue
+  MANAGER: "#8b5cf6",       // Violet / Purple
+  SALES: "#f59e0b",         // Amber / Orange
+  EMPLOYEE: "#10b981",      // Emerald Green
+  SUPPORT: "#ec4899",       // Pink
+  FINANCE: "#06b6d4",       // Cyan
+  MARKETING: "#f43f5e",     // Rose
+};
 
-const MODULES = [
-  ...Object.values(navLibrary)
-    .filter(nav => usedTitles.has(nav.title))
-    .map(nav => nav.title),
-  "Help Center"
-];
+export const getRoleColor = (role?: Role | null): string => {
+  if (!role) return "#10b981";
+  const upper = (role.name || "").trim().toUpperCase();
+  if (role.isSystem && ROLE_SYSTEM_COLORS[upper]) {
+    return ROLE_SYSTEM_COLORS[upper];
+  }
+  if (role.color && role.color !== "#10b981") {
+    return role.color;
+  }
+  if (ROLE_SYSTEM_COLORS[upper]) {
+    return ROLE_SYSTEM_COLORS[upper];
+  }
+  const customPalette = [
+    "#8b5cf6",
+    "#3b82f6",
+    "#f59e0b",
+    "#10b981",
+    "#ec4899",
+    "#06b6d4",
+    "#f43f5e",
+    "#6366f1",
+  ];
+  let hash = 0;
+  for (let i = 0; i < role.name.length; i++) {
+    hash = role.name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return customPalette[Math.abs(hash) % customPalette.length];
+};
 
-export function RoleList() {
+export function RoleList({ onCreateRoleTrigger }: { onCreateRoleTrigger?: () => void }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const currentUserRole = (user?.role || "EMPLOYEE").toUpperCase();
+  const canManageRoles =
+    currentUserRole === "SUPER ADMIN" ||
+    currentUserRole === "ADMIN" ||
+    currentUserRole === "OWNER";
+
+  // Search State
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300) || "";
-  
-  // Permissions editing state
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editTargetRole, setEditTargetRole] = useState<Role | null>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editPermissions, setEditPermissions] = useState<string[]>([]);
-  const [newRoleName, setNewRoleName] = useState("");
 
-  // Rename dialog state
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [renameTargetRole, setRenameTargetRole] = useState<Role | null>(null);
-  const [renameValue, setRenameValue] = useState("");
-
-  // Delete dialog state
+  // Modal states
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [viewingRole, setViewingRole] = useState<Role | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteTargetRole, setDeleteTargetRole] = useState<Role | null>(null);
-  
-  const { user } = useAuth();
-  const currentUserRole = user?.role?.toUpperCase() || "EMPLOYEE";
-  const canEditAnyRole = currentUserRole === "SUPER ADMIN" || currentUserRole === "ADMIN";
+  const [deletingRole, setDeletingRole] = useState<Role | null>(null);
+  const [replacementRoleId, setReplacementRoleId] = useState<string>("");
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['roles'],
+  // Editor Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    color: "#3b82f6",
+    permissions: [] as string[],
+  });
+
+  // Queries
+  const { data: rolesData, isLoading: isRolesLoading } = useQuery<{
+    success: boolean;
+    data: Role[];
+  }>({
+    queryKey: ["roles"],
     queryFn: async () => {
-      const res = await client.get("/crm/roles");
+      const res = await client.get("/roles");
       return res.data;
-    }
+    },
   });
 
-  // Save permissions mutation
-  const saveMutation = useMutation({
-    mutationFn: async ({ id, isNew, name }: { id: string; isNew: boolean, name?: string }) => {
-      const url = isNew ? `/crm/roles` : `/crm/roles/${id}`;
-      const method = isNew ? 'POST' : 'PUT';
-      
-      const payload: { permissions: string[]; name?: string; description?: string } = { permissions: editPermissions };
+  const { data: statsData, isLoading: isStatsLoading } = useQuery<{
+    success: boolean;
+    data: { total: number; system: number; custom: number; totalAssignedUsers: number };
+  }>({
+    queryKey: ["roles-stats"],
+    queryFn: async () => {
+      const res = await client.get("/roles/stats");
+      return res.data;
+    },
+  });
+
+  const roles = rolesData?.data || [];
+  const stats = statsData?.data || {
+    total: roles.length,
+    system: roles.filter((r) => r.isSystem).length,
+    custom: roles.filter((r) => !r.isSystem).length,
+    totalAssignedUsers: roles.reduce(
+      (acc, r) => acc + (r._count?.users || 0),
+      0,
+    ),
+  };
+
+  const isLoading = isRolesLoading || isStatsLoading;
+
+  // Filter roles by search
+  const filteredRoles = useMemo(() => {
+    if (!debouncedSearch.trim()) return roles;
+    const q = debouncedSearch.toLowerCase();
+    return roles.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        (r.description && r.description.toLowerCase().includes(q)),
+    );
+  }, [roles, debouncedSearch]);
+
+  const availableReplacementRoles = useMemo(() => {
+    if (!deletingRole) return [];
+    return roles.filter((r) => r.id !== deletingRole.id);
+  }, [roles, deletingRole]);
+
+  // Check form dirty
+  const isFormDirty = useMemo(() => {
+    if (!editingRole) return true;
+    if (formData.name !== editingRole.name) return true;
+    if ((formData.color || "") !== (editingRole.color || "#3b82f6")) return true;
+    const initialPerms = (editingRole.permissions || [])
+      .filter((p) => p.hasAccess)
+      .map((p) => p.module);
+    if (formData.permissions.length !== initialPerms.length) return true;
+    const currentSet = new Set(formData.permissions);
+    return !initialPerms.every((p) => currentSet.has(p));
+  }, [formData, editingRole]);
+
+  // Mutations
+  const saveRoleMutation = useMutation({
+    mutationFn: async ({
+      roleId,
+      isNew,
+      payload,
+    }: {
+      roleId?: string;
+      isNew: boolean;
+      payload: any;
+    }) => {
       if (isNew) {
-        payload.name = name;
-        payload.description = "";
+        const res = await client.post("/roles", payload);
+        return res.data;
+      } else {
+        const res = await client.put(`/roles/${roleId}`, payload);
+        return res.data;
       }
-
-      const res = await client.request({
-        url,
-        method,
-        data: payload
-      });
-      return res.data;
     },
-    onSuccess: () => {
-      toast.success("Role saved successfully");
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
-      setEditDialogOpen(false);
-      setEditTargetRole(null);
-      setCreateDialogOpen(false);
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: ["roles-stats"] });
+      toast.success(
+        variables.isNew
+          ? "Role created successfully!"
+          : "Role updated successfully!",
+      );
+      setEditorOpen(false);
+      setEditingRole(null);
     },
-    onError: (err: Error) => toast.error(err.message)
+    onError: (err: any) => {
+      const msg = err.response?.data?.message || "Failed to save role";
+      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
+    },
   });
 
-  // Rename mutation
-  const renameMutation = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const res = await client.put(`/crm/roles/${id}`, { name });
+  const deleteRoleMutation = useMutation({
+    mutationFn: async ({
+      roleId,
+      replacementId,
+    }: {
+      roleId: string;
+      replacementId?: string;
+    }) => {
+      const query = replacementId ? `?replacementRoleId=${replacementId}` : "";
+      const res = await client.delete(`/roles/${roleId}${query}`);
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Role renamed successfully");
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
-      setRenameDialogOpen(false);
-      setRenameTargetRole(null);
-    },
-    onError: (err: Error) => toast.error(err.message)
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await client.delete(`/crm/roles/${id}`);
-      return res.data;
-    },
-    onSuccess: () => {
-      toast.success("Role deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: ["roles-stats"] });
+      toast.success("Role deleted successfully!");
       setDeleteDialogOpen(false);
-      setDeleteTargetRole(null);
+      setDeletingRole(null);
+      setReplacementRoleId("");
     },
-    onError: (err: Error) => toast.error(err.message)
+    onError: (err: any) => {
+      const msg = err.response?.data?.message || "Failed to delete role";
+      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
+    },
   });
 
-  if (isLoading) return <RoleManagementSkeleton />;
-
-  const roles: Role[] = Array.isArray(data) ? data : (data?.roles || data?.data || []);
-  const filteredRoles = roles.filter((r) => {
-    return r?.name?.toLowerCase().includes(debouncedSearch.toLowerCase());
-  });
-
-  const handleEditClick = (role: Role) => {
-    setEditTargetRole(role);
-    const isSystemAdmin = role.name.toUpperCase() === "ADMIN" || role.name.toUpperCase() === "SUPER ADMIN";
-    
-    if (isSystemAdmin) {
-      setEditPermissions([...MODULES]);
-    } else {
-      const initialPerms: string[] = [];
-      if (role.permissions && Array.isArray(role.permissions)) {
-        role.permissions.forEach((rp) => {
-          if (rp.hasAccess && rp.module) {
-            initialPerms.push(rp.module);
-          }
-        });
-      }
-      setEditPermissions(initialPerms);
+  // Handlers
+  const handleOpenCreate = () => {
+    if (onCreateRoleTrigger) {
+      onCreateRoleTrigger();
+      return;
     }
-    setEditDialogOpen(true);
+    setEditingRole(null);
+    setFormData({
+      name: "",
+      description: "",
+      color: "#3b82f6",
+      permissions: [],
+    });
+    setEditorOpen(true);
   };
 
-  const handleCreateClick = () => {
-    setNewRoleName("");
-    setEditPermissions([]);
-    setCreateDialogOpen(true);
+  const handleOpenEdit = (role: Role) => {
+    setEditingRole(role);
+    const activePerms = (role.permissions || [])
+      .filter((p) => p.hasAccess)
+      .map((p) => p.module);
+    setFormData({
+      name: role.name,
+      description: role.description || "",
+      color: role.color || getRoleColor(role),
+      permissions: activePerms,
+    });
+    setEditorOpen(true);
   };
 
-  const handleRenameClick = (role: Role) => {
-    setRenameTargetRole(role);
-    setRenameValue(role.name);
-    setRenameDialogOpen(true);
+  const handleOpenView = (role: Role) => {
+    setViewingRole(role);
+    setViewDialogOpen(true);
   };
 
-  const handleDeleteClick = (role: Role) => {
-    setDeleteTargetRole(role);
+  const handleOpenDelete = (role: Role) => {
+    setDeletingRole(role);
+    setReplacementRoleId("");
     setDeleteDialogOpen(true);
   };
 
-  const handleToggle = (module: string, checked: boolean) => {
-    setEditPermissions((prev) => {
-      if (checked) {
-        return Array.from(new Set([...prev, module]));
-      } else {
-        return prev.filter((m: string) => m !== module);
-      }
+  const handleSaveEditor = () => {
+    if (!formData.name.trim()) {
+      toast.error("Please enter a role name");
+      return;
+    }
+
+    const payload = {
+      name: formData.name.trim(),
+      description: formData.description?.trim() || null,
+      color: formData.color,
+      permissions: formData.permissions.map((module) => ({
+        module,
+        hasAccess: true,
+      })),
+    };
+
+    saveRoleMutation.mutate({
+      roleId: editingRole?.id,
+      isNew: !editingRole,
+      payload,
     });
   };
 
-  const getModuleBadges = (role: Role) => {
-    const isSystemAdmin = role.name.toUpperCase() === "ADMIN" || role.name.toUpperCase() === "SUPER ADMIN";
-    if (isSystemAdmin && (!role.permissions || role.permissions.length === 0)) {
-      return MODULES;
-    }
-    if (!role.permissions) return [];
-    return Array.from(new Set(role.permissions.filter((rp) => rp.hasAccess && MODULES.includes(rp.module)).map((rp) => rp.module).filter(Boolean))) as string[];
+  const handleDeleteConfirm = () => {
+    if (!deletingRole) return;
+    deleteRoleMutation.mutate({
+      roleId: deletingRole.id,
+      replacementId: replacementRoleId || undefined,
+    });
   };
 
-  const renderInlinePermissionsEditor = (roleName?: string) => {
-    const isSystemAdmin = roleName ? (roleName.toUpperCase() === "ADMIN" || roleName.toUpperCase() === "SUPER ADMIN") : false;
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-3 gap-x-4 py-2 max-h-[300px] overflow-y-auto w-full">
-        {MODULES.map(module => (
-          <label key={module} className={`flex items-center gap-2 text-sm text-foreground ${isSystemAdmin ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:bg-muted/50'} p-1.5 rounded-md transition-colors`}>
-            <Checkbox 
-              className="w-4 h-4"
-              checked={isSystemAdmin ? true : editPermissions.includes(module)}
-              onCheckedChange={(c) => !isSystemAdmin && handleToggle(module, !!c)}
-              disabled={isSystemAdmin}
-            />
-            {module}
-          </label>
-        ))}
-      </div>
-    );
-  };
-
-  const isSystemAdminRole = editTargetRole ? (editTargetRole.name.toUpperCase() === "ADMIN" || editTargetRole.name.toUpperCase() === "SUPER ADMIN") : false;
-  
-  let hasEditChanges = false;
-  if (editTargetRole && !isSystemAdminRole) {
-    const initialPerms = editTargetRole.permissions?.filter(rp => rp.hasAccess).map(rp => rp.module) || [];
-    if (initialPerms.length !== editPermissions.length) {
-      hasEditChanges = true;
-    } else {
-      hasEditChanges = editPermissions.some(p => !initialPerms.includes(p));
-    }
-  }
+  if (isLoading) return <RoleManagementSkeleton />;
 
   return (
-    <>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center bg-card p-4 rounded-lg border">
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search roles..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={cn("pl-9", searchQuery && "pr-9")}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Clear search</span>
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {canEditAnyRole && (
-              <Button onClick={handleCreateClick}>
-                <Plus className="mr-2 h-4 w-4" /> Add Role
-              </Button>
-            )}
-          </div>
-        </div>
+    <div className="space-y-6">
+      {/* ── Standard CRMMetricsGrid matching Contacts & Employees ── */}
+      <CRMMetricsGrid cols={3}>
+        <CRMMetricCard
+          title="Total Roles"
+          value={stats.total}
+          change="0%"
+          trend="up"
+          icon={Shield}
+          color="indigo"
+          delay={0.1}
+        />
+        <CRMMetricCard
+          title="Custom Roles"
+          value={stats.custom}
+          change="Custom"
+          trend="up"
+          icon={ShieldCheck}
+          color="emerald"
+          delay={0.2}
+        />
+        <CRMMetricCard
+          title="Assigned Users"
+          value={stats.totalAssignedUsers}
+          change="Members"
+          trend="up"
+          icon={Users}
+          color="orange"
+          delay={0.3}
+        />
+      </CRMMetricsGrid>
 
-        <div className="border rounded-lg bg-card">
-          <DataTable>
-            <CRMTableHeader>
-              <CRMTableRow>
-                <CRMTableHeaderCell className="w-[22%]">Role Name</CRMTableHeaderCell>
-                <CRMTableHeaderCell className="w-[55%]">Permissions</CRMTableHeaderCell>
-                <CRMTableHeaderCell className="w-[10%]">Status</CRMTableHeaderCell>
-                <CRMTableHeaderCell className="w-[13%] text-right">Actions</CRMTableHeaderCell>
-              </CRMTableRow>
-            </CRMTableHeader>
-            <CRMTableBody>
-              {filteredRoles.length === 0 ? (
-                <CRMTableRow>
-                  <CRMTableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    No roles found
-                  </CRMTableCell>
-                </CRMTableRow>
-              ) : (
-                filteredRoles.map((role) => {
-                  const isSuperAdminTarget = role.name.toUpperCase() === "SUPER ADMIN";
-                  const canEditThisRole = canEditAnyRole && !(currentUserRole === "ADMIN" && isSuperAdminTarget);
-                  const canDeleteThisRole = canEditThisRole && !role.isSystem;
-                  const roleIsActive = role.isSystem ? true : role.isActive;
-                  const modules = getModuleBadges(role);
+      {/* ── Standard CRMToolbar with Search & Action ── */}
+      <CRMToolbar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        placeholder="Search roles by name or description..."
+      >
+        {canManageRoles && (
+          <Button
+            onClick={handleOpenCreate}
+            size="sm"
+            className="h-9 gap-1.5 text-xs font-semibold"
+          >
+            <Plus className="h-4 w-4" />
+            Create Role
+          </Button>
+        )}
+      </CRMToolbar>
 
-                  return (
-                    <CRMTableRow key={role.id}>
-                      <CRMTableCell className="align-top pt-4">
-                        <div className="flex items-center gap-2 font-medium">
-                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role.color || '#3b82f6' }} />
-                          <span>{role.name}</span>
-                          {role.isSystem && (
-                            <Badge variant="secondary" className="ml-1 text-[9px] uppercase tracking-wider py-0 px-1">System</Badge>
-                          )}
-                        </div>
-                      </CRMTableCell>
-                      <CRMTableCell className="align-top pt-4">
-                        <div className="flex flex-wrap gap-1.5">
-                          {modules.length === 0 ? (
-                            <span className="text-sm text-muted-foreground">No permissions assigned</span>
-                          ) : (
-                            <>
-                              {modules.slice(0, 4).map(m => (
-                                <Badge key={m} variant="secondary" className="font-normal text-xs bg-muted/50 text-muted-foreground hover:bg-muted">
-                                  {m}
-                                </Badge>
-                              ))}
-                              {modules.length > 4 && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge variant="outline" className="font-normal text-xs border-dashed text-muted-foreground cursor-help">
-                                        +{modules.length - 4} More
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p className="max-w-[200px] leading-relaxed">
-                                        {modules.slice(4).join(', ')}
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </CRMTableCell>
-                      <CRMTableCell className="align-top pt-4">
-                        <Badge variant={roleIsActive ? "default" : "destructive"} className="font-normal">
-                          {roleIsActive ? 'Active' : 'Disabled'}
-                        </Badge>
-                      </CRMTableCell>
-                      <CRMTableCell className="align-top pt-4 text-right">
-                        {canEditThisRole ? (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8"
-                              onClick={() => handleEditClick(role)}
-                            >
-                              <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                              Edit
-                            </Button>
-                            {!role.isSystem && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                  onClick={() => handleRenameClick(role)}
-                                  title="Rename Role"
-                                >
-                                  <Pencil className="h-4 w-4 text-blue-500" />
-                                </Button>
-                                {canDeleteThisRole && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => handleDeleteClick(role)}
-                                    title="Delete Role"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Restricted</span>
-                        )}
-                      </CRMTableCell>
-                    </CRMTableRow>
-                  );
-                })
-              )}
-            </CRMTableBody>
-          </DataTable>
-        </div>
-      </div>
+      {/* ── Standard DataTable ── */}
+      <DataTable>
+        <CRMTableHeader>
+          <CRMTableRow>
+            <CRMTableHeaderCell className="w-[32%]">Role Name</CRMTableHeaderCell>
+            <CRMTableHeaderCell className="w-[18%]">Assigned Users</CRMTableHeaderCell>
+            <CRMTableHeaderCell className="w-[45%]">Permission Modules</CRMTableHeaderCell>
+            <CRMTableHeaderCell className="w-[5%] text-right">Actions</CRMTableHeaderCell>
+          </CRMTableRow>
+        </CRMTableHeader>
+        <CRMTableBody>
+          <RoleTableRows
+            roles={filteredRoles}
+            canManageRoles={canManageRoles}
+            currentUserRole={currentUserRole}
+            getRoleColor={getRoleColor}
+            onViewRole={handleOpenView}
+            onEditRole={handleOpenEdit}
+            onDeleteRole={handleOpenDelete}
+          />
+        </CRMTableBody>
+      </DataTable>
 
-      {/* ── Create Role Dialog ─────────────────────────────────────── */}
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              Create New Role
-            </DialogTitle>
-            <DialogDescription>
-              Define a new role and its module access permissions.
-            </DialogDescription>
-          </DialogHeader>
+      {/* ── Create / Edit Role Modal ── */}
+      <RoleEditorModal
+        isOpen={editorOpen}
+        onOpenChange={setEditorOpen}
+        editingRole={editingRole}
+        formData={formData}
+        setFormData={setFormData}
+        isFormDirty={isFormDirty}
+        isPending={saveRoleMutation.isPending}
+        onSave={handleSaveEditor}
+      />
 
-          <div className="py-4 space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Role Name</label>
-              <Input 
-                value={newRoleName}
-                onChange={(e) => setNewRoleName(e.target.value)}
-                placeholder="e.g. Sales Manager"
-                autoFocus
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Permissions</label>
-              <div className="border rounded-md p-4 bg-muted/20">
-                {renderInlinePermissionsEditor()}
-              </div>
-            </div>
-          </div>
+      {/* ── View Role Details Modal ── */}
+      <RoleDetailsDialog
+        isOpen={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        role={viewingRole}
+        roleColor={getRoleColor(viewingRole)}
+      />
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setCreateDialogOpen(false)}
-              disabled={saveMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (!newRoleName.trim()) {
-                  toast.error("Role name is required");
-                  return;
-                }
-                saveMutation.mutate({ id: "new", isNew: true, name: newRoleName });
-              }}
-              disabled={saveMutation.isPending || !newRoleName.trim()}
-            >
-              {saveMutation.isPending ? "Creating…" : "Create Role"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Edit Role Dialog ─────────────────────────────────────── */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              Edit Permissions: {editTargetRole?.name}
-            </DialogTitle>
-            <DialogDescription>
-              Modify the module access permissions for this role.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-4 border rounded-md p-4 mt-2 bg-muted/20">
-            {renderInlinePermissionsEditor(editTargetRole?.name)}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setEditDialogOpen(false)}
-              disabled={saveMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (editTargetRole) {
-                  saveMutation.mutate({ id: editTargetRole.id, isNew: false });
-                }
-              }}
-              disabled={saveMutation.isPending || isSystemAdminRole || !hasEditChanges}
-            >
-              {saveMutation.isPending ? "Saving…" : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Rename Dialog ─────────────────────────────────────── */}
-      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="h-5 w-5 text-primary" />
-              Rename Role
-            </DialogTitle>
-            <DialogDescription>
-              Enter a new name for <span className="font-semibold text-foreground">{renameTargetRole?.name}</span>.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-2">
-            <Input
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              placeholder="Role name"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && renameValue.trim() && renameTargetRole) {
-                  renameMutation.mutate({ id: renameTargetRole.id, name: renameValue.trim() });
-                }
-              }}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRenameDialogOpen(false)}
-              disabled={renameMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (!renameValue.trim()) {
-                  toast.error("Role name cannot be empty");
-                  return;
-                }
-                renameMutation.mutate({ id: renameTargetRole!.id, name: renameValue.trim() });
-              }}
-              disabled={renameMutation.isPending || !renameValue.trim()}
-            >
-              {renameMutation.isPending ? "Saving…" : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Delete Confirm Dialog ──────────────────────────────── */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              Delete Role
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{" "}
-              <span className="font-semibold text-foreground">{deleteTargetRole?.name}</span>?
-              {" "}This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-1 px-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-            Roles assigned to users cannot be deleted.
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-              disabled={deleteMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteTargetRole && deleteMutation.mutate(deleteTargetRole.id)}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting…" : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+      {/* ── Safe Delete & Reassignment Modal ── */}
+      <RoleDeleteDialog
+        isOpen={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        deletingRole={deletingRole}
+        replacementRoleId={replacementRoleId}
+        setReplacementRoleId={setReplacementRoleId}
+        availableReplacementRoles={availableReplacementRoles}
+        isPending={deleteRoleMutation.isPending}
+        onConfirmDelete={handleDeleteConfirm}
+      />
+    </div>
   );
 }

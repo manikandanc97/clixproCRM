@@ -27,8 +27,12 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('No role assigned to user');
     }
 
-    const roleName = userRole.name.toUpperCase();
-    if (roleName === 'SUPER ADMIN' || roleName === 'ADMIN') {
+    if (userRole.isActive === false) {
+      throw new ForbiddenException('Role is currently deactivated');
+    }
+
+    const roleName = (userRole.name || '').toUpperCase();
+    if (roleName === 'SUPER ADMIN' || roleName === 'ADMIN' || roleName === 'OWNER') {
       return true;
     }
 
@@ -36,10 +40,34 @@ export class RolesGuard implements CanActivate {
       .map((r) => r.toUpperCase())
       .includes(roleName);
 
-    if (!hasRole) {
-      throw new ForbiddenException('Insufficient role');
+    if (hasRole) {
+      return true;
     }
 
-    return true;
+    // For custom roles: Check if user's permissions satisfy the module access
+    // E.g., requiredRoles ['ADMIN', 'MANAGER', 'SALES'] for Leads/Deals/etc.
+    if (userRole.permissions && Array.isArray(userRole.permissions)) {
+      const activeModules = userRole.permissions
+        .filter((p: any) => p.hasAccess)
+        .map((p: any) => (p.module || '').toLowerCase());
+
+      const normalizedRoles = requiredRoles.map((r) => r.toLowerCase());
+      
+      const hasModuleEquivalence = activeModules.some((mod: string) =>
+        normalizedRoles.some(
+          (reqRole) =>
+            reqRole === mod ||
+            (reqRole === 'sales' && (mod.includes('lead') || mod.includes('deal') || mod.includes('quotation') || mod.includes('customer') || mod.includes('contact') || mod.includes('company'))) ||
+            (reqRole === 'manager' && (mod.includes('lead') || mod.includes('deal') || mod.includes('report') || mod.includes('employee'))) ||
+            (reqRole === 'employee' && (mod.includes('task') || mod.includes('calendar'))),
+        ),
+      );
+
+      if (hasModuleEquivalence) {
+        return true;
+      }
+    }
+
+    throw new ForbiddenException('Insufficient role permissions');
   }
 }

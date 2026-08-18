@@ -18,8 +18,6 @@ export function parseApiErrors(error: unknown, fallback = "Something went wrong.
 
   if (axios.isAxiosError(error)) {
     const data = error.response?.data;
-    
-    console.log("parseApiErrors -> Axios Error Data:", data);
 
     if (data?.error?.details && Array.isArray(data.error.details) && data.error.details.length > 0) {
       data.error.details.forEach((detail: { path?: string[]; message?: string }) => {

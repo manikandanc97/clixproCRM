@@ -30,6 +30,10 @@ export const PERMISSION_MODULES = {
   INTEGRATIONS: 'Integrations',
   AUDIT_LOGS: 'AuditLogs',
 
+  // HRM & Operations
+  ATTENDANCE: 'Attendance',
+  PERFORMANCE: 'Performance',
+
   // Support (backward compat)
   SUPPORT: 'Support',
 } as const;

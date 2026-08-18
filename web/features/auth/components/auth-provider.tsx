@@ -12,6 +12,9 @@ import {
   CRM_ROLES, 
   roleRouteConfig,
   getRolePermissions,
+  hasModuleAccess,
+  normalizeToModuleTitle,
+  navLibrary,
 } from "@/shared/lib/auth/rbac";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 
@@ -105,6 +108,17 @@ function buildAccess(user: AuthUser | null): RoleAccess {
   if (resolvedPermissions.includes("Help Center") || roleKey === CRM_ROLES.ADMIN) {
     if (!allowedRoutes.includes("/help")) {
       allowedRoutes.push("/help");
+    }
+  }
+
+  // Ensure all permitted module routes are dynamically authorized
+  for (const perm of resolvedPermissions) {
+    const title = normalizeToModuleTitle(perm);
+    if (title) {
+      const navItem = Object.values(navLibrary).find((n) => n.title === title);
+      if (navItem?.href && !allowedRoutes.includes(navItem.href)) {
+        allowedRoutes.push(navItem.href);
+      }
     }
   }
 
@@ -321,8 +335,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshUser,
       hasPermission: (permission: string) => {
         if (!user) return false;
-        if (user.role === CRM_ROLES.ADMIN) return true;
-        return Boolean(access.permissions.includes(permission));
+        if (normalizeRole(user.role) === CRM_ROLES.ADMIN) return true;
+        if (access.permissions.includes(permission)) return true;
+        return hasModuleAccess(permission, access.permissions, user.role);
       },
     };
   }, [status, user, login, logout, refreshUser, loading, isHydrated, cleanupAuthState]);

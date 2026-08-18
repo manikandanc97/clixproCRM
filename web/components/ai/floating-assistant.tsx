@@ -16,10 +16,6 @@ export default function FloatingAssistant() {
   const transport = React.useMemo(() => {
     return new DefaultChatTransport({
       api: '/ai/chat',
-      body: {
-        tenantId: 'dev-tenant-1',
-        userId: 'dev-user-1',
-      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fetch: async (url: any, options: any) => {
         console.log("[DEBUG] useChat fetching URL with native fetch:", url);

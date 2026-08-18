@@ -27,17 +27,38 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('No permissions found for user');
     }
 
-    const roleName = userRole.name.toUpperCase();
-    if (
-      roleName === 'SUPER ADMIN' ||
-      roleName === 'ADMIN' ||
-      userRole.isSystem
-    ) {
+    if (userRole.isActive === false) {
+      throw new ForbiddenException('Role is currently deactivated');
+    }
+
+    const roleName = (userRole.name || '').toUpperCase();
+    if (roleName === 'SUPER ADMIN' || roleName === 'ADMIN' || roleName === 'OWNER') {
       return true;
     }
 
+    const matchesPermission = (required: string, userMod: string) => {
+      if (!required || !userMod) return false;
+      if (required === userMod) return true;
+      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const reqNorm = normalize(required);
+      const userNorm = normalize(userMod);
+      if (reqNorm === userNorm) return true;
+      if (reqNorm.startsWith(userNorm) || userNorm.startsWith(reqNorm)) return true;
+      if (
+        (reqNorm.includes('role') && userNorm.includes('role')) ||
+        (reqNorm.includes('report') && userNorm.includes('report')) ||
+        (reqNorm.includes('employee') && userNorm.includes('employee')) ||
+        (reqNorm.includes('support') && userNorm.includes('support'))
+      ) {
+        return true;
+      }
+      return false;
+    };
+
     const hasPermission = userRole.permissions?.some(
-      (p: any) => requiredPermissions.includes(p.module) && p.hasAccess,
+      (p: any) =>
+        p.hasAccess &&
+        requiredPermissions.some((reqPerm) => matchesPermission(reqPerm, p.module)),
     );
 
     if (!hasPermission) {

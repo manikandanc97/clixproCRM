@@ -35,7 +35,6 @@ const CompaniesPage = () => {
 
   const { data, isLoading: loading, error, refetch } = useCompanies();
   const safeCompanies = useMemo(() => Array.isArray(data?.companies) ? data.companies : [], [data]);
-  console.log('COMPANIES DATA', data, safeCompanies);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedCompany, setSelectedCompany] = useState<any | null>(null);

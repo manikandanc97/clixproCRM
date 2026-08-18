@@ -19,17 +19,12 @@ export class DashboardController {
     @Req() req: AuthenticatedRequest,
     @Query('timeframe') timeframe = 'month',
   ) {
-    const tCtrl0 = performance.now();
     const tenantId = req.tenantId;
     const data = await this.dashboardService.getDashboardData(
       tenantId,
       timeframe,
     );
-    const tCtrl1 = performance.now();
-    const result = { success: true, data };
-    const tCtrl2 = performance.now();
-    console.log(`[PROFILE: DashboardController] Controller Service Wait: ${(tCtrl1 - tCtrl0).toFixed(2)} ms, Serialization/Wrap: ${(tCtrl2 - tCtrl1).toFixed(2)} ms, Total Controller: ${(tCtrl2 - tCtrl0).toFixed(2)} ms\n`);
-    return result;
+    return { success: true, data };
   }
 
   @Get('revenue-growth')

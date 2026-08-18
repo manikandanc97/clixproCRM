@@ -362,26 +362,6 @@ export class DashboardService {
       positive: targetChange >= 100,
     };
 
-    const tEnd = performance.now();
-    const currencyTime = tCurr - tStart;
-    const queriesTotal = tQueriesEnd - tQueriesStart;
-    const businessLogicTime = tEnd - tQueriesEnd;
-    const totalServiceTime = tEnd - tStart;
-
-    console.log('\n[PROFILE: DashboardService.getDashboardData]');
-    console.log(`- Tenant currency resolution: ${currencyTime.toFixed(2)} ms`);
-    console.log(`- Q1 statsRaw: ${(qTimings['Q1_statsRaw'] || 0).toFixed(2)} ms`);
-    console.log(`- Q2 monthlySalesRaw: ${(qTimings['Q2_monthlySalesRaw'] || 0).toFixed(2)} ms`);
-    console.log(`- Q3 sparklineDealsRaw: ${(qTimings['Q3_sparklineDealsRaw'] || 0).toFixed(2)} ms`);
-    console.log(`- Q4 sparklineRevenueRaw: ${(qTimings['Q4_sparklineRevenueRaw'] || 0).toFixed(2)} ms`);
-    console.log(`- Q5 recentDeals: ${(qTimings['Q5_recentDeals'] || 0).toFixed(2)} ms`);
-    console.log(`- Q6 recentQuotations: ${(qTimings['Q6_recentQuotations'] || 0).toFixed(2)} ms`);
-    console.log(`- Q7 recentCompletedTasks: ${(qTimings['Q7_recentCompletedTasks'] || 0).toFixed(2)} ms`);
-    console.log(`- Q8 revenueTargetData: ${(qTimings['Q8_revenueTargetData'] || 0).toFixed(2)} ms`);
-    console.log(`- All 8 Queries (Promise.all elapsed): ${queriesTotal.toFixed(2)} ms`);
-    console.log(`- In-Memory Business Logic / Formatting: ${businessLogicTime.toFixed(2)} ms`);
-    console.log(`- Total DashboardService Duration: ${totalServiceTime.toFixed(2)} ms\n`);
-
     return {
       stats: dashboardStats,
       recentActivities,

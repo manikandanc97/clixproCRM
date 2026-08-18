@@ -3,10 +3,22 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, TaskStatus, TaskPriority } from '@prisma/client';
 import { formatRelativeDate } from '../../common/utils/crm-formatters.util';
 import { TaskQueryDto } from '../dto/task-query.dto';
+import { TasksExportService } from './tasks.export.service';
+import { TasksHistoryService } from './tasks.history.service';
 
+/**
+ * @file activities/services/tasks.query.service.ts
+ * Query, filtering, RBAC visibility scoping, and single-task retrieval for Tasks.
+ * Export logic is in tasks.export.service.ts.
+ * History logic is in tasks.history.service.ts.
+ */
 @Injectable()
 export class TasksQueryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tasksExportService: TasksExportService,
+    private readonly tasksHistoryService: TasksHistoryService,
+  ) {}
 
   async syncOverdueTasks(tenantId: string) {
     const now = new Date();
@@ -264,43 +276,17 @@ export class TasksQueryService {
     const dueTodayCount = Number(row.due_today_count || 0);
 
     const taskStats = [
-      {
-        title: 'Total Tasks',
-        value: totalCount.toLocaleString('en-US'),
-        change: '+0%',
-        trend: 'up' as const,
-      },
-      {
-        title: 'Completed',
-        value: completedCount.toLocaleString('en-US'),
-        change:
-          totalCount > 0
-            ? `${Math.round((completedCount / totalCount) * 100)}%`
-            : '0%',
-        trend: 'up' as const,
-      },
-      {
-        title: 'In Progress',
-        value: inProgressCount.toLocaleString('en-US'),
-        change: '+0%',
-        trend: 'up' as const,
-      },
-      {
-        title: 'Overdue',
-        value: overdueCount.toLocaleString('en-US'),
-        change: overdueCount > 0 ? 'Alert' : '0',
-        trend: overdueCount > 0 ? ('down' as const) : ('up' as const),
-      },
+      { label: 'Total Tasks', value: totalCount, change: '+0%', changeType: 'neutral', icon: 'CheckSquare', color: 'primary' },
+      { label: 'Pending', value: pendingCount, change: '+0%', changeType: 'neutral', icon: 'Clock', color: 'warning' },
+      { label: 'In Progress', value: inProgressCount, change: '+0%', changeType: 'neutral', icon: 'PlayCircle', color: 'info' },
+      { label: 'Completed', value: completedCount, change: '+0%', changeType: 'positive', icon: 'CheckCircle2', color: 'success' },
+      { label: 'Overdue', value: overdueCount, change: '+0%', changeType: overdueCount > 0 ? 'negative' : 'neutral', icon: 'AlertTriangle', color: 'destructive' },
     ];
 
     const formattedTasks = tasksList.map((task: any) => {
-      const checklistArray = Array.isArray(task.checklist)
-        ? (task.checklist as any[])
-        : [];
+      const checklistArray = Array.isArray(task.checklist) ? (task.checklist as any[]) : [];
       const totalChecklist = checklistArray.length;
-      const completedChecklist = checklistArray.filter(
-        (c: any) => c.completed,
-      ).length;
+      const completedChecklist = checklistArray.filter((c: any) => c.completed).length;
       const progressPercent =
         totalChecklist > 0
           ? Math.round((completedChecklist / totalChecklist) * 100)
@@ -329,9 +315,7 @@ export class TasksQueryService {
         priority: task.priority,
         dueDate: formatRelativeDate(task.dueDate, { fallback: 'No due date' }),
         dueDateValue: dueDateObj ? dueDateObj.toISOString() : null,
-        reminderDate: task.reminderDate
-          ? new Date(task.reminderDate).toISOString()
-          : null,
+        reminderDate: task.reminderDate ? new Date(task.reminderDate).toISOString() : null,
         assignedToId: task.assignedToId,
         createdById: task.createdById,
         relatedLeadId: task.relatedLeadId,
@@ -340,53 +324,17 @@ export class TasksQueryService {
         relatedQuotationId: task.relatedQuotationId,
         tags: task.tags || [],
         checklist: checklistArray,
-        attachments: Array.isArray(task.attachments)
-          ? (task.attachments as any[])
-          : [],
-
+        attachments: Array.isArray(task.attachments) ? (task.attachments as any[]) : [],
         completedAt: task.completedAt ? new Date(task.completedAt).toISOString() : null,
         deletedAt: task.deletedAt ? new Date(task.deletedAt).toISOString() : null,
         createdAt: new Date(task.createdAt).toISOString(),
         updatedAt: new Date(task.updatedAt).toISOString(),
-
-        assignedTo: task.assignedTo
-          ? {
-              id: task.assignedTo.id,
-              name: task.assignedTo.name,
-              email: task.assignedTo.email,
-            }
-          : null,
-        createdBy: task.createdById
-          ? { id: task.createdById, name: 'Owner', email: '' }
-          : null,
-        relatedLead: task.relatedLead
-          ? {
-              id: task.relatedLead.id,
-              name: task.relatedLead.name,
-              company: task.relatedLead.company,
-              email: task.relatedLead.email,
-            }
-          : null,
-        relatedCustomer: task.relatedCustomer
-          ? {
-              id: task.relatedCustomer.id,
-              name: task.relatedCustomer.name,
-              company: task.relatedCustomer.company,
-              email: task.relatedCustomer.email,
-            }
-          : null,
-        relatedMeeting: task.relatedMeeting
-          ? { id: task.relatedMeeting.id, name: task.relatedMeeting.title || task.relatedMeeting.name }
-          : null,
-        relatedQuotation: task.relatedQuotation
-          ? {
-              id: task.relatedQuotation.id,
-              name: task.relatedQuotation.quoteNumber || task.relatedQuotation.name,
-              company: task.relatedQuotation.client || task.relatedQuotation.company,
-              amount: Number(task.relatedQuotation.amount),
-            }
-          : null,
-
+        assignedTo: task.assignedTo ? { id: task.assignedTo.id, name: task.assignedTo.name, email: task.assignedTo.email } : null,
+        createdBy: task.createdById ? { id: task.createdById, name: 'Owner', email: '' } : null,
+        relatedLead: task.relatedLead ? { id: task.relatedLead.id, name: task.relatedLead.name, company: task.relatedLead.company, email: task.relatedLead.email } : null,
+        relatedCustomer: task.relatedCustomer ? { id: task.relatedCustomer.id, name: task.relatedCustomer.name, company: task.relatedCustomer.company, email: task.relatedCustomer.email } : null,
+        relatedMeeting: task.relatedMeeting ? { id: task.relatedMeeting.id, name: task.relatedMeeting.title || task.relatedMeeting.name } : null,
+        relatedQuotation: task.relatedQuotation ? { id: task.relatedQuotation.id, name: task.relatedQuotation.quoteNumber || task.relatedQuotation.name, company: task.relatedQuotation.client || task.relatedQuotation.company, amount: Number(task.relatedQuotation.amount) } : null,
         isOverdue: isTaskOverdue,
         progress: progressPercent,
         subtaskCount: { total: totalChecklist, completed: completedChecklist },
@@ -403,8 +351,7 @@ export class TasksQueryService {
         overdue: overdueCount,
         blocked: blockedCount,
         dueToday: dueTodayCount,
-        completionRate:
-          totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
+        completionRate: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
       },
       tasks: formattedTasks,
       pagination: {
@@ -417,99 +364,7 @@ export class TasksQueryService {
   }
 
   async exportTasks(tenantId: string, userId: string, query: any) {
-    const where: Prisma.TaskWhereInput = {
-      tenantId,
-      deletedAt: null,
-    };
-
-    if (query.ids) {
-      const ids = query.ids.split(',');
-      where.id = { in: ids };
-    } else {
-      if (query.search) {
-        where.OR = [
-          { title: { contains: query.search, mode: 'insensitive' } },
-          { description: { contains: query.search, mode: 'insensitive' } },
-        ];
-      }
-      if (query.status && query.status !== 'all')
-        where.status = query.status as TaskStatus;
-      if (query.priority && query.priority !== 'all')
-        where.priority = query.priority as TaskPriority;
-      if (query.assignedToId) where.assignedToId = query.assignedToId;
-    }
-
-    const tasks = await this.prisma.task.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        assignedTo: { select: { id: true, name: true, email: true } },
-        relatedLead: { select: { name: true } },
-        relatedCustomer: { select: { name: true } },
-      },
-    });
-
-    const headers = [
-      'Task ID',
-      'Title',
-      'Description',
-      'Status',
-      'Priority',
-      'Due Date',
-      'Assigned To',
-      'Related Entity',
-      'Created At',
-    ];
-
-    const escapeCSV = (value: any): string => {
-      if (value === null || value === undefined) return '';
-      let stringValue = String(value);
-      if (/^[=+\-@]/.test(stringValue)) {
-        stringValue = "'" + stringValue;
-      }
-      if (stringValue.includes('"')) {
-        stringValue = stringValue.replace(/"/g, '""');
-      }
-      if (
-        stringValue.includes(',') ||
-        stringValue.includes('\n') ||
-        stringValue.includes('"')
-      ) {
-        return `"${stringValue}"`;
-      }
-      return stringValue;
-    };
-
-    const csvRows = [headers.join(',')];
-
-    for (const task of tasks) {
-      const relatedEntity =
-        task.relatedLead?.name || task.relatedCustomer?.name || '';
-      const row = [
-        escapeCSV(task.id),
-        escapeCSV(task.title),
-        escapeCSV(task.description),
-        escapeCSV(task.status),
-        escapeCSV(task.priority),
-        escapeCSV(task.dueDate ? new Date(task.dueDate).toISOString() : ''),
-        escapeCSV(task.assignedTo?.name || task.assignedTo?.email || ''),
-        escapeCSV(relatedEntity),
-        escapeCSV(task.createdAt.toISOString()),
-      ];
-      csvRows.push(row.join(','));
-    }
-
-    await this.prisma.auditLog.create({
-      data: {
-        tenantId,
-        userId,
-        action: 'EXPORT_TASKS',
-        module: 'TASKS',
-        details: { count: tasks.length, filters: query },
-      },
-    });
-
-    return csvRows.join('\n');
+    return this.tasksExportService.exportTasks(tenantId, userId, query);
   }
 
   async getTaskById(tenantId: string, id: string, options?: { userId: string; role: string }) {
@@ -620,54 +475,8 @@ export class TasksQueryService {
       subtaskCount: { total: totalChecklist, completed: completedChecklist },
     };
   }
+
   async getTaskHistory(tenantId: string, taskId: string) {
-    const logs = await this.prisma.auditLog.findMany({
-      where: {
-        tenantId,
-        module: 'TASKS',
-        details: { path: ['taskId'], equals: taskId },
-        action: {
-          in: [
-            'TASK_CREATED',
-            'TASK_ASSIGNED',
-            'TASK_REASSIGNED',
-            'TASK_UNASSIGNED',
-          ],
-        },
-      },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const userIds = new Set<string>();
-    logs.forEach((log) => {
-      const details = (log.details as any) || {};
-      if (details.assignedToId) userIds.add(details.assignedToId);
-      if (details.previousAssigneeId) userIds.add(details.previousAssigneeId);
-    });
-
-    const users = await this.prisma.user.findMany({
-      where: { id: { in: Array.from(userIds) } },
-      select: { id: true, name: true },
-    });
-    const userMap = new Map(users.map((u) => [u.id, u.name]));
-
-    return logs.map((log) => {
-      const details = (log.details as any) || {};
-      return {
-        id: log.id,
-        action: log.action,
-        actor: log.user ? log.user.name : 'System',
-        assignedTo: details.assignedToId
-          ? userMap.get(details.assignedToId)
-          : null,
-        previousAssignee: details.previousAssigneeId
-          ? userMap.get(details.previousAssigneeId)
-          : null,
-        createdAt: log.createdAt.toISOString(),
-      };
-    });
+    return this.tasksHistoryService.getTaskHistory(tenantId, taskId);
   }
 }

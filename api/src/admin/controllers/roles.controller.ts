@@ -3,9 +3,11 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Req,
   HttpException,
@@ -29,7 +31,8 @@ const roleSchema = z.object({
   description: z.string().optional(),
   color: z.string().optional(),
   priority: z.number().optional().default(0),
-  permissions: z.array(z.string()),
+  isActive: z.boolean().optional().default(true),
+  permissions: z.array(z.string()).default([]),
 });
 
 const roleUpdateSchema = z.object({
@@ -41,6 +44,14 @@ const roleUpdateSchema = z.object({
   permissions: z.array(z.string()).optional(),
 });
 
+const statusToggleSchema = z.object({
+  isActive: z.boolean(),
+});
+
+const reassignDeleteSchema = z.object({
+  replacementRoleId: z.string().min(1, 'Replacement role ID is required'),
+});
+
 @Controller('crm/roles')
 @UseGuards(SupabaseAuthGuard, TenantGuard, PermissionsGuard)
 export class RolesController {
@@ -50,6 +61,13 @@ export class RolesController {
   @Permissions('Roles')
   async getRoles(@Req() req: any) {
     const data = await this.rolesService.getRoles(req.tenantId);
+    return { success: true, data };
+  }
+
+  @Get(':id')
+  @Permissions('Roles')
+  async getRoleById(@Req() req: any, @Param('id') id: string) {
+    const data = await this.rolesService.getRoleById(req.tenantId, id);
     return { success: true, data };
   }
 
@@ -73,12 +91,24 @@ export class RolesController {
     }
     await incrementRateLimit(identifier, RATE_LIMITS.ADMIN);
 
+    const currentUserRole = req.userRole?.name?.toUpperCase() || 'UNKNOWN';
+    if (currentUserRole === 'EMPLOYEE') {
+      throw new HttpException(
+        { success: false, message: 'Unauthorized to create roles' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     try {
       const parsedData = roleSchema.parse(body);
+      const userAgent = req.headers['user-agent'] || '';
       const data = await this.rolesService.createRole(
         req.tenantId,
         req.user.id,
+        currentUserRole,
         parsedData,
+        ip,
+        userAgent,
       );
       return { success: true, data, message: 'Role created successfully' };
     } catch (error: any) {
@@ -148,9 +178,73 @@ export class RolesController {
     }
   }
 
+  @Patch(':id/status')
+  @Permissions('Roles')
+  async toggleRoleStatus(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    const ip = getClientIp(req);
+    const identifier = `admin_${ip}`;
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.ADMIN);
+    if (!rateLimit.allowed) {
+      throw new HttpException(
+        {
+          success: false,
+          error: {
+            code: 'TOO_MANY_REQUESTS',
+            message: 'Too many requests. Please try again later.',
+          },
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    await incrementRateLimit(identifier, RATE_LIMITS.ADMIN);
+
+    const currentUserRole = req.userRole?.name?.toUpperCase() || 'UNKNOWN';
+    if (currentUserRole === 'EMPLOYEE') {
+      throw new HttpException(
+        { success: false, message: 'Unauthorized to change role status' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    try {
+      const parsed = statusToggleSchema.parse(body);
+      const userAgent = req.headers['user-agent'] || '';
+      const data = await this.rolesService.toggleRoleStatus(
+        req.tenantId,
+        req.user.id,
+        id,
+        parsed.isActive,
+        ip,
+        userAgent,
+      );
+      return {
+        success: true,
+        data,
+        message: `Role ${parsed.isActive ? 'activated' : 'deactivated'} successfully`,
+      };
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        throw new HttpException(
+          { success: false, message: (error as any).errors[0].message },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw error;
+    }
+  }
+
   @Delete(':id')
   @Permissions('Roles')
-  async deleteRole(@Req() req: any, @Param('id') id: string) {
+  async deleteRole(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query('replacementRoleId') replacementQuery?: string,
+    @Body() body?: any,
+  ) {
     const ip = getClientIp(req);
     const identifier = `delete_${ip}`;
     const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.DELETE);
@@ -168,22 +262,85 @@ export class RolesController {
     }
     await incrementRateLimit(identifier, RATE_LIMITS.DELETE);
 
+    const currentUserRole = req.userRole?.name?.toUpperCase() || 'UNKNOWN';
+    if (currentUserRole === 'EMPLOYEE') {
+      throw new HttpException(
+        { success: false, message: 'Unauthorized to delete roles' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const replacementRoleId = replacementQuery || body?.replacementRoleId;
     const userAgent = req.headers['user-agent'] || '';
-    await this.rolesService.deleteRole(
+
+    const result = await this.rolesService.deleteRole(
       req.tenantId,
       req.user.id,
       id,
+      replacementRoleId,
       ip,
       userAgent,
     );
-    return { success: true, message: 'Role deleted successfully' };
+    return result;
+  }
+
+  @Post(':id/reassign-and-delete')
+  @Permissions('Roles')
+  async reassignAndDeleteRole(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    const ip = getClientIp(req);
+    const identifier = `delete_${ip}`;
+    const rateLimit = await checkRateLimit(identifier, RATE_LIMITS.DELETE);
+    if (!rateLimit.allowed) {
+      throw new HttpException(
+        {
+          success: false,
+          error: {
+            code: 'TOO_MANY_REQUESTS',
+            message: 'Too many requests. Please try again later.',
+          },
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    await incrementRateLimit(identifier, RATE_LIMITS.DELETE);
+
+    const currentUserRole = req.userRole?.name?.toUpperCase() || 'UNKNOWN';
+    if (currentUserRole === 'EMPLOYEE') {
+      throw new HttpException(
+        { success: false, message: 'Unauthorized to delete roles' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    try {
+      const parsed = reassignDeleteSchema.parse(body);
+      const userAgent = req.headers['user-agent'] || '';
+      const result = await this.rolesService.deleteRole(
+        req.tenantId,
+        req.user.id,
+        id,
+        parsed.replacementRoleId,
+        ip,
+        userAgent,
+      );
+      return result;
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        throw new HttpException(
+          { success: false, message: (error as any).errors[0].message },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw error;
+    }
   }
 
   @Post(':id/duplicate')
-  @Permissions('Roles:Manage') // Original had 'Roles', 'Manage'. NestJS Permissions guard usually takes strings, maybe it maps array?
-  // Wait, in Next.js it was `await requirePermission("Roles", "Manage");`
-  // We'll just map it to the standard format used in NestJS for this app, which is array of module+actions, but wait, Permissions decorator takes strings.
-  // Actually, I'll use @Permissions('Roles') or whatever the guard checks. Let's see how PermissionsGuard is written.
+  @Permissions('Roles')
   async duplicateRole(@Req() req: any, @Param('id') id: string) {
     const ip = getClientIp(req);
     const identifier = `admin_${ip}`;
@@ -201,6 +358,14 @@ export class RolesController {
       );
     }
     await incrementRateLimit(identifier, RATE_LIMITS.ADMIN);
+
+    const currentUserRole = req.userRole?.name?.toUpperCase() || 'UNKNOWN';
+    if (currentUserRole === 'EMPLOYEE') {
+      throw new HttpException(
+        { success: false, message: 'Unauthorized to duplicate roles' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
 
     const userAgent = req.headers['user-agent'] || '';
     const data = await this.rolesService.duplicateRole(

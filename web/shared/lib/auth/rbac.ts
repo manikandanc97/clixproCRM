@@ -76,9 +76,60 @@ export function normalizeRole(role?: string): RoleKey {
   return CRM_ROLES.EMPLOYEE;
 }
 
+export const MODULE_SYNONYMS: Record<string, string[]> = {
+  "Dashboard": ["dashboard", "dashboard.view"],
+  "Contacts": ["contacts", "contacts.read", "contacts.create", "contacts.update", "contacts.delete"],
+  "Companies": ["companies", "companies.read", "companies.create", "companies.update", "companies.delete"],
+  "Deals": ["deals", "deals.read", "deals.create", "deals.update", "deals.delete"],
+  "Tasks": ["tasks", "tasks.read", "tasks.create", "tasks.update", "tasks.delete"],
+  "Calendar": ["calendar"],
+  "Quotations": ["quotations", "quotations.read", "quotations.create", "quotations.update", "quotations.delete", "quotations.approve"],
+  "Reports & Analytics": ["reports & analytics", "reports", "report", "analytics", "reports.read", "reports:read", "reports:view", "reports.view"],
+  "Employees": ["employees", "employee", "employees.read", "employees.manage", "employees:view", "employees:manage"],
+  "Role Management": ["role management", "roles", "role", "role_management", "roles:manage", "roles:view", "rolemanagement", "role_management.read", "role_management.manage", "roles.read", "roles.manage"],
+  "Settings": ["settings", "settings.read", "settings.manage", "settings:view", "settings:manage"],
+  "Support Tickets": ["support tickets", "support", "ticket", "tickets", "support_tickets", "support_tickets.read", "support_tickets.manage"],
+  "Team Performance": ["team performance", "teamperformance", "performance", "reports", "employees"],
+  "Attendance": ["attendance", "attendance.read"],
+  "Performance": ["performance", "performance.read"],
+  "Help Center": ["help center", "help"],
+};
+
+export function normalizeToModuleTitle(perm: string): string | null {
+  if (!perm) return null;
+  const p = perm.trim().toLowerCase();
+  for (const [title, synonyms] of Object.entries(MODULE_SYNONYMS)) {
+    if (title.toLowerCase() === p || synonyms.some(s => s.toLowerCase() === p)) {
+      return title;
+    }
+  }
+  return null;
+}
+
+export function hasModuleAccess(itemTitle: string, permissions?: string[], role?: string): boolean {
+  const roleKey = normalizeRole(role);
+  if (roleKey === CRM_ROLES.ADMIN) return true;
+  if (!permissions || permissions.length === 0) return false;
+  
+  const titleLower = itemTitle.toLowerCase();
+  const synonyms = MODULE_SYNONYMS[itemTitle]?.map(s => s.toLowerCase()) || [titleLower];
+  
+  return permissions.some(p => {
+    const pLower = p.trim().toLowerCase();
+    if (pLower === titleLower || synonyms.includes(pLower)) return true;
+    const normalized = normalizeToModuleTitle(p);
+    return normalized === itemTitle;
+  });
+}
+
 export function getRoleMenu(role?: string, permissions?: string[]) {
   const roleKey = normalizeRole(role);
-  const baseMenu = roleMenuConfig[roleKey];
+  const baseMenu = roleMenuConfig[roleKey] || roleMenuConfig[CRM_ROLES.EMPLOYEE];
+  
+  // ADMIN role always gets full base admin menu
+  if (roleKey === CRM_ROLES.ADMIN) {
+    return baseMenu;
+  }
   
   if (!permissions || permissions.length === 0) {
     return baseMenu;
@@ -90,7 +141,7 @@ export function getRoleMenu(role?: string, permissions?: string[]) {
   // 1. Filter base menu using permissions
   for (const group of baseMenu) {
     const filteredItems = group.items.filter(item => {
-      const hasPerm = permissions.includes(item.title);
+      const hasPerm = hasModuleAccess(item.title, permissions, role);
       if (hasPerm) handledTitles.add(item.title);
       return hasPerm;
     });
@@ -104,12 +155,14 @@ export function getRoleMenu(role?: string, permissions?: string[]) {
   }
   
   // 2. Add items that are in permissions but not in base menu
-  const missingItems = [];
+  const missingItems: NavItem[] = [];
   for (const perm of permissions) {
-    if (perm === "Help Center") continue; // Handled separately
-    if (!handledTitles.has(perm)) {
-      const navItem = Object.values(navLibrary).find(n => n.title === perm);
-      if (navItem) {
+    if (perm === "Help Center" || perm.toLowerCase() === "help") continue;
+    const title = normalizeToModuleTitle(perm);
+    if (title && !handledTitles.has(title)) {
+      const navItem = Object.values(navLibrary).find(n => n.title === title);
+      if (navItem && !handledTitles.has(navItem.title)) {
+        handledTitles.add(navItem.title);
         missingItems.push(navItem);
       }
     }

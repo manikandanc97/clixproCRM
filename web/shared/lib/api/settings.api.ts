@@ -1,0 +1,89 @@
+/**
+ * @file shared/lib/api/settings.api.ts
+ * Settings-related API endpoints.
+ */
+import client from "./client";
+import { ApiResponseType } from "@/shared/types/api";
+import {
+  AiSettingsDataType,
+  BillingSettingsDataType,
+  IntegrationSettingsDataType,
+  NotificationSettingsDataType,
+  SecuritySettingsDataType,
+  WorkspaceDataType,
+} from "@/shared/types/settings";
+
+async function unwrapResponse<T>(request: Promise<{ data: ApiResponseType<T> }>) {
+  try {
+    const response = await request;
+    if (!response.data?.success || response.data.data === undefined) {
+      throw new Error(response.data?.message || "Invalid API response.");
+    }
+    return response.data.data;
+  } catch (error: any) {
+    const msg = error.response?.data?.message;
+    if (msg) {
+      if (typeof msg === 'string') throw new Error(msg);
+      else if (typeof msg === 'object') throw new Error(msg.message || JSON.stringify(msg));
+    }
+    throw error;
+  }
+}
+
+export function fetchWorkspaceData() {
+  return unwrapResponse<WorkspaceDataType>(client.get("/crm/workspace"));
+}
+
+export function fetchSecuritySettings() {
+  return unwrapResponse<SecuritySettingsDataType>(client.get("/crm/settings/security"));
+}
+
+export function fetchBillingSettings() {
+  return unwrapResponse<BillingSettingsDataType>(client.get("/crm/settings/billing"));
+}
+
+export function fetchIntegrationSettings() {
+  return unwrapResponse<IntegrationSettingsDataType>(client.get("/crm/settings/integrations"));
+}
+
+export function fetchAiSettings() {
+  return unwrapResponse<AiSettingsDataType>(client.get("/crm/settings/ai"));
+}
+
+export function fetchNotificationSettings() {
+  return unwrapResponse<NotificationSettingsDataType>(client.get("/crm/settings/notifications"));
+}
+
+export function updateWorkspaceData(data: Partial<WorkspaceDataType>) {
+  return unwrapResponse<WorkspaceDataType>(client.patch("/crm/settings/workspace", data));
+}
+
+export function updateSecuritySettings(data: Partial<SecuritySettingsDataType>) {
+  return unwrapResponse<SecuritySettingsDataType>(client.patch("/crm/settings/security", data));
+}
+
+export function updateIntegrationSettings(id: string, connected: boolean) {
+  return unwrapResponse<any>(client.patch(`/crm/settings/integrations/${id}`, { connected }));
+}
+
+export function updateAiSettings(data: Partial<AiSettingsDataType>) {
+  return unwrapResponse<AiSettingsDataType>(client.patch("/crm/settings/ai", data));
+}
+
+export function updateNotificationSettings(data: Partial<NotificationSettingsDataType>) {
+  return unwrapResponse<NotificationSettingsDataType>(client.patch("/crm/settings/notifications", data));
+}
+
+export function fetchRevenueTargets() {
+  return unwrapResponse<any[]>(client.get("/crm/settings/revenue-targets"));
+}
+
+export function fetchRevenueTargetAnalytics(filters: Record<string, any> = {}) {
+  const searchParams = new URLSearchParams(filters);
+  return unwrapResponse<any>(client.get(`/crm/analytics/revenue-target?${searchParams.toString()}`));
+}
+
+export function createMeeting(data: any) {
+  return unwrapResponse<any>(client.post("/crm/meetings", data));
+}
+

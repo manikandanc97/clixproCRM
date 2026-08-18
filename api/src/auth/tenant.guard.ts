@@ -42,7 +42,6 @@ export class TenantGuard implements CanActivate {
   constructor(private prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const t0 = performance.now();
     const request = context.switchToHttp().getRequest();
     const user = request.user;
     const tenantId = request.headers['x-tenant-id'];
@@ -60,7 +59,6 @@ export class TenantGuard implements CanActivate {
       memberships = cached.memberships;
       isCached = true;
     } else {
-      const tDb0 = performance.now();
       const userRecord = await this.prisma.user.findUnique({
         where: { id: user.id },
         include: {
@@ -70,8 +68,6 @@ export class TenantGuard implements CanActivate {
           },
         },
       });
-      const tDb1 = performance.now();
-      console.log(`[PROFILE: TenantGuard] DB query for user memberships: ${(tDb1 - tDb0).toFixed(2)} ms`);
 
       if (!userRecord || userRecord.memberships.length === 0) {
         userMembershipCache.delete(user.id);
@@ -99,8 +95,6 @@ export class TenantGuard implements CanActivate {
 
     request.tenantId = membership.tenantId;
     request.userRole = membership.role;
-    const totalDur = performance.now() - t0;
-    console.log(`[PROFILE: TenantGuard] Total guard duration: ${totalDur.toFixed(2)} ms (Cached: ${isCached})`);
     return true;
   }
 }

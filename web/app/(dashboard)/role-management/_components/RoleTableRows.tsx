@@ -1,0 +1,214 @@
+"use client";
+
+import React from "react";
+import { Users, MoreVertical, User, Edit2, Trash2, Shield } from "lucide-react";
+import { Button } from "@/shared/ui/button";
+import { Badge } from "@/shared/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/shared/ui/tooltip";
+import {
+  CRMTableRow,
+  CRMTableCell,
+} from "@/shared/components/crm";
+import { EmptyState } from "@/shared/components/EmptyState";
+import { normalizeToModuleTitle } from "@/shared/lib/auth/rbac";
+import { toast } from "sonner";
+
+interface RoleTableRowsProps {
+  roles: any[];
+  canManageRoles: boolean;
+  currentUserRole: string;
+  getRoleColor: (role: any) => string;
+  onViewRole: (role: any) => void;
+  onEditRole: (role: any) => void;
+  onDeleteRole: (role: any) => void;
+}
+
+export function RoleTableRows({
+  roles,
+  canManageRoles,
+  currentUserRole,
+  getRoleColor,
+  onViewRole,
+  onEditRole,
+  onDeleteRole,
+}: RoleTableRowsProps) {
+  if (roles.length === 0) {
+    return (
+      <CRMTableRow className="hover:bg-transparent border-0">
+        <CRMTableCell colSpan={4} className="p-4 border-0">
+          <EmptyState
+            icon={Shield}
+            title="No roles found"
+            description="No roles match the current search query."
+          />
+        </CRMTableCell>
+      </CRMTableRow>
+    );
+  }
+
+  return (
+    <>
+      {roles.map((role) => {
+        const isSuperAdmin = role.name.toUpperCase() === "SUPER ADMIN";
+        const isAdmin = role.name.toUpperCase() === "ADMIN";
+        const canEditThis =
+          canManageRoles && !(currentUserRole === "ADMIN" && isSuperAdmin);
+
+        const rawPermissions = role.permissions || [];
+        const activePermModules: string[] =
+          isAdmin || isSuperAdmin
+            ? ["Full Workspace Access"]
+            : Array.from(
+                new Set(
+                  rawPermissions
+                    .filter((p: any) => p.hasAccess)
+                    .map(
+                      (p: any) =>
+                        (normalizeToModuleTitle(p.module) || p.module) as string,
+                    ),
+                ),
+              );
+
+        return (
+          <CRMTableRow key={role.id} className="cursor-default">
+            {/* Role Name */}
+            <CRMTableCell>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0 shadow-xs ring-2 ring-background"
+                  style={{ backgroundColor: getRoleColor(role) }}
+                />
+                <div className="font-bold text-sm tracking-tight text-foreground">
+                  {role.name}
+                </div>
+              </div>
+            </CRMTableCell>
+
+            {/* Assigned Users */}
+            <CRMTableCell>
+              <div className="flex items-center gap-2 font-medium text-sm text-foreground">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span>{role._count?.users || 0}</span>
+                <span className="text-xs text-muted-foreground font-normal">
+                  users
+                </span>
+              </div>
+            </CRMTableCell>
+
+            {/* Permission Modules */}
+            <CRMTableCell>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {activePermModules.length === 0 ? (
+                  <span className="text-xs text-muted-foreground italic">
+                    No permissions assigned
+                  </span>
+                ) : (
+                  <>
+                    {activePermModules.slice(0, 3).map((mod) => (
+                      <Badge
+                        key={mod}
+                        variant="secondary"
+                        className="font-normal text-xs bg-muted/60 text-muted-foreground hover:bg-muted"
+                      >
+                        {mod}
+                      </Badge>
+                    ))}
+                    {activePermModules.length > 3 && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant="outline"
+                              className="font-normal text-xs border-dashed text-muted-foreground cursor-help"
+                            >
+                              +{activePermModules.length - 3} More
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent className="p-3 max-w-xs bg-slate-900 text-white border border-slate-700/60 rounded-xl shadow-2xl">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                              Additional Modules ({activePermModules.length - 3})
+                            </p>
+                            <p className="text-xs text-slate-100 font-medium leading-relaxed">
+                              {activePermModules.slice(3).join(", ")}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </>
+                )}
+              </div>
+            </CRMTableCell>
+
+            {/* Actions */}
+            <CRMTableCell className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-48 rounded-xl p-1.5 shadow-elevated border-border bg-popover/95 backdrop-blur-xl"
+                >
+                  <DropdownMenuItem
+                    onClick={() => onViewRole(role)}
+                    className="cursor-pointer py-2.5 rounded-xl group"
+                  >
+                    <User className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <span className="font-semibold text-sm">View Details</span>
+                  </DropdownMenuItem>
+
+                  {canEditThis && (
+                    <DropdownMenuItem
+                      onClick={() => onEditRole(role)}
+                      className="cursor-pointer py-2.5 rounded-xl group"
+                    >
+                      <Edit2 className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="font-semibold text-sm">
+                        Edit Permissions
+                      </span>
+                    </DropdownMenuItem>
+                  )}
+
+                  {canManageRoles && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => {
+                        if (role.isSystem) {
+                          toast.error(
+                            `System default role "${role.name}" cannot be deleted.`,
+                          );
+                          return;
+                        }
+                        onDeleteRole(role);
+                      }}
+                      className="cursor-pointer py-2.5 rounded-xl group"
+                    >
+                      <Trash2 className="mr-3 h-4 w-4 transition-colors" />
+                      <span className="font-bold text-sm transition-colors">
+                        Delete Role
+                      </span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CRMTableCell>
+          </CRMTableRow>
+        );
+      })}
+    </>
+  );
+}
