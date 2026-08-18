@@ -34,42 +34,6 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
 
-  // Listen for popup auth messages
-  useEffect(() => {
-    const handleAuthMessage = async (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "CLIXPROCRM_GOOGLE_AUTH_SUCCESS") {
-        setGoogleLoading(true);
-        try {
-          if (typeof window !== "undefined") {
-            localStorage.setItem("has_session", "1");
-          }
-          await refreshUser();
-          const user = await fetchCurrentUser();
-          if (user) {
-            router.push("/dashboard");
-          } else {
-            router.push("/login");
-          }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-          if (err?.message === "NEEDS_ONBOARDING") {
-            router.push("/onboarding");
-          } else {
-            toast.error("Authentication failed. Please try again.");
-          }
-        } finally {
-          setGoogleLoading(false);
-        }
-      }
-    };
-
-    window.addEventListener("message", handleAuthMessage);
-    return () => {
-      window.removeEventListener("message", handleAuthMessage);
-    };
-  }, [refreshUser, router]);
-
   // Reset loading states on back navigation (bfcache), tab focus, or visibility change
   useEffect(() => {
     const handleResetLoading = () => {
@@ -103,7 +67,7 @@ export default function RegisterPage() {
     try {
       setGoogleLoading(true);
       const result = await signInWithGoogle();
-      if (result?.success) {
+      if (result?.success && !result?.redirected) {
         if (typeof window !== "undefined") {
           localStorage.setItem("has_session", "1");
         }

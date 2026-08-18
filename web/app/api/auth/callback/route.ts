@@ -8,6 +8,11 @@ export async function GET(request: Request) {
   const errorDescription = requestUrl.searchParams.get('error_description')
 
   const sendResponse = (isSuccess: boolean, errorMessage?: string) => {
+    const escapedErrorMessage = (errorMessage || 'An error occurred during authentication. You can close this window and try again.')
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/\n/g, ' ');
+
     const html = `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -85,6 +90,7 @@ export async function GET(request: Request) {
         font-size: 13px;
         font-weight: 500;
         cursor: pointer;
+        text-decoration: none;
       }
       .close-btn:hover {
         background: #374151;
@@ -106,19 +112,22 @@ export async function GET(request: Request) {
           ? (errorMessage || 'An error occurred during authentication. You can close this window and try again.')
           : 'Completing sign in...'
       }</p>
-      <button id="close-btn" class="close-btn" style="display: none;" onclick="window.close()">Close Window</button>
+      <button id="close-btn" class="close-btn" style="display: ${!isSuccess ? 'inline-block' : 'none'};" onclick="window.close()">Close Window</button>
+      <a id="dashboard-link" class="close-btn" style="display: none;" href="/dashboard">Go to Dashboard</a>
     </div>
     <script>
       (function() {
         var isSuccess = ${isSuccess ? 'true' : 'false'};
         var messageType = isSuccess ? 'CLIXPROCRM_GOOGLE_AUTH_SUCCESS' : 'CLIXPROCRM_GOOGLE_AUTH_ERROR';
+        var isPopup = false;
 
-        // 1. PostMessage to opener with exact origin check
-        if (window.opener && window.opener !== window) {
-          try {
+        // 1. PostMessage to opener
+        try {
+          if (window.opener && window.opener !== window) {
+            isPopup = true;
             window.opener.postMessage({ type: messageType }, window.location.origin);
-          } catch (e) {}
-        }
+          }
+        } catch (e) {}
 
         // 2. BroadcastChannel
         try {
@@ -137,13 +146,12 @@ export async function GET(request: Request) {
           }));
         } catch (e) {}
 
-        // Automatically attempt to close popup
+        // Attempt to close popup automatically
         setTimeout(function() {
           try {
             window.close();
           } catch (e) {}
 
-          // If browser policy prevents window.close(), update UI and show manual close button
           setTimeout(function() {
             var statusEl = document.getElementById('status-text');
             var btnEl = document.getElementById('close-btn');
@@ -152,6 +160,10 @@ export async function GET(request: Request) {
             }
             if (btnEl) {
               btnEl.style.display = 'inline-block';
+            }
+            // If in main tab and success, navigate to dashboard
+            if (!isPopup && isSuccess) {
+              window.location.replace('/dashboard');
             }
           }, 300);
         }, 200);

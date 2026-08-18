@@ -166,7 +166,7 @@ export const getAuthRedirectUrl = (path: string = "/api/auth/callback"): string 
 
 let activeOAuthPopup: Window | null = null;
 
-export const signInWithGoogle = async (): Promise<{ success: boolean; target?: string }> => {
+export const signInWithGoogle = async (): Promise<{ success: boolean; target?: string; redirected?: boolean }> => {
   if (typeof window === "undefined") {
     return { success: false };
   }
@@ -191,31 +191,60 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
   const left = Math.max(0, Math.floor(screenLeft + (outerWidth - width) / 2));
   const top = Math.max(0, Math.floor(screenTop + (outerHeight - height) / 2));
 
-  // Open popup synchronously during user gesture call stack
-  const popup = window.open(
-    "about:blank",
-    "clixprocrm-google-login",
-    `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no`
-  );
-
-  activeOAuthPopup = popup;
-
-  // Handle popup-blocked browsers gracefully without navigating the main window
-  if (!popup || popup.closed || typeof popup.closed === "undefined") {
-    activeOAuthPopup = null;
-    throw new Error(
-      "Google sign-in could not open. Please allow popups for ClixProCRM and try again."
+  let popup: Window | null = null;
+  try {
+    popup = window.open(
+      "about:blank",
+      "clixprocrm_google_auth",
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no`
     );
+  } catch {
+    popup = null;
   }
 
   const supabase = createClient();
-  let oauthUrl = "";
+  const callbackUrl = getAuthRedirectUrl("/api/auth/callback");
 
+  // If popup is blocked by browser, smoothly fallback to standard full-page redirect flow
+  if (!popup || popup.closed || typeof popup.closed === "undefined") {
+    activeOAuthPopup = null;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: callbackUrl,
+      },
+    });
+
+    if (error) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("has_session");
+      }
+      throw new Error(error.message);
+    }
+
+    if (data?.url) {
+      window.location.href = data.url;
+      return { success: true, redirected: true };
+    }
+
+    throw new Error("Failed to initialize Google authentication");
+  }
+
+  activeOAuthPopup = popup;
+
+  // Add sleek loading indicator inside the popup while waiting for oauthUrl
+  try {
+    popup.document.write(`<!DOCTYPE html><html><head><title>Connecting to Google...</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#0b0f19;color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;text-align:center}.spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,0.1);border-top:3px solid #10b981;border-radius:50%;animation:s 0.8s linear infinite;margin:0 auto 16px}@keyframes s{to{transform:rotate(360deg)}}p{font-size:14px;color:#94a3b8;margin:0}</style></head><body><div><div class="spinner"></div><p>Connecting to Google...</p></div></body></html>`);
+  } catch {
+    // Ignore cross-origin write errors
+  }
+
+  let oauthUrl = "";
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: callbackUrl,
         skipBrowserRedirect: true,
       },
     });
@@ -241,7 +270,16 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
   }
 
   // Navigate the popup window to Google OAuth URL
-  popup.location.href = oauthUrl;
+  try {
+    popup.location.href = oauthUrl;
+  } catch {
+    if (popup && !popup.closed) {
+      popup.close();
+    }
+    activeOAuthPopup = null;
+    window.location.href = oauthUrl;
+    return { success: true, redirected: true };
+  }
 
   return new Promise((resolve, reject) => {
     let resolved = false;
