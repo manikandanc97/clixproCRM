@@ -92,7 +92,7 @@ export const registerUser = async (data: RegisterPayload) => {
 export const forgotPassword = async (data: ForgotPasswordPayload) => {
   const supabase = createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-    redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/reset-password`,
+    redirectTo: getAuthRedirectUrl("/reset-password"),
   });
 
   if (error) {
@@ -144,85 +144,129 @@ export const updateProfile = async (data: Record<string, ReturnType<typeof JSON.
   return response.data;
 };
 
+/**
+ * Helper to get environment-aware auth redirect URL.
+ * Local: http://localhost:3000/api/auth/callback
+ * Production: https://clixprocrm.vercel.app/api/auth/callback
+ */
+export const getAuthRedirectUrl = (path: string = "/api/auth/callback"): string => {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return `${window.location.origin}${cleanPath}`;
+  }
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    "http://localhost:3000";
+
+  return `${baseUrl.replace(/\/$/, "")}${cleanPath}`;
+};
+
+let activeOAuthPopup: Window | null = null;
+
 export const signInWithGoogle = async (): Promise<{ success: boolean; target?: string }> => {
   if (typeof window === "undefined") {
     return { success: false };
   }
 
-  // Calculate centered coordinates for popup window
+  // Prevent duplicate popup windows if one is already open and active
+  if (activeOAuthPopup && !activeOAuthPopup.closed) {
+    try {
+      activeOAuthPopup.focus();
+      return { success: false };
+    } catch {
+      // Continue to open fresh popup
+    }
+  }
+
+  // Calculate centered coordinates relative to current browser window
   const width = 500;
   const height = 650;
-  const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
-  const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
+  const screenLeft = typeof window.screenLeft !== "undefined" ? window.screenLeft : window.screenX;
+  const screenTop = typeof window.screenTop !== "undefined" ? window.screenTop : window.screenY;
+  const outerWidth = window.outerWidth || document.documentElement.clientWidth || 1024;
+  const outerHeight = window.outerHeight || document.documentElement.clientHeight || 768;
+  const left = Math.max(0, Math.floor(screenLeft + (outerWidth - width) / 2));
+  const top = Math.max(0, Math.floor(screenTop + (outerHeight - height) / 2));
 
-  // Synchronously open popup immediately in the user gesture call stack so browsers never block it as a popup in production
+  // Open popup synchronously during user gesture call stack
   const popup = window.open(
     "about:blank",
-    "google_oauth_popup",
+    "clixpro_google_oauth_popup",
     `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
   );
 
-  if (popup && !popup.closed) {
-    try {
-      popup.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Connecting to Google...</title>
-            <style>
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                height: 100vh;
-                margin: 0;
-                background-color: #0b0f19;
-                color: #f8fafc;
-              }
-              .container {
-                text-align: center;
-                padding: 24px;
-              }
-              .spinner {
-                width: 32px;
-                height: 32px;
-                border: 3px solid rgba(255, 255, 255, 0.1);
-                border-top: 3px solid #3b82f6;
-                border-radius: 50%;
-                animation: spin 0.8s linear infinite;
-                margin: 0 auto 16px;
-              }
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-              .title {
-                font-size: 15px;
-                font-weight: 600;
-                color: #f8fafc;
-                margin-bottom: 4px;
-              }
-              .desc {
-                font-size: 13px;
-                color: #94a3b8;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="spinner"></div>
-              <div class="title">Connecting to Google...</div>
-              <div class="desc">Please wait while we connect securely.</div>
-            </div>
-          </body>
-        </html>
-      `);
-    } catch {
-      // Ignore if document.write fails in strict contexts
-    }
+  activeOAuthPopup = popup;
+
+  // Handle popup-blocked browsers gracefully without navigating the main window
+  if (!popup || popup.closed || typeof popup.closed === "undefined") {
+    activeOAuthPopup = null;
+    throw new Error(
+      "Popup was blocked by your browser. Please allow popups for this site and try again."
+    );
+  }
+
+  try {
+    popup.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Connecting to Google...</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              margin: 0;
+              background-color: #0b0f19;
+              color: #f8fafc;
+            }
+            .container {
+              text-align: center;
+              padding: 24px;
+            }
+            .spinner {
+              width: 32px;
+              height: 32px;
+              border: 3px solid rgba(255, 255, 255, 0.1);
+              border-top: 3px solid #10b981;
+              border-radius: 50%;
+              animation: spin 0.8s linear infinite;
+              margin: 0 auto 16px;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            .title {
+              font-size: 15px;
+              font-weight: 600;
+              color: #f8fafc;
+              margin-bottom: 4px;
+            }
+            .desc {
+              font-size: 13px;
+              color: #94a3b8;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="spinner"></div>
+            <div class="title">Connecting to Google...</div>
+            <div class="desc">Please select your account in the window.</div>
+          </div>
+        </body>
+      </html>
+    `);
+  } catch {
+    // Ignore if document.write fails in strict contexts
   }
 
   const supabase = createClient();
@@ -232,7 +276,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: getAuthRedirectUrl("/api/auth/callback"),
         skipBrowserRedirect: true,
       },
     });
@@ -253,16 +297,11 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     if (popup && !popup.closed) {
       popup.close();
     }
+    activeOAuthPopup = null;
     throw err;
   }
 
-  // If popup failed to open (e.g. aggressive extension blocker), fallback to standard redirect
-  if (!popup || popup.closed || typeof popup.closed === "undefined") {
-    window.location.href = oauthUrl;
-    return { success: true };
-  }
-
-  // Redirect the popup to Google OAuth URL
+  // Navigate the popup window to Google OAuth URL
   popup.location.href = oauthUrl;
 
   return new Promise((resolve, reject) => {
@@ -288,6 +327,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
         }
       }
       clearInterval(timer);
+      activeOAuthPopup = null;
     };
 
     const processPayload = (payload: { type?: string; target?: string; error?: string }) => {
@@ -300,6 +340,13 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
           localStorage.setItem("has_session", "1");
           localStorage.removeItem("oauth_auth_event");
         }
+        if (popup && !popup.closed) {
+          try {
+            popup.close();
+          } catch {
+            // Ignore popup close error
+          }
+        }
         resolve({ success: true, target: payload.target || "/dashboard" });
       } else if (payload.type === "OAUTH_AUTH_ERROR") {
         resolved = true;
@@ -307,11 +354,19 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
         if (typeof window !== "undefined") {
           localStorage.removeItem("oauth_auth_event");
         }
+        if (popup && !popup.closed) {
+          try {
+            popup.close();
+          } catch {
+            // Ignore popup close error
+          }
+        }
         reject(new Error(payload.error || "Authentication failed"));
       }
     };
 
     const handleMessage = (event: MessageEvent) => {
+      // Secure check: verify origin matches exact origin
       if (event.origin !== window.location.origin) return;
       processPayload(event.data);
     };
@@ -336,7 +391,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     window.addEventListener("message", handleMessage);
     window.addEventListener("storage", handleStorage);
 
-    // Watcher in case user closes popup window manually
+    // Watcher in case user closes popup window manually before completion
     const timer = setInterval(() => {
       if (popup.closed) {
         clearInterval(timer);
@@ -345,9 +400,9 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
             cleanup();
             reject(new Error("Login was cancelled"));
           }
-        }, 600);
+        }, 500);
       }
-    }, 500);
+    }, 400);
   });
 };
 
