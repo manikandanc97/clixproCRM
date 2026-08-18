@@ -20,10 +20,21 @@ async function bootstrap() {
     },
   });
 
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'https://clixprocrm.vercel.app',
+  ];
+
+  const envOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)
+    : [];
+
+  const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
+
   app.enableCors({
-    origin: ['http://localhost:3000'],
+    origin: allowedOrigins,
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   });
 
   app.useGlobalPipes(
