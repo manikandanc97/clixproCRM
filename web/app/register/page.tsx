@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
 import AuthLayout from "@/features/auth/components/auth-layout";
-import { registerUser, signInWithGoogle, fetchCurrentUser } from "@/shared/lib/api/auth";
+import { registerUser, signInWithGoogle, openGoogleAuthPopup, fetchCurrentUser } from "@/shared/lib/api/auth";
 import { parseApiErrors } from "@/shared/lib/api/error";
 
 import { Button } from "@/shared/ui/button";
@@ -63,10 +63,27 @@ export default function RegisterPage() {
     if (generalError) setGeneralError(null);
   };
 
-  const handleGoogleLogin = async () => {
+  /**
+   * Synchronous click handler — opens the popup immediately in the user-gesture
+   * call stack, then fires the async OAuth flow without holding the gesture context.
+   */
+  const handleGoogleLogin = () => {
+    // MUST be synchronous and first: create popup before any await
+    const popup = openGoogleAuthPopup();
+
+    if (!popup) {
+      toast.error("Popup was blocked. Please allow popups for this site and try again.");
+      return;
+    }
+
+    setGoogleLoading(true);
+    void startGoogleOAuth(popup);
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const startGoogleOAuth = async (popup: Window) => {
     try {
-      setGoogleLoading(true);
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle(popup);
       if (result?.success && !result?.redirected) {
         if (typeof window !== "undefined") {
           localStorage.setItem("has_session", "1");

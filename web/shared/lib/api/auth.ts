@@ -164,9 +164,49 @@ export const getAuthRedirectUrl = (path: string = "/api/auth/callback"): string 
   return `${baseUrl.replace(/\/$/, "")}${cleanPath}`;
 };
 
+/**
+ * Opens a centered popup window for Google OAuth.
+ * MUST be called synchronously from a user-gesture event handler.
+ * Returns the popup reference, or null if blocked by the browser.
+ */
+export const openGoogleAuthPopup = (): Window | null => {
+  if (typeof window === "undefined") return null;
+
+  const width = 500;
+  const height = 650;
+  const screenLeft = typeof window.screenLeft !== "undefined" ? window.screenLeft : window.screenX;
+  const screenTop = typeof window.screenTop !== "undefined" ? window.screenTop : window.screenY;
+  const outerWidth = window.outerWidth || document.documentElement.clientWidth || 1024;
+  const outerHeight = window.outerHeight || document.documentElement.clientHeight || 768;
+  const left = Math.max(0, Math.floor(screenLeft + (outerWidth - width) / 2));
+  const top = Math.max(0, Math.floor(screenTop + (outerHeight - height) / 2));
+
+  // IMPORTANT: Do NOT include location=no or status=no.
+  // On HTTPS (production), Chromium blocks cross-origin popup navigation when location=no
+  // is set — Google's OAuth redirect from about:blank to accounts.google.com gets blocked,
+  // causing the parent window to navigate instead. Removing these flags fixes production.
+  try {
+    return window.open(
+      "about:blank",
+      "clixprocrm_google_auth",
+      `width=${width},height=${height},left=${left},top=${top},popup=yes,toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+  } catch {
+    return null;
+  }
+};
+
 let activeOAuthPopup: Window | null = null;
 
-export const signInWithGoogle = async (): Promise<{ success: boolean; target?: string; redirected?: boolean }> => {
+/**
+ * Drives the Google OAuth popup flow.
+ * @param preCreatedPopup - A popup opened synchronously from a click handler (before any await).
+ *   If not provided, a new popup is opened here (may lose user-gesture context in some browsers).
+ *   If null is explicitly passed, falls back to full-page redirect.
+ */
+export const signInWithGoogle = async (
+  preCreatedPopup?: Window | null
+): Promise<{ success: boolean; target?: string; redirected?: boolean }> => {
   if (typeof window === "undefined") {
     return { success: false };
   }
@@ -181,32 +221,15 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     }
   }
 
-  // Calculate centered coordinates relative to current browser window
-  const width = 500;
-  const height = 650;
-  const screenLeft = typeof window.screenLeft !== "undefined" ? window.screenLeft : window.screenX;
-  const screenTop = typeof window.screenTop !== "undefined" ? window.screenTop : window.screenY;
-  const outerWidth = window.outerWidth || document.documentElement.clientWidth || 1024;
-  const outerHeight = window.outerHeight || document.documentElement.clientHeight || 768;
-  const left = Math.max(0, Math.floor(screenLeft + (outerWidth - width) / 2));
-  const top = Math.max(0, Math.floor(screenTop + (outerHeight - height) / 2));
-
-  let popup: Window | null = null;
-  try {
-    popup = window.open(
-      "about:blank",
-      "clixprocrm_google_auth",
-      `width=${width},height=${height},left=${left},top=${top},popup=1,toolbar=no,menubar=no,location=no,status=no,scrollbars=yes,resizable=yes`
-    );
-  } catch {
-    popup = null;
-  }
-
   const supabase = createClient();
   const popupCallbackUrl = getAuthRedirectUrl("/api/auth/callback?popup=1");
   const directCallbackUrl = getAuthRedirectUrl("/api/auth/callback");
 
-  // If popup is blocked by browser, smoothly fallback to standard full-page redirect flow
+  // Use pre-created popup if provided; otherwise open one now (fallback path)
+  let popup: Window | null =
+    preCreatedPopup !== undefined ? preCreatedPopup : openGoogleAuthPopup();
+
+  // If popup is blocked by browser, fall back to standard full-page redirect flow
   if (!popup || popup.closed || typeof popup.closed === "undefined") {
     activeOAuthPopup = null;
     const { data, error } = await supabase.auth.signInWithOAuth({
