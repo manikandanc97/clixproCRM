@@ -1,5 +1,5 @@
 import { type NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+import { updateSession } from "@/lib/supabase/proxy";
 
 const publicPaths = [
   "/login",
@@ -13,7 +13,7 @@ const publicApiPaths = [
   "/api/auth/callback",
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
     return;
   }
 
-  // Update session and check authentication via Supabase
+  // Update session and verify authentication via Supabase
   return await updateSession(request);
 }
 

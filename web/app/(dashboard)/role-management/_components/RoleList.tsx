@@ -123,34 +123,51 @@ export function RoleList({ onCreateRoleTrigger }: { onCreateRoleTrigger?: () => 
   }>({
     queryKey: ["roles"],
     queryFn: async () => {
-      const res = await client.get("/roles");
+      const res = await client.get("/crm/roles");
       return res.data;
     },
   });
 
   const { data: statsData, isLoading: isStatsLoading } = useQuery<{
     success: boolean;
-    data: { total: number; system: number; custom: number; totalAssignedUsers: number };
+    data: any;
   }>({
     queryKey: ["roles-stats"],
     queryFn: async () => {
-      const res = await client.get("/roles/stats");
-      return res.data;
+      try {
+        const res = await client.get("/crm/role-management/stats");
+        return res.data;
+      } catch {
+        return null;
+      }
     },
   });
 
-  const roles = rolesData?.data || [];
-  const stats = statsData?.data || {
-    total: roles.length,
-    system: roles.filter((r) => r.isSystem).length,
-    custom: roles.filter((r) => !r.isSystem).length,
-    totalAssignedUsers: roles.reduce(
-      (acc, r) => acc + (r._count?.users || 0),
-      0,
-    ),
-  };
+  const roles = Array.isArray(rolesData?.data) ? rolesData.data : [];
+  const stats = useMemo(() => {
+    const rawStats = statsData?.data;
+    if (rawStats) {
+      const totalRoles = rawStats.roles?.total ?? rawStats.total ?? roles.length;
+      const customRoles = rawStats.roles?.custom ?? rawStats.custom ?? roles.filter((r) => !r.isSystem).length;
+      const totalUsers = rawStats.users?.total ?? rawStats.totalAssignedUsers ?? roles.reduce((acc, r) => acc + (r._count?.users || 0), 0);
+      return {
+        total: totalRoles,
+        custom: customRoles,
+        totalAssignedUsers: totalUsers,
+      };
+    }
+    return {
+      total: roles.length,
+      system: roles.filter((r) => r.isSystem).length,
+      custom: roles.filter((r) => !r.isSystem).length,
+      totalAssignedUsers: roles.reduce(
+        (acc, r) => acc + (r._count?.users || 0),
+        0,
+      ),
+    };
+  }, [roles, statsData]);
 
-  const isLoading = isRolesLoading || isStatsLoading;
+  const isLoading = isRolesLoading;
 
   // Filter roles by search
   const filteredRoles = useMemo(() => {
@@ -193,10 +210,10 @@ export function RoleList({ onCreateRoleTrigger }: { onCreateRoleTrigger?: () => 
       payload: any;
     }) => {
       if (isNew) {
-        const res = await client.post("/roles", payload);
+        const res = await client.post("/crm/roles", payload);
         return res.data;
       } else {
-        const res = await client.put(`/roles/${roleId}`, payload);
+        const res = await client.put(`/crm/roles/${roleId}`, payload);
         return res.data;
       }
     },
@@ -226,7 +243,7 @@ export function RoleList({ onCreateRoleTrigger }: { onCreateRoleTrigger?: () => 
       replacementId?: string;
     }) => {
       const query = replacementId ? `?replacementRoleId=${replacementId}` : "";
-      const res = await client.delete(`/roles/${roleId}${query}`);
+      const res = await client.delete(`/crm/roles/${roleId}${query}`);
       return res.data;
     },
     onSuccess: () => {

@@ -46,11 +46,12 @@ export function RoleTableRows({
   if (roles.length === 0) {
     return (
       <CRMTableRow className="hover:bg-transparent border-0">
-        <CRMTableCell colSpan={4} className="p-4 border-0">
+        <CRMTableCell colSpan={4} className="py-12 border-0 text-center">
           <EmptyState
             icon={Shield}
             title="No roles found"
             description="No roles match the current search query."
+            className="border-0 bg-transparent shadow-none rounded-none py-6 min-h-[180px]"
           />
         </CRMTableCell>
       </CRMTableRow>
