@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
 import AuthLayout from "@/features/auth/components/auth-layout";
-import { registerUser } from "@/shared/lib/api/auth";
+import { registerUser, signInWithGoogle, fetchCurrentUser } from "@/shared/lib/api/auth";
 import { parseApiErrors } from "@/shared/lib/api/error";
-import { signInWithGoogle } from "@/shared/lib/api/auth";
 
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -34,6 +33,42 @@ export default function RegisterPage() {
   
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+
+  // Listen for popup auth messages
+  useEffect(() => {
+    const handleAuthMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "CLIXPROCRM_GOOGLE_AUTH_SUCCESS") {
+        setGoogleLoading(true);
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("has_session", "1");
+          }
+          await refreshUser();
+          const user = await fetchCurrentUser();
+          if (user) {
+            router.push("/dashboard");
+          } else {
+            router.push("/login");
+          }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+          if (err?.message === "NEEDS_ONBOARDING") {
+            router.push("/onboarding");
+          } else {
+            toast.error("Authentication failed. Please try again.");
+          }
+        } finally {
+          setGoogleLoading(false);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleAuthMessage);
+    return () => {
+      window.removeEventListener("message", handleAuthMessage);
+    };
+  }, [refreshUser, router]);
 
   // Reset loading states on back navigation (bfcache), tab focus, or visibility change
   useEffect(() => {
@@ -68,13 +103,32 @@ export default function RegisterPage() {
     try {
       setGoogleLoading(true);
       const result = await signInWithGoogle();
-      if (result?.target) {
+      if (result?.success) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("has_session", "1");
+        }
         await refreshUser();
-        router.push(result.target);
+        try {
+          const user = await fetchCurrentUser();
+          if (user) {
+            router.push("/dashboard");
+          } else {
+            router.push("/login");
+          }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+          if (err?.message === "NEEDS_ONBOARDING") {
+            router.push("/onboarding");
+          } else {
+            throw err;
+          }
+        }
       }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      if (error?.message !== "Login was cancelled") {
+      if (error?.message === "Google sign-in was cancelled.") {
+        toast.info("Google sign-in was cancelled.");
+      } else {
         toast.error(error.message || "Unable to sign in with Google.");
       }
     } finally {
@@ -277,7 +331,7 @@ export default function RegisterPage() {
                 <path d="M12 5.34C13.62 5.34 15.06 5.89 16.2 6.98L19.36 3.82C17.45 2.03 14.96 1 12 1C7.7 1 4.01 3.39 2.21 6.97L5.88 9.82C6.75 7.26 9.16 5.34 12 5.34Z" fill="#EA4335" />
               </svg>
             )}
-            {googleLoading ? "Connecting..." : "Continue with Google"}
+            {googleLoading ? "Connecting to Google..." : "Continue with Google"}
           </Button>
         </form>
       </AuthLayout>

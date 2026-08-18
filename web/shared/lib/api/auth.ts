@@ -194,8 +194,8 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
   // Open popup synchronously during user gesture call stack
   const popup = window.open(
     "about:blank",
-    "clixpro_google_oauth_popup",
-    `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
+    "clixprocrm-google-login",
+    `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no`
   );
 
   activeOAuthPopup = popup;
@@ -204,69 +204,8 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
   if (!popup || popup.closed || typeof popup.closed === "undefined") {
     activeOAuthPopup = null;
     throw new Error(
-      "Popup was blocked by your browser. Please allow popups for this site and try again."
+      "Google sign-in could not open. Please allow popups for ClixProCRM and try again."
     );
-  }
-
-  try {
-    popup.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>Connecting to Google...</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              height: 100vh;
-              margin: 0;
-              background-color: #0b0f19;
-              color: #f8fafc;
-            }
-            .container {
-              text-align: center;
-              padding: 24px;
-            }
-            .spinner {
-              width: 32px;
-              height: 32px;
-              border: 3px solid rgba(255, 255, 255, 0.1);
-              border-top: 3px solid #10b981;
-              border-radius: 50%;
-              animation: spin 0.8s linear infinite;
-              margin: 0 auto 16px;
-            }
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-            .title {
-              font-size: 15px;
-              font-weight: 600;
-              color: #f8fafc;
-              margin-bottom: 4px;
-            }
-            .desc {
-              font-size: 13px;
-              color: #94a3b8;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="spinner"></div>
-            <div class="title">Connecting to Google...</div>
-            <div class="desc">Please select your account in the window.</div>
-          </div>
-        </body>
-      </html>
-    `);
-  } catch {
-    // Ignore if document.write fails in strict contexts
   }
 
   const supabase = createClient();
@@ -276,7 +215,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: getAuthRedirectUrl("/api/auth/callback"),
+        redirectTo: `${window.location.origin}/api/auth/callback`,
         skipBrowserRedirect: true,
       },
     });
@@ -310,7 +249,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     let channel: BroadcastChannel | null = null;
     if (typeof BroadcastChannel !== "undefined") {
       try {
-        channel = new BroadcastChannel("oauth_auth_channel");
+        channel = new BroadcastChannel("clixprocrm_google_auth_channel");
       } catch {
         channel = null;
       }
@@ -333,12 +272,12 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     const processPayload = (payload: { type?: string; target?: string; error?: string }) => {
       if (!payload || resolved) return;
 
-      if (payload.type === "OAUTH_AUTH_SUCCESS") {
+      if (payload.type === "CLIXPROCRM_GOOGLE_AUTH_SUCCESS") {
         resolved = true;
         cleanup();
         if (typeof window !== "undefined") {
           localStorage.setItem("has_session", "1");
-          localStorage.removeItem("oauth_auth_event");
+          localStorage.removeItem("clixprocrm_google_auth_event");
         }
         if (popup && !popup.closed) {
           try {
@@ -348,11 +287,11 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
           }
         }
         resolve({ success: true, target: payload.target || "/dashboard" });
-      } else if (payload.type === "OAUTH_AUTH_ERROR") {
+      } else if (payload.type === "CLIXPROCRM_GOOGLE_AUTH_ERROR") {
         resolved = true;
         cleanup();
         if (typeof window !== "undefined") {
-          localStorage.removeItem("oauth_auth_event");
+          localStorage.removeItem("clixprocrm_google_auth_event");
         }
         if (popup && !popup.closed) {
           try {
@@ -372,7 +311,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
     };
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === "oauth_auth_event" && event.newValue) {
+      if (event.key === "clixprocrm_google_auth_event" && event.newValue) {
         try {
           const data = JSON.parse(event.newValue);
           processPayload(data);
@@ -398,7 +337,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
         setTimeout(() => {
           if (!resolved) {
             cleanup();
-            reject(new Error("Login was cancelled"));
+            reject(new Error("Google sign-in was cancelled."));
           }
         }, 500);
       }

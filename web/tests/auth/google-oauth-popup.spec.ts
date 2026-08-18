@@ -9,7 +9,7 @@ test.describe('Google OAuth Popup Flow', () => {
     // Intercept Google OAuth initialization or capture popup
     const popupPromise = page.waitForEvent('popup');
     
-    const googleButton = page.getByRole('button', { name: /continue with google|connecting\.\.\./i });
+    const googleButton = page.getByRole('button', { name: /continue with google|connecting to google\.\.\./i });
     await expect(googleButton).toBeVisible();
     await googleButton.click();
 
