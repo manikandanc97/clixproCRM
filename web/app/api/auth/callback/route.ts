@@ -61,20 +61,44 @@ export async function GET(request: Request) {
       (function() {
         var target = "${targetPath}";
         var err = ${error ? JSON.stringify(error) : "null"};
-        if (window.opener) {
+        var payload = {
+          type: err ? 'OAUTH_AUTH_ERROR' : 'OAUTH_AUTH_SUCCESS',
+          target: target,
+          error: err,
+          timestamp: Date.now()
+        };
+
+        // 1. BroadcastChannel (modern standard, works across all same-origin tabs/windows even without opener)
+        try {
+          if (typeof BroadcastChannel !== 'undefined') {
+            var channel = new BroadcastChannel('oauth_auth_channel');
+            channel.postMessage(payload);
+            channel.close();
+          }
+        } catch (e) {}
+
+        // 2. LocalStorage event (guaranteed cross-tab/cross-window event on same-origin)
+        try {
+          localStorage.setItem('oauth_auth_event', JSON.stringify(payload));
+        } catch (e) {}
+
+        // 3. PostMessage via window.opener (if opener is preserved)
+        if (window.opener && window.opener !== window) {
           try {
-            window.opener.postMessage({
-              type: err ? 'OAUTH_AUTH_ERROR' : 'OAUTH_AUTH_SUCCESS',
-              target: target,
-              error: err
-            }, window.location.origin);
-          } catch(e) {}
-          setTimeout(function() {
-            window.close();
-          }, 300);
-        } else {
-          window.location.href = target;
+            window.opener.postMessage(payload, window.location.origin);
+          } catch (e) {}
         }
+
+        // Close popup window
+        setTimeout(function() {
+          try {
+            window.close();
+          } catch (e) {}
+          // Fallback if window cannot be closed (e.g. was opened as full tab/redirect fallback)
+          setTimeout(function() {
+            window.location.href = target;
+          }, 400);
+        }, 250);
       })();
     </script>
   </body>

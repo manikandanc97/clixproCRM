@@ -145,26 +145,6 @@ export const updateProfile = async (data: Record<string, ReturnType<typeof JSON.
 };
 
 export const signInWithGoogle = async (): Promise<{ success: boolean; target?: string }> => {
-  const supabase = createClient();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/api/auth/callback`,
-      skipBrowserRedirect: true,
-    },
-  });
-
-  if (error) {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("has_session");
-    }
-    throw new Error(error.message);
-  }
-
-  if (!data?.url) {
-    throw new Error("Failed to initialize Google authentication URL");
-  }
-
   if (typeof window === "undefined") {
     return { success: false };
   }
@@ -175,44 +155,186 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
   const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
   const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
 
+  // Synchronously open popup immediately in the user gesture call stack so browsers never block it as a popup in production
   const popup = window.open(
-    data.url,
+    "about:blank",
     "google_oauth_popup",
     `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
   );
 
-  // If popup is blocked by browser, fallback to standard redirect
+  if (popup && !popup.closed) {
+    try {
+      popup.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Connecting to Google...</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #0b0f19;
+                color: #f8fafc;
+              }
+              .container {
+                text-align: center;
+                padding: 24px;
+              }
+              .spinner {
+                width: 32px;
+                height: 32px;
+                border: 3px solid rgba(255, 255, 255, 0.1);
+                border-top: 3px solid #3b82f6;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                margin: 0 auto 16px;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              .title {
+                font-size: 15px;
+                font-weight: 600;
+                color: #f8fafc;
+                margin-bottom: 4px;
+              }
+              .desc {
+                font-size: 13px;
+                color: #94a3b8;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="spinner"></div>
+              <div class="title">Connecting to Google...</div>
+              <div class="desc">Please wait while we connect securely.</div>
+            </div>
+          </body>
+        </html>
+      `);
+    } catch {
+      // Ignore if document.write fails in strict contexts
+    }
+  }
+
+  const supabase = createClient();
+  let oauthUrl = "";
+
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback`,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("has_session");
+      }
+      throw new Error(error.message);
+    }
+
+    if (!data?.url) {
+      throw new Error("Failed to initialize Google authentication URL");
+    }
+
+    oauthUrl = data.url;
+  } catch (err) {
+    if (popup && !popup.closed) {
+      popup.close();
+    }
+    throw err;
+  }
+
+  // If popup failed to open (e.g. aggressive extension blocker), fallback to standard redirect
   if (!popup || popup.closed || typeof popup.closed === "undefined") {
-    window.location.href = data.url;
+    window.location.href = oauthUrl;
     return { success: true };
   }
+
+  // Redirect the popup to Google OAuth URL
+  popup.location.href = oauthUrl;
 
   return new Promise((resolve, reject) => {
     let resolved = false;
 
+    let channel: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        channel = new BroadcastChannel("oauth_auth_channel");
+      } catch {
+        channel = null;
+      }
+    }
+
     const cleanup = () => {
       window.removeEventListener("message", handleMessage);
+      window.removeEventListener("storage", handleStorage);
+      if (channel) {
+        try {
+          channel.close();
+        } catch {
+          // Ignore cleanup error
+        }
+      }
       clearInterval(timer);
     };
 
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
+    const processPayload = (payload: { type?: string; target?: string; error?: string }) => {
+      if (!payload || resolved) return;
 
-      if (event.data?.type === "OAUTH_AUTH_SUCCESS") {
+      if (payload.type === "OAUTH_AUTH_SUCCESS") {
         resolved = true;
         cleanup();
         if (typeof window !== "undefined") {
           localStorage.setItem("has_session", "1");
+          localStorage.removeItem("oauth_auth_event");
         }
-        resolve({ success: true, target: event.data.target || "/dashboard" });
-      } else if (event.data?.type === "OAUTH_AUTH_ERROR") {
+        resolve({ success: true, target: payload.target || "/dashboard" });
+      } else if (payload.type === "OAUTH_AUTH_ERROR") {
         resolved = true;
         cleanup();
-        reject(new Error(event.data.error || "Authentication failed"));
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("oauth_auth_event");
+        }
+        reject(new Error(payload.error || "Authentication failed"));
       }
     };
 
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      processPayload(event.data);
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === "oauth_auth_event" && event.newValue) {
+        try {
+          const data = JSON.parse(event.newValue);
+          processPayload(data);
+        } catch {
+          // Ignore JSON parse error
+        }
+      }
+    };
+
+    if (channel) {
+      channel.onmessage = (event) => {
+        processPayload(event.data);
+      };
+    }
+
     window.addEventListener("message", handleMessage);
+    window.addEventListener("storage", handleStorage);
 
     // Watcher in case user closes popup window manually
     const timer = setInterval(() => {
@@ -223,7 +345,7 @@ export const signInWithGoogle = async (): Promise<{ success: boolean; target?: s
             cleanup();
             reject(new Error("Login was cancelled"));
           }
-        }, 500);
+        }, 600);
       }
     }, 500);
   });
