@@ -4,6 +4,7 @@ import DashboardShell from "@/features/dashboard/components/DashboardShell";
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { GlobalModalManager } from "@/shared/components/GlobalModalManager";
 import FloatingAssistantWrapper from "@/components/ai/floating-assistant-wrapper";
+import { DashboardCelebration } from "@/components/celebration";
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default function DashboardLayout({
           <DashboardShell>
             {children}
           </DashboardShell>
+          <DashboardCelebration />
           <GlobalModalManager />
           <FloatingAssistantWrapper />
         </SidebarProvider>

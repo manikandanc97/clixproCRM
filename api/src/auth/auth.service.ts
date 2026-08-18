@@ -2,6 +2,7 @@ import {
   Injectable,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
@@ -28,6 +29,8 @@ export function invalidateGetMeCache(userId?: string) {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getMe(userId: string, tenantId: string, email?: string) {
@@ -43,7 +46,10 @@ export class AuthService {
       include: {
         memberships: {
           where: tenantId ? { tenantId } : undefined,
-          include: { role: { include: { permissions: true } } },
+          include: {
+            role: { include: { permissions: true } },
+            tenant: true,
+          },
         },
       },
     });
@@ -54,7 +60,10 @@ export class AuthService {
         include: {
           memberships: {
             where: tenantId ? { tenantId } : undefined,
-            include: { role: { include: { permissions: true } } },
+            include: {
+              role: { include: { permissions: true } },
+              tenant: true,
+            },
           },
         },
       });
@@ -67,7 +76,10 @@ export class AuthService {
           include: {
             memberships: {
               where: tenantId ? { tenantId } : undefined,
-              include: { role: { include: { permissions: true } } },
+              include: {
+                role: { include: { permissions: true } },
+                tenant: true,
+              },
             },
           },
         });
@@ -92,6 +104,7 @@ export class AuthService {
         phone: user.phone,
         status: user.status,
         tenantId: membership.tenantId,
+        companyName: membership.tenant?.name || 'My Workspace',
         role: roleName,
         permissions,
       },
@@ -245,5 +258,308 @@ export class AuthService {
 
       return { user, tenant };
     });
+  }
+
+  async deleteAccount(
+    userId: string,
+    tenantId: string,
+    confirmation: { confirm1?: string; confirm2?: string },
+  ) {
+    const membership = await this.prisma.tenantUser.findUnique({
+      where: {
+        tenantId_userId: {
+          tenantId,
+          userId,
+        },
+      },
+      include: {
+        role: true,
+        tenant: true,
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('User is not a member of this workspace.');
+    }
+
+    const expectedCompanyName = (membership.tenant?.name || '').trim().toLowerCase();
+    const providedConfirm1 = (confirmation?.confirm1 || '').trim().toLowerCase();
+    const providedConfirm2 = (confirmation?.confirm2 || '').trim().toLowerCase();
+
+    const isCompanyMatch =
+      providedConfirm1 === expectedCompanyName ||
+      providedConfirm1 === 'clixprocrm' ||
+      (membership.tenant?.slug && providedConfirm1 === membership.tenant.slug.toLowerCase());
+
+    const isSecondMatch = providedConfirm2 === 'delete my account';
+
+    if (!confirmation || !isCompanyMatch || !isSecondMatch) {
+      throw new BadRequestException(
+        'Confirmation strings do not match the required text.',
+      );
+    }
+
+    const isAdmin = membership.role.name === 'ADMIN';
+
+    try {
+      if (isAdmin) {
+        // Complete workspace-level permanent deletion in a single atomic transaction
+        await this.prisma.$transaction(
+          async (tx: any) => {
+            // 1. Break circular / self-referential / non-cascading FK references
+          await tx.$executeRawUnsafe(
+            `UPDATE "TenantUser" SET "reportingManagerId" = NULL, "departmentId" = NULL WHERE "tenantId" = $1`,
+            tenantId,
+          );
+          await tx.$executeRawUnsafe(
+            `UPDATE "Task" SET "relatedCustomerId" = NULL, "relatedLeadId" = NULL, "relatedMeetingId" = NULL, "relatedQuotationId" = NULL, "relatedDealId" = NULL WHERE "tenantId" = $1`,
+            tenantId,
+          );
+          await tx.$executeRawUnsafe(
+            `UPDATE "Meeting" SET "customerId" = NULL, "leadId" = NULL, "quotationId" = NULL, "dealId" = NULL WHERE "tenantId" = $1`,
+            tenantId,
+          );
+          await tx.$executeRawUnsafe(
+            `UPDATE "Quotation" SET "customerId" = NULL, "dealId" = NULL WHERE "tenantId" = $1`,
+            tenantId,
+          );
+          await tx.$executeRawUnsafe(
+            `UPDATE "Deal" SET "companyId" = NULL, "customerId" = NULL, "leadId" = NULL WHERE "tenantId" = $1`,
+            tenantId,
+          );
+          await tx.$executeRawUnsafe(
+            `UPDATE "Lead" SET "customerId" = NULL, "companyId" = NULL WHERE "tenantId" = $1`,
+            tenantId,
+          );
+          await tx.$executeRawUnsafe(
+            `UPDATE "Customer" SET "companyId" = NULL WHERE "tenantId" = $1`,
+            tenantId,
+          );
+
+          // 2. Delete child models of AI & RAG
+          const convs = await tx.aiConversation.findMany({
+            where: { tenantId },
+            select: { id: true },
+          });
+          if (convs.length > 0) {
+            const convIds = convs.map((c: any) => c.id);
+            await tx.aiMessage.deleteMany({
+              where: { conversationId: { in: convIds } },
+            });
+          }
+          await tx.aiConversation.deleteMany({ where: { tenantId } });
+
+          const docs = await tx.document.findMany({
+            where: { tenantId },
+            select: { id: true },
+          });
+          if (docs.length > 0) {
+            const docIds = docs.map((d: any) => d.id);
+            await tx.documentChunk.deleteMany({
+              where: { documentId: { in: docIds } },
+            });
+          }
+          await tx.document.deleteMany({ where: { tenantId } });
+          await tx.tenantAiConfig.deleteMany({ where: { tenantId } });
+
+          // 3. Delete tenant timeline events, attachments, notes, notifications
+          await tx.timelineEvent.deleteMany({ where: { tenantId } });
+          await tx.attachment.deleteMany({ where: { tenantId } });
+          await tx.note.deleteMany({ where: { tenantId } });
+          await tx.notification.deleteMany({ where: { tenantId } });
+
+          // 4. Delete financial & operational records
+          await tx.invoice.deleteMany({ where: { tenantId } });
+          await tx.invoiceCounter.deleteMany({ where: { tenantId } });
+          await tx.quotation.deleteMany({ where: { tenantId } });
+          await tx.task.deleteMany({ where: { tenantId } });
+          await tx.meeting.deleteMany({ where: { tenantId } });
+          await tx.deal.deleteMany({ where: { tenantId } });
+          await tx.lead.deleteMany({ where: { tenantId } });
+          await tx.customer.deleteMany({ where: { tenantId } });
+          await tx.company.deleteMany({ where: { tenantId } });
+          await tx.product.deleteMany({ where: { tenantId } });
+          await tx.revenueTarget.deleteMany({ where: { tenantId } });
+          await tx.invitation.deleteMany({ where: { tenantId } });
+
+          // 5. Gather all users who belong to this tenant
+          const tenantUsers = await tx.tenantUser.findMany({
+            where: { tenantId },
+            select: { userId: true },
+          });
+          const userIdsInTenant: string[] = tenantUsers.map(
+            (tu: any) => tu.userId,
+          );
+
+          // Delete tenant user memberships
+          await tx.tenantUser.deleteMany({ where: { tenantId } });
+
+          // 6. Delete roles, permissions, departments
+          const roles = await tx.role.findMany({
+            where: { tenantId },
+            select: { id: true },
+          });
+          if (roles.length > 0) {
+            const roleIds = roles.map((r: any) => r.id);
+            await tx.rolePermission.deleteMany({
+              where: { roleId: { in: roleIds } },
+            });
+          }
+          await tx.role.deleteMany({ where: { tenantId } });
+          await tx.department.deleteMany({ where: { tenantId } });
+
+          // 7. Delete Audit Logs associated with this tenant
+          await tx.auditLog.deleteMany({ where: { tenantId } });
+
+          // 8. Delete Tenant
+          await tx.tenant.delete({ where: { id: tenantId } });
+
+          // 9. Clean up users who have no other tenant memberships
+          for (const uid of userIdsInTenant) {
+            const otherMemberships = await tx.tenantUser.count({
+              where: { userId: uid },
+            });
+            if (otherMemberships === 0) {
+              await tx.auditLog.deleteMany({
+                where: {
+                  OR: [{ userId: uid }, { targetUserId: uid }],
+                },
+              });
+              await tx.user.delete({ where: { id: uid } });
+            }
+          }
+        },
+        { maxWait: 10000, timeout: 30000 },
+      );
+      } else {
+        // Normal non-admin user deletion: Remove user's membership and personal records only
+        await this.prisma.$transaction(
+          async (tx: any) => {
+            await tx.$executeRawUnsafe(
+              `UPDATE "TenantUser" SET "reportingManagerId" = NULL WHERE "id" = $1 OR "reportingManagerId" = $1`,
+              membership.id,
+            );
+
+            await tx.$executeRawUnsafe(
+              `UPDATE "Customer" SET "assignedToId" = NULL WHERE "assignedToId" = $1 AND "tenantId" = $2`,
+              userId,
+              tenantId,
+            );
+            await tx.$executeRawUnsafe(
+              `UPDATE "Lead" SET "assignedToId" = NULL, "createdById" = NULL, "updatedById" = NULL WHERE ("assignedToId" = $1 OR "createdById" = $1 OR "updatedById" = $1) AND "tenantId" = $2`,
+              userId,
+              tenantId,
+            );
+            await tx.$executeRawUnsafe(
+              `UPDATE "Task" SET "assignedToId" = NULL, "createdById" = NULL, "completedById" = NULL WHERE ("assignedToId" = $1 OR "createdById" = $1 OR "completedById" = $1) AND "tenantId" = $2`,
+              userId,
+              tenantId,
+            );
+            await tx.$executeRawUnsafe(
+              `UPDATE "Quotation" SET "assignedToId" = NULL WHERE "assignedToId" = $1 AND "tenantId" = $2`,
+              userId,
+              tenantId,
+            );
+            await tx.$executeRawUnsafe(
+              `UPDATE "Meeting" SET "assignedToId" = NULL, "ownerId" = NULL WHERE ("assignedToId" = $1 OR "ownerId" = $1) AND "tenantId" = $2`,
+              userId,
+              tenantId,
+            );
+            await tx.$executeRawUnsafe(
+              `UPDATE "Company" SET "ownerId" = NULL WHERE "ownerId" = $1 AND "tenantId" = $2`,
+              userId,
+              tenantId,
+            );
+            await tx.$executeRawUnsafe(
+              `UPDATE "Deal" SET "ownerId" = NULL WHERE "ownerId" = $1 AND "tenantId" = $2`,
+              userId,
+              tenantId,
+            );
+
+            const convs = await tx.aiConversation.findMany({
+              where: { userId, tenantId },
+              select: { id: true },
+            });
+            if (convs.length > 0) {
+              const convIds = convs.map((c: any) => c.id);
+              await tx.aiMessage.deleteMany({
+                where: { conversationId: { in: convIds } },
+              });
+            }
+            await tx.aiConversation.deleteMany({ where: { userId, tenantId } });
+            await tx.notification.deleteMany({ where: { userId, tenantId } });
+            await tx.attachment.deleteMany({ where: { userId, tenantId } });
+            await tx.note.deleteMany({ where: { userId, tenantId } });
+            await tx.timelineEvent.deleteMany({ where: { userId, tenantId } });
+
+            await tx.tenantUser.delete({ where: { id: membership.id } });
+
+            const otherMemberships = await tx.tenantUser.count({
+              where: { userId },
+            });
+            if (otherMemberships === 0) {
+              await tx.auditLog.deleteMany({
+                where: {
+                  OR: [{ userId }, { targetUserId: userId }],
+                },
+              });
+              await tx.user.delete({ where: { id: userId } });
+            }
+          },
+          { maxWait: 10000, timeout: 30000 },
+        );
+      }
+
+      this.logger.log(
+        `Initiating account deletion transaction for tenantId: ${tenantId}, userId: ${userId}, isAdmin: ${isAdmin}`,
+      );
+
+      // Purge user from Supabase Auth Provider if user ID is a valid UUID
+      try {
+        const isUUID =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            userId,
+          );
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseKey =
+          process.env.SUPABASE_SERVICE_ROLE_KEY ||
+          process.env.SUPABASE_ANON_KEY;
+        if (isUUID && supabaseUrl && supabaseKey) {
+          const { createClient } = require('@supabase/supabase-js');
+          const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+            auth: { autoRefreshToken: false, persistSession: false },
+          });
+          await supabaseAdmin.auth.admin.deleteUser(userId);
+        }
+      } catch (authErr: any) {
+        this.logger.warn(
+          `Supabase Auth admin deleteUser warning for userId: ${userId}: ${authErr?.message || authErr}`,
+        );
+      }
+
+      // Invalidate memory caches
+      invalidateGetMeCache(userId);
+      try {
+        const { invalidateUserTenantCache } = require('./tenant.guard');
+        invalidateUserTenantCache(userId);
+      } catch (_) {}
+
+      this.logger.log(
+        `Account deletion transaction committed successfully for tenantId: ${tenantId}, userId: ${userId}`,
+      );
+
+      return {
+        success: true,
+        message:
+          'Your account and workspace data have been permanently deleted.',
+      };
+    } catch (error: any) {
+      this.logger.error(
+        `Account deletion transaction failed for tenantId: ${tenantId}, userId: ${userId}: ${error?.message || error}`,
+      );
+      throw new BadRequestException(
+        'Account deletion failed. No data was deleted. Please try again.',
+      );
+    }
   }
 }

@@ -66,9 +66,11 @@ export default function FloatingAssistant() {
   const { messages, sendMessage, status, error } = useChat({
     transport,
     onError: (err) => {
-      let msg = err.message;
-      if (msg.startsWith('<!DOCTYPE html>')) msg = 'Server returned HTML (likely a 404/500 error). Check API route.';
-      console.error("[DEBUG] useChat onError called:", msg);
+      let msg = err?.message || 'An unexpected error occurred.';
+      if (msg.startsWith('<!DOCTYPE html>')) {
+        msg = 'Server returned HTML (likely a 404/500 error). Check API route.';
+      }
+      console.error("[AI Assistant Error]:", msg);
     }
   });
 

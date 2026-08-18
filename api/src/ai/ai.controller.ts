@@ -17,7 +17,7 @@ export class AiController {
   async chat(@Body() body: any, @Res() res: FastifyReply, @Req() req: any) {
     try {
       const messages = body.messages || [];
-      const model = body.model || 'gemini-1.5-flash';
+      const model = body.model || 'gemini-3.6-flash';
 
       // Tenant and User resolution STRICTLY from authenticated guards
       const tenantId = req.tenantId;
@@ -43,7 +43,7 @@ export class AiController {
       res.raw.setHeader('Access-Control-Allow-Credentials', 'true');
       res.raw.setHeader(
         'Access-Control-Allow-Headers',
-        'Content-Type, Authorization, x-tenant-id',
+        'Content-Type, Authorization, x-tenant-id, X-Currency, x-currency',
       );
 
       // Pipe UI message stream to response

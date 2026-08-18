@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { User, Mail, ShieldCheck, CheckCircle2, Phone, Save, Loader2 } from "lucide-react";
+import { User, Mail, ShieldCheck, CheckCircle2, Phone, Save, Loader2, AlertTriangle, Trash2 } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { CRMCard } from "@/shared/components/crm";
 import { useMutation } from "@tanstack/react-query";
 import { updateProfile } from "@/shared/lib/api/auth";
+import { DeleteAccountModal } from "./DeleteAccountModal";
 
 function formatRole(role?: string) {
   if (!role) return "";
@@ -34,6 +35,7 @@ function getInitials(name?: string) {
 
 const ProfileSettings = () => {
   const { user, refreshUser } = useAuth();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -206,6 +208,40 @@ const ProfileSettings = () => {
           <p className="text-right text-[9px] font-bold text-primary mt-1">{completion}%</p>
         </div>
       </CRMCard>
+
+      {/* Danger Zone */}
+      <CRMCard className="border-destructive/30 bg-destructive/5 overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold tracking-tight text-destructive flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+                Danger Zone
+              </h3>
+              <Badge variant="destructive" className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5">
+                Irreversible
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground font-medium">
+              Permanently delete your account, workspace, and all associated CRM records.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowDeleteModal(true)}
+            className="font-bold text-xs gap-2 shrink-0 h-9 px-4 shadow-sm"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Account
+          </Button>
+        </div>
+      </CRMCard>
+
+      <DeleteAccountModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+      />
     </div>
   );
 };

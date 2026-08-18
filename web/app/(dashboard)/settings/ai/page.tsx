@@ -57,7 +57,7 @@ export default function AISettingsPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Model Selection</label>
             <select 
-              value={config?.model || 'gemini-1.5-flash'}
+              value={config?.model || 'gemini-3.6-flash'}
               onChange={e => setConfig({...config, model: e.target.value})}
               className="w-full p-2 border rounded-md"
             >
@@ -68,8 +68,7 @@ export default function AISettingsPage() {
                 </>
               ) : (
                 <>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
-                  <option value="gemini-1.5-pro">Gemini 1.5 Pro (Reasoning)</option>
+                  <option value="gemini-3.6-flash">Gemini 3.6 Flash (Fast & Recommended)</option>
                 </>
               )}
             </select>

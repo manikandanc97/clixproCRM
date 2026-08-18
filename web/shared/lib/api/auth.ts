@@ -144,34 +144,94 @@ export const updateProfile = async (data: Record<string, ReturnType<typeof JSON.
   return response.data;
 };
 
-export const signInWithGoogle = async () => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem("has_session", "1");
-  }
+export const signInWithGoogle = async (): Promise<{ success: boolean; target?: string }> => {
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${window.location.origin}/api/auth/callback`,
+      redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/api/auth/callback`,
+      skipBrowserRedirect: true,
     },
   });
 
   if (error) {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.removeItem("has_session");
     }
     throw new Error(error.message);
   }
+
+  if (!data?.url) {
+    throw new Error("Failed to initialize Google authentication URL");
+  }
+
+  if (typeof window === "undefined") {
+    return { success: false };
+  }
+
+  // Calculate centered coordinates for popup window
+  const width = 500;
+  const height = 650;
+  const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
+  const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
+
+  const popup = window.open(
+    data.url,
+    "google_oauth_popup",
+    `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
+  );
+
+  // If popup is blocked by browser, fallback to standard redirect
+  if (!popup || popup.closed || typeof popup.closed === "undefined") {
+    window.location.href = data.url;
+    return { success: true };
+  }
+
+  return new Promise((resolve, reject) => {
+    let resolved = false;
+
+    const cleanup = () => {
+      window.removeEventListener("message", handleMessage);
+      clearInterval(timer);
+    };
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === "OAUTH_AUTH_SUCCESS") {
+        resolved = true;
+        cleanup();
+        if (typeof window !== "undefined") {
+          localStorage.setItem("has_session", "1");
+        }
+        resolve({ success: true, target: event.data.target || "/dashboard" });
+      } else if (event.data?.type === "OAUTH_AUTH_ERROR") {
+        resolved = true;
+        cleanup();
+        reject(new Error(event.data.error || "Authentication failed"));
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    // Watcher in case user closes popup window manually
+    const timer = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(timer);
+        setTimeout(() => {
+          if (!resolved) {
+            cleanup();
+            reject(new Error("Login was cancelled"));
+          }
+        }, 500);
+      }
+    }, 500);
+  });
 };
 
-
-
-
-
-
-
-
-
-
-
-
+export const deleteAccount = async (confirmation: { confirm1: string; confirm2: string }) => {
+  const response = await client.delete<{ success: boolean; message: string }>("/auth/account", {
+    data: confirmation,
+  });
+  return response.data;
+};

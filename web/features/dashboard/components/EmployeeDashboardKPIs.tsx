@@ -6,7 +6,6 @@ import {
   CalendarDays,
   Users,
   Handshake,
-  Activity,
 } from "lucide-react";
 import { useEmployeeDashboard } from "@/shared/hooks/use-employee-dashboard";
 import { CRMMetricCard, CRMMetricsGrid } from "@/shared/components/crm";

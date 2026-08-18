@@ -3,12 +3,14 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Body,
   UseGuards,
   Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SupabaseAuthGuard } from './supabase.guard';
+import { TenantGuard } from './tenant.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -45,20 +47,24 @@ export class AuthController {
     const email = req.user.email;
     const ip = req.ip || req.headers['x-forwarded-for'];
     const userAgent = req.headers['user-agent'];
+    const userId = req.user.id || req.user.sub;
+    const result = await this.authService.register(
+      { userId, name, email, companyName },
+      { ip: typeof ip === 'string' ? ip : undefined, userAgent },
+    );
+    return { success: true, data: result, message: 'Onboarding successful' };
+  }
 
-    try {
-      const userId = req.user.id || req.user.sub;
-      const result = await this.authService.register(
-        { userId, name, email, companyName },
-        { ip: typeof ip === 'string' ? ip : undefined, userAgent },
-      );
-      return { success: true, data: result, message: 'Onboarding successful' };
-    } catch (error: any) {
-      require('fs').writeFileSync(
-        'onboarding-error.log',
-        error.stack || error.message,
-      );
-      throw error;
-    }
+  @UseGuards(SupabaseAuthGuard, TenantGuard)
+  @Delete('account')
+  async deleteAccount(@Req() req: any, @Body() body: any) {
+    const userId = req.user.id || req.user.sub;
+    const tenantId = req.tenantId;
+    const result = await this.authService.deleteAccount(
+      userId,
+      tenantId,
+      body || {},
+    );
+    return result;
   }
 }

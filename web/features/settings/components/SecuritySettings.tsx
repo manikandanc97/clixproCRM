@@ -1,13 +1,17 @@
 "use client";
 
-import React from "react";
-import { Lock, ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
+import { Lock, ShieldCheck, AlertTriangle, Trash2 } from "lucide-react";
 import { CRMCard } from "@/shared/components/crm";
 import { useSecuritySettings } from "@/shared/hooks/use-settings";
 import { PageErrorState, ComponentLoadingState } from "@/shared/components/page-states";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
+import { DeleteAccountModal } from "./DeleteAccountModal";
 
 const SecuritySettings = () => {
   const { isLoading, error, refetch } = useSecuritySettings();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   if (isLoading) {
     return <ComponentLoadingState label="Loading security settings..." />;
@@ -49,6 +53,40 @@ const SecuritySettings = () => {
           </div>
         </CRMCard>
       </div>
+
+      {/* Danger Zone */}
+      <CRMCard className="border-destructive/30 bg-destructive/5 overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold tracking-tight text-destructive flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+                Danger Zone
+              </h3>
+              <Badge variant="destructive" className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5">
+                Irreversible
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground font-medium">
+              Permanently delete your account, workspace, and all associated CRM records.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowDeleteModal(true)}
+            className="font-bold text-xs gap-2 shrink-0 h-9 px-4 shadow-sm"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Account
+          </Button>
+        </div>
+      </CRMCard>
+
+      <DeleteAccountModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+      />
     </div>
   );
 };

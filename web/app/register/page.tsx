@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
 import AuthLayout from "@/features/auth/components/auth-layout";
@@ -14,9 +14,11 @@ import { Label } from "@/shared/ui/label";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import PublicRoute from "@/features/auth/components/public-route";
+import { useAuth } from "@/features/auth/components/auth-provider";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   // Form state
   const [name, setName] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -33,6 +35,30 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
 
+  // Reset loading states on back navigation (bfcache), tab focus, or visibility change
+  useEffect(() => {
+    const handleResetLoading = () => {
+      setGoogleLoading(false);
+      setLoading(false);
+    };
+
+    window.addEventListener("pageshow", handleResetLoading);
+    window.addEventListener("focus", handleResetLoading);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        setGoogleLoading(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pageshow", handleResetLoading);
+      window.removeEventListener("focus", handleResetLoading);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   const clearFieldError = (field: string) => {
     if (fieldErrors[field]) setFieldErrors((prev) => ({ ...prev, [field]: "" }));
     if (generalError) setGeneralError(null);
@@ -41,10 +67,17 @@ export default function RegisterPage() {
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
-      await signInWithGoogle();
+      const result = await signInWithGoogle();
+      if (result?.target) {
+        await refreshUser();
+        router.push(result.target);
+      }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || "Unable to sign in with Google.");
+      if (error?.message !== "Login was cancelled") {
+        toast.error(error.message || "Unable to sign in with Google.");
+      }
+    } finally {
       setGoogleLoading(false);
     }
   };

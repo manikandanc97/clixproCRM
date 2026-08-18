@@ -41,7 +41,6 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { 
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,

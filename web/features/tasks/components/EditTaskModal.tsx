@@ -7,7 +7,6 @@ import * as z from "zod";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/shared/ui/dialog";

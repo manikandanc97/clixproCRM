@@ -10,8 +10,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Calendar, 
-  User, 
-  X,
+  User,
   Trash2,
   CheckCircle2,
   Edit2,
@@ -22,23 +21,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import { useUpdateLead } from "@/shared/hooks/use-crm";
-import { updateLead } from "@/shared/lib/api/crm";
 import { LEAD_STATUS_LABELS } from "@/lib/crm-formatters";
 import { useRouter } from "next/navigation";
 import { WonLostSubmitData } from "@/features/pipeline/components/WonLostModal";
 import { LeadBulkActionToolbar } from "./LeadBulkActionToolbar";
 import { LeadMobileCards } from "./LeadMobileCards";
 import { LeadModalsHost } from "./LeadModalsHost";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+
+
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { 
@@ -49,15 +39,12 @@ import {
   DropdownMenuSeparator
 } from "@/shared/ui/dropdown-menu";
 import { LeadType, LeadStatus } from "@/shared/types/lead";
-import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { DataTable } from "@/shared/components/DataTable";
 import { StatusBadge, StatusVariant } from "@/shared/components/StatusBadge";
 import { cn } from "@/shared/lib/utils";
 import { useLeads } from "../hooks/useLeads";
 import { Badge } from "@/shared/ui/badge";
-import { AddNoteModal } from "./AddNoteModal";
-import { LeadDetailsDrawer } from "./LeadDetailsDrawer";
 import { formatDistanceToNow } from "date-fns";
 import { LeadEmptyState } from "./LeadEmptyState";
 

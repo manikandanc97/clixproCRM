@@ -6,7 +6,7 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
@@ -25,8 +25,8 @@ import { useAuth } from "@/features/auth/components/auth-provider";
 
 export default function LoginPage() {
    
-  const _router = useRouter();
-  const { login } = useAuth();
+  const router = useRouter();
+  const { login, refreshUser } = useAuth();
 
   // Form state
   const [email, setEmail] = useState("");
@@ -38,6 +38,30 @@ export default function LoginPage() {
   
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+
+  // Reset loading states on back navigation (bfcache), tab focus, or visibility change
+  useEffect(() => {
+    const handleResetLoading = () => {
+      setGoogleLoading(false);
+      setLoading(false);
+    };
+
+    window.addEventListener("pageshow", handleResetLoading);
+    window.addEventListener("focus", handleResetLoading);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        setGoogleLoading(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pageshow", handleResetLoading);
+      window.removeEventListener("focus", handleResetLoading);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -54,10 +78,17 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
-      await signInWithGoogle();
+      const result = await signInWithGoogle();
+      if (result?.target) {
+        await refreshUser();
+        router.push(result.target);
+      }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || "Unable to sign in with Google.");
+      if (error?.message !== "Login was cancelled") {
+        toast.error(error.message || "Unable to sign in with Google.");
+      }
+    } finally {
       setGoogleLoading(false);
     }
   };

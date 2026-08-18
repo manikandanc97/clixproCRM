@@ -72,9 +72,46 @@ CRITICAL SECURITY RULES:
     };
   }
 
+  /**
+   * Resolves model names and maps legacy/deprecated names to current active Google Gemini models.
+   */
+  public resolveModelName(modelName?: string): string {
+    const legacyMap: Record<string, string> = {
+      'gemini-1.5-flash': 'gemini-3.6-flash',
+      'gemini-1.5-flash-latest': 'gemini-3.6-flash',
+      'gemini-2.0-flash': 'gemini-3.6-flash',
+      'gemini-2.5-flash': 'gemini-3.6-flash',
+      'gemini-1.5-pro': 'gemini-3.6-flash',
+      'gemini-2.5-pro': 'gemini-3.6-flash',
+    };
+    if (!modelName) return 'gemini-3.6-flash';
+    return legacyMap[modelName] || modelName;
+  }
+
+  /**
+   * Sanitizes and ensures message structure is compliant with UIMessage specification.
+   */
+  private sanitizeMessages(messages: any[]): any[] {
+    return (messages || []).map((m) => {
+      if (typeof m === 'string') {
+        return { role: 'user', parts: [{ type: 'text', text: m }] };
+      }
+      if (m.parts && Array.isArray(m.parts) && m.parts.length > 0) {
+        return m;
+      }
+      if (typeof m.content === 'string') {
+        return { ...m, role: m.role || 'user', parts: [{ type: 'text', text: m.content }] };
+      }
+      if (Array.isArray(m.content)) {
+        return { ...m, role: m.role || 'user', parts: m.content };
+      }
+      return { ...m, role: m.role || 'user', parts: [{ type: 'text', text: '' }] };
+    });
+  }
+
   async generateStream(
     messages: any[],
-    modelName = 'gemini-1.5-flash',
+    modelName = 'gemini-3.6-flash',
     userContext: UserSecurityContext,
   ): Promise<any> {
     if (!this.googleAi) {
@@ -83,18 +120,15 @@ CRITICAL SECURITY RULES:
       );
     }
 
+    const activeModel = this.resolveModelName(modelName);
+
     try {
       const tools = this.getAuthorizedTools(userContext);
-      const sanitizedMessages = messages.map((m) => {
-        if (!m.parts && m.content) {
-          return { ...m, parts: [{ type: 'text', text: m.content }] };
-        }
-        return m;
-      });
+      const sanitizedMessages = this.sanitizeMessages(messages);
       const coreMessages = await convertToModelMessages(sanitizedMessages, { tools });
 
       const result = await streamText({
-        model: this.googleAi(modelName),
+        model: this.googleAi(activeModel),
         messages: coreMessages,
         temperature: 0.7,
         stopWhen: isStepCount(5),
@@ -111,7 +145,7 @@ CRITICAL SECURITY RULES:
             res.statusCode = 500;
           }
           res.end(
-            JSON.stringify({ error: error.toString(), stack: error.stack }),
+            JSON.stringify({ error: error?.message || error.toString(), stack: error?.stack }),
           );
         },
       };
@@ -120,7 +154,7 @@ CRITICAL SECURITY RULES:
 
   async generateText(
     messages: any[],
-    modelName = 'gemini-1.5-flash',
+    modelName = 'gemini-3.6-flash',
     userContext: UserSecurityContext,
   ): Promise<string> {
     if (!this.googleAi) {
@@ -129,18 +163,15 @@ CRITICAL SECURITY RULES:
       );
     }
 
+    const activeModel = this.resolveModelName(modelName);
+
     try {
       const tools = this.getAuthorizedTools(userContext);
-      const sanitizedMessages = messages.map((m) => {
-        if (!m.parts && m.content) {
-          return { ...m, parts: [{ type: 'text', text: m.content }] };
-        }
-        return m;
-      });
+      const sanitizedMessages = this.sanitizeMessages(messages);
       const coreMessages = await convertToModelMessages(sanitizedMessages, { tools });
 
       const result = await generateText({
-        model: this.googleAi(modelName),
+        model: this.googleAi(activeModel),
         messages: coreMessages,
         temperature: 0.7,
         stopWhen: isStepCount(5),
@@ -158,3 +189,4 @@ CRITICAL SECURITY RULES:
     }
   }
 }
+

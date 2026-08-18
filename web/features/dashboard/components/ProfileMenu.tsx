@@ -10,9 +10,7 @@ import {
   Palette,
   Check,
   Type,
-  Layout,
-  DollarSign,
-  IndianRupee
+  Layout
 } from "lucide-react";
 import {
   DropdownMenu,

@@ -7,6 +7,7 @@ const publicPaths = [
   "/forgot-password",
   "/reset-password",
   "/onboarding",
+  "/account-deleted",
 ];
 
 const publicApiPaths = [
