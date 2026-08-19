@@ -24,47 +24,42 @@ function getInitials(name?: string) {
 }
 
 export function SuperAdminHeader() {
-  const pathname = usePathname();
   const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const initials = getInitials(user?.name);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
-    <header className="sticky top-0 z-40 flex justify-between items-center bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur-md px-4 sm:px-8 border-b border-border h-[72px] transition-all shadow-[0_1px_2px_0_rgba(0,0,0,0.02)] gap-4">
-      {/* Global Search */}
-      <div className="flex flex-1 items-center gap-4 max-w-full md:max-w-[450px]">
-        <GlobalSearch />
-      </div>
-
-      {/* Right Controls */}
-      <div className="flex items-center gap-3 sm:gap-5">
-        {/* Create New Organization Action */}
-        <Link href="/super-admin/organizations">
-          <Button
-            size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg px-4 py-2 text-xs md:text-sm shadow-sm gap-1.5 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New</span>
-          </Button>
-        </Link>
-
-        {/* Currency & Notifications */}
-        <div className="flex items-center gap-3">
-          <CurrencySwitcher />
-          <NotificationPanel />
+    <header className="sticky top-0 z-40 w-full px-3 sm:px-6 lg:px-10 pt-3 pb-0">
+      {/* ── Single Floating Card Container ── */}
+      <div className="flex items-center justify-between gap-3 sm:gap-4 bg-sidebar text-sidebar-foreground border border-sidebar-border/80 dark:border-white/10 shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/40 rounded-2xl px-3.5 sm:px-5 backdrop-blur-md h-[66px]">
+        {/* Left: Global Search */}
+        <div className="flex flex-1 items-center gap-2.5 max-w-full md:max-w-[460px]">
+          <GlobalSearch />
         </div>
 
-        {/* Theme Toggle */}
-        <ThemeToggle />
+        {/* Right: Action, Utilities, Profile */}
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          <Link href="/super-admin/organizations">
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl px-3.5 sm:px-4 h-[38px] text-xs md:text-sm shadow-sm gap-1.5 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4 shrink-0" strokeWidth={2.2} />
+              <span className="hidden sm:inline font-semibold">Create New</span>
+            </Button>
+          </Link>
 
-        {/* Profile Menu with Avatar */}
-        <ProfileMenu user={user} initials={initials} />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <div className="hidden sm:block h-4 w-px bg-sidebar-border/60 mx-0.5" />
+            <CurrencySwitcher />
+            <div className="h-4 w-px bg-sidebar-border/60 mx-0.5" />
+            <NotificationPanel />
+          </div>
+
+          <div className="h-6 w-px bg-sidebar-border/60 mx-0.5 hidden sm:block" />
+
+          <ProfileMenu user={user} initials={initials} />
+        </div>
       </div>
     </header>
   );

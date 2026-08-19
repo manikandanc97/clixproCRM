@@ -36,36 +36,43 @@ export default function Topbar() {
   }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-40 flex justify-between items-center bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur-md px-4 sm:px-8 border-b border-border h-[72px] transition-all shadow-[0_1px_2px_0_rgba(0,0,0,0.02)] gap-4">
-      {/* Mobile Sidebar Trigger & Search */}
-      <div className="flex flex-1 items-center gap-4 max-w-full md:max-w-[450px]">
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden shrink-0 w-10 h-10 rounded-full">
-              <Menu className="w-5 h-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-[270px] bg-sidebar border-sidebar-border [&>button]:hidden">
-            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-            <SidebarContent isMobile={true} />
-          </SheetContent>
-        </Sheet>
+    <header className="sticky top-0 z-40 w-full px-3 sm:px-6 lg:px-10 pt-3 pb-0">
+      {/* ── Single Floating Card Container ── */}
+      <div className="flex items-center justify-between gap-3 sm:gap-4 bg-sidebar text-sidebar-foreground border border-sidebar-border/80 dark:border-white/10 shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/40 rounded-2xl px-3.5 sm:px-5 backdrop-blur-md h-[66px]">
+        {/* Left: Mobile Nav Drawer & Search */}
+        <div className="flex flex-1 items-center gap-2.5 max-w-full md:max-w-[460px]">
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden shrink-0 w-9 h-9 rounded-xl hover:bg-sidebar-accent/60 text-sidebar-foreground/70">
+                <Menu className="w-5 h-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-[270px] bg-sidebar border-sidebar-border [&>button]:hidden">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <SidebarContent isMobile={true} />
+            </SheetContent>
+          </Sheet>
 
-        <GlobalSearch />
-      </div>
-
-      {/* Right */}
-      <div className="flex items-center gap-5">
-        <CreateNewMenu />
-
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <CurrencySwitcher />
-          <NotificationPanel />
+          <GlobalSearch />
         </div>
 
-        <ProfileMenu user={user} initials={initials} />
+        {/* Right: Action, Utilities, Profile */}
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          <CreateNewMenu />
+
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <div className="hidden sm:block h-4 w-px bg-sidebar-border/60 mx-0.5" />
+            <CurrencySwitcher />
+            <div className="h-4 w-px bg-sidebar-border/60 mx-0.5" />
+            <NotificationPanel />
+          </div>
+
+          <div className="h-6 w-px bg-sidebar-border/60 mx-0.5 hidden sm:block" />
+
+          <ProfileMenu user={user} initials={initials} />
+        </div>
       </div>
     </header>
   );

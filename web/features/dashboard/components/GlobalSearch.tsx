@@ -69,23 +69,23 @@ export default function GlobalSearch() {
       {!isOpen ? (
         <button 
           onClick={openSearch}
-          className="w-full flex items-center justify-between bg-muted/30 hover:bg-muted/50 border border-border/50 hover:border-border px-4 h-[46px] rounded-xl transition-all duration-200 group shadow-[0_1px_2px_rgba(0,0,0,0.03)] outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary"
+          className="w-full flex items-center justify-between bg-sidebar-accent/50 hover:bg-sidebar-accent/80 border border-sidebar-border/60 hover:border-sidebar-border px-3.5 h-[38px] rounded-xl transition-all duration-200 group outline-none cursor-pointer"
         >
-          <div className="flex items-center gap-3">
-            <Search className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" strokeWidth={1.5} />
-            <span className="text-muted-foreground text-[15px] font-medium tracking-tight hidden sm:inline truncate">Search leads, customers, tasks...</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Search className="w-4 h-4 text-sidebar-foreground/50 group-hover:text-primary transition-colors shrink-0" strokeWidth={1.75} />
+            <span className="text-sidebar-foreground/60 group-hover:text-sidebar-foreground text-xs md:text-sm font-medium tracking-tight truncate">Search leads, customers, tasks...</span>
           </div>
-          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-muted-foreground bg-background/50 rounded-md shadow-sm border border-border/50 backdrop-blur-sm">
-            <CommandIcon className="w-3 h-3" /> K
+          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold text-sidebar-foreground/50 bg-background/60 rounded-md border border-sidebar-border/60">
+            <CommandIcon className="w-2.5 h-2.5" /> K
           </kbd>
         </button>
       ) : (
-        <div className="w-full flex items-center bg-background border border-primary px-4 h-[46px] rounded-xl shadow-[0_0_0_4px_rgba(var(--primary),0.1)] outline-none relative z-50">
-          <Search className="w-5 h-5 text-primary shrink-0" strokeWidth={1.5} />
+        <div className="w-full flex items-center bg-background border border-primary px-3 h-[38px] rounded-xl shadow-[0_0_0_3px_rgba(var(--primary),0.12)] outline-none relative z-50">
+          <Search className="w-4 h-4 text-primary shrink-0" strokeWidth={1.75} />
           <input
             ref={inputRef}
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none px-3 text-[15px] font-medium placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent border-none outline-none px-2.5 text-xs md:text-sm font-medium placeholder:text-muted-foreground"
             placeholder="Type to search..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -103,7 +103,7 @@ export default function GlobalSearch() {
               }}
               className="text-muted-foreground hover:text-foreground focus:outline-none shrink-0"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
               <span className="sr-only">Clear search</span>
             </button>
           )}
@@ -115,7 +115,7 @@ export default function GlobalSearch() {
 
       {/* Dropdown Results */}
       {isOpen && query && (
-        <div className="absolute top-[54px] left-0 w-full bg-popover/95 backdrop-blur-xl border border-border shadow-elevated rounded-xl overflow-hidden z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-[48px] left-0 w-full bg-popover/95 backdrop-blur-xl border border-border shadow-elevated rounded-xl overflow-hidden z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
           {isFetching && results.length === 0 ? (
             <div className="space-y-1 p-2">
               <div className="h-4 w-16 bg-muted/50 rounded animate-pulse mb-2" />

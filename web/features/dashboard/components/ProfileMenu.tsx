@@ -137,10 +137,13 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-3 bg-background hover:bg-muted/30 p-1.5 h-[52px] rounded-xl transition-all duration-200 hover:-translate-y-0.5 group border border-transparent outline-none focus-visible:ring-1 focus-visible:ring-primary">
+        <button 
+          className="relative flex items-center justify-center p-1 rounded-xl hover:bg-sidebar-accent/50 transition-all duration-200 group outline-none cursor-pointer"
+          aria-label="User Profile Menu"
+        >
           <div className="relative shrink-0">
             <div 
-              className="flex justify-center items-center rounded-full w-[38px] h-[38px] font-bold text-sm text-primary-foreground shadow-sm border border-white/20 transition-all duration-300"
+              className="flex justify-center items-center rounded-xl w-[36px] h-[36px] font-bold text-xs text-primary-foreground shadow-sm border border-white/20 transition-all duration-300"
               style={{
                 background: "linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 65%, black))"
               }}
@@ -149,7 +152,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
             </div>
             {/* Online Indicator */}
             <div 
-              className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300"
+              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300"
               style={{ backgroundColor: "var(--primary)" }}
             />
           </div>

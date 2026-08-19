@@ -186,7 +186,7 @@ export function BaseSidebarContent({
       <motion.div
         initial={false}
         animate={{ opacity: 1 }}
-        className="relative shrink-0 bg-sidebar text-sidebar-foreground border border-sidebar-border/80 dark:border-white/10 shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/40 rounded-2xl overflow-hidden"
+        className="relative shrink-0 h-[66px] flex items-center bg-sidebar text-sidebar-foreground border border-sidebar-border/80 dark:border-white/10 shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/40 rounded-2xl overflow-hidden"
       >
         {collapsedState ? (
           <TooltipProvider delayDuration={0}>
@@ -194,10 +194,10 @@ export function BaseSidebarContent({
               <TooltipTrigger asChild>
                 <div
                   onClick={onToggleCollapse}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl cursor-pointer group/logo transition-all ${themeClasses.collapsedLogoBox}`}
+                  className={`flex flex-col items-center justify-center w-full h-full p-2 rounded-2xl cursor-pointer group/logo transition-all ${themeClasses.collapsedLogoBox}`}
                 >
                   {header.logo || <ClixProIcon pixelSize={26} />}
-                  <span className={`text-[9px] font-extrabold uppercase mt-1.5 tracking-wider ${themeClasses.collapsedTag}`}>
+                  <span className={`text-[9px] font-extrabold uppercase mt-1 tracking-wider ${themeClasses.collapsedTag}`}>
                     {header.collapsedTag || "CRM"}
                   </span>
                 </div>
@@ -212,7 +212,7 @@ export function BaseSidebarContent({
             </Tooltip>
           </TooltipProvider>
         ) : (
-          <div className="flex items-center justify-between p-3 gap-2">
+          <div className="flex items-center justify-between p-3 gap-2 w-full h-full">
             <div className="flex items-center gap-3 min-w-0">
               <div className={`flex shrink-0 justify-center items-center rounded-xl w-10 h-10 border shadow-sm ${themeClasses.logoBox}`}>
                 {header.logo || <ClixProIcon pixelSize={26} />}
