@@ -14,6 +14,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { CRMCard } from "@/shared/components/crm";
+import { ClixProIcon } from "@/shared/ui/logo";
 import Image from "next/image";
 
 import { useWorkspace, useUpdateWorkspace } from "@/shared/hooks/use-settings";
@@ -116,7 +117,7 @@ const WorkspaceSettings = () => {
                     />
                   </div>
                 ) : (
-                  <Building2 className="w-7 h-7 text-muted-foreground/50" />
+                  <ClixProIcon pixelSize={44} />
                 )}
               </div>
             </div>

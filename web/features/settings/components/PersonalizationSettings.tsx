@@ -18,6 +18,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/shared/lib/utils";
 import { CRMCard } from "@/shared/components/crm";
 import { useSettings, type AccentColor } from "@/features/dashboard/components/SettingsContext";
+import { ClixProLogo } from "@/shared/ui/logo";
 
 const accentColors: { name: string; id: AccentColor; value: string }[] = [
   { name: "Emerald", id: "emerald", value: "bg-emerald-600" },
@@ -123,6 +124,19 @@ const PersonalizationSettings = () => {
                     {accentColor === color.id && <CheckCircle2 className="w-4 h-4 text-white" />}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Live Logo Theme Preview */}
+            <div className="pt-3 border-t border-border/50">
+              <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground block mb-2">
+                Live Brand Logo Preview
+              </Label>
+              <div className="p-4 rounded-xl bg-background/80 border border-border/60 flex items-center justify-between">
+                <ClixProLogo size="lg" animated />
+                <span className="text-[11px] font-semibold text-muted-foreground bg-primary/10 text-primary px-2.5 py-1 rounded-full border border-primary/20">
+                  Dynamic Theme Reactive
+                </span>
               </div>
             </div>
           </div>

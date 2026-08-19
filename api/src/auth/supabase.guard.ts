@@ -80,26 +80,45 @@ export class SupabaseAuthGuard implements CanActivate {
     }
 
     const supabase = getSupabaseClient();
-    const { data, error } = await (supabase.auth as any).getClaims(token);
+    let user: any = null;
 
-    if (error || !data?.claims) {
-      tokenUserCache.delete(token);
-      throw new UnauthorizedException(
-        error?.message || 'Invalid or expired authentication token',
-      );
+    try {
+      const { data, error } = await (supabase.auth as any).getClaims(token);
+      if (!error && data?.claims) {
+        const claims: any = data.claims;
+        user = {
+          id: claims.sub,
+          sub: claims.sub,
+          email: claims.email,
+          user_metadata: claims.user_metadata || {},
+          app_metadata: claims.app_metadata || {},
+          role: claims.role,
+          aud: claims.aud,
+          ...claims,
+        };
+      }
+    } catch {
+      // Fall through to getUser
     }
 
-    const claims: any = data.claims;
-    const user: any = {
-      id: claims.sub,
-      sub: claims.sub,
-      email: claims.email,
-      user_metadata: claims.user_metadata || {},
-      app_metadata: claims.app_metadata || {},
-      role: claims.role,
-      aud: claims.aud,
-      ...claims,
-    };
+    if (!user) {
+      const { data, error } = await supabase.auth.getUser(token);
+      if (error || !data?.user) {
+        tokenUserCache.delete(token);
+        throw new UnauthorizedException(
+          error?.message || 'Invalid or expired authentication token',
+        );
+      }
+      user = {
+        id: data.user.id,
+        sub: data.user.id,
+        email: data.user.email,
+        user_metadata: data.user.user_metadata || {},
+        app_metadata: data.user.app_metadata || {},
+        role: data.user.role,
+        aud: data.user.aud,
+      };
+    }
 
     // Cache valid user for 60 seconds
     tokenUserCache.set(token, {
@@ -111,4 +130,5 @@ export class SupabaseAuthGuard implements CanActivate {
     return true;
   }
 }
+
 

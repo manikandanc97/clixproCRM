@@ -84,9 +84,9 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0.015 255);
 
-  /* Primary — Emerald */
-  --primary: oklch(0.45 0.15 160);
-  --primary-foreground: oklch(0.98 0.01 160);
+  /* Primary — Emerald (Calibrated to match emblem #32bd87) */
+  --primary: oklch(0.58 0.165 157);
+  --primary-foreground: oklch(0.99 0.005 157);
 
   /* Secondary — Soft Slate */
   --secondary: oklch(0.95 0.008 255);
@@ -97,8 +97,8 @@
   --muted-foreground: oklch(0.52 0.015 255);
 
   /* Accent — Soft Emerald */
-  --accent: oklch(0.96 0.02 160);
-  --accent-foreground: oklch(0.45 0.15 160);
+  --accent: oklch(0.96 0.02 157);
+  --accent-foreground: oklch(0.58 0.165 157);
 
   /* Destructive */
   --destructive: oklch(0.58 0.22 25);
@@ -133,9 +133,9 @@
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.45 0.015 255);
   --sidebar-border: oklch(0.93 0.005 255);
-  --sidebar-accent: oklch(0.97 0.015 160);
-  --sidebar-accent-foreground: oklch(0.45 0.15 160);
-  --sidebar-primary: oklch(0.45 0.15 160);
+  --sidebar-accent: oklch(0.97 0.015 157);
+  --sidebar-accent-foreground: oklch(0.58 0.165 157);
+  --sidebar-primary: oklch(0.58 0.165 157);
   --sidebar-primary-foreground: oklch(1 0 0);
 
   /* Charts */
@@ -146,8 +146,8 @@
   --chart-5: oklch(0.62 0.2 330);
 
   /* Semantic colors */
-  --success: oklch(0.52 0.16 145);
-  --success-foreground: oklch(0.98 0.005 145);
+  --success: oklch(0.58 0.165 157);
+  --success-foreground: oklch(0.98 0.005 157);
   --warning: oklch(0.72 0.18 65);
   --warning-foreground: oklch(0.25 0.05 65);
   --info: oklch(0.55 0.18 220);
@@ -166,7 +166,7 @@
     0 0 0 1px oklch(0.91 0.008 255), 0 10px 30px -10px oklch(0 0 0 / 0.08);
   --shadow-card: var(--crm-card-shadow);
   --shadow-sidebar: 1px 0 0 oklch(0.93 0.005 255);
-  --shadow-glow: 0 0 20px oklch(0.45 0.15 160 / 0.1);
+  --shadow-glow: 0 0 20px oklch(0.58 0.165 157 / 0.12);
   --shadow-soft:
     0 2px 12px -3px oklch(0 0 0 / 0.06);
   --shadow-elevated: var(--crm-card-hover-shadow);
@@ -184,7 +184,7 @@
   --popover: oklch(0.16 0.018 265);
   --popover-foreground: oklch(0.93 0.01 265);
 
-  --primary: oklch(0.7 0.15 160);
+  --primary: oklch(0.68 0.16 157);
   --primary-foreground: oklch(0.12 0.015 265);
 
   --secondary: oklch(0.2 0.02 265);
@@ -193,14 +193,14 @@
   --muted: oklch(0.2 0.018 265);
   --muted-foreground: oklch(0.58 0.015 265);
 
-  --accent: oklch(0.25 0.05 160);
-  --accent-foreground: oklch(0.85 0.1 160);
+  --accent: oklch(0.25 0.05 157);
+  --accent-foreground: oklch(0.85 0.1 157);
 
   --destructive: oklch(0.65 0.22 25);
 
   --border: oklch(0.24 0.018 265);
   --input: oklch(0.24 0.018 265);
-  --ring: oklch(0.7 0.15 160);
+  --ring: oklch(0.68 0.16 157);
 
   /* CRM Specific Tokens Dark */
   --crm-radius-card: 12px;
@@ -217,7 +217,7 @@
   --sidebar-border: oklch(0.18 0.02 265);
   --sidebar-accent: oklch(0.18 0.025 265);
   --sidebar-accent-foreground: oklch(0.9 0.01 265);
-  --sidebar-primary: oklch(0.7 0.15 160);
+  --sidebar-primary: oklch(0.68 0.16 157);
   --sidebar-primary-foreground: oklch(0.12 0.015 265);
 
   --chart-1: oklch(0.68 0.2 270);
@@ -226,8 +226,8 @@
   --chart-4: oklch(0.72 0.18 45);
   --chart-5: oklch(0.66 0.2 330);
 
-  --success: oklch(0.6 0.16 145);
-  --success-foreground: oklch(0.12 0.015 145);
+  --success: oklch(0.65 0.16 157);
+  --success-foreground: oklch(0.12 0.015 157);
   --warning: oklch(0.76 0.18 65);
   --warning-foreground: oklch(0.12 0.015 65);
   --info: oklch(0.62 0.18 220);
@@ -240,52 +240,64 @@
 }
 
 /* Accent Color Overrides */
+[data-accent="emerald"] {
+  --primary: oklch(0.58 0.165 157);
+  --accent: oklch(0.96 0.02 157);
+  --sidebar-primary: oklch(0.58 0.165 157);
+  --sidebar-accent: oklch(0.97 0.015 157);
+}
+.dark [data-accent="emerald"], [data-accent="emerald"].dark {
+  --primary: oklch(0.68 0.16 157);
+  --accent: oklch(0.25 0.05 157);
+  --sidebar-primary: oklch(0.68 0.16 157);
+}
+
 [data-accent="blue"] {
-  --primary: oklch(0.55 0.2 240);
-  --accent: oklch(0.96 0.02 240);
-  --sidebar-primary: oklch(0.55 0.2 240);
-  --sidebar-accent: oklch(0.97 0.015 240);
+  --primary: oklch(0.55 0.19 250);
+  --accent: oklch(0.96 0.02 250);
+  --sidebar-primary: oklch(0.55 0.19 250);
+  --sidebar-accent: oklch(0.97 0.015 250);
 }
 .dark [data-accent="blue"], [data-accent="blue"].dark {
-  --primary: oklch(0.7 0.15 240);
-  --accent: oklch(0.25 0.05 240);
-  --sidebar-primary: oklch(0.7 0.15 240);
+  --primary: oklch(0.68 0.16 250);
+  --accent: oklch(0.25 0.05 250);
+  --sidebar-primary: oklch(0.68 0.16 250);
 }
 
 [data-accent="violet"] {
-  --primary: oklch(0.55 0.2 300);
-  --accent: oklch(0.96 0.02 300);
-  --sidebar-primary: oklch(0.55 0.2 300);
-  --sidebar-accent: oklch(0.97 0.015 300);
+  --primary: oklch(0.54 0.22 295);
+  --accent: oklch(0.96 0.02 295);
+  --sidebar-primary: oklch(0.54 0.22 295);
+  --sidebar-accent: oklch(0.97 0.015 295);
 }
 .dark [data-accent="violet"], [data-accent="violet"].dark {
-  --primary: oklch(0.7 0.15 300);
-  --accent: oklch(0.25 0.05 300);
-  --sidebar-primary: oklch(0.7 0.15 300);
+  --primary: oklch(0.68 0.18 295);
+  --accent: oklch(0.25 0.05 295);
+  --sidebar-primary: oklch(0.68 0.18 295);
 }
 
 [data-accent="amber"] {
-  --primary: oklch(0.75 0.18 70);
-  --accent: oklch(0.96 0.02 70);
-  --sidebar-primary: oklch(0.75 0.18 70);
-  --sidebar-accent: oklch(0.97 0.015 70);
+  --primary: oklch(0.62 0.17 75);
+  --accent: oklch(0.96 0.02 75);
+  --sidebar-primary: oklch(0.62 0.17 75);
+  --sidebar-accent: oklch(0.97 0.015 75);
 }
 .dark [data-accent="amber"], [data-accent="amber"].dark {
-  --primary: oklch(0.8 0.15 70);
-  --accent: oklch(0.3 0.05 70);
-  --sidebar-primary: oklch(0.8 0.15 70);
+  --primary: oklch(0.75 0.16 75);
+  --accent: oklch(0.3 0.05 75);
+  --sidebar-primary: oklch(0.75 0.16 75);
 }
 
 [data-accent="rose"] {
-  --primary: oklch(0.65 0.2 20);
-  --accent: oklch(0.96 0.02 20);
-  --sidebar-primary: oklch(0.65 0.2 20);
-  --sidebar-accent: oklch(0.97 0.015 20);
+  --primary: oklch(0.56 0.21 15);
+  --accent: oklch(0.96 0.02 15);
+  --sidebar-primary: oklch(0.56 0.21 15);
+  --sidebar-accent: oklch(0.97 0.015 15);
 }
 .dark [data-accent="rose"], [data-accent="rose"].dark {
-  --primary: oklch(0.75 0.15 20);
-  --accent: oklch(0.3 0.05 20);
-  --sidebar-primary: oklch(0.75 0.15 20);
+  --primary: oklch(0.70 0.18 15);
+  --accent: oklch(0.3 0.05 15);
+  --sidebar-primary: oklch(0.70 0.18 15);
 }
 
 /* Font Family Overrides */
@@ -978,3 +990,459 @@
     scrollbar-width: none;
   }
 }
+
+/* ============================================================
+   AUTH LAYOUT — FULL VIEWPORT LAYERED BACKGROUND
+   ============================================================ */
+
+/* Cover full viewport with dark base */
+html:has(.auth-shell),
+body:has(.auth-shell) {
+  background:
+    linear-gradient(
+      155deg,
+      oklch(0.20 0.07 168) 0%,
+      oklch(0.13 0.05 190) 40%,
+      oklch(0.08 0.025 240) 100%
+    );
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* ─── Layer 1: Full-Screen Animated Background & Ambient Glow ─── */
+.auth-bg-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 70% at 20% -10%, oklch(0.32 0.15 165 / 0.5), transparent 70%),
+    radial-gradient(ellipse 80% 60% at 85% 110%, oklch(0.28 0.13 210 / 0.45), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 50% 50%, oklch(0.22 0.09 175 / 0.35), transparent 80%),
+    linear-gradient(
+      155deg,
+      oklch(0.18 0.07 168) 0%,
+      oklch(0.12 0.05 190) 45%,
+      oklch(0.07 0.03 240) 100%
+    );
+}
+
+/* Particle canvas covers 100% of viewport */
+.auth-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Decorative ambient blobs */
+.auth-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.85;
+}
+.auth-blob-1 {
+  width: 600px;
+  height: 600px;
+  top: -150px;
+  right: 10%;
+  background: radial-gradient(circle, oklch(0.60 0.20 157 / 0.35), transparent 70%);
+  animation: blob-float 10s ease-in-out infinite;
+}
+.auth-blob-2 {
+  width: 500px;
+  height: 500px;
+  bottom: -50px;
+  left: -80px;
+  background: radial-gradient(circle, oklch(0.52 0.18 240 / 0.28), transparent 70%);
+  animation: blob-float 14s ease-in-out infinite;
+  animation-delay: -4s;
+}
+.auth-blob-3 {
+  width: 450px;
+  height: 450px;
+  top: 40%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, oklch(0.68 0.18 160 / 0.2), transparent 70%);
+  animation: blob-float 9s ease-in-out infinite;
+  animation-delay: -2s;
+}
+
+@keyframes blob-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(25px, -30px) scale(1.08); }
+  66%       { transform: translate(-20px, 20px) scale(0.94); }
+}
+
+/* ─── Layer 2 & 3: Floating UI Container ─── */
+.auth-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  min-height: 100dvh;
+  width: 100%;
+  background: transparent;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+}
+
+.auth-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1280px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 3rem 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3.5rem;
+}
+
+@media (max-width: 1023px) {
+  .auth-container {
+    flex-direction: column;
+    justify-content: center;
+    padding: 2.5rem 1.5rem;
+    gap: 1.5rem;
+    min-height: 100dvh;
+  }
+}
+
+/* ─── Layer 2: LEFT CONTENT ─── */
+.auth-left-panel {
+  position: relative;
+  display: none;
+  flex: 1;
+  max-width: 580px;
+  background: transparent;
+  z-index: 2;
+}
+
+@media (min-width: 1024px) {
+  .auth-left-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+.auth-left-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+/* Brand */
+.auth-brand {
+  display: flex;
+  align-items: center;
+}
+.auth-logo {
+  opacity: 1;
+}
+
+/* Hero text */
+.auth-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+.auth-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.12;
+  color: oklch(0.96 0.012 160);
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+.auth-headline-accent {
+  background: linear-gradient(90deg, oklch(0.80 0.19 155), oklch(0.90 0.12 185));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.auth-tagline {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: oklch(0.82 0.02 180 / 0.75);
+  max-width: 380px;
+  margin: 0;
+}
+
+/* Features list */
+.auth-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+.auth-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.auth-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: oklch(1 0 0 / 0.07);
+  border: 1px solid oklch(1 0 0 / 0.12);
+  color: oklch(0.80 0.16 157);
+  backdrop-filter: blur(8px);
+  transition: background 0.2s;
+}
+.auth-feature-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: oklch(0.96 0.008 0);
+  margin: 0 0 0.125rem;
+  line-height: 1.3;
+}
+.auth-feature-desc {
+  font-size: 0.78rem;
+  color: oklch(0.78 0.01 0 / 0.6);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Social proof pill */
+.auth-social-proof {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.125rem;
+  background: oklch(1 0 0 / 0.06);
+  border: 1px solid oklch(1 0 0 / 0.1);
+  border-radius: 50px;
+  width: fit-content;
+  backdrop-filter: blur(10px);
+}
+.auth-avatars {
+  display: flex;
+  align-items: center;
+}
+.auth-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, oklch(0.55 0.165 157), oklch(0.44 0.18 195));
+  border: 2px solid oklch(0.14 0.035 185);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  margin-left: -7px;
+  box-shadow: 0 2px 6px oklch(0 0 0 / 0.3);
+}
+.auth-avatar:first-child { margin-left: 0; }
+.auth-proof-text {
+  font-size: 0.8rem;
+  color: oklch(0.82 0.01 0 / 0.7);
+  margin: 0;
+}
+.auth-proof-text strong {
+  color: oklch(0.85 0.16 157);
+  font-weight: 600;
+}
+
+/* ─── Layer 3: RIGHT PANEL (LOGIN FORM) ─── */
+.auth-right-panel {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  flex-shrink: 0;
+  transition: max-width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 1024px) {
+  .auth-right-panel {
+    width: 100%;
+    max-width: 500px;
+    background: transparent;
+    border: none;
+    backdrop-filter: none;
+  }
+}
+
+.dark .auth-right-panel {
+  background: transparent;
+  border: none;
+}
+@media (min-width: 1024px) {
+  .dark .auth-right-panel {
+    background: transparent;
+    border: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Form wrapper — contained, centered block */
+.auth-form-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Mobile-only logo */
+.auth-mobile-logo {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 0.5rem;
+}
+@media (min-width: 1024px) {
+  .auth-mobile-logo { display: none; }
+}
+
+/* Card */
+.auth-card {
+  position: relative;
+  background: oklch(1 0 0);
+  border: 1px solid oklch(0.90 0.006 255 / 0.8);
+  border-radius: 22px;
+  padding: 2.25rem 2rem;
+  box-shadow:
+    0 1px 3px oklch(0 0 0 / 0.04),
+    0 8px 24px -6px oklch(0 0 0 / 0.08),
+    0 20px 48px -12px oklch(0 0 0 / 0.06);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .auth-card {
+  background: oklch(0.16 0.025 195);
+  border-color: oklch(0.30 0.04 175 / 0.4);
+  box-shadow:
+    0 0 0 1px oklch(0.30 0.04 175 / 0.25),
+    0 8px 32px -8px oklch(0 0 0 / 0.6);
+}
+
+/* Animated top shimmer bar */
+.auth-card-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(0.68 0.18 157) 40%,
+    oklch(0.75 0.15 190) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-slide 3s ease-in-out infinite;
+  border-radius: 3px 3px 0 0;
+}
+
+/* Card header */
+.auth-card-header {
+  margin-bottom: 1.75rem;
+}
+.auth-card-title {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: oklch(0.14 0.015 255);
+  letter-spacing: -0.028em;
+  margin: 0 0 0.4rem;
+  line-height: 1.2;
+}
+.dark .auth-card-title {
+  color: oklch(0.94 0.01 265);
+}
+.auth-card-subtitle {
+  font-size: 0.875rem;
+  color: oklch(0.52 0.014 255);
+  margin: 0;
+  line-height: 1.55;
+}
+.dark .auth-card-subtitle {
+  color: oklch(0.60 0.014 265);
+}
+
+/* Footer link row */
+.auth-card-footer-text {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid oklch(0.91 0.007 255 / 0.6);
+  font-size: 0.875rem;
+  color: oklch(0.52 0.014 255);
+  text-align: center;
+  line-height: 1.5;
+}
+.dark .auth-card-footer-text {
+  border-color: oklch(0.26 0.018 265 / 0.5);
+  color: oklch(0.60 0.014 265);
+}
+.auth-card-footer-link {
+  font-weight: 600;
+  color: oklch(0.48 0.165 157);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.18s ease, opacity 0.18s ease;
+}
+.auth-card-footer-link:hover {
+  color: oklch(0.38 0.165 157);
+  text-decoration: underline;
+}
+
+/* Security badge */
+.auth-security-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  color: oklch(0.82 0.03 165 / 0.7);
+  letter-spacing: 0.015em;
+  padding: 0.25rem 0;
+  margin-top: -0.5rem;
+}
+.auth-security-badge svg {
+  color: oklch(0.80 0.16 157);
+  flex-shrink: 0;
+}
+.dark .auth-security-badge {
+  color: oklch(0.82 0.03 165 / 0.7);
+}
+

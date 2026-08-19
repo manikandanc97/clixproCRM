@@ -4,11 +4,14 @@ Before deploying ClixProCRM to a production environment (Vercel, AWS, etc.), fol
 
 ## 1. Environment Variables
 - [ ] `.env` is fully populated based on `.env.example`.
+- [ ] `NEXT_PUBLIC_API_URL` is set to the live production NestJS backend URL (e.g. `https://api.yourdomain.com/api` or `https://backend.clixprocrm.com/api`).
 - [ ] `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are valid.
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` is kept strictly secret and NOT prefixed with `NEXT_PUBLIC_`.
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` is kept strictly secret on the backend and NOT prefixed with `NEXT_PUBLIC_`.
 - [ ] `DATABASE_URL` is pointing to the production pooler (e.g. Supabase port `6543` with `?pgbouncer=true`).
 - [ ] `DIRECT_URL` is pointing to the production direct connection (e.g. Supabase port `5432`).
+- [ ] `ALLOWED_ORIGINS` on the backend includes the production frontend domain (e.g. `https://clixprocrm.vercel.app`).
 - [ ] `UPSTASH_REDIS_REST_URL` and `TOKEN` are populated for rate-limiting.
+
 
 ## 2. Database & Migrations
 - [ ] Verified that NO developer uses `npx prisma db push` on the production database.

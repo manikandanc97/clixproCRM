@@ -33,7 +33,7 @@ export class AuthService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async getMe(userId: string, tenantId: string, email?: string) {
+  async getMe(userId: string, tenantId?: string, email?: string) {
     const cacheKey = `${userId}:${tenantId || ''}`;
     const now = Date.now();
     const cached = meProfileCache.get(cacheKey);
@@ -45,7 +45,7 @@ export class AuthService {
       where: { id: userId },
       include: {
         memberships: {
-          where: tenantId ? { tenantId } : undefined,
+          where: { status: 'ACTIVE' },
           include: {
             role: { include: { permissions: true } },
             tenant: true,
@@ -59,7 +59,7 @@ export class AuthService {
         where: { email },
         include: {
           memberships: {
-            where: tenantId ? { tenantId } : undefined,
+            where: { status: 'ACTIVE' },
             include: {
               role: { include: { permissions: true } },
               tenant: true,
@@ -75,7 +75,7 @@ export class AuthService {
           data: { id: userId },
           include: {
             memberships: {
-              where: tenantId ? { tenantId } : undefined,
+              where: { status: 'ACTIVE' },
               include: {
                 role: { include: { permissions: true } },
                 tenant: true,
@@ -86,13 +86,20 @@ export class AuthService {
       }
     }
 
-    if (!user || user.memberships.length === 0) {
+    if (!user || !user.memberships || user.memberships.length === 0) {
       throw new ForbiddenException('NEEDS_ONBOARDING');
     }
 
-    const membership = user.memberships[0];
+    const membership = tenantId
+      ? user.memberships.find((m: any) => m.tenantId === tenantId) || user.memberships[0]
+      : user.memberships[0];
+
+    if (!membership || !membership.role) {
+      throw new ForbiddenException('NEEDS_ONBOARDING');
+    }
+
     const roleName = membership.role.name;
-    const permissions = membership.role.permissions
+    const permissions = (membership.role.permissions || [])
       .filter((rp: any) => rp.hasAccess)
       .map((rp: any) => rp.module);
 

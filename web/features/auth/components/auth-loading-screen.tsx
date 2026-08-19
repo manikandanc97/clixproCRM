@@ -9,6 +9,7 @@
  */
 
 import { motion } from "framer-motion";
+import { ClixProLogo } from "@/shared/ui/logo";
 
 export default function AuthLoadingScreen() {
   return (
@@ -26,29 +27,24 @@ export default function AuthLoadingScreen() {
       <div className="relative z-10 flex flex-col items-center gap-8">
         {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="relative flex items-center justify-center"
         >
           {/* Glow */}
-          <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150" />
-          <div className="relative flex items-center justify-center bg-gradient-to-br from-primary to-emerald-600 shadow-2xl shadow-primary/30 border border-white/20 rounded-xl w-20 h-20 font-black text-white text-3xl">
-            CR
-          </div>
+          <div className="absolute inset-0 bg-primary/15 blur-xl rounded-full scale-110 pointer-events-none" />
+          <ClixProLogo size="xl" animated className="relative justify-center py-1" />
         </motion.div>
 
-        {/* Brand name */}
+        {/* Status text */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
           className="text-center"
         >
-          <h1 className="font-bold text-foreground text-2xl tracking-tight">
-            ClixProCRM
-          </h1>
-          <p className="mt-1 text-muted-foreground text-sm font-medium">
+          <p className="text-muted-foreground text-sm font-medium">
             Restoring your session...
           </p>
         </motion.div>

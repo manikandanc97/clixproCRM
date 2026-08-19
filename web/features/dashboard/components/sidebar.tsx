@@ -4,12 +4,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
-  Building2,
   LifeBuoy
 } from "lucide-react";
-
-
-
+import { ClixProIcon } from "@/shared/ui/logo";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -51,8 +48,8 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
       <div className={`pt-6 pb-2 transition-all duration-300 ${collapsedState ? "px-3" : "px-4"}`}>
         <div className={`flex items-center ${collapsedState ? "justify-center" : "justify-between p-2 rounded-xl hover:bg-sidebar-accent/50 cursor-pointer border border-transparent hover:border-sidebar-border/50 shadow-sm hover:shadow-md transition-all group/ws bg-background/50 dark:bg-muted/10 backdrop-blur-sm"}`}>
           <div className="flex items-center gap-3">
-            <div className="flex shrink-0 justify-center items-center bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground rounded-lg w-9 h-9 border border-white/10 shadow-sm">
-              <Building2 className="w-4 h-4" />
+            <div className="flex shrink-0 justify-center items-center bg-primary/10 text-primary rounded-lg w-9 h-9 border border-primary/20 shadow-sm transition-all group-hover/ws:bg-primary/20">
+              <ClixProIcon pixelSize={24} />
             </div>
             
             <AnimatePresence mode="wait">

@@ -61,8 +61,21 @@ export const loginUser = async (data: LoginPayload) => {
   }
 
   // Fetch current user details to return the expected AuthResponse format
-  const meResponse = await client.get<AuthResponse>("/auth/me");
-  return meResponse.data;
+  try {
+    const meResponse = await client.get<AuthResponse>("/auth/me");
+    return meResponse.data;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (meError: any) {
+    const isNeedsOnboarding =
+      meError.response?.status === 403 &&
+      (meError.response?.data?.message === "NEEDS_ONBOARDING" ||
+        meError.response?.data?.error === "NEEDS_ONBOARDING" ||
+        meError.response?.data === "NEEDS_ONBOARDING");
+    if (isNeedsOnboarding) {
+      throw new Error("NEEDS_ONBOARDING");
+    }
+    throw meError;
+  }
 };
 
 export const registerUser = async (data: RegisterPayload) => {
@@ -118,13 +131,18 @@ export const resetPassword = async (data: ResetPasswordPayload) => {
 export const fetchCurrentUser = async (): Promise<AuthUser | null> => {
   try {
     const response = await client.get<AuthResponse>("/auth/me");
-    if (!response.data.success) {
+    if (!response.data?.success) {
       return null;
     }
     return response.data.data.user;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    if (error.response?.status === 403 && error.response?.data?.error === "NEEDS_ONBOARDING") {
+    const isNeedsOnboarding =
+      error.response?.status === 403 &&
+      (error.response?.data?.message === "NEEDS_ONBOARDING" ||
+        error.response?.data?.error === "NEEDS_ONBOARDING" ||
+        error.response?.data === "NEEDS_ONBOARDING");
+    if (isNeedsOnboarding) {
       throw new Error("NEEDS_ONBOARDING");
     }
     return null;
@@ -225,7 +243,7 @@ export const signInWithGoogle = async (
   const callbackUrl = getAuthRedirectUrl("/api/auth/callback");
 
   // Use pre-created popup if provided; otherwise open one now (fallback path)
-  let popup: Window | null =
+  const popup: Window | null =
     preCreatedPopup !== undefined ? preCreatedPopup : openGoogleAuthPopup();
 
   // If popup is blocked by browser, fall back to standard full-page redirect flow
@@ -341,12 +359,12 @@ export const signInWithGoogle = async (
           localStorage.setItem("has_session", "1");
           localStorage.removeItem("clixprocrm_google_auth_event");
         }
-        if (popup && !popup.closed) {
-          try {
+        try {
+          if (popup && !popup.closed) {
             popup.close();
-          } catch {
-            // Ignore popup close error
           }
+        } catch {
+          // Ignore popup close error
         }
         resolve({ success: true, target: payload.target || "/dashboard" });
       } else if (payload.type === "CLIXPROCRM_GOOGLE_AUTH_ERROR") {
@@ -355,12 +373,12 @@ export const signInWithGoogle = async (
         if (typeof window !== "undefined") {
           localStorage.removeItem("clixprocrm_google_auth_event");
         }
-        if (popup && !popup.closed) {
-          try {
+        try {
+          if (popup && !popup.closed) {
             popup.close();
-          } catch {
-            // Ignore popup close error
           }
+        } catch {
+          // Ignore popup close error
         }
         reject(new Error(payload.error || "Authentication failed"));
       }
@@ -393,17 +411,31 @@ export const signInWithGoogle = async (
     window.addEventListener("storage", handleStorage);
 
     // Watcher in case user closes popup window manually before completion
+    let pollCount = 0;
     const timer = setInterval(() => {
-      if (popup.closed) {
+      pollCount++;
+      // Give initial grace period (3s) while navigating cross-origin to Google
+      if (pollCount < 2) return;
+
+      let isClosed = false;
+      try {
+        if (popup && typeof popup.closed !== "undefined") {
+          isClosed = popup.closed === true;
+        }
+      } catch {
+        // Cross-Origin-Opener-Policy policy can restrict accessing popup.closed while on Google's origin
+        isClosed = false;
+      }
+      if (isClosed) {
         clearInterval(timer);
         setTimeout(() => {
           if (!resolved) {
             cleanup();
             reject(new Error("Google sign-in was cancelled."));
           }
-        }, 500);
+        }, 300);
       }
-    }, 400);
+    }, 1500);
   });
 };
 

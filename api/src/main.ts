@@ -4,10 +4,22 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+
+  // Fail-fast startup validation for required backend configuration
+  const requiredEnvVars = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
+  const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key]);
+  if (missingEnvVars.length > 0) {
+    logger.error(
+      `[FATAL] Missing required environment variables: ${missingEnvVars.join(', ')}. Backend cannot start.`,
+    );
+    process.exit(1);
+  }
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
@@ -22,6 +34,7 @@ async function bootstrap() {
 
   const defaultOrigins = [
     'http://localhost:3000',
+    'http://127.0.0.1:3000',
     'https://clixprocrm.vercel.app',
   ];
 
@@ -32,9 +45,33 @@ async function bootstrap() {
   const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+        /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS error: Origin ${origin} not allowed`), false);
+    },
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Currency',
+      'X-Tenant-Id',
+      'Accept',
+      'Origin',
+    ],
   });
 
   app.useGlobalPipes(
@@ -50,6 +87,7 @@ async function bootstrap() {
 
   const port = parseInt(process.env.PORT || '4000', 10);
   await app.listen(port, '0.0.0.0');
+  logger.log(`ClixPro CRM API server running on port ${port} (0.0.0.0:${port})`);
 }
 bootstrap();
-// Trigger restart
+

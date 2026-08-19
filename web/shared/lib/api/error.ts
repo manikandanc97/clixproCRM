@@ -38,6 +38,15 @@ export function parseApiErrors(error: unknown, fallback = "Something went wrong.
   };
 
   if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      if (error.code === 'ECONNABORTED') {
+        result.generalError = 'Request timed out. Please try again.';
+      } else {
+        result.generalError = 'Unable to connect to the backend server. Please check your connection or server status.';
+      }
+      return result;
+    }
+
     const data = error.response?.data;
 
     if (data?.error?.details && Array.isArray(data.error.details) && data.error.details.length > 0) {

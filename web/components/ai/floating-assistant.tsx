@@ -6,6 +6,7 @@ import { Bot, X, Send, Paperclip, Minimize2, Maximize2, MoreVertical } from 'luc
 import { DefaultChatTransport } from 'ai';
 import { WelcomeScreen } from './welcome-screen';
 import { MessageCard } from './message-card';
+import { getApiBaseUrl } from '@/shared/lib/api/client';
 
 export default function FloatingAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,11 +19,9 @@ export default function FloatingAssistant() {
       api: '/ai/chat',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fetch: async (url: any, options: any) => {
-        console.log("[DEBUG] useChat fetching URL with native fetch:", url);
-        
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000/api";
-          const fullUrl = url.startsWith('http') ? url : `${API_URL}${url.startsWith('/') ? url : `/${url}`}`;
+          const baseUrl = getApiBaseUrl();
+          const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? url : `/${url}`}`;
 
           const headers = new Headers(options.headers || {});
           
