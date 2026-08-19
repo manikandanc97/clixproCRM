@@ -189,7 +189,7 @@ export const openGoogleAuthPopup = (): Window | null => {
     return window.open(
       "about:blank",
       "clixprocrm_google_auth",
-      `width=${width},height=${height},left=${left},top=${top},popup=yes,toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
     );
   } catch {
     return null;
@@ -222,8 +222,7 @@ export const signInWithGoogle = async (
   }
 
   const supabase = createClient();
-  const popupCallbackUrl = getAuthRedirectUrl("/api/auth/callback?popup=1");
-  const directCallbackUrl = getAuthRedirectUrl("/api/auth/callback");
+  const callbackUrl = getAuthRedirectUrl("/api/auth/callback");
 
   // Use pre-created popup if provided; otherwise open one now (fallback path)
   let popup: Window | null =
@@ -235,7 +234,7 @@ export const signInWithGoogle = async (
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: directCallbackUrl,
+        redirectTo: callbackUrl,
       },
     });
 
@@ -259,6 +258,7 @@ export const signInWithGoogle = async (
   // Add sleek loading indicator inside the popup while waiting for oauthUrl
   try {
     popup.document.write(`<!DOCTYPE html><html><head><title>Connecting to Google...</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#0b0f19;color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;text-align:center}.spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,0.1);border-top:3px solid #10b981;border-radius:50%;animation:s 0.8s linear infinite;margin:0 auto 16px}@keyframes s{to{transform:rotate(360deg)}}p{font-size:14px;color:#94a3b8;margin:0}</style></head><body><div><div class="spinner"></div><p>Connecting to Google...</p></div></body></html>`);
+    popup.document.close();
   } catch {
     // Ignore cross-origin write errors
   }
@@ -268,7 +268,7 @@ export const signInWithGoogle = async (
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: popupCallbackUrl,
+        redirectTo: callbackUrl,
         skipBrowserRedirect: true,
       },
     });

@@ -9,8 +9,8 @@
     "lint": "eslint"
   },
   "allowScripts": {
-    "sharp": "0.34.5",
-    "unrs-resolver": "1.11.1"
+    "sharp": true,
+    "unrs-resolver": true
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.37",
