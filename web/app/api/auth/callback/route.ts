@@ -184,6 +184,12 @@ export async function GET(request: Request) {
     return new NextResponse(html, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
+        // Required for OAuth popup: ensures window.opener is not severed when the popup
+        // lands on this callback URL after navigating through Google and Supabase (cross-origin).
+        // This explicitly overrides any COOP policy that Vercel or Next.js may apply,
+        // preserving the opener reference needed for postMessage and BroadcastChannel fallbacks.
+        'Cross-Origin-Opener-Policy': 'unsafe-none',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
       },
     })
   }

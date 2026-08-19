@@ -40,7 +40,21 @@ const nextConfig: NextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
-          }
+          },
+          {
+            // Required for OAuth popup: prevents the browser from severing window.opener
+            // after the popup navigates cross-origin (login → Google → Supabase → callback).
+            // Without this, Vercel may default to same-origin COOP, breaking postMessage,
+            // BroadcastChannel, and localStorage communication from popup back to parent.
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'unsafe-none',
+          },
+          {
+            // Allow the callback page to load cross-origin resources (Google fonts, etc.)
+            // without being blocked by CORP restrictions.
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin',
+          },
         ],
       },
     ];
