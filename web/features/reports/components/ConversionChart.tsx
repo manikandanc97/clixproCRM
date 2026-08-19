@@ -36,7 +36,7 @@ const ConversionChart = ({ data, loading }: ConversionChartProps) => {
         <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <CardTitle className="font-bold text-foreground text-xl tracking-tight">Lead Conversion</CardTitle>
+              <CardTitle className="font-bold text-foreground tracking-tight">Lead Conversion</CardTitle>
               <BarChart3 className="w-4 h-4 text-emerald-500" />
             </div>
             <CardDescription className="text-muted-foreground text-sm mt-1">Weekly conversion percentage</CardDescription>

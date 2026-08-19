@@ -75,8 +75,7 @@ function DialogContent({
               className="absolute top-2 right-2"
               size="icon-sm"
             >
-              <XIcon
-              />
+              <XIcon />
               <span className="sr-only">Close</span>
             </Button>
           </DialogPrimitive.Close>
@@ -132,7 +131,7 @@ function DialogTitle({
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "text-xl font-semibold leading-tight tracking-normal",
+        "text-lg font-bold leading-tight tracking-tight",
         className
       )}
       {...props}
@@ -168,14 +167,3 @@ export {
   DialogTitle,
   DialogTrigger,
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -42,7 +42,7 @@ const RevenueChart = ({ data, loading }: RevenueChartProps) => {
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <CardTitle className="font-bold text-foreground text-xl tracking-tight">Revenue Analysis</CardTitle>
+                <CardTitle className="font-bold text-foreground tracking-tight">Revenue Analysis</CardTitle>
                 <div className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
                   +12.5%

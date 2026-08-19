@@ -22,7 +22,7 @@ const ActivityHeatmap = ({ data }: { data: ActivityHeatmapPointType[] }) => {
   return (
     <Card className="bg-card rounded-xl border-border shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
       <CardHeader className="p-8 pb-4 flex flex-row items-center justify-between">
-        <CardTitle className="font-bold text-foreground text-xl tracking-tight">Sales Activity</CardTitle>
+        <CardTitle className="font-bold text-foreground tracking-tight">Sales Activity</CardTitle>
         <Info className="w-4 h-4 text-slate-300" />
       </CardHeader>
       <CardContent className="p-8 pt-4">

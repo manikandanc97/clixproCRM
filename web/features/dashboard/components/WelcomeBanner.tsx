@@ -71,7 +71,7 @@ export default function WelcomeBanner() {
             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
               Welcome back, <span className="capitalize font-extrabold transition-colors duration-300" style={{ color: "var(--primary)" }}>{user?.displayName || user?.name || access.roleName}</span>
             </h1>
-            <div className="text-slate-400 text-base max-w-2xl leading-relaxed">
+            <div className="text-slate-400 text-sm md:text-base max-w-2xl leading-relaxed">
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   Your revenue grew by <Skeleton className="h-5 w-12 bg-white/10 inline-block align-middle" /> this week. Check your latest insights below.

@@ -217,7 +217,7 @@ const ReportsPage = () => {
       {/* Team Performance */}
       <div className="space-y-4 pt-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-bold tracking-tight">Team Performance</h2>
+          <h2 className="text-base font-bold tracking-tight text-foreground">Team Performance</h2>
           <p className="text-muted-foreground text-sm font-medium">Detailed breakdown of sales representative metrics and activity.</p>
         </div>
         
