@@ -23,9 +23,25 @@ import { ClixProLogo } from "@/shared/ui/logo";
 const accentColors: { name: string; id: AccentColor; value: string }[] = [
   { name: "Emerald", id: "emerald", value: "bg-emerald-600" },
   { name: "Blue", id: "blue", value: "bg-blue-600" },
+  { name: "Indigo", id: "indigo", value: "bg-indigo-600" },
   { name: "Violet", id: "violet", value: "bg-violet-600" },
+  { name: "Purple", id: "purple", value: "bg-purple-600" },
+  { name: "Red", id: "red", value: "bg-red-600" },
+  { name: "Teal", id: "teal", value: "bg-teal-600" },
+  { name: "Cyan", id: "cyan", value: "bg-cyan-600" },
   { name: "Amber", id: "amber", value: "bg-amber-600" },
   { name: "Rose", id: "rose", value: "bg-rose-600" },
+];
+
+const googleFonts = [
+  { label: "Inter", id: "inter" },
+  { label: "Roboto", id: "roboto" },
+  { label: "Poppins", id: "poppins" },
+  { label: "Plus Jakarta", id: "jakarta" },
+  { label: "Outfit", id: "outfit" },
+  { label: "Space Grotesk", id: "space" },
+  { label: "Lora (Serif)", id: "lora" },
+  { label: "Fira Code (Mono)", id: "fira" },
 ];
 
 const PersonalizationSettings = () => {
@@ -58,12 +74,6 @@ const PersonalizationSettings = () => {
     const newValue = !fullWidth;
     setFullWidth(newValue);
     localStorage.setItem("crm-full-width", newValue.toString());
-  };
-
-  const cycleFont = () => {
-    if (fontFamily === "sans") setFontFamily("geist");
-    else if (fontFamily === "geist") setFontFamily("jakarta");
-    else setFontFamily("sans");
   };
 
   return (
@@ -109,14 +119,26 @@ const PersonalizationSettings = () => {
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Accent Color</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Accent Color</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground font-medium">Color Wheel:</span>
+                  <input 
+                    type="color" 
+                    value={accentColor.startsWith("#") ? accentColor : "#10b981"} 
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    className="w-6 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
+                    title="Choose custom color from wheel"
+                  />
+                </div>
+              </div>
               <div className="flex flex-wrap gap-2.5">
                 {accentColors.map((color) => (
                   <button
                     key={color.id}
                     onClick={() => setAccentColor(color.id)}
                     className={cn(
-                      "w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-110 shadow-sm",
+                      "w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 shadow-sm",
                       color.value,
                       accentColor === color.id && "ring-2 ring-offset-2 ring-offset-background ring-primary"
                     )}
@@ -147,12 +169,12 @@ const PersonalizationSettings = () => {
           <div className="mb-5">
             <h3 className="text-base font-bold tracking-tight text-foreground flex items-center gap-2">
               <Layout className="w-4 h-4 text-primary" />
-              Navigation & Layout
+              Navigation & Google Fonts
             </h3>
-            <p className="text-xs text-muted-foreground font-medium mt-0.5">Optimize your workspace for focus and speed.</p>
+            <p className="text-xs text-muted-foreground font-medium mt-0.5">Optimize your workspace typography and layout.</p>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-4">
             {[
               { id: "sidebar", title: "Compact Sidebar", desc: "Maximize your working area.", icon: Sidebar, active: compactSidebar, onClick: toggleCompactSidebar },
               { id: "width", title: "Full Width Mode", desc: "Expand content to fill the screen.", icon: Maximize2, active: fullWidth, onClick: toggleFullWidth },
@@ -175,19 +197,32 @@ const PersonalizationSettings = () => {
               </div>
             ))}
 
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 group hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
+            <div className="p-3 rounded-lg bg-muted/30 border border-border/50 space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-card border border-border/50 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-lg bg-card border border-border/50 flex items-center justify-center shrink-0">
                   <Type className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-xs text-foreground tracking-tight">Typography</h4>
-                  <p className="text-[10px] text-muted-foreground font-medium">Cycle between available fonts.</p>
+                  <h4 className="font-bold text-xs text-foreground tracking-tight">Google Fonts Typography</h4>
+                  <p className="text-[10px] text-muted-foreground font-medium">Select your preferred Google Font.</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 bg-card/50 rounded-md p-1 border border-border/50">
-                <span className="text-[10px] font-bold w-12 text-center uppercase">{fontFamily}</span>
-                <Button variant="ghost" size="icon" onClick={cycleFont} className="h-6 w-6 rounded-md hover:bg-primary/10 hover:text-primary">⟳</Button>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                {googleFonts.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFontFamily(f.id as any)}
+                    className={cn(
+                      "p-2 rounded-lg text-left text-xs transition-all border flex items-center justify-between",
+                      fontFamily === f.id
+                        ? "bg-primary/10 border-primary font-bold text-primary"
+                        : "bg-card border-border/60 hover:border-primary/50 text-foreground"
+                    )}
+                  >
+                    <span className={`font-${f.id}`}>{f.label}</span>
+                    {fontFamily === f.id && <CheckCircle2 className="w-3.5 h-3.5 text-primary" />}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -196,5 +231,6 @@ const PersonalizationSettings = () => {
     </div>
   );
 };
+
 
 export default PersonalizationSettings;

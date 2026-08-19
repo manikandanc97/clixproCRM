@@ -34,12 +34,12 @@ export function toNumber(value: unknown): number {
 }
 
 function getSupportedCurrency(value?: string | null): string {
-  const currency = String(value || 'USD').toUpperCase();
-  return CURRENCY_FORMATS[currency] ? currency : 'USD';
+  const currency = String(value || 'INR').toUpperCase();
+  return CURRENCY_FORMATS[currency] ? currency : 'INR';
 }
 
 export function formatCurrency(value: unknown, currency?: string): string {
-  const selectedCurrency = getSupportedCurrency(currency || 'USD');
+  const selectedCurrency = getSupportedCurrency(currency || 'INR');
   const format = CURRENCY_FORMATS[selectedCurrency];
 
   return new Intl.NumberFormat(format.locale, {

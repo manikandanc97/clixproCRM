@@ -58,8 +58,9 @@ export class TasksQueryService {
 
     // Role-based visibility scoping
     if (options.role && options.userId) {
-      const userRole = options.role.toUpperCase();
-      if (userRole !== 'ADMIN' && userRole !== 'SUPER ADMIN') {
+      const rawRole = typeof options.role === 'object' ? (options.role as any)?.name || '' : String(options.role || '');
+      const userRole = rawRole.toUpperCase().replace(/[\s_]+/g, '');
+      if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'OWNER') {
         const tenantUser = await this.prisma.tenantUser.findFirst({
           where: { tenantId, userId: options.userId },
           select: { id: true, departmentId: true },
@@ -371,8 +372,9 @@ export class TasksQueryService {
     const where: Prisma.TaskWhereInput = { id, tenantId, deletedAt: null };
 
     if (options?.role && options?.userId) {
-      const userRole = options.role.toUpperCase();
-      if (userRole !== 'ADMIN' && userRole !== 'SUPER ADMIN') {
+      const rawRole = typeof options.role === 'object' ? (options.role as any)?.name || '' : String(options.role || '');
+      const userRole = rawRole.toUpperCase().replace(/[\s_]+/g, '');
+      if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'OWNER') {
         const tenantUser = await this.prisma.tenantUser.findFirst({
           where: { tenantId, userId: options.userId },
         });

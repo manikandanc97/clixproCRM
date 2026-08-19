@@ -94,7 +94,8 @@ export class MeetingsService {
 
   async updateMeeting(tenantId: string, user: any, id: string, data: UpdateMeetingDto) {
     const userId = user.id || user.sub;
-    const role = user.role?.name?.toUpperCase() || 'EMPLOYEE';
+    const rawRole = typeof user.role === 'object' ? user.role?.name || '' : String(user.role || '');
+    const role = rawRole.toUpperCase().replace(/[\s_]+/g, '');
     
     // @ts-ignore
     const existing = await this.prisma.meeting.findUnique({ where: { id, tenantId } });
@@ -102,7 +103,7 @@ export class MeetingsService {
 
     // RBAC Edit check
     const isOwner = existing.ownerId === userId || existing.assignedToId === userId;
-    const isAdmin = role === 'ADMIN' || role === 'SUPER ADMIN';
+    const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN' || role === 'OWNER';
     let isManager = false;
     
     if (role === 'MANAGER') {
@@ -153,14 +154,15 @@ export class MeetingsService {
 
   async deleteMeeting(tenantId: string, user: any, id: string) {
     const userId = user.id || user.sub;
-    const role = user.role?.name?.toUpperCase() || 'EMPLOYEE';
+    const rawRole = typeof user.role === 'object' ? user.role?.name || '' : String(user.role || '');
+    const role = rawRole.toUpperCase().replace(/[\s_]+/g, '');
     
     // @ts-ignore
     const existing = await this.prisma.meeting.findUnique({ where: { id, tenantId } });
     if (!existing) throw new HttpException('Meeting not found', HttpStatus.NOT_FOUND);
 
     const isOwner = existing.ownerId === userId || existing.assignedToId === userId;
-    const isAdmin = role === 'ADMIN' || role === 'SUPER ADMIN';
+    const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN' || role === 'OWNER';
     let isManager = false;
     
     if (role === 'MANAGER') {
@@ -189,7 +191,9 @@ export class MeetingsService {
 
   async getMeetings(tenantId: string, user: any, startDate?: string, endDate?: string) {
     const userId = user.id || user.sub;
-    const role = user.role?.name?.toUpperCase() || 'EMPLOYEE';
+    const rawRole = typeof user.role === 'object' ? user.role?.name || '' : String(user.role || '');
+    const role = rawRole.toUpperCase().replace(/[\s_]+/g, '');
+    const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN' || role === 'OWNER';
     
     let start = startDate ? new Date(startDate) : new Date();
     let end = endDate ? new Date(endDate) : new Date(new Date().setMonth(new Date().getMonth() + 1));
@@ -208,9 +212,7 @@ export class MeetingsService {
             { assignedToId: userId },
             { visibility: 'ORGANIZATION' },
             { visibility: 'TEAM', ownerId: { in: managedUsers } },
-            ...(role === 'ADMIN' || role === 'SUPER ADMIN'
-              ? [{ id: { not: '' } }]
-              : []),
+            ...(isAdmin ? [{ id: { not: '' } }] : []),
           ],
         },
         orderBy: { startTime: 'asc' },
@@ -239,9 +241,7 @@ export class MeetingsService {
             ...(role === 'MANAGER'
               ? [{ assignedToId: { in: managedUsers } }]
               : []),
-            ...(role === 'ADMIN' || role === 'SUPER ADMIN'
-              ? [{ id: { not: '' } }]
-              : []),
+            ...(isAdmin ? [{ id: { not: '' } }] : []),
           ],
         },
         select: {
@@ -257,7 +257,7 @@ export class MeetingsService {
 
     const mappedMeetings = meetings.map((m: any) => ({
       id: m.id,
-      title: (m.visibility === 'PRIVATE' && m.ownerId !== userId && role !== 'ADMIN' && role !== 'SUPER ADMIN') ? 'Busy' : m.title,
+      title: (m.visibility === 'PRIVATE' && m.ownerId !== userId && !isAdmin) ? 'Busy' : m.title,
       date: formatDate(m.startTime),
       startTime: m.startTime,
       endTime: m.endTime,

@@ -25,9 +25,8 @@ import { useCRMStore } from "@/shared/store/useCRMStore";
 const WorkspaceSettings = () => {
   const { data: workspace, isLoading: loading, error, refetch } = useWorkspace();
   const mutation = useUpdateWorkspace();
-  const { currency } = useCurrency();
+  const { currency, CurrencyIcon } = useCurrency();
   const setStoreCurrency = useCRMStore((state) => state.setCurrency);
-  const CurrencyIcon = IndianRupee;
 
   const [formData, setFormData] = useState({
     name: "",

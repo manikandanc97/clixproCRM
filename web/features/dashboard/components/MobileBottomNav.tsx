@@ -32,17 +32,17 @@ export function MobileBottomNav() {
               className="relative flex flex-col items-center justify-center p-2 min-w-16"
             >
               <div className="relative">
-                <Icon className={`w-6 h-6 transition-colors duration-300 ${isActive ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground dark:text-muted-foreground"}`} />
+                <Icon className={`w-6 h-6 transition-colors duration-300 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                 {isActive && (
                   <motion.div
                     layoutId="mobile-nav-indicator"
-                    className="absolute -inset-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl -z-10"
+                    className="absolute -inset-2 bg-primary/10 rounded-xl -z-10"
                     initial={false}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}
               </div>
-              <span className={`text-[10px] mt-1 font-semibold transition-colors duration-300 ${isActive ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground dark:text-muted-foreground"}`}>
+              <span className={`text-[10px] mt-1 font-semibold transition-colors duration-300 ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                 {item.label}
               </span>
             </Link>

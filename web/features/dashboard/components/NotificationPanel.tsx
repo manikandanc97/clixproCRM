@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Bell, Check, Clock, UserPlus, FileCheck, AlertCircle, Settings, Calendar, DollarSign, IndianRupee, Briefcase } from "lucide-react";
+import { Bell, Check, Clock, UserPlus, FileCheck, AlertCircle, Settings, Calendar, IndianRupee, Briefcase } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,8 +59,7 @@ export default function NotificationPanel() {
   const { data, isLoading: loading } = useNotifications();
   const markReadMutation = useMarkNotificationRead();
   const markAllReadMutation = useMarkAllNotificationsRead();
-  const { currency } = useCurrency();
-  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
+  const { CurrencyIcon } = useCurrency();
 
   const notifications = useMemo(() => {
     if (!data?.notifications) return [];

@@ -59,6 +59,15 @@ type AuthContextState = {
 const AuthContext = createContext<AuthContextState | null>(null);
 
 const WIDGETS_BY_ROLE: Record<string, string[]> = {
+  [CRM_ROLES.SUPER_ADMIN]: [
+    // Org-wide KPI cards
+    "revenue", "newLeads", "activeDeals", "winRate",
+    // Widgets
+    "salesChart", "upcomingMeetings", "hotLeads", "teamPerformance",
+    "leadFunnel", "revenueTracker", "recentActivities", "pendingFollowups",
+    "aiInsights", "calendarWidget", "revenueChart", "revenueTarget",
+    "recentCustomers",
+  ],
   [CRM_ROLES.ADMIN]: [
     // Org-wide KPI cards
     "revenue", "newLeads", "activeDeals", "winRate",
@@ -99,13 +108,21 @@ function buildAccess(user: AuthUser | null): RoleAccess {
   }
 
   const roleKey = normalizeRole(user.role);
-  const allowedRoutes = roleRouteConfig[roleKey] ? [...roleRouteConfig[roleKey]] : ["/dashboard"];
+  const isSuperAdmin = roleKey === CRM_ROLES.SUPER_ADMIN || (user as any).isSuperAdmin === true;
 
-  const resolvedPermissions = user.permissions && user.permissions.length > 0 
+  const allowedRoutes = isSuperAdmin
+    ? ["*", ...(roleRouteConfig[CRM_ROLES.SUPER_ADMIN] || [])]
+    : roleRouteConfig[roleKey]
+    ? [...roleRouteConfig[roleKey]]
+    : ["/dashboard"];
+
+  const resolvedPermissions = isSuperAdmin
+    ? ["*"]
+    : user.permissions && user.permissions.length > 0 
     ? user.permissions 
     : getRolePermissions(roleKey);
     
-  if (resolvedPermissions.includes("Help Center") || roleKey === CRM_ROLES.ADMIN) {
+  if (resolvedPermissions.includes("Help Center") || roleKey === CRM_ROLES.ADMIN || isSuperAdmin) {
     if (!allowedRoutes.includes("/help")) {
       allowedRoutes.push("/help");
     }
@@ -335,7 +352,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshUser,
       hasPermission: (permission: string) => {
         if (!user) return false;
-        if (normalizeRole(user.role) === CRM_ROLES.ADMIN) return true;
+        const roleKey = normalizeRole(user.role);
+        if (roleKey === CRM_ROLES.SUPER_ADMIN || roleKey === CRM_ROLES.ADMIN) return true;
         if (access.permissions.includes(permission)) return true;
         return hasModuleAccess(permission, access.permissions, user.role);
       },

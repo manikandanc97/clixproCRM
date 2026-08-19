@@ -12,6 +12,7 @@ import { SidebarContent } from "./sidebar";
 import { Button } from "@/shared/ui/button";
 import GlobalSearch from "./GlobalSearch";
 import CurrencySwitcher from "./CurrencySwitcher";
+import ThemeToggle from "./ThemeToggle";
 
 function getInitials(name?: string) {
   if (!name) return "CR";
@@ -59,6 +60,7 @@ export default function Topbar() {
         <CreateNewMenu />
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <CurrencySwitcher />
           <NotificationPanel />
         </div>

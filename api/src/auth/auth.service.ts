@@ -86,6 +86,31 @@ export class AuthService {
       }
     }
 
+    // 1. Super Admin platform special case: does not depend on tenant memberships
+    if (user && (user as any).isSuperAdmin) {
+      const result = {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          status: user.status,
+          tenantId: null,
+          companyName: 'ClixProCRM Platform',
+          role: 'SUPER_ADMIN',
+          isSuperAdmin: true,
+          permissions: ['*'],
+        },
+      };
+
+      meProfileCache.set(cacheKey, {
+        data: result,
+        expiresAt: now + 30000,
+      });
+
+      return result;
+    }
+
     if (!user || !user.memberships || user.memberships.length === 0) {
       throw new ForbiddenException('NEEDS_ONBOARDING');
     }
@@ -96,6 +121,13 @@ export class AuthService {
 
     if (!membership || !membership.role) {
       throw new ForbiddenException('NEEDS_ONBOARDING');
+    }
+
+    // Check organization suspension
+    if (membership.tenant?.status === 'SUSPENDED') {
+      throw new ForbiddenException(
+        'Your organization account is suspended. Please contact platform support.',
+      );
     }
 
     const roleName = membership.role.name;
@@ -113,6 +145,7 @@ export class AuthService {
         tenantId: membership.tenantId,
         companyName: membership.tenant?.name || 'My Workspace',
         role: roleName,
+        isSuperAdmin: false,
         permissions,
       },
     };

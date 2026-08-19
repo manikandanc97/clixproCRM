@@ -26,7 +26,7 @@ export async function getCachedTenantCurrency(
     select: { currency: true },
   });
 
-  const currency = tenant?.currency || 'USD';
+  const currency = tenant?.currency || 'INR';
   tenantMetadataCache.set(tenantId, {
     currency,
     expiresAt: now + 5 * 60 * 1000, // 5 minutes TTL

@@ -5,7 +5,7 @@ import { PipelineLeadType, DealStage } from "@/shared/types/pipeline";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
-import { DollarSign, IndianRupee, Trophy, XCircle, Loader2 } from "lucide-react";
+import { IndianRupee, Trophy, XCircle, Loader2 } from "lucide-react";
 import { useCurrency } from "@/shared/hooks/use-currency";
 
 export interface WonLostSubmitData {
@@ -27,8 +27,7 @@ interface WonLostModalProps {
 
 export function WonLostModal({ isOpen, onClose, type, deal, onSubmit, isLoading }: WonLostModalProps) {
   const [internalLoading, setInternalLoading] = useState(false);
-  const { currency } = useCurrency();
-  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
+  const { CurrencyIcon } = useCurrency();
   const [reason, setReason] = useState("");
   const [competitor, setCompetitor] = useState("");
   const [actualRevenue, setActualRevenue] = useState("");

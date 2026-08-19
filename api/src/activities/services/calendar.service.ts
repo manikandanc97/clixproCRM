@@ -14,7 +14,8 @@ export class CalendarService {
     const start = new Date(startParam);
     const end = new Date(endParam);
     const userId = user.sub || user.id;
-    const userRole = (user.role || '').toUpperCase();
+    const rawRole = typeof user.role === 'object' ? user.role?.name || '' : String(user.role || '');
+    const userRole = rawRole.toUpperCase().replace(/[\s_]+/g, '');
 
     const meetingWhere: any = {
       tenantId,
@@ -32,7 +33,7 @@ export class CalendarService {
       expectedCloseDate: { gte: start, lte: end },
     };
 
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER ADMIN') {
+    if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'OWNER') {
       const tenantUser = await this.prisma.tenantUser.findFirst({
         where: { tenantId, userId },
       });

@@ -18,6 +18,7 @@ import { SystemModule } from './system/system.module';
 import { SupportModule } from './support/support.module';
 import { AiModule } from './ai/ai.module';
 import { CustomersModule } from './customers/customers.module';
+import { SuperAdminModule } from './super-admin/super-admin.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CustomersModule } from './customers/customers.module';
     }),
     PrismaModule,
     AuthModule,
+    SuperAdminModule,
     ContactsModule,
     CompaniesModule,
     LeadsModule,

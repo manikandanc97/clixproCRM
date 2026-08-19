@@ -51,46 +51,65 @@ export class TenantGuard implements CanActivate {
     }
 
     const now = Date.now();
-    let memberships: Array<{ tenantId: string; role: any }> | null = null;
-    const cached = userMembershipCache.get(user.id);
 
-    let isCached = false;
-    if (cached && cached.expiresAt > now) {
-      memberships = cached.memberships;
-      isCached = true;
-    } else {
-      const userRecord = await this.prisma.user.findUnique({
-        where: { id: user.id },
-        include: {
-          memberships: {
-            where: { status: 'ACTIVE' },
-            include: { role: { include: { permissions: true } } },
+    // Check if user is platform Super Admin
+    const userRecord = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        memberships: {
+          where: { status: 'ACTIVE' },
+          include: {
+            role: { include: { permissions: true } },
+            tenant: true,
           },
         },
-      });
+      },
+    });
 
-      if (!userRecord || userRecord.memberships.length === 0) {
-        userMembershipCache.delete(user.id);
-        throw new UnauthorizedException('User has no active tenant memberships');
+    if (!userRecord) {
+      throw new UnauthorizedException('User account not found');
+    }
+
+    if (userRecord.isSuperAdmin) {
+      // Super Admin operating on a tenant route
+      let effectiveTenantId = tenantId;
+      if (!effectiveTenantId && userRecord.memberships.length > 0) {
+        effectiveTenantId = userRecord.memberships[0].tenantId;
+      }
+      if (!effectiveTenantId) {
+        // Find any active tenant or first tenant for fallback
+        const firstTenant = await this.prisma.tenant.findFirst({
+          select: { id: true },
+        });
+        effectiveTenantId = firstTenant?.id;
       }
 
-      memberships = userRecord.memberships.map((m: any) => ({
-        tenantId: m.tenantId,
-        role: m.role,
-      }));
+      request.tenantId = effectiveTenantId;
+      request.userRole = {
+        name: 'SUPER_ADMIN',
+        permissions: [{ module: 'ALL', hasAccess: true }],
+        isActive: true,
+      };
+      request.isSuperAdmin = true;
+      return true;
+    }
 
-      userMembershipCache.set(user.id, {
-        memberships,
-        expiresAt: now + 30000, // 30s TTL
-      });
+    if (!userRecord.memberships || userRecord.memberships.length === 0) {
+      throw new UnauthorizedException('User has no active tenant memberships');
     }
 
     const membership = tenantId
-      ? memberships.find((m: any) => m.tenantId === tenantId)
-      : memberships[0];
+      ? userRecord.memberships.find((m: any) => m.tenantId === tenantId) || userRecord.memberships[0]
+      : userRecord.memberships[0];
 
     if (!membership) {
       throw new UnauthorizedException('Invalid tenant');
+    }
+
+    if (membership.tenant?.status === 'SUSPENDED') {
+      throw new UnauthorizedException(
+        'Your organization account is suspended. Please contact platform support.',
+      );
     }
 
     request.tenantId = membership.tenantId;

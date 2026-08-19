@@ -300,10 +300,72 @@
   --sidebar-primary: oklch(0.70 0.18 15);
 }
 
+[data-accent="indigo"] {
+  --primary: oklch(0.55 0.22 265);
+  --accent: oklch(0.96 0.02 265);
+  --sidebar-primary: oklch(0.55 0.22 265);
+  --sidebar-accent: oklch(0.97 0.015 265);
+}
+.dark [data-accent="indigo"], [data-accent="indigo"].dark {
+  --primary: oklch(0.68 0.18 265);
+  --accent: oklch(0.25 0.05 265);
+  --sidebar-primary: oklch(0.68 0.18 265);
+}
+
+[data-accent="purple"] {
+  --primary: oklch(0.56 0.24 315);
+  --accent: oklch(0.96 0.02 315);
+  --sidebar-primary: oklch(0.56 0.24 315);
+}
+.dark [data-accent="purple"], [data-accent="purple"].dark {
+  --primary: oklch(0.68 0.20 315);
+  --sidebar-primary: oklch(0.68 0.20 315);
+}
+
+[data-accent="red"] {
+  --primary: oklch(0.57 0.22 27);
+  --accent: oklch(0.96 0.02 27);
+  --sidebar-primary: oklch(0.57 0.22 27);
+}
+.dark [data-accent="red"], [data-accent="red"].dark {
+  --primary: oklch(0.68 0.20 27);
+  --sidebar-primary: oklch(0.68 0.20 27);
+}
+
+[data-accent="teal"] {
+  --primary: oklch(0.58 0.15 180);
+  --accent: oklch(0.96 0.02 180);
+  --sidebar-primary: oklch(0.58 0.15 180);
+}
+.dark [data-accent="teal"], [data-accent="teal"].dark {
+  --primary: oklch(0.68 0.15 180);
+  --sidebar-primary: oklch(0.68 0.15 180);
+}
+
+[data-accent="cyan"] {
+  --primary: oklch(0.60 0.16 210);
+  --accent: oklch(0.96 0.02 210);
+  --sidebar-primary: oklch(0.60 0.16 210);
+}
+.dark [data-accent="cyan"], [data-accent="cyan"].dark {
+  --primary: oklch(0.70 0.16 210);
+  --sidebar-primary: oklch(0.70 0.16 210);
+}
+
 /* Font Family Overrides */
-[data-font="geist"] {
-  --font-sans: "Geist Sans", var(--font-inter), sans-serif;
-  --font-display: "Geist Sans", var(--font-inter), sans-serif;
+[data-font="inter"], [data-font="sans"] {
+  --font-sans: var(--font-inter), "Segoe UI", sans-serif;
+  --font-display: var(--font-inter), "Segoe UI", sans-serif;
+}
+
+[data-font="roboto"] {
+  --font-sans: var(--font-roboto), sans-serif;
+  --font-display: var(--font-roboto), sans-serif;
+}
+
+[data-font="poppins"] {
+  --font-sans: var(--font-poppins), sans-serif;
+  --font-display: var(--font-poppins), sans-serif;
 }
 
 [data-font="jakarta"] {
@@ -311,30 +373,48 @@
   --font-display: var(--font-jakarta), sans-serif;
 }
 
-[data-font="sans"] {
-  --font-sans: var(--font-inter), "Segoe UI", sans-serif;
-  --font-display: var(--font-jakarta), "Trebuchet MS", sans-serif;
+[data-font="outfit"] {
+  --font-sans: var(--font-outfit), sans-serif;
+  --font-display: var(--font-outfit), sans-serif;
+}
+
+[data-font="space"] {
+  --font-sans: var(--font-space), sans-serif;
+  --font-display: var(--font-space), sans-serif;
+}
+
+[data-font="lora"] {
+  --font-sans: var(--font-lora), Georgia, serif;
+  --font-display: var(--font-lora), Georgia, serif;
+}
+
+[data-font="fira"] {
+  --font-sans: var(--font-fira), monospace;
+  --font-display: var(--font-fira), monospace;
+}
+
+[data-font="geist"] {
+  --font-sans: "Geist Sans", var(--font-inter), sans-serif;
+  --font-display: "Geist Sans", var(--font-inter), sans-serif;
 }
 
 
 /* Font utility classes */
-.font-sans {
-  font-family: var(--font-sans);
-}
-.font-display {
-  font-family: var(--font-display);
-}
-.font-mono {
-  font-family: var(--font-mono);
-}
+.font-sans { font-family: var(--font-sans); }
+.font-display { font-family: var(--font-display); }
+.font-mono { font-family: var(--font-mono); }
 
 /* Specific Font Mappings */
-.font-geist {
-  font-family: "Geist Sans", var(--font-inter), sans-serif;
-}
-.font-jakarta {
-  font-family: var(--font-jakarta), sans-serif;
-}
+.font-inter { font-family: var(--font-inter), sans-serif; }
+.font-roboto { font-family: var(--font-roboto), sans-serif; }
+.font-poppins { font-family: var(--font-poppins), sans-serif; }
+.font-jakarta { font-family: var(--font-jakarta), sans-serif; }
+.font-outfit { font-family: var(--font-outfit), sans-serif; }
+.font-space { font-family: var(--font-space), sans-serif; }
+.font-lora { font-family: var(--font-lora), serif; }
+.font-fira { font-family: var(--font-fira), monospace; }
+.font-geist { font-family: "Geist Sans", var(--font-inter), sans-serif; }
+
 
 /* ============================================================
    BASE STYLES
@@ -787,7 +867,7 @@
     background: linear-gradient(
       135deg,
       var(--primary) 0%,
-      oklch(0.6 0.18 160) 100%
+      color-mix(in srgb, var(--primary) 65%, black) 100%
     );
   }
 

@@ -2,7 +2,7 @@
 
 import { PipelineLeadType } from "@/shared/types/pipeline";
 import PipelineCard from "./PipelineCard";
-import { Plus, MoreHorizontal, TrendingUp, DollarSign, IndianRupee, Target } from "lucide-react";
+import { Plus, MoreHorizontal, TrendingUp, IndianRupee, Target } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
@@ -24,9 +24,8 @@ const PipelineColumn = ({ title, items, onSelectDeal, onAddDeal }: Props) => {
   });
 
   const totalValue = items.reduce((sum, item) => sum + (item.valueAmount || 0), 0);
-  const { formatCurrency, currency } = useCurrency();
+  const { formatCurrency, CurrencyIcon } = useCurrency();
   const formattedTotal = formatCurrency(totalValue);
-  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
   const displayTitle = PIPELINE_STAGE_LABELS[title] || title;
 
   const getStageColor = (t: string) => {

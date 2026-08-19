@@ -64,8 +64,8 @@ export class RolesService {
     actorRoleName: string,
     requestedPermissions: string[],
   ): Promise<void> {
-    const roleUpper = actorRoleName.toUpperCase();
-    if (roleUpper === 'SUPER ADMIN' || roleUpper === 'ADMIN' || roleUpper === 'OWNER') {
+    const roleUpper = actorRoleName.toUpperCase().replace(/[\s_]+/g, '');
+    if (roleUpper === 'SUPERADMIN' || roleUpper === 'ADMIN' || roleUpper === 'OWNER') {
       return; // Admins have full authority
     }
 
@@ -224,10 +224,11 @@ export class RolesService {
       );
     }
 
-    const actorUpper = actorRoleName.toUpperCase();
+    const actorUpper = actorRoleName.toUpperCase().replace(/[\s_]+/g, '');
+    const existingRoleNorm = existingRole.name.toUpperCase().replace(/[\s_]+/g, '');
     if (
-      existingRole.name.toUpperCase() === 'SUPER ADMIN' &&
-      actorUpper !== 'SUPER ADMIN'
+      existingRoleNorm === 'SUPERADMIN' &&
+      actorUpper !== 'SUPERADMIN'
     ) {
       throw new HttpException(
         {

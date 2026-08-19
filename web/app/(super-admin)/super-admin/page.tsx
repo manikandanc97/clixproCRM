@@ -1,0 +1,490 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  Building2,
+  Users,
+  ShieldCheck,
+  Ban,
+  TrendingUp,
+  ArrowUpRight,
+  Plus,
+  Zap,
+  Sparkles,
+  Clock,
+  Filter,
+  Target,
+  Layers,
+} from "lucide-react";
+import {
+  fetchPlatformOverview,
+  PlatformOverviewData,
+} from "@/shared/lib/api/super-admin.api";
+import { Button } from "@/shared/ui/button";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { useAuth } from "@/features/auth/components/auth-provider";
+import {
+  CRMPageContainer,
+  CRMMetricCard,
+  CRMMetricsGrid,
+} from "@/shared/components/crm";
+import { StatusBadge } from "@/shared/components/StatusBadge";
+import { EmptyState } from "@/shared/components/EmptyState";
+
+export default function SuperAdminDashboardPage() {
+  const { user } = useAuth();
+  const [data, setData] = useState<PlatformOverviewData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState<"Today" | "Week" | "Month" | "Year">("Month");
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const overview = await fetchPlatformOverview();
+      setData(overview);
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to load platform overview data."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const metrics = data?.metrics || {
+    totalOrganizations: 0,
+    activeOrganizations: 0,
+    suspendedOrganizations: 0,
+    totalUsers: 0,
+    activeUsers: 0,
+    totalLeads: 0,
+    totalCustomers: 0,
+    totalDeals: 0,
+  };
+
+  return (
+    <CRMPageContainer>
+      {/* 1. Sleek Welcome Hero Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="relative overflow-hidden rounded-2xl bg-slate-950 p-6 md:p-8 shadow-xl border border-white/5"
+      >
+        {/* Dynamic Theme Reactive Ambient Gradients */}
+        <div 
+          className="absolute top-0 right-0 w-1/2 h-full pointer-events-none transition-all duration-500" 
+          style={{
+            background: "linear-gradient(to left, color-mix(in srgb, var(--primary) 20%, transparent), transparent)"
+          }}
+        />
+        <div 
+          className="absolute -top-16 -right-16 w-56 h-56 blur-[80px] rounded-full pointer-events-none transition-all duration-500" 
+          style={{
+            backgroundColor: "var(--primary)",
+            opacity: 0.22
+          }}
+        />
+
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex-1 space-y-4">
+            <div className="flex items-center gap-3">
+              {/* Dynamic Status Badge */}
+              <div 
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--primary) 12%, transparent)",
+                  borderColor: "color-mix(in srgb, var(--primary) 28%, transparent)",
+                  color: "var(--primary)"
+                }}
+              >
+                <Zap className="w-3 h-3" style={{ fill: "var(--primary)", color: "var(--primary)" }} />
+                Multi-Tenant Core Live
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+                Welcome back, <span className="capitalize font-extrabold transition-colors duration-300" style={{ color: "var(--primary)" }}>{user?.displayName || user?.name || "Platform Admin"}</span>
+              </h1>
+              <div className="text-slate-400 text-sm md:text-base max-w-2xl leading-relaxed">
+                Your platform is running with <span className="font-semibold transition-colors duration-300" style={{ color: "var(--primary)" }}>{metrics.activeOrganizations} active</span> tenant organizations and <span className="font-semibold transition-colors duration-300" style={{ color: "var(--primary)" }}>{metrics.activeUsers}</span> global users. All multi-tenant services are operating smoothly.
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Button
+              asChild
+              className="rounded-xl px-5 h-10 bg-white text-slate-950 hover:bg-slate-200 font-bold transition-all shadow-md text-xs sm:text-sm"
+            >
+              <Link href="/super-admin/organizations" className="flex items-center gap-2">
+                <span>View Organizations</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-xl px-5 h-10 border-white/10 bg-white/5 text-white hover:bg-white/10 font-bold transition-all text-xs sm:text-sm"
+            >
+              <Link href="/super-admin/audit-logs">
+                <span>Audit Trail</span>
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Decorative Sparkle */}
+        <div className="absolute top-6 right-1/4 opacity-20 animate-pulse pointer-events-none">
+          <Sparkles className="w-5 h-5 text-white" />
+        </div>
+      </motion.div>
+
+      {/* 2. Filter & Timeframe Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Timeframe selector */}
+        <div className="inline-flex items-center bg-muted/60 border border-border/60 rounded-xl p-1 shadow-sm">
+          {(["Today", "Week", "Month", "Year"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTimeRange(t)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                timeRange === t
+                  ? "bg-card text-foreground font-bold shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2.5">
+          <Link href="/super-admin/organizations">
+            <Button
+              size="sm"
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 h-9 shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create Organization</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* 3. Core KPI Metrics Grid */}
+      <CRMMetricsGrid cols={4}>
+        {/* Card 1: Total Organizations */}
+        <Link href="/super-admin/organizations" className="block group">
+          <CRMMetricCard
+            title="Total Organizations"
+            value={metrics.totalOrganizations.toString()}
+            change={`${metrics.activeOrganizations} Active`}
+            trend="up"
+            icon={Building2}
+            color="emerald"
+            loading={loading}
+            comparisonText="active tenants"
+            className="group-hover:ring-2 ring-emerald-500/20 transition-all"
+          />
+        </Link>
+
+        {/* Card 2: Platform Users */}
+        <Link href="/super-admin/users" className="block group">
+          <CRMMetricCard
+            title="Platform Users"
+            value={metrics.totalUsers.toString()}
+            change={`${metrics.activeUsers} Active`}
+            trend="neutral"
+            icon={Users}
+            color="indigo"
+            loading={loading}
+            comparisonText="active accounts"
+            className="group-hover:ring-2 ring-indigo-500/20 transition-all"
+          />
+        </Link>
+
+        {/* Card 3: Total CRM Records */}
+        <Link href="/super-admin/analytics" className="block group">
+          <CRMMetricCard
+            title="CRM Activity"
+            value={(metrics.totalLeads + metrics.totalDeals + metrics.totalCustomers).toString()}
+            change={`${metrics.totalLeads} Leads • ${metrics.totalDeals} Deals`}
+            trend="up"
+            icon={Target}
+            color="cyan"
+            loading={loading}
+            comparisonText="cross-tenant data"
+            className="group-hover:ring-2 ring-cyan-500/20 transition-all"
+          />
+        </Link>
+
+        {/* Card 4: Platform System Health */}
+        <Link href="/super-admin/settings" className="block group">
+          <CRMMetricCard
+            title="System Health"
+            value="99.9%"
+            change="All Systems Normal"
+            trend="up"
+            icon={TrendingUp}
+            color="orange"
+            loading={loading}
+            comparisonText="uptime guarantee"
+            className="group-hover:ring-2 ring-orange-500/20 transition-all"
+          />
+        </Link>
+      </CRMMetricsGrid>
+
+      {/* 4. Main Platform Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Recent Organizations (2 cols) */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="lg:col-span-2 rounded-2xl bg-card border border-border shadow-card p-6 space-y-5"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-foreground">
+                    Recent Organizations
+                  </h3>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                    Live
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Tenant workspaces registered on the platform and current status
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/super-admin/organizations"
+              className="text-xs font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider transition-colors"
+            >
+              View All
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-border/60">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-border bg-muted/20 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  <th className="h-11 px-4">Organization</th>
+                  <th className="h-11 px-4">Plan</th>
+                  <th className="h-11 px-4">Users</th>
+                  <th className="h-11 px-4">Status</th>
+                  <th className="h-11 px-4 text-right">Created</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse h-14">
+                      <td className="px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-muted" />
+                          <div className="space-y-1">
+                            <div className="h-3.5 w-24 bg-muted rounded" />
+                            <div className="h-2.5 w-16 bg-muted/60 rounded" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4"><div className="h-4 w-12 bg-muted rounded-full" /></td>
+                      <td className="px-4"><div className="h-3.5 w-10 bg-muted rounded" /></td>
+                      <td className="px-4"><div className="h-4 w-14 bg-muted rounded-full" /></td>
+                      <td className="px-4 text-right"><div className="h-3.5 w-16 bg-muted rounded ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : data?.recentOrganizations && data.recentOrganizations.length > 0 ? (
+                  data.recentOrganizations.map((org) => (
+                    <tr
+                      key={org.id}
+                      className="group h-14 hover:bg-muted/[0.03] transition-colors"
+                    >
+                      <td className="px-4 font-medium text-foreground">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xs border border-emerald-500/20 shadow-sm shrink-0">
+                            {org.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <Link
+                              href="/super-admin/organizations"
+                              className="font-bold text-xs text-foreground group-hover:text-emerald-600 transition-colors truncate block"
+                            >
+                              {org.name}
+                            </Link>
+                            <p className="text-[11px] text-muted-foreground font-mono truncate">
+                              /{org.slug}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4">
+                        <span className="capitalize text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-muted/60 border border-border text-foreground">
+                          {org.plan}
+                        </span>
+                      </td>
+                      <td className="px-4 text-xs text-muted-foreground font-medium">
+                        <span className="text-foreground font-semibold">{org.userCount}</span> users
+                      </td>
+                      <td className="px-4">
+                        <StatusBadge
+                          status={org.status === "ACTIVE" ? "Active" : "Suspended"}
+                          variant={org.status === "ACTIVE" ? "emerald" : "rose"}
+                        />
+                      </td>
+                      <td className="px-4 text-right text-xs text-muted-foreground font-medium">
+                        {new Date(org.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="py-10 text-center text-xs text-muted-foreground"
+                    >
+                      <Building2 className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
+                      No organizations created yet. Click &quot;Create Organization&quot; to begin.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+
+        {/* Right Column: Goal Progress Emerald Card & Activity (1 col) */}
+        <div className="space-y-6">
+          {/* Goal Progress Style Emerald Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="rounded-2xl bg-emerald-600 text-white p-6 shadow-xl relative overflow-hidden space-y-4"
+          >
+            {/* Background shine */}
+            <div className="absolute -top-12 -right-12 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-white/15 text-white">
+                  <Target className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Platform Health</h3>
+                  <p className="text-[11px] text-emerald-100">Live multi-tenant status</p>
+                </div>
+              </div>
+              <ShieldCheck className="h-5 w-5 text-emerald-200" />
+            </div>
+
+            <div className="pt-2 grid grid-cols-2 gap-4 border-t border-white/15">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">
+                  Active Tenants
+                </p>
+                <p className="text-2xl font-black text-white mt-0.5">
+                  {metrics.activeOrganizations}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">
+                  Platform Users
+                </p>
+                <p className="text-2xl font-black text-white mt-0.5">
+                  {metrics.activeUsers}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 pt-1">
+              <div className="flex justify-between text-[11px] font-semibold text-emerald-100">
+                <span>Tenant Activity Target</span>
+                <span>100%</span>
+              </div>
+              <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden">
+                <div className="h-full bg-white rounded-full transition-all duration-500 w-full" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Platform Activity Feed */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-2xl bg-card border border-border shadow-card p-6 space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4 text-emerald-600" />
+                <span>Platform Activity</span>
+              </h3>
+              <Link
+                href="/super-admin/audit-logs"
+                className="text-xs font-bold text-emerald-600 hover:underline"
+              >
+                All Logs
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="space-y-1.5 animate-pulse pb-2 border-b border-border/40 last:border-0">
+                    <div className="h-3 w-28 bg-muted rounded" />
+                    <div className="h-2.5 w-20 bg-muted/60 rounded" />
+                  </div>
+                ))
+              ) : data?.recentAuditLogs && data.recentAuditLogs.length > 0 ? (
+                data.recentAuditLogs.slice(0, 4).map((log) => (
+                  <div
+                    key={log.id}
+                    className="text-xs space-y-0.5 border-b border-border/40 pb-2.5 last:border-0 last:pb-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-foreground">
+                        {log.action.replace(/_/g, " ")}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(log.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground text-[11px]">
+                      by <span className="text-foreground font-semibold">{log.actor}</span> ({log.module})
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  No recent audit activities.
+                </p>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </CRMPageContainer>
+  );
+}

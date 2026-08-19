@@ -108,9 +108,10 @@ export class TasksService {
     data: UpdateTaskDto,
   ) {
     const userId = user.id || user.sub;
-    const roleName = user.role?.name?.toUpperCase() || '';
+    const rawRole = typeof user.role === 'object' ? user.role?.name || '' : String(user.role || '');
+    const roleName = rawRole.toUpperCase().replace(/[\s_]+/g, '');
     const isSuperAdminOrAdmin =
-      roleName === 'SUPER ADMIN' || roleName === 'ADMIN' || user.role?.isSystem;
+      roleName === 'SUPERADMIN' || roleName === 'ADMIN' || roleName === 'OWNER' || user.role?.isSystem;
 
     // Evaluate if user has explicit update permission (simulate frontend PERMISSIONS.TASKS_UPDATE)
     // Actually, in the backend we just check if they are ADMIN or MANAGER for full edit
@@ -357,9 +358,10 @@ export class TasksService {
 
   async deleteTask(tenantId: string, user: any, id: string) {
     const userId = user.id || user.sub;
-    const roleName = user.role?.name?.toUpperCase() || '';
+    const rawRole = typeof user.role === 'object' ? user.role?.name || '' : String(user.role || '');
+    const roleName = rawRole.toUpperCase().replace(/[\s_]+/g, '');
     const isSuperAdminOrAdmin =
-      roleName === 'SUPER ADMIN' || roleName === 'ADMIN' || user.role?.isSystem;
+      roleName === 'SUPERADMIN' || roleName === 'ADMIN' || roleName === 'OWNER' || user.role?.isSystem;
 
     // Only Admin and Manager can delete tasks
     const hasDeleteAccess = isSuperAdminOrAdmin || roleName === 'MANAGER';

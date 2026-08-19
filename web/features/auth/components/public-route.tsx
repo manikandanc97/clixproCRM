@@ -23,13 +23,22 @@ type PublicRouteProps = {
 
 export default function PublicRoute({ children }: PublicRouteProps) {
   const router = useRouter();
-  const { isAuthenticated, isInitializing } = useAuth();
+  const { isAuthenticated, isInitializing, user } = useAuth();
 
   useEffect(() => {
-    if (!isInitializing && isAuthenticated) {
-      router.replace("/dashboard");
+    if (!isInitializing && isAuthenticated && user) {
+      const isSuperAdmin =
+        user.role?.toUpperCase() === "SUPER_ADMIN" ||
+        user.role?.toUpperCase() === "SUPER ADMIN" ||
+        (user as any)?.isSuperAdmin === true;
+
+      if (isSuperAdmin) {
+        router.replace("/super-admin");
+      } else {
+        router.replace("/dashboard");
+      }
     }
-  }, [isAuthenticated, isInitializing, router]);
+  }, [isAuthenticated, isInitializing, router, user]);
 
   // During init or when redirecting authenticated user, show loading screen instead of blank null
   if (isInitializing || isAuthenticated) {

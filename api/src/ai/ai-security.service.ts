@@ -40,9 +40,11 @@ export class AiSecurityService {
     });
 
     const role = userRole || tenantUser?.role;
-    const roleName = (role?.name || '').toUpperCase();
+    const rawRole = typeof role === 'object' ? role?.name || '' : String(role || '');
+    const roleName = rawRole.toUpperCase();
+    const normRole = roleName.replace(/[\s_]+/g, '');
     const isSystemAdmin =
-      roleName === 'SUPER ADMIN' || roleName === 'ADMIN' || roleName === 'OWNER';
+      normRole === 'SUPERADMIN' || normRole === 'ADMIN' || normRole === 'OWNER';
     const isRoleActive = role ? role.isActive !== false : true;
 
     let subordinateUserIds: string[] = [];

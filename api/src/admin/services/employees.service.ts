@@ -71,6 +71,16 @@ export class EmployeesService {
     name?: string,
     password?: string,
   ) {
+    if (
+      roleName.toUpperCase() === 'SUPER_ADMIN' ||
+      roleName.toUpperCase() === 'SUPER ADMIN'
+    ) {
+      throw new HttpException(
+        'SUPER_ADMIN is a platform-level role and cannot be created inside an organization.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const normalizedEmail = email.toLowerCase().trim();
 
     const existingTenantUser = await this.prisma.tenantUser.findFirst({
@@ -239,6 +249,17 @@ export class EmployeesService {
     actorRole: string,
     data: { name?: string; email?: string; role?: string },
   ) {
+    if (
+      data.role &&
+      (data.role.toUpperCase() === 'SUPER_ADMIN' ||
+        data.role.toUpperCase() === 'SUPER ADMIN')
+    ) {
+      throw new HttpException(
+        'SUPER_ADMIN is a platform-level role and cannot be assigned by an organization admin.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     if (data.role === 'ADMIN' && actorRole !== 'ADMIN') {
       throw new HttpException(
         'Only ADMIN can assign the ADMIN role',

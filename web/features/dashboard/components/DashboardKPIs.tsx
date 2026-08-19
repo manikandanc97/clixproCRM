@@ -2,7 +2,6 @@
 
 import React, { useMemo } from "react";
 import { 
-  DollarSign, 
   IndianRupee,
   Users, 
   Target, 
@@ -29,7 +28,7 @@ export default function DashboardKPIs() {
   const dashboardQuery = useDashboardData();
   const leadsQuery = useLeads();
   const pipelineQuery = usePipeline();
-  const { formatCurrency, currency } = useCurrency();
+  const { formatCurrency, currency, CurrencyIcon } = useCurrency();
 
   // Extract query data safely
   const dashboardData = dashboardQuery.data;
@@ -62,7 +61,7 @@ export default function DashboardKPIs() {
         if (!dashboardRevenue) return "neutral" as const;
         return dashboardRevenue.positive ? ("up" as const) : ("down" as const);
       },
-      icon: currency === "INR" ? IndianRupee : DollarSign,
+      icon: CurrencyIcon,
       color: "emerald" as const,
       loading: dashboardQuery.isLoading,
       sparklineData: dashboardRevenue?.sparklineData,
@@ -144,11 +143,14 @@ export default function DashboardKPIs() {
     return kpiConfigs
       .filter(kpi => TOP_KPI_IDS.includes(kpi.id))
       .filter(kpi =>
+        user?.role === CRM_ROLES.SUPER_ADMIN ||
         user?.role === CRM_ROLES.ADMIN ||
+        (user as any)?.isSuperAdmin === true ||
+        access.roleName === "Super Admin" ||
         access.roleName === "Admin" ||
         access.dashboardWidgets.includes(kpi.id)
       );
-  }, [kpiConfigs, access.roleName, access.dashboardWidgets, user?.role]);
+  }, [kpiConfigs, access.roleName, access.dashboardWidgets, user?.role, (user as any)?.isSuperAdmin]);
 
   // ─── Employee role: render personal dashboard cards instead ──────────────
   // This prevents the org-wide KPI cards from showing for Employee users

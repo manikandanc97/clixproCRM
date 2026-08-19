@@ -1,32 +1,32 @@
 import { useCRMStore } from "@/shared/store/useCRMStore";
+import { IndianRupee } from "lucide-react";
 
 const CURRENCY_FORMATS: Record<string, { locale: string; currency: string }> = {
   INR: { locale: "en-IN", currency: "INR" },
 };
 
 function getSupportedCurrency(value?: string | null): string {
-  const currency = String(value || "INR").toUpperCase();
-  return CURRENCY_FORMATS[currency] ? currency : "INR";
+  return "INR";
 }
 
 export function useCurrency() {
-  const currency = useCRMStore((state) => state.currency) || "INR";
+  const currency = "INR";
 
   const formatCurrency = (value: number | string | undefined | null) => {
     const numValue = Number(value || 0);
-    const selectedCurrency = getSupportedCurrency(currency);
-    const format = CURRENCY_FORMATS[selectedCurrency];
 
-    return new Intl.NumberFormat(format.locale, {
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: selectedCurrency,
+      currency: "INR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(numValue);
   };
 
+  const CurrencyIcon = IndianRupee;
   const currencySymbol = "₹";
-  const currencyCode = currency;
+  const currencyCode = "INR";
 
-  return { currency, formatCurrency, currencySymbol, currencyCode };
+  return { currency, formatCurrency, currencySymbol, currencyCode, CurrencyIcon };
 }
+

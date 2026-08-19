@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { motion } from "framer-motion";
-import { Target, Calendar, ArrowUpRight, Settings, IndianRupee, DollarSign } from "lucide-react";
+import { Target, Calendar, ArrowUpRight, Settings, IndianRupee } from "lucide-react";
 import { EmptyStateCard } from "@/shared/components/page-states";
 import { RevenueTargetType } from "@/shared/types/report";
 import { useCurrency } from "@/shared/hooks/use-currency";
@@ -11,7 +11,7 @@ import { Button } from "@/shared/ui/button";
 
 const RevenueTarget = ({ data }: { data: RevenueTargetType | null }) => {
   const router = useRouter();
-  const { currencySymbol, currency } = useCurrency();
+  const { currencySymbol, CurrencyIcon } = useCurrency();
   
   if (!data) {
     return (
@@ -29,7 +29,7 @@ const RevenueTarget = ({ data }: { data: RevenueTargetType | null }) => {
   const percentage = targetRevenue > 0 ? Math.round((currentRevenue / targetRevenue) * 100) : (currentRevenue > 0 ? 100 : 0);
   const remaining = targetRevenue > 0 ? targetRevenue - currentRevenue : 0;
   
-  const CurrencyBgIcon = currency === "INR" ? IndianRupee : DollarSign;
+  const CurrencyBgIcon = CurrencyIcon;
 
   return (
     <Card className="relative bg-primary text-primary-foreground rounded-xl border-transparent shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 min-w-0">

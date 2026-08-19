@@ -31,7 +31,7 @@ export class RevenueService {
           tenantId,
           periodType: data.periodType || 'MONTHLY',
           value: data.value || 0,
-          currency: data.currency || 'USD', // The client should eventually use Tenant currency, but targets inherently carry their own currency per original schema
+          currency: data.currency || 'INR',
           startDate: new Date(data.startDate),
           endDate: new Date(data.endDate),
           isActive,

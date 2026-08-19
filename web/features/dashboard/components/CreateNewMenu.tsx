@@ -6,7 +6,6 @@ import {
   Briefcase, 
   FileText, 
   CheckSquare, 
-  DollarSign,
   IndianRupee,
   ArrowRight,
   Calendar,
@@ -31,8 +30,7 @@ export default function CreateNewMenu() {
   const router = useRouter();
   const { hasPermission } = useAuth();
   const { openModal } = useGlobalModalStore();
-  const { currency } = useCurrency();
-  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
+  const { CurrencyIcon } = useCurrency();
 
   const actions = [
     { label: "New Lead", icon: <UserPlus className="w-4 h-4 text-emerald-500" />, path: "/leads?new=true", color: "hover:bg-emerald-500/5 hover:text-emerald-600", permission: PERMISSIONS.LEADS_CREATE },

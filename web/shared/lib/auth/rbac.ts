@@ -1,6 +1,7 @@
 import type React from "react";
 import {
   Building2,
+  Crown,
   ShieldCheck,
   Ticket,
   UserSquare2,
@@ -50,7 +51,8 @@ export const defaultRoleAccess: RoleAccess = {
  * Role mapping for backward compatibility
  */
 const legacyRoleMap: Record<string, RoleKey> = {
-  "super_admin": CRM_ROLES.ADMIN,
+  "super_admin": CRM_ROLES.SUPER_ADMIN,
+  "superadmin": CRM_ROLES.SUPER_ADMIN,
   "admin": CRM_ROLES.ADMIN,
   "sales_manager": CRM_ROLES.MANAGER,
   "sales_executive": CRM_ROLES.SALES,
@@ -108,7 +110,7 @@ export function normalizeToModuleTitle(perm: string): string | null {
 
 export function hasModuleAccess(itemTitle: string, permissions?: string[], role?: string): boolean {
   const roleKey = normalizeRole(role);
-  if (roleKey === CRM_ROLES.ADMIN) return true;
+  if (roleKey === CRM_ROLES.SUPER_ADMIN || roleKey === CRM_ROLES.ADMIN) return true;
   if (!permissions || permissions.length === 0) return false;
   
   const titleLower = itemTitle.toLowerCase();
@@ -126,8 +128,8 @@ export function getRoleMenu(role?: string, permissions?: string[]) {
   const roleKey = normalizeRole(role);
   const baseMenu = roleMenuConfig[roleKey] || roleMenuConfig[CRM_ROLES.EMPLOYEE];
   
-  // ADMIN role always gets full base admin menu
-  if (roleKey === CRM_ROLES.ADMIN) {
+  // SUPER_ADMIN and ADMIN roles always get full base menu
+  if (roleKey === CRM_ROLES.SUPER_ADMIN || roleKey === CRM_ROLES.ADMIN) {
     return baseMenu;
   }
   
@@ -184,6 +186,7 @@ export function getRoleMenu(role?: string, permissions?: string[]) {
 }
 
 export const roleAccent: Record<RoleKey, string> = {
+  [CRM_ROLES.SUPER_ADMIN]: "from-amber-500 to-indigo-600",
   [CRM_ROLES.ADMIN]: "from-violet-500 to-purple-600",
   [CRM_ROLES.MANAGER]: "from-emerald-500 to-green-600",
   [CRM_ROLES.SALES]: "from-blue-500 to-cyan-600",
@@ -192,6 +195,7 @@ export const roleAccent: Record<RoleKey, string> = {
 };
 
 export const roleIcon: Record<RoleKey, React.ComponentType<{ className?: string }>> = {
+  [CRM_ROLES.SUPER_ADMIN]: Crown,
   [CRM_ROLES.ADMIN]: ShieldCheck,
   [CRM_ROLES.MANAGER]: Building2,
   [CRM_ROLES.SALES]: Users,

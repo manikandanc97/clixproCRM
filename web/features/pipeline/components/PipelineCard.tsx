@@ -3,7 +3,6 @@
 import { PipelineLeadType } from "@/shared/types/pipeline";
 import { 
   MoreHorizontal, 
-  DollarSign, 
   IndianRupee,
   Clock, 
   MessageSquare, 
@@ -42,8 +41,7 @@ const PipelineCard = ({ item, isOverlay, onSelect }: Props) => {
     isDragging
   } = useSortable({ id: item.id, data: { type: 'Card', item } });
   
-  const { formatCurrency, currency } = useCurrency();
-  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
+  const { formatCurrency, CurrencyIcon } = useCurrency();
 
   const style = {
     transform: CSS.Translate.toString(transform),

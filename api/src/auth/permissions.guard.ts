@@ -31,13 +31,19 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('Role is currently deactivated');
     }
 
-    const roleName = (userRole.name || '').toUpperCase();
-    if (roleName === 'SUPER ADMIN' || roleName === 'ADMIN' || roleName === 'OWNER') {
+    const roleName = (userRole.name || '').toUpperCase().trim();
+    const normalizedRole = roleName.replace(/[\s_]+/g, '');
+    if (
+      normalizedRole === 'SUPERADMIN' ||
+      normalizedRole === 'ADMIN' ||
+      normalizedRole === 'OWNER'
+    ) {
       return true;
     }
 
     const matchesPermission = (required: string, userMod: string) => {
       if (!required || !userMod) return false;
+      if (userMod === 'ALL' || userMod === 'all') return true;
       if (required === userMod) return true;
       const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
       const reqNorm = normalize(required);
@@ -68,3 +74,4 @@ export class PermissionsGuard implements CanActivate {
     return true;
   }
 }
+

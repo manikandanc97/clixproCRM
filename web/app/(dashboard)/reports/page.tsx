@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3, Download, Calendar, TrendingUp, Users, DollarSign, IndianRupee, Target, RefreshCcw } from "lucide-react";
+import { BarChart3, Download, Calendar, TrendingUp, Users, IndianRupee, Target, RefreshCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import { PageErrorState } from "@/shared/components/page-states";
 import { ReportsSkeleton } from "@/features/reports/components/ReportsSkeleton";
@@ -28,8 +28,7 @@ const ReportsPage = () => {
   
   const { data, isLoading: loading, error, refetch, isFetching } = useReports(filters);
   
-  const { currency } = useCurrency();
-  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
+  const { CurrencyIcon } = useCurrency();
 
   const handleTimePeriod = () => {
     // Demo implementation for toggling this month filter

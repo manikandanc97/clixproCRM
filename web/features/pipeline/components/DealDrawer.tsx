@@ -6,7 +6,7 @@ import { PipelineLeadType } from "@/shared/types/pipeline";
 import { useUpdatePipelineItem } from "@/shared/hooks/use-crm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useCurrency } from "@/shared/hooks/use-currency";
-import { DollarSign, IndianRupee, Clock, Check, Save } from "lucide-react";
+import { IndianRupee, Clock, Check, Save } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
 
@@ -19,8 +19,7 @@ interface DealDrawerProps {
 
 export function DealDrawer({ item, isOpen, onClose, onStageChange }: DealDrawerProps) {
   const { mutate: updateDeal, isPending } = useUpdatePipelineItem();
-  const { currency } = useCurrency();
-  const CurrencyIcon = currency === "INR" ? IndianRupee : DollarSign;
+  const { CurrencyIcon } = useCurrency();
   
   // Local state for editing
   const [formData, setFormData] = useState<Partial<PipelineLeadType>>({});

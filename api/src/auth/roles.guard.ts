@@ -31,35 +31,53 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('Role is currently deactivated');
     }
 
-    const roleName = (userRole.name || '').toUpperCase();
-    if (roleName === 'SUPER ADMIN' || roleName === 'ADMIN' || roleName === 'OWNER') {
+    const roleName = (userRole.name || '').toUpperCase().trim();
+    const normalizedRole = roleName.replace(/[\s_]+/g, '');
+    if (
+      normalizedRole === 'SUPERADMIN' ||
+      normalizedRole === 'ADMIN' ||
+      normalizedRole === 'OWNER'
+    ) {
       return true;
     }
 
-    const hasRole = requiredRoles
-      .map((r) => r.toUpperCase())
-      .includes(roleName);
+    const normalizedRequiredRoles = requiredRoles.map((r) =>
+      r.toUpperCase().trim().replace(/[\s_]+/g, ''),
+    );
 
-    if (hasRole) {
+    if (normalizedRequiredRoles.includes(normalizedRole)) {
       return true;
     }
 
     // For custom roles: Check if user's permissions satisfy the module access
-    // E.g., requiredRoles ['ADMIN', 'MANAGER', 'SALES'] for Leads/Deals/etc.
     if (userRole.permissions && Array.isArray(userRole.permissions)) {
       const activeModules = userRole.permissions
         .filter((p: any) => p.hasAccess)
-        .map((p: any) => (p.module || '').toLowerCase());
+        .map((p: any) => (p.module || '').toLowerCase().replace(/[\s_]+/g, ''));
 
-      const normalizedRoles = requiredRoles.map((r) => r.toLowerCase());
-      
+      const normalizedRoles = requiredRoles.map((r) =>
+        r.toLowerCase().replace(/[\s_]+/g, ''),
+      );
+
       const hasModuleEquivalence = activeModules.some((mod: string) =>
+        mod === 'all' ||
         normalizedRoles.some(
           (reqRole) =>
             reqRole === mod ||
-            (reqRole === 'sales' && (mod.includes('lead') || mod.includes('deal') || mod.includes('quotation') || mod.includes('customer') || mod.includes('contact') || mod.includes('company'))) ||
-            (reqRole === 'manager' && (mod.includes('lead') || mod.includes('deal') || mod.includes('report') || mod.includes('employee'))) ||
-            (reqRole === 'employee' && (mod.includes('task') || mod.includes('calendar'))),
+            (reqRole === 'sales' &&
+              (mod.includes('lead') ||
+                mod.includes('deal') ||
+                mod.includes('quotation') ||
+                mod.includes('customer') ||
+                mod.includes('contact') ||
+                mod.includes('company'))) ||
+            (reqRole === 'manager' &&
+              (mod.includes('lead') ||
+                mod.includes('deal') ||
+                mod.includes('report') ||
+                mod.includes('employee'))) ||
+            (reqRole === 'employee' &&
+              (mod.includes('task') || mod.includes('calendar'))),
         ),
       );
 
@@ -71,3 +89,4 @@ export class RolesGuard implements CanActivate {
     throw new ForbiddenException('Insufficient role permissions');
   }
 }
+

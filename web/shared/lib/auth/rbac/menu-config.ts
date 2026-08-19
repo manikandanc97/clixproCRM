@@ -4,9 +4,11 @@ import {
   Building2,
   CalendarDays,
   CheckSquare,
+  CreditCard,
   FileText,
   Handshake,
   LayoutDashboard,
+  ScrollText,
   Settings,
   ShieldCheck,
   Ticket,
@@ -43,6 +45,38 @@ export const navLibrary: Record<string, NavItem> = {
 };
 
 export const roleMenuConfig: Record<RoleKey, NavGroup[]> = {
+  [CRM_ROLES.SUPER_ADMIN]: [
+    {
+      label: "Platform Control",
+      items: [
+        { title: "Super Admin Platform", href: "/super-admin", icon: ShieldCheck },
+      ],
+    },
+    {
+      label: "Core",
+      items: [
+        navLibrary.dashboard,
+        navLibrary.contacts,
+        navLibrary.companies,
+        navLibrary.deals,
+        navLibrary.tasks,
+        navLibrary.calendar,
+        navLibrary.quotations,
+      ],
+    },
+    {
+      label: "Insights",
+      items: [navLibrary.reports],
+    },
+    {
+      label: "Administration",
+      items: [
+        navLibrary.employees,
+        navLibrary.roleManagement,
+        navLibrary.settings,
+      ],
+    },
+  ],
   [CRM_ROLES.ADMIN]: [
     {
       label: "Core",
