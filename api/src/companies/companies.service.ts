@@ -21,51 +21,53 @@ export class CompaniesService {
   ) {}
 
   async getCompanies(tenantId: string, query: PaginationQueryDto) {
-    const page = Math.max(1, query.page || 1);
-    const limit = Math.max(1, Math.min(query.limit || 1000, 10000));
-    const search = query.search || '';
-    const skip = (page - 1) * limit;
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const page = Math.max(1, query.page || 1);
+      const limit = Math.max(1, Math.min(query.limit || 1000, 10000));
+      const search = query.search || '';
+      const skip = (page - 1) * limit;
 
-    const where: Prisma.CompanyWhereInput = { tenantId, deletedAt: null };
+      const where: Prisma.CompanyWhereInput = { tenantId, deletedAt: null };
 
-    const [companies, total] = await Promise.all([
-      this.prisma.company.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          _count: {
-            select: { customers: { where: { deletedAt: null } }, deals: true },
+      const [companies, total] = await Promise.all([
+        tx.company.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+          include: {
+            _count: {
+              select: { customers: { where: { deletedAt: null } }, deals: true },
+            },
           },
-        },
-      }),
-      this.prisma.company.count({ where }),
-    ]);
+        }),
+        tx.company.count({ where }),
+      ]);
 
-    // Decrypt PII fields
-    const decrypted = companies.map((c) => ({
-      ...c,
-      name: this.enc.decrypt(c.name),
-      email: this.enc.decrypt(c.email),
-      phone: this.enc.decrypt(c.phone),
-      address: this.enc.decrypt(c.address),
-      notes: this.enc.decrypt(c.notes),
-    }));
+      // Decrypt PII fields
+      const decrypted = companies.map((c) => ({
+        ...c,
+        name: this.enc.decrypt(c.name),
+        email: this.enc.decrypt(c.email),
+        phone: this.enc.decrypt(c.phone),
+        address: this.enc.decrypt(c.address),
+        notes: this.enc.decrypt(c.notes),
+      }));
 
-    // Apply search post-decryption (name substring, industry is plaintext)
-    const filtered = search
-      ? decrypted.filter(
-          (c) =>
-            (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
-            (c.industry || '').toLowerCase().includes(search.toLowerCase()),
-        )
-      : decrypted;
+      // Apply search post-decryption (name substring, industry is plaintext)
+      const filtered = search
+        ? decrypted.filter(
+            (c) =>
+              (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+              (c.industry || '').toLowerCase().includes(search.toLowerCase()),
+          )
+        : decrypted;
 
-    return {
-      companies: filtered,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
+      return {
+        companies: filtered,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    });
   }
 
   async createCompany(
@@ -73,42 +75,46 @@ export class CompaniesService {
     data: CreateCompanyDto,
     userId: string,
   ) {
-    const { encrypted: encName, hash: nameHash } = this.enc.encryptWithHash(
-      data.name,
-    );
-    return this.prisma.company.create({
-      data: {
-        tenantId,
-        ownerId: userId,
-        name: encName!,
-        nameHash,
-        industry: data.industry,
-        website: data.website,
-        email: this.enc.encrypt(data.email),
-        phone: this.enc.encrypt(data.phone),
-        address: this.enc.encrypt(data.address),
-        notes: this.enc.encrypt(data.notes),
-        status: data.status || 'ACTIVE',
-      },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const { encrypted: encName, hash: nameHash } = this.enc.encryptWithHash(
+        data.name,
+      );
+      return tx.company.create({
+        data: {
+          tenantId,
+          ownerId: userId,
+          name: encName!,
+          nameHash,
+          industry: data.industry,
+          website: data.website,
+          email: this.enc.encrypt(data.email),
+          phone: this.enc.encrypt(data.phone),
+          address: this.enc.encrypt(data.address),
+          notes: this.enc.encrypt(data.notes),
+          status: data.status || 'ACTIVE',
+        },
+      });
     });
   }
 
   async updateCompany(tenantId: string, id: string, data: Partial<CreateCompanyDto>) {
-    const updateData: any = {};
-    if (data.name !== undefined) {
-      const { encrypted: encName, hash: nameHash } =
-        this.enc.encryptWithHash(data.name);
-      updateData.name = encName;
-      updateData.nameHash = nameHash;
-    }
-    if (data.email !== undefined) updateData.email = this.enc.encrypt(data.email);
-    if (data.phone !== undefined) updateData.phone = this.enc.encrypt(data.phone);
-    if (data.address !== undefined) updateData.address = this.enc.encrypt(data.address);
-    if (data.notes !== undefined) updateData.notes = this.enc.encrypt(data.notes);
-    if (data.industry !== undefined) updateData.industry = data.industry;
-    if (data.website !== undefined) updateData.website = data.website;
-    if (data.status !== undefined) updateData.status = data.status;
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const updateData: any = {};
+      if (data.name !== undefined) {
+        const { encrypted: encName, hash: nameHash } =
+          this.enc.encryptWithHash(data.name);
+        updateData.name = encName;
+        updateData.nameHash = nameHash;
+      }
+      if (data.email !== undefined) updateData.email = this.enc.encrypt(data.email);
+      if (data.phone !== undefined) updateData.phone = this.enc.encrypt(data.phone);
+      if (data.address !== undefined) updateData.address = this.enc.encrypt(data.address);
+      if (data.notes !== undefined) updateData.notes = this.enc.encrypt(data.notes);
+      if (data.industry !== undefined) updateData.industry = data.industry;
+      if (data.website !== undefined) updateData.website = data.website;
+      if (data.status !== undefined) updateData.status = data.status;
 
-    return this.prisma.company.update({ where: { id, tenantId }, data: updateData });
+      return tx.company.update({ where: { id, tenantId }, data: updateData });
+    });
   }
 }

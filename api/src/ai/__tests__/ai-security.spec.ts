@@ -15,6 +15,7 @@ jest.mock('ai', () => ({
 import { AiSecurityService, UserSecurityContext } from '../ai-security.service';
 import { AiService } from '../ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 import { ConfigService } from '@nestjs/config';
 import { PERMISSION_MODULES } from '../../common/role-permissions.constants';
 
@@ -50,9 +51,20 @@ describe('AI Chatbot Enterprise RBAC & Data Access Security Audit Suite', () => 
       quotation: {
         findMany: jest.fn(),
       },
+      tenantAiConfig: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
       auditLog: {
         create: jest.fn().mockResolvedValue({ id: 'audit-1' }),
       },
+      withTenantContext: jest.fn(async (opts: any, cb: (tx: any) => Promise<any>) => cb(prismaMock)),
+    };
+
+    const encryptionMock = {
+      encrypt: jest.fn((v) => (v ? `enc_${v}` : null)),
+      decrypt: jest.fn((v) => (v && typeof v === 'string' && v.startsWith('enc_') ? v.replace('enc_', '') : v)),
+      decryptFields: jest.fn((obj, fields) => obj),
+      decryptMany: jest.fn((arr, fields) => arr),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -60,6 +72,7 @@ describe('AI Chatbot Enterprise RBAC & Data Access Security Audit Suite', () => 
         AiSecurityService,
         AiService,
         { provide: PrismaService, useValue: prismaMock },
+        { provide: EncryptionService, useValue: encryptionMock },
         {
           provide: ConfigService,
           useValue: {

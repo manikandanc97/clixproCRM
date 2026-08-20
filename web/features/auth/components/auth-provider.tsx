@@ -314,6 +314,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hasFetched.current = true;
       const response = await loginUser({ email, password, staySignedIn });
       
+      if ((response as any)?.mfaRequired) {
+        hasFetched.current = false;
+        throw new Error("MFA_REQUIRED");
+      }
+
       if (typeof window !== "undefined") {
         localStorage.setItem("has_session", "1");
       }

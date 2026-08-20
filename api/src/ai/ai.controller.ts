@@ -38,15 +38,7 @@ export class AiController {
         securityContext,
       );
 
-      const origin = req.headers.origin || '*';
-      res.raw.setHeader('Access-Control-Allow-Origin', origin);
-      res.raw.setHeader('Access-Control-Allow-Credentials', 'true');
-      res.raw.setHeader(
-        'Access-Control-Allow-Headers',
-        'Content-Type, Authorization, x-tenant-id, X-Currency, x-currency',
-      );
-
-      // Pipe UI message stream to response
+      // Pipe UI message stream to response (CORS is handled globally by NestJS middleware)
       const pipePromise = streamResult.pipeUIMessageStreamToResponse(res.raw);
       if (pipePromise && pipePromise.catch) {
         pipePromise.catch((error: any) => {
@@ -58,7 +50,6 @@ export class AiController {
       console.error('[AI CHAT ERROR] Unhandled controller error:', e);
       res.status(500).send({
         error: e.message || 'Internal Controller Error',
-        stack: e.stack,
       });
     }
   }

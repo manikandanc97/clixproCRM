@@ -46,15 +46,19 @@ export function buildLeadsTools(
           if (stage) whereClause.stage = stage;
           if (isConverted !== undefined) whereClause.isConverted = isConverted;
 
-          const leads = await prisma.lead.findMany({
-            where: whereClause,
-            orderBy: { createdAt: 'desc' },
-            take: safeLimit,
-            select: {
-              id: true, name: true, company: true, email: true, phone: true,
-              value: true, priority: true, stage: true, isConverted: true, createdAt: true,
-            },
-          });
+          const leads = await prisma.withTenantContext(
+            { tenantId: userContext.tenantId },
+            async (tx) =>
+              tx.lead.findMany({
+                where: whereClause,
+                orderBy: { createdAt: 'desc' },
+                take: safeLimit,
+                select: {
+                  id: true, name: true, company: true, email: true, phone: true,
+                  value: true, priority: true, stage: true, isConverted: true, createdAt: true,
+                },
+              }),
+          );
 
           await aiSecurityService.logToolExecution(userContext, toolName, 'ALLOWED', { count: leads.length });
 

@@ -115,18 +115,30 @@ function verifyRoundTrip(original: string | null, field: string, id: string): bo
 const prisma = new PrismaClient();
 const BATCH = 200;
 
+async function withAdminContext<T>(fn: (tx: any) => Promise<T>): Promise<T> {
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.is_super_admin', 'true', true)`;
+      return fn(tx);
+    },
+    { timeout: 60000 },
+  );
+}
+
 async function migrateLeads() {
   console.log('\n[migrate-encrypt] Processing Lead table...');
   let cursor: string | undefined;
   let total = 0, encrypted = 0, skipped = 0;
 
   while (true) {
-    const batch = await prisma.lead.findMany({
-      take: BATCH,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-      orderBy: { id: 'asc' },
-      select: { id: true, name: true, email: true, phone: true, company: true, emailHash: true },
-    });
+    const batch = await withAdminContext(async (tx) =>
+      tx.lead.findMany({
+        take: BATCH,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        orderBy: { id: 'asc' },
+        select: { id: true, name: true, email: true, phone: true, company: true, emailHash: true },
+      }),
+    );
     if (!batch.length) break;
     cursor = batch[batch.length - 1].id;
 
@@ -137,10 +149,12 @@ async function migrateLeads() {
         // Update hash if missing
         if (!r.emailHash) {
           const plain = decrypt(r.email);
-          await prisma.lead.update({
-            where: { id: r.id },
-            data: { emailHash: hmacHash(plain) },
-          });
+          await withAdminContext(async (tx) =>
+            tx.lead.update({
+              where: { id: r.id },
+              data: { emailHash: hmacHash(plain) },
+            }),
+          );
         }
         skipped++;
         continue;
@@ -149,16 +163,18 @@ async function migrateLeads() {
       if (!verifyRoundTrip(r.name, 'name', r.id)) { process.exit(1); }
       if (!verifyRoundTrip(r.email, 'email', r.id)) { process.exit(1); }
 
-      await prisma.lead.update({
-        where: { id: r.id },
-        data: {
-          name: encrypt(r.name)!,
-          email: encrypt(r.email)!,
-          emailHash: hmacHash(r.email),
-          phone: r.phone ? encrypt(r.phone) : r.phone,
-          company: encrypt(r.company)!,
-        },
-      });
+      await withAdminContext(async (tx) =>
+        tx.lead.update({
+          where: { id: r.id },
+          data: {
+            name: encrypt(r.name)!,
+            email: encrypt(r.email)!,
+            emailHash: hmacHash(r.email),
+            phone: r.phone ? encrypt(r.phone) : r.phone,
+            company: encrypt(r.company)!,
+          },
+        }),
+      );
       encrypted++;
     }
   }
@@ -171,12 +187,14 @@ async function migrateCustomers() {
   let total = 0, encrypted = 0, skipped = 0;
 
   while (true) {
-    const batch = await prisma.customer.findMany({
-      take: BATCH,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-      orderBy: { id: 'asc' },
-      select: { id: true, name: true, email: true, company: true, emailHash: true },
-    });
+    const batch = await withAdminContext(async (tx) =>
+      tx.customer.findMany({
+        take: BATCH,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        orderBy: { id: 'asc' },
+        select: { id: true, name: true, email: true, company: true, emailHash: true },
+      }),
+    );
     if (!batch.length) break;
     cursor = batch[batch.length - 1].id;
 
@@ -185,7 +203,9 @@ async function migrateCustomers() {
       if (isLikelyEncrypted(r.name) && (!r.email || isLikelyEncrypted(r.email))) {
         if (!r.emailHash && r.email) {
           const plain = decrypt(r.email);
-          await prisma.customer.update({ where: { id: r.id }, data: { emailHash: hmacHash(plain) } });
+          await withAdminContext(async (tx) =>
+            tx.customer.update({ where: { id: r.id }, data: { emailHash: hmacHash(plain) } }),
+          );
         }
         skipped++;
         continue;
@@ -193,15 +213,17 @@ async function migrateCustomers() {
       if (!verifyRoundTrip(r.name, 'name', r.id)) { process.exit(1); }
       if (r.email && !verifyRoundTrip(r.email, 'email', r.id)) { process.exit(1); }
 
-      await prisma.customer.update({
-        where: { id: r.id },
-        data: {
-          name: encrypt(r.name)!,
-          email: r.email ? encrypt(r.email) : r.email,
-          emailHash: hmacHash(r.email),
-          company: encrypt(r.company)!,
-        },
-      });
+      await withAdminContext(async (tx) =>
+        tx.customer.update({
+          where: { id: r.id },
+          data: {
+            name: encrypt(r.name)!,
+            email: r.email ? encrypt(r.email) : r.email,
+            emailHash: hmacHash(r.email),
+            company: encrypt(r.company)!,
+          },
+        }),
+      );
       encrypted++;
     }
   }
@@ -214,12 +236,14 @@ async function migrateCompanies() {
   let total = 0, encrypted = 0, skipped = 0;
 
   while (true) {
-    const batch = await prisma.company.findMany({
-      take: BATCH,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-      orderBy: { id: 'asc' },
-      select: { id: true, name: true, email: true, phone: true, address: true, notes: true, nameHash: true },
-    });
+    const batch = await withAdminContext(async (tx) =>
+      tx.company.findMany({
+        take: BATCH,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        orderBy: { id: 'asc' },
+        select: { id: true, name: true, email: true, phone: true, address: true, notes: true, nameHash: true },
+      }),
+    );
     if (!batch.length) break;
     cursor = batch[batch.length - 1].id;
 
@@ -228,24 +252,28 @@ async function migrateCompanies() {
       if (isLikelyEncrypted(r.name)) {
         if (!r.nameHash) {
           const plain = decrypt(r.name);
-          await prisma.company.update({ where: { id: r.id }, data: { nameHash: hmacHash(plain) } });
+          await withAdminContext(async (tx) =>
+            tx.company.update({ where: { id: r.id }, data: { nameHash: hmacHash(plain) } }),
+          );
         }
         skipped++;
         continue;
       }
       if (!verifyRoundTrip(r.name, 'name', r.id)) { process.exit(1); }
 
-      await prisma.company.update({
-        where: { id: r.id },
-        data: {
-          name: encrypt(r.name)!,
-          nameHash: hmacHash(r.name),
-          email: r.email ? encrypt(r.email) : r.email,
-          phone: r.phone ? encrypt(r.phone) : r.phone,
-          address: r.address ? encrypt(r.address) : r.address,
-          notes: r.notes ? encrypt(r.notes) : r.notes,
-        },
-      });
+      await withAdminContext(async (tx) =>
+        tx.company.update({
+          where: { id: r.id },
+          data: {
+            name: encrypt(r.name)!,
+            nameHash: hmacHash(r.name),
+            email: r.email ? encrypt(r.email) : r.email,
+            phone: r.phone ? encrypt(r.phone) : r.phone,
+            address: r.address ? encrypt(r.address) : r.address,
+            notes: r.notes ? encrypt(r.notes) : r.notes,
+          },
+        }),
+      );
       encrypted++;
     }
   }
@@ -258,12 +286,14 @@ async function migrateNotes() {
   let total = 0, encrypted = 0, skipped = 0;
 
   while (true) {
-    const batch = await prisma.note.findMany({
-      take: BATCH,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-      orderBy: { id: 'asc' },
-      select: { id: true, message: true },
-    });
+    const batch = await withAdminContext(async (tx) =>
+      tx.note.findMany({
+        take: BATCH,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        orderBy: { id: 'asc' },
+        select: { id: true, message: true },
+      }),
+    );
     if (!batch.length) break;
     cursor = batch[batch.length - 1].id;
 
@@ -271,7 +301,9 @@ async function migrateNotes() {
       total++;
       if (isLikelyEncrypted(r.message)) { skipped++; continue; }
       if (!verifyRoundTrip(r.message, 'message', r.id)) { process.exit(1); }
-      await prisma.note.update({ where: { id: r.id }, data: { message: encrypt(r.message)! } });
+      await withAdminContext(async (tx) =>
+        tx.note.update({ where: { id: r.id }, data: { message: encrypt(r.message)! } }),
+      );
       encrypted++;
     }
   }
@@ -284,12 +316,14 @@ async function migrateQuotations() {
   let total = 0, encrypted = 0, skipped = 0;
 
   while (true) {
-    const batch = await prisma.quotation.findMany({
-      take: BATCH,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-      orderBy: { id: 'asc' },
-      select: { id: true, client: true, notes: true },
-    });
+    const batch = await withAdminContext(async (tx) =>
+      tx.quotation.findMany({
+        take: BATCH,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        orderBy: { id: 'asc' },
+        select: { id: true, client: true, notes: true },
+      }),
+    );
     if (!batch.length) break;
     cursor = batch[batch.length - 1].id;
 
@@ -298,13 +332,15 @@ async function migrateQuotations() {
       if (isLikelyEncrypted(r.client)) { skipped++; continue; }
       if (!verifyRoundTrip(r.client, 'client', r.id)) { process.exit(1); }
 
-      await prisma.quotation.update({
-        where: { id: r.id },
-        data: {
-          client: encrypt(r.client)!,
-          notes: r.notes ? encrypt(r.notes) : r.notes,
-        },
-      });
+      await withAdminContext(async (tx) =>
+        tx.quotation.update({
+          where: { id: r.id },
+          data: {
+            client: encrypt(r.client)!,
+            notes: r.notes ? encrypt(r.notes) : r.notes,
+          },
+        }),
+      );
       encrypted++;
     }
   }
@@ -317,12 +353,14 @@ async function migrateMeetings() {
   let total = 0, encrypted = 0, skipped = 0;
 
   while (true) {
-    const batch = await (prisma.meeting as any).findMany({
-      take: BATCH,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-      orderBy: { id: 'asc' },
-      select: { id: true, location: true, description: true, meetingNotes: true },
-    });
+    const batch = await withAdminContext(async (tx) =>
+      (tx.meeting as any).findMany({
+        take: BATCH,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+        orderBy: { id: 'asc' },
+        select: { id: true, location: true, description: true, meetingNotes: true },
+      }),
+    );
     if (!batch.length) break;
     cursor = batch[batch.length - 1].id;
 
@@ -335,14 +373,16 @@ async function migrateMeetings() {
         skipped++;
         continue;
       }
-      await (prisma.meeting as any).update({
-        where: { id: r.id },
-        data: {
-          location: r.location ? encrypt(r.location) : r.location,
-          description: r.description ? encrypt(r.description) : r.description,
-          meetingNotes: r.meetingNotes ? encrypt(r.meetingNotes) : r.meetingNotes,
-        },
-      });
+      await withAdminContext(async (tx) =>
+        (tx.meeting as any).update({
+          where: { id: r.id },
+          data: {
+            location: r.location ? encrypt(r.location) : r.location,
+            description: r.description ? encrypt(r.description) : r.description,
+            meetingNotes: r.meetingNotes ? encrypt(r.meetingNotes) : r.meetingNotes,
+          },
+        }),
+      );
       encrypted++;
     }
   }
@@ -351,9 +391,11 @@ async function migrateMeetings() {
 
 async function migrateTenants() {
   console.log('\n[migrate-encrypt] Processing Tenant table...');
-  const tenants = await prisma.tenant.findMany({
-    select: { id: true, taxId: true, address: true },
-  });
+  const tenants = await withAdminContext(async (tx) =>
+    tx.tenant.findMany({
+      select: { id: true, taxId: true, address: true },
+    }),
+  );
   let encrypted = 0, skipped = 0;
   for (const t of tenants) {
     if (
@@ -363,13 +405,15 @@ async function migrateTenants() {
       skipped++;
       continue;
     }
-    await prisma.tenant.update({
-      where: { id: t.id },
-      data: {
-        taxId: t.taxId ? encrypt(t.taxId) : t.taxId,
-        address: t.address ? encrypt(t.address) : t.address,
-      },
-    });
+    await withAdminContext(async (tx) =>
+      tx.tenant.update({
+        where: { id: t.id },
+        data: {
+          taxId: t.taxId ? encrypt(t.taxId) : t.taxId,
+          address: t.address ? encrypt(t.address) : t.address,
+        },
+      }),
+    );
     encrypted++;
   }
   console.log(`[migrate-encrypt] Tenant: total=${tenants.length} encrypted=${encrypted} skipped=${skipped}`);

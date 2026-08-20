@@ -12,8 +12,8 @@ export class MeetingsService {
     private readonly enc: EncryptionService,
   ) {}
 
-  private async checkConflict(tenantId: string, ownerId: string, startTime: Date, endTime: Date, excludeMeetingId?: string) {
-    const conflict = await this.prisma.meeting.findFirst({
+  private async checkConflict(tx: any, tenantId: string, ownerId: string, startTime: Date, endTime: Date, excludeMeetingId?: string) {
+    const conflict = await tx.meeting.findFirst({
       where: {
         tenantId,
         ownerId,
@@ -31,8 +31,8 @@ export class MeetingsService {
     }
   }
 
-  private async getManagedUsers(tenantId: string, userId: string) {
-    const subordinates = await this.prisma.tenantUser.findMany({
+  private async getManagedUsers(tx: any, tenantId: string, userId: string) {
+    const subordinates = await tx.tenantUser.findMany({
       where: { tenantId, reportingManagerId: userId }
     });
     return subordinates.map((s: any) => s.userId);
@@ -45,9 +45,10 @@ export class MeetingsService {
 
     const start = new Date(data.startTime);
     const end = new Date(data.endTime);
-    await this.checkConflict(tenantId, ownerId, start, end);
 
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.withTenantContext({ tenantId }, async (tx: any) => {
+      await this.checkConflict(tx, tenantId, ownerId, start, end);
+
       // @ts-ignore
       const meeting = await tx.meeting.create({
         data: {
@@ -100,30 +101,30 @@ export class MeetingsService {
     const userId = user.id || user.sub;
     const rawRole = typeof user.role === 'object' ? user.role?.name || '' : String(user.role || '');
     const role = rawRole.toUpperCase().replace(/[\s_]+/g, '');
-    
-    // @ts-ignore
-    const existing = await this.prisma.meeting.findUnique({ where: { id, tenantId } });
-    if (!existing) throw new HttpException('Meeting not found', HttpStatus.NOT_FOUND);
-
-    // RBAC Edit check
-    const isOwner = existing.ownerId === userId || existing.assignedToId === userId;
     const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN' || role === 'OWNER';
-    let isManager = false;
-    
-    if (role === 'MANAGER') {
-      const managed = await this.getManagedUsers(tenantId, userId);
-      if (managed.includes(existing.ownerId) || managed.includes(existing.assignedToId)) isManager = true;
-    }
 
-    if (!isOwner && !isAdmin && !isManager) {
-      throw new HttpException('Forbidden: Cannot edit this meeting', HttpStatus.FORBIDDEN);
-    }
+    return this.prisma.withTenantContext({ tenantId }, async (tx: any) => {
+      // @ts-ignore
+      const existing = await tx.meeting.findUnique({ where: { id, tenantId } });
+      if (!existing) throw new HttpException('Meeting not found', HttpStatus.NOT_FOUND);
 
-    if (data.startTime && data.endTime) {
-       await this.checkConflict(tenantId, existing.ownerId || existing.assignedToId || userId, new Date(data.startTime), new Date(data.endTime), id);
-    }
+      // RBAC Edit check
+      const isOwner = existing.ownerId === userId || existing.assignedToId === userId;
+      let isManager = false;
+      
+      if (role === 'MANAGER') {
+        const managed = await this.getManagedUsers(tx, tenantId, userId);
+        if (managed.includes(existing.ownerId) || managed.includes(existing.assignedToId)) isManager = true;
+      }
 
-    return this.prisma.$transaction(async (tx: any) => {
+      if (!isOwner && !isAdmin && !isManager) {
+        throw new HttpException('Forbidden: Cannot edit this meeting', HttpStatus.FORBIDDEN);
+      }
+
+      if (data.startTime && data.endTime) {
+         await this.checkConflict(tx, tenantId, existing.ownerId || existing.assignedToId || userId, new Date(data.startTime), new Date(data.endTime), id);
+      }
+
       const updateData: any = {
         ...(data.title && { title: data.title }),
         ...(data.startTime && { startTime: new Date(data.startTime) }),
@@ -157,35 +158,37 @@ export class MeetingsService {
     const userId = user.id || user.sub;
     const rawRole = typeof user.role === 'object' ? user.role?.name || '' : String(user.role || '');
     const role = rawRole.toUpperCase().replace(/[\s_]+/g, '');
-    
-    // @ts-ignore
-    const existing = await this.prisma.meeting.findUnique({ where: { id, tenantId } });
-    if (!existing) throw new HttpException('Meeting not found', HttpStatus.NOT_FOUND);
-
-    const isOwner = existing.ownerId === userId || existing.assignedToId === userId;
     const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN' || role === 'OWNER';
-    let isManager = false;
-    
-    if (role === 'MANAGER') {
-      const managed = await this.getManagedUsers(tenantId, userId);
-      if (managed.includes(existing.ownerId)) isManager = true;
-    }
 
-    if (!isOwner && !isAdmin && !isManager) {
-      throw new HttpException('Forbidden: Cannot delete this meeting', HttpStatus.FORBIDDEN);
-    }
+    return this.prisma.withTenantContext({ tenantId }, async (tx: any) => {
+      // @ts-ignore
+      const existing = await tx.meeting.findUnique({ where: { id, tenantId } });
+      if (!existing) throw new HttpException('Meeting not found', HttpStatus.NOT_FOUND);
 
-    if (existing.status === 'COMPLETED') {
-      throw new HttpException('Cannot delete a completed meeting, business history must be preserved.', HttpStatus.BAD_REQUEST);
-    }
-
-    // @ts-ignore
-    return this.prisma.meeting.update({
-      where: { id, tenantId },
-      data: {
-        status: 'CANCELLED',
-        cancelledAt: new Date()
+      const isOwner = existing.ownerId === userId || existing.assignedToId === userId;
+      let isManager = false;
+      
+      if (role === 'MANAGER') {
+        const managed = await this.getManagedUsers(tx, tenantId, userId);
+        if (managed.includes(existing.ownerId)) isManager = true;
       }
+
+      if (!isOwner && !isAdmin && !isManager) {
+        throw new HttpException('Forbidden: Cannot delete this meeting', HttpStatus.FORBIDDEN);
+      }
+
+      if (existing.status === 'COMPLETED') {
+        throw new HttpException('Cannot delete a completed meeting, business history must be preserved.', HttpStatus.BAD_REQUEST);
+      }
+
+      // @ts-ignore
+      return tx.meeting.update({
+        where: { id, tenantId },
+        data: {
+          status: 'CANCELLED',
+          cancelledAt: new Date()
+        }
+      });
     });
   }
 
@@ -197,113 +200,118 @@ export class MeetingsService {
     
     let start = startDate ? new Date(startDate) : new Date();
     let end = endDate ? new Date(endDate) : new Date(new Date().setMonth(new Date().getMonth() + 1));
-    
-    const managedUsers = role === 'MANAGER' ? await this.getManagedUsers(tenantId, userId) : [];
 
-    // Fetch meetings and calendar-dated tasks in parallel
-    const [meetings, tasks] = await Promise.all([
-      this.prisma.meeting.findMany({
-        where: {
-          tenantId,
-          startTime: { gte: start },
-          endTime: { lte: end },
-          OR: [
-            { ownerId: userId },
-            { assignedToId: userId },
-            { visibility: 'ORGANIZATION' },
-            { visibility: 'TEAM', ownerId: { in: managedUsers } },
-            ...(isAdmin ? [{ id: { not: '' } }] : []),
-          ],
-        },
-        orderBy: { startTime: 'asc' },
-        select: {
-          id: true,
-          title: true,
-          startTime: true,
-          endTime: true,
-          location: true,
-          isOnline: true,
-          status: true,
-          type: true,
-          visibility: true,
-          ownerId: true,
-          assignedTo: { select: { id: true, name: true } },
-        },
-      }),
-      this.prisma.task.findMany({
-        where: {
-          tenantId,
-          dueDate: { gte: start, lte: end },
-          deletedAt: null,
-          OR: [
-            { assignedToId: userId },
-            { createdById: userId },
-            ...(role === 'MANAGER'
-              ? [{ assignedToId: { in: managedUsers } }]
-              : []),
-            ...(isAdmin ? [{ id: { not: '' } }] : []),
-          ],
-        },
-        select: {
-          id: true,
-          title: true,
-          dueDate: true,
-          status: true,
-          priority: true,
-          assignedTo: { select: { id: true, name: true } },
-        },
-      }),
-    ]);
+    return this.prisma.withTenantContext({ tenantId }, async (tx: any) => {
+      const managedUsers = role === 'MANAGER' ? await this.getManagedUsers(tx, tenantId, userId) : [];
 
-    const mappedMeetings = meetings.map((m: any) => ({
-      id: m.id,
-      title: (m.visibility === 'PRIVATE' && m.ownerId !== userId && !isAdmin) ? 'Busy' : m.title,
-      date: formatDate(m.startTime),
-      startTime: m.startTime,
-      endTime: m.endTime,
-      location: this.enc.decrypt(m.location) || 'Virtual',
-      isOnline: m.isOnline,
-      status: m.status,
-      type: m.type,
-      isToday: false,
-      attendees: m.assignedTo ? [m.assignedTo] : [],
-      color: m.status === 'CANCELLED' ? '#ef4444' : '#2563eb',
-      isTask: false
-    }));
+      // Fetch meetings and calendar-dated tasks in parallel
+      const [meetings, tasks] = await Promise.all([
+        tx.meeting.findMany({
+          where: {
+            tenantId,
+            startTime: { gte: start },
+            endTime: { lte: end },
+            OR: [
+              { ownerId: userId },
+              { assignedToId: userId },
+              { visibility: 'ORGANIZATION' },
+              { visibility: 'TEAM', ownerId: { in: managedUsers } },
+              ...(isAdmin ? [{ id: { not: '' } }] : []),
+            ],
+          },
+          orderBy: { startTime: 'asc' },
+          select: {
+            id: true,
+            title: true,
+            startTime: true,
+            endTime: true,
+            location: true,
+            isOnline: true,
+            status: true,
+            type: true,
+            visibility: true,
+            ownerId: true,
+            assignedTo: { select: { id: true, name: true } },
+          },
+        }),
+        tx.task.findMany({
+          where: {
+            tenantId,
+            dueDate: { gte: start, lte: end },
+            deletedAt: null,
+            OR: [
+              { assignedToId: userId },
+              { createdById: userId },
+              ...(role === 'MANAGER'
+                ? [{ assignedToId: { in: managedUsers } }]
+                : []),
+              ...(isAdmin ? [{ id: { not: '' } }] : []),
+            ],
+          },
+          select: {
+            id: true,
+            title: true,
+            dueDate: true,
+            status: true,
+            priority: true,
+            assignedTo: { select: { id: true, name: true } },
+          },
+        }),
+      ]);
 
-    const mappedTasks = tasks.map((t: any) => ({
-      id: t.id,
-      title: `Task Due: ${t.title}`,
-      date: formatDate(t.dueDate),
-      startTime: t.dueDate,
-      endTime: t.dueDate,
-      location: 'Task',
-      isOnline: false,
-      status: t.status,
-      type: 'TASK_DEADLINE',
-      isToday: false,
-      attendees: t.assignedTo ? [t.assignedTo] : [],
-      color: t.status === 'COMPLETED' ? '#10b981' : '#f59e0b',
-      isTask: true
-    }));
+      const mappedMeetings = meetings.map((m: any) => ({
+        id: m.id,
+        title: (m.visibility === 'PRIVATE' && m.ownerId !== userId && !isAdmin) ? 'Busy' : m.title,
+        date: formatDate(m.startTime),
+        startTime: m.startTime,
+        endTime: m.endTime,
+        location: this.enc.decrypt(m.location) || 'Virtual',
+        isOnline: m.isOnline,
+        status: m.status,
+        type: m.type,
+        isToday: false,
+        attendees: m.assignedTo ? [m.assignedTo] : [],
+        color: m.status === 'CANCELLED' ? '#ef4444' : '#2563eb',
+        isTask: false
+      }));
 
-    return [...mappedMeetings, ...mappedTasks].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+      const mappedTasks = tasks.map((t: any) => ({
+        id: t.id,
+        title: `Task Due: ${t.title}`,
+        date: formatDate(t.dueDate),
+        startTime: t.dueDate,
+        endTime: t.dueDate,
+        location: 'Task',
+        isOnline: false,
+        status: t.status,
+        type: 'TASK_DEADLINE',
+        isToday: false,
+        attendees: t.assignedTo ? [t.assignedTo] : [],
+        color: t.status === 'COMPLETED' ? '#10b981' : '#f59e0b',
+        isTask: true
+      }));
+
+      return [...mappedMeetings, ...mappedTasks].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    });
   }
 
   async getLeadMeetings(tenantId: string, leadId: string) {
-    const meetings = await this.prisma.meeting.findMany({
-      where: { tenantId, leadId },
-      include: {
-        assignedTo: { select: { name: true, email: true, id: true } },
-      },
-      orderBy: { startTime: 'desc' },
+    return this.prisma.withTenantContext({ tenantId }, async (tx: any) => {
+      const meetings = await tx.meeting.findMany({
+        where: { tenantId, leadId },
+        include: {
+          assignedTo: { select: { name: true, email: true, id: true } },
+        },
+        orderBy: { startTime: 'desc' },
+      });
+      // Decrypt sensitive meeting fields
+      return meetings.map((m: any) => ({
+        ...m,
+        location: this.enc.decrypt(m.location),
+        description: this.enc.decrypt(m.description),
+        meetingNotes: this.enc.decrypt(m.meetingNotes),
+      }));
     });
-    // Decrypt sensitive meeting fields
-    return meetings.map((m) => ({
-      ...m,
-      location: this.enc.decrypt(m.location),
-      description: this.enc.decrypt(m.description),
-      meetingNotes: this.enc.decrypt(m.meetingNotes),
-    }));
   }
 }
+

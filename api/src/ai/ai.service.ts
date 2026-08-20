@@ -111,17 +111,46 @@ CRITICAL SECURITY RULES:
     });
   }
 
-  async generateStream(
-    messages: any[],
-    modelName = 'gemini-3.6-flash',
-    userContext: UserSecurityContext,
-  ): Promise<any> {
+  /**
+   * Resolves the AI client for the given tenant (using tenant's encrypted BYOK key if present,
+   * or falling back to platform GEMINI_API_KEY).
+   */
+  private async getAiClientForTenant(tenantId?: string) {
+    if (tenantId) {
+      const config = await this.prisma.withTenantContext(
+        { tenantId },
+        async (tx) => {
+          return tx.tenantAiConfig.findUnique({
+            where: { tenantId },
+          });
+        },
+      );
+      if (config) {
+        if (config.isAiEnabled === false) {
+          throw new InternalServerErrorException('AI assistant is currently disabled for this workspace.');
+        }
+        if (config.apiKey) {
+          const decryptedKey = this.enc.decrypt(config.apiKey);
+          if (decryptedKey) {
+            return createGoogleGenerativeAI({ apiKey: decryptedKey });
+          }
+        }
+      }
+    }
     if (!this.googleAi) {
       throw new InternalServerErrorException(
         'GEMINI_API_KEY is not configured on the backend',
       );
     }
+    return this.googleAi;
+  }
 
+  async generateStream(
+    messages: any[],
+    modelName = 'gemini-3.6-flash',
+    userContext: UserSecurityContext,
+  ): Promise<any> {
+    const aiClient = await this.getAiClientForTenant(userContext.tenantId);
     const activeModel = this.resolveModelName(modelName);
 
     try {
@@ -130,7 +159,7 @@ CRITICAL SECURITY RULES:
       const coreMessages = await convertToModelMessages(sanitizedMessages, { tools });
 
       const result = await streamText({
-        model: this.googleAi(activeModel),
+        model: aiClient(activeModel),
         messages: coreMessages,
         temperature: 0.7,
         stopWhen: isStepCount(5),
@@ -147,7 +176,7 @@ CRITICAL SECURITY RULES:
             res.statusCode = 500;
           }
           res.end(
-            JSON.stringify({ error: error?.message || error.toString(), stack: error?.stack }),
+            JSON.stringify({ error: error?.message || error.toString() }),
           );
         },
       };
@@ -159,12 +188,7 @@ CRITICAL SECURITY RULES:
     modelName = 'gemini-3.6-flash',
     userContext: UserSecurityContext,
   ): Promise<string> {
-    if (!this.googleAi) {
-      throw new InternalServerErrorException(
-        'GEMINI_API_KEY is not configured on the backend',
-      );
-    }
-
+    const aiClient = await this.getAiClientForTenant(userContext.tenantId);
     const activeModel = this.resolveModelName(modelName);
 
     try {
@@ -173,7 +197,7 @@ CRITICAL SECURITY RULES:
       const coreMessages = await convertToModelMessages(sanitizedMessages, { tools });
 
       const result = await generateText({
-        model: this.googleAi(activeModel),
+        model: aiClient(activeModel),
         messages: coreMessages,
         temperature: 0.7,
         stopWhen: isStepCount(5),

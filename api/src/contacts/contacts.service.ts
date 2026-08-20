@@ -57,68 +57,70 @@ export class ContactsService implements OnModuleInit {
   }
 
   async getCustomers(tenantId: string, query: PaginationQueryDto) {
-    const page = Math.max(1, query.page || 1);
-    const limit = Math.max(1, Math.min(query.limit || 1000, 10000));
-    const search = query.search?.trim() || '';
-    const skip = (page - 1) * limit;
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const page = Math.max(1, query.page || 1);
+      const limit = Math.max(1, Math.min(query.limit || 1000, 10000));
+      const search = query.search?.trim() || '';
+      const skip = (page - 1) * limit;
 
-    // Fetch customers using Prisma (no raw SQL since fields are now encrypted)
-    const [customers, total] = await Promise.all([
-      this.prisma.customer.findMany({
-        where: { tenantId, deletedAt: null },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          _count: {
-            select: { deals: { where: { status: { not: 'LOST' } } } },
+      // Fetch customers using Prisma
+      const [customers, total] = await Promise.all([
+        tx.customer.findMany({
+          where: { tenantId, deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+          include: {
+            _count: {
+              select: { deals: { where: { status: { not: 'LOST' } } } },
+            },
+            deals: { select: { value: true, stage: true } },
           },
-          deals: { select: { value: true, stage: true } },
-        },
-      }),
-      this.prisma.customer.count({ where: { tenantId, deletedAt: null } }),
-    ]);
+        }),
+        tx.customer.count({ where: { tenantId, deletedAt: null } }),
+      ]);
 
-    // Decrypt + map
-    const mappedCustomers = customers.map((c) => {
-      const dealsRevenue = c.deals
-        .filter((d) => d.stage !== 'LOST')
-        .reduce((sum, d) => sum + Number(d.value || 0), 0);
+      // Decrypt + map
+      const mappedCustomers = customers.map((c) => {
+        const dealsRevenue = c.deals
+          .filter((d) => d.stage !== 'LOST')
+          .reduce((sum, d) => sum + Number(d.value || 0), 0);
+
+        return {
+          id: c.id,
+          tenantId: c.tenantId,
+          assignedToId: c.assignedToId,
+          name: this.enc.decrypt(c.name),
+          company: this.enc.decrypt(c.company),
+          email: this.enc.decrypt(c.email),
+          status: c.status,
+          revenue: c.revenue,
+          lastContactAt: c.lastContactAt,
+          deletedAt: c.deletedAt,
+          createdAt: c.createdAt,
+          updatedAt: c.updatedAt,
+          leadId: c.leadId,
+          companyId: c.companyId,
+          dealsCount: c._count.deals,
+          revenueValue: dealsRevenue > 0 ? dealsRevenue : Number(c.revenue || 0),
+        };
+      });
+
+      // Post-decryption search filter
+      const filtered = search
+        ? mappedCustomers.filter(
+            (c) =>
+              (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+              (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
+              (c.company || '').toLowerCase().includes(search.toLowerCase()),
+          )
+        : mappedCustomers;
 
       return {
-        id: c.id,
-        tenantId: c.tenantId,
-        assignedToId: c.assignedToId,
-        name: this.enc.decrypt(c.name),
-        company: this.enc.decrypt(c.company),
-        email: this.enc.decrypt(c.email),
-        status: c.status,
-        revenue: c.revenue,
-        lastContactAt: c.lastContactAt,
-        deletedAt: c.deletedAt,
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-        leadId: c.leadId,
-        companyId: c.companyId,
-        dealsCount: c._count.deals,
-        revenueValue: dealsRevenue > 0 ? dealsRevenue : Number(c.revenue || 0),
+        customers: filtered,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       };
     });
-
-    // Post-decryption search filter
-    const filtered = search
-      ? mappedCustomers.filter(
-          (c) =>
-            (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
-            (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
-            (c.company || '').toLowerCase().includes(search.toLowerCase()),
-        )
-      : mappedCustomers;
-
-    return {
-      customers: filtered,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
   }
 
   async createCustomer(
@@ -126,18 +128,21 @@ export class ContactsService implements OnModuleInit {
     data: CreateContactDto,
     userId: string,
   ) {
-    const { encrypted: encEmail, hash: emailHash } = this.enc.encryptWithHash(data.email);
-    return this.prisma.customer.create({
-      data: {
-        name: this.enc.encrypt(data.name)!,
-        company: this.enc.encrypt(data.company)!,
-        email: encEmail,
-        emailHash,
-        tenantId,
-        revenue: data.revenue || 0,
-        status: data.status || 'ACTIVE',
-        assignedToId: userId,
-      },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const { encrypted: encEmail, hash: emailHash } = this.enc.encryptWithHash(data.email);
+      return tx.customer.create({
+        data: {
+          name: this.enc.encrypt(data.name)!,
+          company: this.enc.encrypt(data.company)!,
+          email: encEmail,
+          emailHash,
+          tenantId,
+          revenue: data.revenue || 0,
+          status: data.status || 'ACTIVE',
+          assignedToId: userId,
+        },
+      });
     });
   }
 }
+

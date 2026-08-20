@@ -65,7 +65,7 @@ export class LeadsService {
   // ─── Core CRUD Operations ───────────────────────────────────────────────────
 
   async createLead(tenantId: string, userId: string, data: CreateLeadDto) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
       if (data.assignedToId && data.assignedToId !== userId) {
         const isValidAssignee = await tx.tenantUser.findFirst({
           where: { userId: data.assignedToId, tenantId, status: 'ACTIVE' },
@@ -146,25 +146,27 @@ export class LeadsService {
   }
 
   async getLeadById(tenantId: string, leadId: string) {
-    const lead = await this.prisma.lead.findUnique({
-      where: { id: leadId, tenantId, deletedAt: null },
-      include: {
-        companyRecord: true,
-        assignedTo: {
-          select: { id: true, name: true, email: true },
-        },
-        _count: {
-          select: {
-            notes: true,
-            meetings: true,
-            attachments: true,
-            timelineEvents: true,
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const lead = await tx.lead.findUnique({
+        where: { id: leadId, tenantId, deletedAt: null },
+        include: {
+          companyRecord: true,
+          assignedTo: {
+            select: { id: true, name: true, email: true },
+          },
+          _count: {
+            select: {
+              notes: true,
+              meetings: true,
+              attachments: true,
+              timelineEvents: true,
+            },
           },
         },
-      },
+      });
+      if (!lead) throw new NotFoundException('Lead not found');
+      return this.decryptLead(lead);
     });
-    if (!lead) throw new NotFoundException('Lead not found');
-    return this.decryptLead(lead);
   }
 
   async updateLead(
@@ -173,7 +175,7 @@ export class LeadsService {
     id: string,
     data: UpdateLeadDto,
   ) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
       const existingLead = await tx.lead.findUnique({
         where: { id, tenantId },
         select: {
@@ -349,7 +351,7 @@ export class LeadsService {
   }
 
   async deleteLead(tenantId: string, userId: string, id: string) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
       const existing = await tx.lead.findUnique({
         where: { id, tenantId },
         select: {
@@ -387,12 +389,22 @@ export class LeadsService {
   }
 
   async getLeadAttachments(tenantId: string, leadId: string) {
-    return this.prisma.attachment.findMany({
-      where: { tenantId, leadId },
-      include: {
-        user: { select: { name: true, email: true, id: true } },
-      },
-      orderBy: { createdAt: 'desc' },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const lead = await tx.lead.findUnique({
+        where: { id: leadId, tenantId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!lead) {
+        throw new NotFoundException('Lead not found');
+      }
+
+      return tx.attachment.findMany({
+        where: { tenantId, leadId },
+        include: {
+          user: { select: { name: true, email: true, id: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
     });
   }
 
@@ -407,47 +419,67 @@ export class LeadsService {
       fileType: string;
     },
   ) {
-    const attachment = await this.prisma.attachment.create({
-      data: {
-        tenantId,
-        leadId,
-        userId,
-        fileName: data.fileName,
-        fileUrl: data.fileUrl,
-        fileSize: data.fileSize,
-        fileType: data.fileType,
-      },
-      include: {
-        user: { select: { name: true, email: true, id: true } },
-      },
-    });
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const lead = await tx.lead.findUnique({
+        where: { id: leadId, tenantId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!lead) {
+        throw new NotFoundException('Lead not found');
+      }
 
-    await this.prisma.timelineEvent.create({
-      data: {
-        tenantId,
-        leadId,
-        action: 'Attachment Added',
-        description: `Uploaded ${data.fileName}`,
-        userId,
-      },
-    });
+      const attachment = await tx.attachment.create({
+        data: {
+          tenantId,
+          leadId,
+          userId,
+          fileName: data.fileName,
+          fileUrl: data.fileUrl,
+          fileSize: data.fileSize,
+          fileType: data.fileType,
+        },
+        include: {
+          user: { select: { name: true, email: true, id: true } },
+        },
+      });
 
-    return attachment;
+      await tx.timelineEvent.create({
+        data: {
+          tenantId,
+          leadId,
+          action: 'Attachment Added',
+          description: `Uploaded ${data.fileName}`,
+          userId,
+        },
+      });
+
+      return attachment;
+    });
   }
 
   async getLeadNotes(tenantId: string, leadId: string) {
-    const notes = await this.prisma.note.findMany({
-      where: { tenantId, leadId },
-      include: {
-        user: { select: { name: true, email: true, id: true } },
-      },
-      orderBy: { createdAt: 'desc' },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const lead = await tx.lead.findUnique({
+        where: { id: leadId, tenantId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!lead) {
+        throw new NotFoundException('Lead not found');
+      }
+
+      const notes = await tx.note.findMany({
+        where: { tenantId, leadId },
+        include: {
+          user: { select: { name: true, email: true, id: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      // Decrypt Note.message on read
+      return notes.map((n) => ({
+        ...n,
+        message: this.enc.decrypt(n.message),
+      }));
     });
-    // Decrypt Note.message on read
-    return notes.map((n) => ({
-      ...n,
-      message: this.enc.decrypt(n.message),
-    }));
   }
 
   async createLeadNote(
@@ -456,39 +488,51 @@ export class LeadsService {
     userId: string,
     data: { content: string },
   ) {
-    const note = await this.prisma.note.create({
-      data: {
-        tenantId,
-        leadId,
-        userId,
-        message: this.enc.encrypt(data.content)!, // Encrypt Note.message
-      },
-      include: {
-        user: { select: { name: true, email: true, id: true } },
-      },
-    });
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const lead = await tx.lead.findUnique({
+        where: { id: leadId, tenantId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!lead) {
+        throw new NotFoundException('Lead not found');
+      }
 
-    await this.prisma.timelineEvent.create({
-      data: {
-        tenantId,
-        leadId,
-        action: 'Note Added',
-        description: 'A new note was added',
-        userId,
-      },
-    });
+      const note = await tx.note.create({
+        data: {
+          tenantId,
+          leadId,
+          userId,
+          message: this.enc.encrypt(data.content)!, // Encrypt Note.message
+        },
+        include: {
+          user: { select: { name: true, email: true, id: true } },
+        },
+      });
 
-    // Return decrypted for API response
-    return { ...note, message: this.enc.decrypt(note.message) };
+      await tx.timelineEvent.create({
+        data: {
+          tenantId,
+          leadId,
+          action: 'Note Added',
+          description: 'A new note was added',
+          userId,
+        },
+      });
+
+      // Return decrypted for API response
+      return { ...note, message: this.enc.decrypt(note.message) };
+    });
   }
 
   async getLeadTimeline(tenantId: string, leadId: string) {
-    return this.prisma.timelineEvent.findMany({
-      where: { tenantId, leadId },
-      include: {
-        user: { select: { name: true, email: true, id: true } },
-      },
-      orderBy: { createdAt: 'desc' },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      return tx.timelineEvent.findMany({
+        where: { tenantId, leadId },
+        include: {
+          user: { select: { name: true, email: true, id: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
     });
   }
 
@@ -499,19 +543,21 @@ export class LeadsService {
     description: string,
     userId: string,
   ) {
-    return this.prisma.timelineEvent.create({
-      data: {
-        tenantId,
-        leadId,
-        userId,
-        action,
-        description,
-      },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      return tx.timelineEvent.create({
+        data: {
+          tenantId,
+          leadId,
+          userId,
+          action,
+          description,
+        },
+      });
     });
   }
 
   async bulkDeleteLeads(tenantId: string, userId: string, ids: string[]) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
       const leads = await tx.lead.updateMany({
         where: { id: { in: ids }, tenantId },
         data: {
@@ -536,6 +582,7 @@ export class LeadsService {
       return leads;
     });
   }
+
 
   // ─── Private Helpers ─────────────────────────────────────────────────────────
 

@@ -17,61 +17,63 @@ export class CustomersService {
   ) {}
 
   async getCustomers(tenantId: string, page = 1, limit = 10, search = '') {
-    page = Math.max(1, page);
-    limit = Math.max(1, Math.min(limit, 10000));
-    const skip = (page - 1) * limit;
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      page = Math.max(1, page);
+      limit = Math.max(1, Math.min(limit, 10000));
+      const skip = (page - 1) * limit;
 
-    const where: Prisma.CustomerWhereInput = { tenantId, deletedAt: null };
+      const where: Prisma.CustomerWhereInput = { tenantId, deletedAt: null };
 
-    const [customers, total] = await Promise.all([
-      this.prisma.customer.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          _count: {
-            select: { deals: { where: { status: { not: 'LOST' } } } },
+      const [customers, total] = await Promise.all([
+        tx.customer.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+          include: {
+            _count: {
+              select: { deals: { where: { status: { not: 'LOST' } } } },
+            },
+            deals: {
+              select: { value: true, stage: true },
+            },
           },
-          deals: {
-            select: { value: true, stage: true },
-          },
-        },
-      }),
-      this.prisma.customer.count({ where }),
-    ]);
+        }),
+        tx.customer.count({ where }),
+      ]);
 
-    const mappedCustomers = customers.map((c) => {
-      const dealsRevenue = c.deals
-        .filter((d) => d.stage !== 'LOST')
-        .reduce((sum, d) => sum + Number(d.value || 0), 0);
+      const mappedCustomers = customers.map((c) => {
+        const dealsRevenue = c.deals
+          .filter((d) => d.stage !== 'LOST')
+          .reduce((sum, d) => sum + Number(d.value || 0), 0);
 
-      // Decrypt PII fields
-      const decrypted = {
-        ...c,
-        name: this.enc.decrypt(c.name),
-        email: this.enc.decrypt(c.email),
-        company: this.enc.decrypt(c.company),
-        dealsCount: c._count.deals,
-        revenueValue: dealsRevenue > 0 ? dealsRevenue : Number(c.revenue || 0),
+        // Decrypt PII fields
+        const decrypted = {
+          ...c,
+          name: this.enc.decrypt(c.name),
+          email: this.enc.decrypt(c.email),
+          company: this.enc.decrypt(c.company),
+          dealsCount: c._count.deals,
+          revenueValue: dealsRevenue > 0 ? dealsRevenue : Number(c.revenue || 0),
+        };
+        return decrypted;
+      });
+
+      // Apply search post-decryption
+      const filtered = search
+        ? mappedCustomers.filter(
+            (c) =>
+              (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+              (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
+              (c.company || '').toLowerCase().includes(search.toLowerCase()),
+          )
+        : mappedCustomers;
+
+      return {
+        customers: filtered,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       };
-      return decrypted;
     });
-
-    // Apply search post-decryption
-    const filtered = search
-      ? mappedCustomers.filter(
-          (c) =>
-            (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
-            (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
-            (c.company || '').toLowerCase().includes(search.toLowerCase()),
-        )
-      : mappedCustomers;
-
-    return {
-      customers: filtered,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
   }
 
   async createCustomer(
@@ -85,20 +87,22 @@ export class CustomersService {
       status?: CustomerStatus;
     },
   ) {
-    const { encrypted: encEmail, hash: emailHash } = this.enc.encryptWithHash(
-      data.email,
-    );
-    return this.prisma.customer.create({
-      data: {
-        name: this.enc.encrypt(data.name)!,
-        company: this.enc.encrypt(data.company)!,
-        email: encEmail,
-        emailHash,
-        tenantId,
-        revenue: data.revenue || 0,
-        status: data.status || 'ACTIVE',
-        assignedToId: userId,
-      },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const { encrypted: encEmail, hash: emailHash } = this.enc.encryptWithHash(
+        data.email,
+      );
+      return tx.customer.create({
+        data: {
+          name: this.enc.encrypt(data.name)!,
+          company: this.enc.encrypt(data.company)!,
+          email: encEmail,
+          emailHash,
+          tenantId,
+          revenue: data.revenue || 0,
+          status: data.status || 'ACTIVE',
+          assignedToId: userId,
+        },
+      });
     });
   }
 
@@ -107,36 +111,43 @@ export class CustomersService {
     id: string,
     data: Partial<Prisma.CustomerUpdateInput>,
   ) {
-    // Encrypt PII fields if provided
-    const updateData: any = { ...data };
-    if (typeof data.name === 'string') {
-      updateData.name = this.enc.encrypt(data.name);
-    }
-    if (typeof data.email === 'string') {
-      const { encrypted, hash } = this.enc.encryptWithHash(data.email);
-      updateData.email = encrypted;
-      updateData.emailHash = hash;
-    }
-    if (typeof data.company === 'string') {
-      updateData.company = this.enc.encrypt(data.company);
-    }
-    return this.prisma.customer.update({
-      where: { id, tenantId },
-      data: updateData,
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      // Encrypt PII fields if provided
+      const updateData: any = { ...data };
+      if (typeof data.name === 'string') {
+        updateData.name = this.enc.encrypt(data.name);
+      }
+      if (typeof data.email === 'string') {
+        const { encrypted, hash } = this.enc.encryptWithHash(data.email);
+        updateData.email = encrypted;
+        updateData.emailHash = hash;
+      }
+      if (typeof data.company === 'string') {
+        updateData.company = this.enc.encrypt(data.company);
+      }
+      return tx.customer.update({
+        where: { id, tenantId },
+        data: updateData,
+      });
     });
   }
 
   async deleteCustomer(tenantId: string, id: string) {
-    return this.prisma.customer.update({
-      where: { id, tenantId },
-      data: { deletedAt: new Date(), status: 'INACTIVE' },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      return tx.customer.update({
+        where: { id, tenantId },
+        data: { deletedAt: new Date(), status: 'INACTIVE' },
+      });
     });
   }
 
   async bulkDeleteCustomers(tenantId: string, ids: string[]) {
-    return this.prisma.customer.updateMany({
-      where: { id: { in: ids }, tenantId },
-      data: { deletedAt: new Date(), status: 'INACTIVE' },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      return tx.customer.updateMany({
+        where: { id: { in: ids }, tenantId },
+        data: { deletedAt: new Date(), status: 'INACTIVE' },
+      });
     });
   }
+
 }

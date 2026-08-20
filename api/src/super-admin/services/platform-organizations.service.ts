@@ -161,7 +161,7 @@ export class PlatformOrganizationsService {
       slug = `${slug}-${crypto.randomBytes(3).toString('hex')}`;
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.withTenantContext({ isSuperAdmin: true }, async (tx) => {
       const tenant = await tx.tenant.create({
         data: {
           name: data.name,
@@ -292,14 +292,10 @@ export class PlatformOrganizationsService {
       throw new NotFoundException('Organization not found');
     }
 
-    return this.prisma.$transaction(
+    return this.prisma.withTenantContext(
+      { isSuperAdmin: true, timeout: 60000 },
       async (tx) => {
-        // 1. Delete audit logs associated with this tenant
-        await tx.auditLog.deleteMany({
-          where: { tenantId: id },
-        });
-
-        // 2. Cascade cleanup of all tenant-scoped data
+        // 1. Cascade cleanup of all tenant-scoped data
         // Clear self-referential relations first to prevent foreign key errors
         await tx.tenantUser.updateMany({
           where: { tenantId: id },
@@ -398,10 +394,6 @@ export class PlatformOrganizationsService {
         });
 
         return deletedTenant;
-      },
-      {
-        maxWait: 15000,
-        timeout: 60000,
       },
     );
   }

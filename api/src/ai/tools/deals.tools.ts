@@ -1,4 +1,4 @@
-﻿import { tool } from 'ai';
+import { tool } from 'ai';
 import { z } from 'zod';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiSecurityService, UserSecurityContext } from '../ai-security.service';
@@ -48,10 +48,14 @@ export function buildDealsTools(
             if (endDate) whereClause.createdAt.lte = new Date(endDate);
           }
 
-          const deals = await prisma.deal.findMany({
-            where: whereClause,
-            select: { id: true, value: true, stage: true },
-          });
+          const deals = await prisma.withTenantContext(
+            { tenantId: userContext.tenantId },
+            async (tx) =>
+              tx.deal.findMany({
+                where: whereClause,
+                select: { id: true, value: true, stage: true },
+              }),
+          );
 
           const totalDeals = deals.length;
           const wonDeals = deals.filter((d) => d.stage === 'WON');
@@ -107,19 +111,23 @@ export function buildDealsTools(
             if (endDate) whereClause.createdAt.lte = new Date(endDate);
           }
 
-          const deals = await prisma.deal.findMany({
-            where: whereClause,
-            orderBy: { value: 'desc' },
-            take: safeLimit,
-            select: {
-              id: true,
-              name: true,
-              value: true,
-              stage: true,
-              expectedCloseDate: true,
-              company: { select: { name: true } },
-            },
-          });
+          const deals = await prisma.withTenantContext(
+            { tenantId: userContext.tenantId },
+            async (tx) =>
+              tx.deal.findMany({
+                where: whereClause,
+                orderBy: { value: 'desc' },
+                take: safeLimit,
+                select: {
+                  id: true,
+                  name: true,
+                  value: true,
+                  stage: true,
+                  expectedCloseDate: true,
+                  company: { select: { name: true } },
+                },
+              }),
+          );
 
           await aiSecurityService.logToolExecution(userContext, toolName, 'ALLOWED', { count: deals.length });
 

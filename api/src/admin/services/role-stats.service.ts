@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /**
@@ -11,37 +11,39 @@ export class RoleStatsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getRoleManagementStats(tenantId: string) {
-    const [
-      totalUsers,
-      activeUsers,
-      disabledUsers,
-      pendingInvites,
-      totalRoles,
-      systemRoles,
-      customRoles,
-      activeRoles,
-      totalPermissions,
-      totalDepartments,
-      auditEvents,
-    ] = await Promise.all([
-      this.prisma.tenantUser.count({ where: { tenantId } }),
-      this.prisma.tenantUser.count({ where: { tenantId, status: 'ACTIVE' } }),
-      this.prisma.tenantUser.count({ where: { tenantId, status: { not: 'ACTIVE' } } }),
-      this.prisma.invitation.count({ where: { tenantId, status: 'PENDING' } }),
-      this.prisma.role.count({ where: { tenantId } }),
-      this.prisma.role.count({ where: { tenantId, isSystem: true } }),
-      this.prisma.role.count({ where: { tenantId, isSystem: false } }),
-      this.prisma.role.count({ where: { tenantId, isActive: true } }),
-      this.prisma.rolePermission.count({ where: { role: { tenantId } } }),
-      this.prisma.department.count({ where: { tenantId } }),
-      this.prisma.auditLog.count({ where: { tenantId } }),
-    ]);
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const [
+        totalUsers,
+        activeUsers,
+        disabledUsers,
+        pendingInvites,
+        totalRoles,
+        systemRoles,
+        customRoles,
+        activeRoles,
+        totalPermissions,
+        totalDepartments,
+        auditEvents,
+      ] = await Promise.all([
+        tx.tenantUser.count({ where: { tenantId } }),
+        tx.tenantUser.count({ where: { tenantId, status: 'ACTIVE' } }),
+        tx.tenantUser.count({ where: { tenantId, status: { not: 'ACTIVE' } } }),
+        tx.invitation.count({ where: { tenantId, status: 'PENDING' } }),
+        tx.role.count({ where: { tenantId } }),
+        tx.role.count({ where: { tenantId, isSystem: true } }),
+        tx.role.count({ where: { tenantId, isSystem: false } }),
+        tx.role.count({ where: { tenantId, isActive: true } }),
+        tx.rolePermission.count({ where: { role: { tenantId } } }),
+        tx.department.count({ where: { tenantId } }),
+        tx.auditLog.count({ where: { tenantId } }),
+      ]);
 
-    return {
-      users: { total: totalUsers, active: activeUsers, disabled: disabledUsers, pendingInvites },
-      roles: { total: totalRoles, system: systemRoles, custom: customRoles, active: activeRoles, permissions: totalPermissions },
-      departments: { total: totalDepartments },
-      audit: { events: auditEvents },
-    };
+      return {
+        users: { total: totalUsers, active: activeUsers, disabled: disabledUsers, pendingInvites },
+        roles: { total: totalRoles, system: systemRoles, custom: customRoles, active: activeRoles, permissions: totalPermissions },
+        departments: { total: totalDepartments },
+        audit: { events: auditEvents },
+      };
+    });
   }
 }

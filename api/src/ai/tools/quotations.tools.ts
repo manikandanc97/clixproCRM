@@ -44,12 +44,16 @@ export function buildQuotationsTools(
           const whereClause: any = { ...visibilityFilter };
           if (status) whereClause.status = status;
 
-          const quotations = await prisma.quotation.findMany({
-            where: whereClause,
-            orderBy: { createdAt: 'desc' },
-            take: safeLimit,
-            select: { quoteNumber: true, client: true, amount: true, status: true, validTill: true },
-          });
+          const quotations = await prisma.withTenantContext(
+            { tenantId: userContext.tenantId },
+            async (tx) =>
+              tx.quotation.findMany({
+                where: whereClause,
+                orderBy: { createdAt: 'desc' },
+                take: safeLimit,
+                select: { quoteNumber: true, client: true, amount: true, status: true, validTill: true },
+              }),
+          );
 
           await aiSecurityService.logToolExecution(userContext, toolName, 'ALLOWED', { count: quotations.length });
 

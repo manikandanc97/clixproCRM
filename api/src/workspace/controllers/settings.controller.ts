@@ -14,6 +14,7 @@ import { SupabaseAuthGuard } from '../../auth/supabase.guard';
 import { TenantGuard } from '../../auth/tenant.guard';
 import { RolesGuard } from '../../auth/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
+import { AalGuard } from '../../auth/aal.guard';
 import {
   checkRateLimit,
   incrementRateLimit,
@@ -22,7 +23,7 @@ import {
 } from '../../common/utils/rate-limit.util';
 
 @Controller('crm/settings')
-@UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
+@UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard, AalGuard)
 export class SettingsController {
   constructor(
     private readonly settingsService: SettingsService,

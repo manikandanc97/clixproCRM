@@ -10,24 +10,29 @@ export class AnalyticsInsightsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAiInsights(tenantId: string) {
-    const [leads, tasks] = await Promise.all([
-      this.prisma.lead.findMany({
-        where: { tenantId, stage: 'NEW', deletedAt: null },
-        take: 3,
-        orderBy: { createdAt: 'desc' },
-        select: { id: true, company: true },
-      }),
-      this.prisma.task.findMany({
-        where: {
-          tenantId,
-          status: 'PENDING',
-          dueDate: { lt: new Date() },
-          deletedAt: null,
-        },
-        take: 2,
-        select: { id: true, title: true },
-      }),
-    ]);
+    const [leads, tasks] = await this.prisma.withTenantContext(
+      { tenantId },
+      async (tx) => {
+        return Promise.all([
+          tx.lead.findMany({
+            where: { tenantId, stage: 'NEW', deletedAt: null },
+            take: 3,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, company: true },
+          }),
+          tx.task.findMany({
+            where: {
+              tenantId,
+              status: 'PENDING',
+              dueDate: { lt: new Date() },
+              deletedAt: null,
+            },
+            take: 2,
+            select: { id: true, title: true },
+          }),
+        ]);
+      },
+    );
 
     const recommendations = [
       ...leads.map((l) => ({

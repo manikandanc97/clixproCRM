@@ -51,6 +51,20 @@ interface AuthResponse {
 }
 
 export const loginUser = async (data: LoginPayload) => {
+  // 1. Enforce backend rate limit pre-check
+  try {
+    await client.post('/auth/login', { email: data.email });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (rateLimitErr: any) {
+    if (rateLimitErr?.response?.status === 429) {
+      throw new Error(
+        rateLimitErr.response.data?.message ||
+          'Too many login attempts. Please wait a few minutes before trying again.'
+      );
+    }
+    // For network connectivity errors to backend API, allow fallback to proceed
+  }
+
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email: data.email,
@@ -63,6 +77,21 @@ export const loginUser = async (data: LoginPayload) => {
 
   if (typeof window !== "undefined") {
     localStorage.setItem("has_session", "1");
+  }
+
+  // Check if AAL2 MFA verification is required for this user
+  try {
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalData && aalData.currentLevel === 'aal1' && aalData.nextLevel === 'aal2') {
+      return {
+        success: true,
+        message: 'MFA_REQUIRED',
+        mfaRequired: true,
+        data: { user: null },
+      } as any;
+    }
+  } catch {
+    // Continue to normal /auth/me fetch
   }
 
   // Fetch current user details to return the expected AuthResponse format
@@ -84,6 +113,19 @@ export const loginUser = async (data: LoginPayload) => {
 };
 
 export const registerUser = async (data: RegisterPayload) => {
+  // 1. Enforce backend rate limit pre-check
+  try {
+    await client.post('/auth/register', { email: data.email });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (rateLimitErr: any) {
+    if (rateLimitErr?.response?.status === 429) {
+      throw new Error(
+        rateLimitErr.response.data?.message ||
+          'Too many registration attempts. Please wait a few minutes before trying again.'
+      );
+    }
+  }
+
   const supabase = createClient();
   const { error } = await supabase.auth.signUp({
     email: data.email,
@@ -108,6 +150,19 @@ export const registerUser = async (data: RegisterPayload) => {
 };
 
 export const forgotPassword = async (data: ForgotPasswordPayload) => {
+  // 1. Enforce backend rate limit pre-check
+  try {
+    await client.post('/auth/forgot-password', { email: data.email });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (rateLimitErr: any) {
+    if (rateLimitErr?.response?.status === 429) {
+      throw new Error(
+        rateLimitErr.response.data?.message ||
+          'Too many password reset requests. Please wait a few minutes before trying again.'
+      );
+    }
+  }
+
   const supabase = createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
     redirectTo: getAuthRedirectUrl("/reset-password"),
@@ -121,6 +176,19 @@ export const forgotPassword = async (data: ForgotPasswordPayload) => {
 };
 
 export const resetPassword = async (data: ResetPasswordPayload) => {
+  // 1. Enforce backend rate limit pre-check
+  try {
+    await client.post('/auth/reset-password', {});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (rateLimitErr: any) {
+    if (rateLimitErr?.response?.status === 429) {
+      throw new Error(
+        rateLimitErr.response.data?.message ||
+          'Too many password update attempts. Please wait a few minutes before trying again.'
+      );
+    }
+  }
+
   const supabase = createClient();
   const { error } = await supabase.auth.updateUser({
     password: data.newPassword,
@@ -130,7 +198,29 @@ export const resetPassword = async (data: ResetPasswordPayload) => {
     throw new Error(error.message);
   }
 
+  // Notify backend to invalidate previous sessions & caches
+  try {
+    await client.post('/auth/password-reset-completed', {});
+  } catch {
+    // Non-fatal if recovery session callback handled separately
+  }
+
   return { success: true, message: "Password updated successfully" };
+};
+
+export const changePassword = async (newPassword: string) => {
+  const supabase = createClient();
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // Notify backend to revoke all other active sessions and clear identity caches
+  const response = await client.post<{ success: boolean; message: string }>('/auth/change-password', {});
+  return response.data;
 };
 
 export const fetchCurrentUser = async (): Promise<AuthUser | null> => {
@@ -157,6 +247,11 @@ export const fetchCurrentUser = async (): Promise<AuthUser | null> => {
 export const logoutUser = async () => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("has_session");
+  }
+  try {
+    await client.post('/auth/logout');
+  } catch {
+    // Ignore server logout errors if token already invalidated
   }
   const supabase = createClient();
   await supabase.auth.signOut();

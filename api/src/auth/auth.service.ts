@@ -46,22 +46,9 @@ export class AuthService {
       return cached.data;
     }
 
-    let user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        memberships: {
-          where: { status: 'ACTIVE' },
-          include: {
-            role: { include: { permissions: true } },
-            tenant: true,
-          },
-        },
-      },
-    });
-
-    if (!user && email) {
-      const emailUser = await this.prisma.user.findUnique({
-        where: { email },
+    let user = await this.prisma.withTenantContext({ userId }, async (tx) => {
+      return tx.user.findUnique({
+        where: { id: userId },
         include: {
           memberships: {
             where: { status: 'ACTIVE' },
@@ -72,12 +59,12 @@ export class AuthService {
           },
         },
       });
+    });
 
-      if (emailUser) {
-        // Link the existing user by updating their ID to match Supabase UUID
-        user = await this.prisma.user.update({
-          where: { id: emailUser.id },
-          data: { id: userId },
+    if (!user && email) {
+      const emailUser = await this.prisma.withTenantContext({ userId }, async (tx) => {
+        return tx.user.findUnique({
+          where: { email },
           include: {
             memberships: {
               where: { status: 'ACTIVE' },
@@ -87,6 +74,25 @@ export class AuthService {
               },
             },
           },
+        });
+      });
+
+      if (emailUser) {
+        // Link the existing user by updating their ID to match Supabase UUID
+        user = await this.prisma.withTenantContext({ userId }, async (tx) => {
+          return tx.user.update({
+            where: { id: emailUser.id },
+            data: { id: userId },
+            include: {
+              memberships: {
+                where: { status: 'ACTIVE' },
+                include: {
+                  role: { include: { permissions: true } },
+                  tenant: true,
+                },
+              },
+            },
+          });
         });
       }
     }
@@ -261,7 +267,7 @@ export class AuthService {
       slug = `${slug}-${crypto.randomBytes(3).toString('hex')}`;
     }
 
-    return this.prisma.$transaction(async (tx: any) => {
+    return this.prisma.withTenantContext({ isSuperAdmin: true }, async (tx: any) => {
       const tenant = await tx.tenant.create({
         data: { name: data.companyName, slug },
       });
@@ -358,18 +364,23 @@ export class AuthService {
     tenantId: string,
     confirmation: { confirm1?: string; confirm2?: string },
   ) {
-    const membership = await this.prisma.tenantUser.findUnique({
-      where: {
-        tenantId_userId: {
-          tenantId,
-          userId,
-        },
+    const membership = await this.prisma.withTenantContext(
+      { tenantId, userId },
+      async (tx) => {
+        return tx.tenantUser.findUnique({
+          where: {
+            tenantId_userId: {
+              tenantId,
+              userId,
+            },
+          },
+          include: {
+            role: true,
+            tenant: true,
+          },
+        });
       },
-      include: {
-        role: true,
-        tenant: true,
-      },
-    });
+    );
 
     if (!membership) {
       throw new ForbiddenException('User is not a member of this workspace.');
@@ -397,7 +408,8 @@ export class AuthService {
     try {
       if (isAdmin) {
         // Complete workspace-level permanent deletion in a single atomic transaction
-        await this.prisma.$transaction(
+        await this.prisma.withTenantContext(
+          { tenantId, isSuperAdmin: true, timeout: 30000 },
           async (tx: any) => {
             // 1. Break circular / self-referential / non-cascading FK references
           await tx.$executeRawUnsafe(
@@ -501,32 +513,50 @@ export class AuthService {
           await tx.role.deleteMany({ where: { tenantId } });
           await tx.department.deleteMany({ where: { tenantId } });
 
-          // 7. Delete Audit Logs associated with this tenant
-          await tx.auditLog.deleteMany({ where: { tenantId } });
+          // 7. Record ORGANIZATION_DELETED audit log (preserved permanently)
+          await tx.auditLog.create({
+            data: {
+              tenantId,
+              userId,
+              action: 'ORGANIZATION_DELETED',
+              module: 'Organization',
+              details: {
+                deletedByUserId: userId,
+                reason: 'Tenant Owner deleted organization and account',
+              },
+            },
+          });
 
-          // 8. Delete Tenant
+          // 8. Delete Tenant (AuditLog rows with this tenantId remain preserved)
           await tx.tenant.delete({ where: { id: tenantId } });
 
-          // 9. Clean up users who have no other tenant memberships
+          // 9. Clean up users who have no other tenant memberships (AuditLog rows preserved)
           for (const uid of userIdsInTenant) {
             const otherMemberships = await tx.tenantUser.count({
               where: { userId: uid },
             });
             if (otherMemberships === 0) {
-              await tx.auditLog.deleteMany({
-                where: {
-                  OR: [{ userId: uid }, { targetUserId: uid }],
+              await tx.auditLog.create({
+                data: {
+                  tenantId,
+                  userId: uid,
+                  action: 'USER_ACCOUNT_DELETED',
+                  module: 'Authentication',
+                  details: {
+                    deletedUserId: uid,
+                    cascadeFromTenantDeletion: true,
+                  },
                 },
               });
               await tx.user.delete({ where: { id: uid } });
             }
           }
         },
-        { maxWait: 10000, timeout: 30000 },
       );
       } else {
         // Normal non-admin user deletion: Remove user's membership and personal records only
-        await this.prisma.$transaction(
+        await this.prisma.withTenantContext(
+          { tenantId, timeout: 30000 },
           async (tx: any) => {
             await tx.$executeRawUnsafe(
               `UPDATE "TenantUser" SET "reportingManagerId" = NULL WHERE "id" = $1 OR "reportingManagerId" = $1`,
@@ -591,15 +621,21 @@ export class AuthService {
               where: { userId },
             });
             if (otherMemberships === 0) {
-              await tx.auditLog.deleteMany({
-                where: {
-                  OR: [{ userId }, { targetUserId: userId }],
+              await tx.auditLog.create({
+                data: {
+                  tenantId,
+                  userId,
+                  action: 'USER_ACCOUNT_DELETED',
+                  module: 'Authentication',
+                  details: {
+                    deletedUserId: userId,
+                    selfDeleted: true,
+                  },
                 },
               });
               await tx.user.delete({ where: { id: userId } });
             }
           },
-          { maxWait: 10000, timeout: 30000 },
         );
       }
 
@@ -655,4 +691,168 @@ export class AuthService {
       );
     }
   }
+
+  async handlePasswordChanged(
+    userId: string,
+    currentSessionId?: string,
+    reqIp?: string,
+    userAgent?: string,
+  ) {
+    let revokedCount = 0;
+    const now = new Date();
+
+    if (currentSessionId) {
+      const otherSessions = await this.prisma.userSession.findMany({
+        where: {
+          userId,
+          sessionId: { not: currentSessionId },
+          revokedAt: null,
+        },
+      });
+
+      if (otherSessions.length > 0) {
+        await this.prisma.userSession.updateMany({
+          where: {
+            userId,
+            sessionId: { not: currentSessionId },
+            revokedAt: null,
+          },
+          data: { revokedAt: now },
+        });
+
+        for (const s of otherSessions) {
+          try {
+            const { invalidateSessionCache } = require('./supabase.guard');
+            invalidateSessionCache(s.sessionId);
+          } catch (_) {}
+        }
+        revokedCount = otherSessions.length;
+      }
+    } else {
+      const allSessions = await this.prisma.userSession.findMany({
+        where: { userId, revokedAt: null },
+      });
+      if (allSessions.length > 0) {
+        await this.prisma.userSession.updateMany({
+          where: { userId, revokedAt: null },
+          data: { revokedAt: now },
+        });
+        for (const s of allSessions) {
+          try {
+            const { invalidateSessionCache } = require('./supabase.guard');
+            invalidateSessionCache(s.sessionId);
+          } catch (_) {}
+        }
+        revokedCount = allSessions.length;
+      }
+    }
+
+    // Invalidate all identity & tenant caches for user
+    invalidateGetMeCache(userId);
+    try {
+      const { invalidateTokenUserCache } = require('./supabase.guard');
+      invalidateTokenUserCache(userId);
+      const { invalidateUserTenantCache } = require('./tenant.guard');
+      invalidateUserTenantCache(userId);
+    } catch (_) {}
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action: 'PASSWORD_CHANGED',
+          module: 'Security',
+          details: {
+            remoteSessionsRevoked: revokedCount,
+            currentSessionPreserved: Boolean(currentSessionId),
+          },
+          ipAddress: reqIp || null,
+          userAgent: userAgent || null,
+        },
+      });
+    } catch (auditErr: any) {
+      this.logger.warn(
+        `Failed to write PASSWORD_CHANGED audit log: ${auditErr?.message || auditErr}`,
+      );
+    }
+
+    return {
+      success: true,
+      message:
+        'Password changed successfully. All other active sessions have been signed out.',
+      revokedCount,
+    };
+  }
+
+  async handlePasswordReset(
+    userId: string,
+    currentSessionId?: string,
+    reqIp?: string,
+    userAgent?: string,
+  ) {
+    const now = new Date();
+    const priorSessions = await this.prisma.userSession.findMany({
+      where: {
+        userId,
+        ...(currentSessionId ? { sessionId: { not: currentSessionId } } : {}),
+        revokedAt: null,
+      },
+    });
+
+    let revokedCount = 0;
+    if (priorSessions.length > 0) {
+      await this.prisma.userSession.updateMany({
+        where: {
+          userId,
+          ...(currentSessionId ? { sessionId: { not: currentSessionId } } : {}),
+          revokedAt: null,
+        },
+        data: { revokedAt: now },
+      });
+
+      for (const s of priorSessions) {
+        try {
+          const { invalidateSessionCache } = require('./supabase.guard');
+          invalidateSessionCache(s.sessionId);
+        } catch (_) {}
+      }
+      revokedCount = priorSessions.length;
+    }
+
+    // Invalidate all identity & token caches
+    invalidateGetMeCache(userId);
+    try {
+      const { invalidateTokenUserCache } = require('./supabase.guard');
+      invalidateTokenUserCache(userId);
+      const { invalidateUserTenantCache } = require('./tenant.guard');
+      invalidateUserTenantCache(userId);
+    } catch (_) {}
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action: 'PASSWORD_RESET',
+          module: 'Security',
+          details: {
+            priorSessionsRevoked: revokedCount,
+          },
+          ipAddress: reqIp || null,
+          userAgent: userAgent || null,
+        },
+      });
+    } catch (auditErr: any) {
+      this.logger.warn(
+        `Failed to write PASSWORD_RESET audit log: ${auditErr?.message || auditErr}`,
+      );
+    }
+
+    return {
+      success: true,
+      message:
+        'Password reset successfully. Previous active sessions have been invalidated.',
+      revokedCount,
+    };
+  }
 }
+

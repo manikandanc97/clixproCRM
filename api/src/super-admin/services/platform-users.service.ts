@@ -6,6 +6,9 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserStatus } from '@prisma/client';
+import { invalidateTokenUserCache } from '../../auth/supabase.guard';
+import { invalidateUserTenantCache } from '../../auth/tenant.guard';
+import { invalidateGetMeCache } from '../../auth/auth.service';
 
 @Injectable()
 export class PlatformUsersService {
@@ -153,6 +156,17 @@ export class PlatformUsersService {
       data: { status },
     });
 
+    if (status !== 'ACTIVE') {
+      await this.prisma.tenantUser.updateMany({
+        where: { userId: id },
+        data: { status },
+      });
+    }
+
+    invalidateTokenUserCache(id);
+    invalidateUserTenantCache(id);
+    invalidateGetMeCache(id);
+
     await this.prisma.auditLog.create({
       data: {
         userId: adminActorId,
@@ -192,6 +206,10 @@ export class PlatformUsersService {
       where: { id },
       data: { isSuperAdmin },
     });
+
+    invalidateTokenUserCache(id);
+    invalidateUserTenantCache(id);
+    invalidateGetMeCache(id);
 
     await this.prisma.auditLog.create({
       data: {

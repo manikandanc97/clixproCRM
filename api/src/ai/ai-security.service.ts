@@ -22,66 +22,69 @@ export class AiSecurityService {
 
   /**
    * Build complete security context for the authenticated user in the active tenant.
+   * Executes inside a tenant-isolated transaction context to satisfy FORCE RLS.
    */
   async buildSecurityContext(
     userId: string,
     tenantId: string,
     userRole?: any,
   ): Promise<UserSecurityContext> {
-    const tenantUser = await this.prisma.tenantUser.findFirst({
-      where: { tenantId, userId, status: 'ACTIVE' },
-      include: {
-        role: {
-          include: {
-            permissions: true,
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const tenantUser = await tx.tenantUser.findFirst({
+        where: { tenantId, userId, status: 'ACTIVE' },
+        include: {
+          role: {
+            include: {
+              permissions: true,
+            },
           },
         },
-      },
+      });
+
+      const role = userRole || tenantUser?.role;
+      const rawRole = typeof role === 'object' ? role?.name || '' : String(role || '');
+      const roleName = rawRole.toUpperCase();
+      const normRole = roleName.replace(/[\s_]+/g, '');
+      const isSystemAdmin =
+        normRole === 'SUPERADMIN' || normRole === 'ADMIN' || normRole === 'OWNER';
+      const isRoleActive = role ? role.isActive !== false : true;
+
+      let subordinateUserIds: string[] = [];
+      let teamUserIds: string[] = [];
+
+      if (tenantUser) {
+        const [subordinates, teamMembers] = await Promise.all([
+          tx.tenantUser.findMany({
+            where: { tenantId, reportingManagerId: tenantUser.id, status: 'ACTIVE' },
+            select: { userId: true },
+          }),
+          tenantUser.departmentId
+            ? tx.tenantUser.findMany({
+                where: {
+                  tenantId,
+                  departmentId: tenantUser.departmentId,
+                  status: 'ACTIVE',
+                },
+                select: { userId: true },
+              })
+            : Promise.resolve([]),
+        ]);
+
+        subordinateUserIds = (subordinates || []).map((s) => s.userId);
+        teamUserIds = (teamMembers || []).map((t) => t.userId);
+      }
+
+      return {
+        userId,
+        tenantId,
+        roleName,
+        isSystemAdmin,
+        permissions: isRoleActive ? (role?.permissions || []) : [],
+        departmentId: tenantUser?.departmentId || null,
+        subordinateUserIds,
+        teamUserIds,
+      };
     });
-
-    const role = userRole || tenantUser?.role;
-    const rawRole = typeof role === 'object' ? role?.name || '' : String(role || '');
-    const roleName = rawRole.toUpperCase();
-    const normRole = roleName.replace(/[\s_]+/g, '');
-    const isSystemAdmin =
-      normRole === 'SUPERADMIN' || normRole === 'ADMIN' || normRole === 'OWNER';
-    const isRoleActive = role ? role.isActive !== false : true;
-
-    let subordinateUserIds: string[] = [];
-    let teamUserIds: string[] = [];
-
-    if (tenantUser) {
-      const [subordinates, teamMembers] = await Promise.all([
-        this.prisma.tenantUser.findMany({
-          where: { tenantId, reportingManagerId: tenantUser.id, status: 'ACTIVE' },
-          select: { userId: true },
-        }),
-        tenantUser.departmentId
-          ? this.prisma.tenantUser.findMany({
-              where: {
-                tenantId,
-                departmentId: tenantUser.departmentId,
-                status: 'ACTIVE',
-              },
-              select: { userId: true },
-            })
-          : Promise.resolve([]),
-      ]);
-
-      subordinateUserIds = (subordinates || []).map((s) => s.userId);
-      teamUserIds = (teamMembers || []).map((t) => t.userId);
-    }
-
-    return {
-      userId,
-      tenantId,
-      roleName,
-      isSystemAdmin,
-      permissions: isRoleActive ? (role?.permissions || []) : [],
-      departmentId: tenantUser?.departmentId || null,
-      subordinateUserIds,
-      teamUserIds,
-    };
   }
 
   /**
@@ -314,6 +317,7 @@ export class AiSecurityService {
 
   /**
    * Log AI tool execution to AuditLog table.
+   * AuditLog is a tenant-scoped table — wrapped in withTenantContext.
    */
   async logToolExecution(
     context: UserSecurityContext,
@@ -322,19 +326,21 @@ export class AiSecurityService {
     details?: Record<string, any>,
   ): Promise<void> {
     try {
-      await this.prisma.auditLog.create({
-        data: {
-          tenantId: context.tenantId,
-          userId: context.userId,
-          action: `AI_TOOL:${toolName}`,
-          module: 'AI_CHAT',
-          details: {
-            toolName,
-            status,
-            role: context.roleName,
-            ...details,
+      await this.prisma.withTenantContext({ tenantId: context.tenantId }, async (tx) => {
+        await tx.auditLog.create({
+          data: {
+            tenantId: context.tenantId,
+            userId: context.userId,
+            action: `AI_TOOL:${toolName}`,
+            module: 'AI_CHAT',
+            details: {
+              toolName,
+              status,
+              role: context.roleName,
+              ...details,
+            },
           },
-        },
+        });
       });
     } catch (e: any) {
       this.logger.error(`Failed to record AI tool audit log: ${e.message}`);

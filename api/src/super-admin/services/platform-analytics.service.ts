@@ -18,19 +18,29 @@ export class PlatformAnalyticsService {
       totalCustomers,
       totalQuotations,
       allTenants,
-    ] = await Promise.all([
-      this.prisma.tenant.count(),
-      this.prisma.tenant.count({ where: { status: 'ACTIVE' } }),
-      this.prisma.user.count(),
-      this.prisma.lead.count(),
-      this.prisma.deal.count(),
-      this.prisma.customer.count(),
-      this.prisma.quotation.count(),
-      this.prisma.tenant.findMany({
-        where: { createdAt: { gte: sixMonthsAgo } },
-        select: { id: true, plan: true, createdAt: true },
-      }),
-    ]);
+      planStats,
+    ] = await this.prisma.withTenantContext(
+      { isSuperAdmin: true },
+      async (tx) => {
+        return Promise.all([
+          tx.tenant.count(),
+          tx.tenant.count({ where: { status: 'ACTIVE' } }),
+          tx.user.count(),
+          tx.lead.count(),
+          tx.deal.count(),
+          tx.customer.count(),
+          tx.quotation.count(),
+          tx.tenant.findMany({
+            where: { createdAt: { gte: sixMonthsAgo } },
+            select: { id: true, plan: true, createdAt: true },
+          }),
+          tx.tenant.groupBy({
+            by: ['plan'],
+            _count: { _all: true },
+          }),
+        ]);
+      },
+    );
 
     // Build monthly growth trends
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -61,11 +71,6 @@ export class PlatformAnalyticsService {
       pro: 4999,
       enterprise: 14999,
     };
-
-    const planStats = await this.prisma.tenant.groupBy({
-      by: ['plan'],
-      _count: { _all: true },
-    });
 
     let estimatedMRR = 0;
     const planBreakdown = planStats.map((p) => {

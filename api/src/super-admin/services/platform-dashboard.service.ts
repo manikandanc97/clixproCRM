@@ -18,36 +18,41 @@ export class PlatformDashboardService {
       recentOrganizations,
       recentAuditLogs,
       tenantsByPlan,
-    ] = await Promise.all([
-      this.prisma.tenant.count(),
-      this.prisma.tenant.count({ where: { status: 'ACTIVE' } }),
-      this.prisma.tenant.count({ where: { status: 'SUSPENDED' } }),
-      this.prisma.user.count(),
-      this.prisma.user.count({ where: { status: 'ACTIVE' } }),
-      this.prisma.lead.count({ where: { deletedAt: null } }),
-      this.prisma.customer.count({ where: { deletedAt: null } }),
-      this.prisma.deal.count({ where: { deletedAt: null } }),
-      this.prisma.tenant.findMany({
-        take: 8,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          _count: {
-            select: { users: true, leads: true, customers: true },
-          },
-        },
-      }),
-      this.prisma.auditLog.findMany({
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { id: true, name: true, email: true } },
-        },
-      }),
-      this.prisma.tenant.groupBy({
-        by: ['plan'],
-        _count: { _all: true },
-      }),
-    ]);
+    ] = await this.prisma.withTenantContext(
+      { isSuperAdmin: true },
+      async (tx) => {
+        return Promise.all([
+          tx.tenant.count(),
+          tx.tenant.count({ where: { status: 'ACTIVE' } }),
+          tx.tenant.count({ where: { status: 'SUSPENDED' } }),
+          tx.user.count(),
+          tx.user.count({ where: { status: 'ACTIVE' } }),
+          tx.lead.count({ where: { deletedAt: null } }),
+          tx.customer.count({ where: { deletedAt: null } }),
+          tx.deal.count({ where: { deletedAt: null } }),
+          tx.tenant.findMany({
+            take: 8,
+            orderBy: { createdAt: 'desc' },
+            include: {
+              _count: {
+                select: { users: true, leads: true, customers: true },
+              },
+            },
+          }),
+          tx.auditLog.findMany({
+            take: 10,
+            orderBy: { createdAt: 'desc' },
+            include: {
+              user: { select: { id: true, name: true, email: true } },
+            },
+          }),
+          tx.tenant.groupBy({
+            by: ['plan'],
+            _count: { _all: true },
+          }),
+        ]);
+      },
+    );
 
     // Format plan distribution
     const planDistribution = tenantsByPlan.map((p) => ({

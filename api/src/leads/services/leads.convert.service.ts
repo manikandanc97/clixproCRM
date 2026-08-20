@@ -29,15 +29,15 @@ export class LeadsConvertService {
     leadId: string,
     data: ConvertLeadDto,
   ) {
-    const lead = await this.prisma.lead.findUnique({
-      where: { id: leadId, tenantId, deletedAt: null },
-    });
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const lead = await tx.lead.findUnique({
+        where: { id: leadId, tenantId, deletedAt: null },
+      });
 
-    if (!lead) throw new NotFoundException('Lead not found');
-    if (lead.isConverted)
-      throw new BadRequestException('Lead is already converted');
+      if (!lead) throw new NotFoundException('Lead not found');
+      if (lead.isConverted)
+        throw new BadRequestException('Lead is already converted');
 
-    return this.prisma.$transaction(async (tx) => {
       // 1. Resolve Company (via nameHash for exact-match)
       let finalCompanyId = data.companyId;
       if (!finalCompanyId && data.companyName) {
@@ -174,3 +174,4 @@ export class LeadsConvertService {
     });
   }
 }
+

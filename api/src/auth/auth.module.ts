@@ -7,23 +7,41 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { WorkspaceModule } from '../workspace/workspace.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { EmailService } from '../common/services/email.service';
+
+import { MfaController } from './mfa.controller';
+import { MfaService } from './mfa.service';
+import { AalGuard } from './aal.guard';
+
+import { SessionsController } from './sessions.controller';
+import { SessionsService } from './sessions.service';
 
 @Module({
-  imports: [PrismaModule, WorkspaceModule],
-  controllers: [AuthController],
+  imports: [PrismaModule, WorkspaceModule, NotificationsModule],
+  controllers: [AuthController, MfaController, SessionsController],
   providers: [
     AuthService,
+    MfaService,
+    SessionsService,
+    EmailService,
     SupabaseAuthGuard,
     TenantGuard,
     RolesGuard,
     PermissionsGuard,
+    AalGuard,
   ],
   exports: [
     AuthService,
+    MfaService,
+    SessionsService,
+    EmailService,
     SupabaseAuthGuard,
     TenantGuard,
     RolesGuard,
     PermissionsGuard,
+    AalGuard,
   ],
 })
 export class AuthModule {}
+

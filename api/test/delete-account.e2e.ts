@@ -304,13 +304,13 @@ async function runTests() {
       verifyInvoices1 > 0 ||
       verifyAiConvs1 > 0 ||
       verifyDocs1 > 0 ||
-      verifyAudit1 > 0
+      verifyAudit1 === 0 // AuditLog must NOT be deleted - must be preserved permanently
     ) {
       throw new Error(
-        `FAILED: Partial records remain for Tenant 1! (T1: ${!!verifyT1}, U1: ${!!verifyU1}, leads: ${verifyLeads1})`
+        `FAILED: Partial records remain or AuditLog was deleted for Tenant 1! (T1: ${!!verifyT1}, U1: ${!!verifyU1}, leads: ${verifyLeads1}, audit: ${verifyAudit1})`
       );
     }
-    console.log('✓ Verified: Tenant 1 and ALL associated records are completely purged from database.');
+    console.log('✓ Verified: Tenant 1 CRM entities purged while historical AuditLog records remain permanently preserved.');
 
     // 6. Verify Tenant 2 Isolation: Ensure all Tenant 2 records remain completely intact
     const verifyT2 = await prisma.tenant.findUnique({ where: { id: t2.id } });

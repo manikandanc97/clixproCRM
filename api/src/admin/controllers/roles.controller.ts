@@ -24,6 +24,7 @@ import {
   getClientIp,
   RATE_LIMITS,
 } from '../../common/utils/rate-limit.util';
+import { AalGuard } from '../../auth/aal.guard';
 import * as z from 'zod';
 
 const roleSchema = z.object({
@@ -53,7 +54,7 @@ const reassignDeleteSchema = z.object({
 });
 
 @Controller('crm/roles')
-@UseGuards(SupabaseAuthGuard, TenantGuard, PermissionsGuard)
+@UseGuards(SupabaseAuthGuard, TenantGuard, PermissionsGuard, AalGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 

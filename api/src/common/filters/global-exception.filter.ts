@@ -22,6 +22,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
+    const isProd = process.env.NODE_ENV === 'production';
     let message = 'Internal server error';
     let errorName: string | undefined = undefined;
 
@@ -36,15 +37,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           : r.message || (typeof r.error === 'string' ? r.error : JSON.stringify(r));
         errorName = typeof r.error === 'string' ? r.error : undefined;
       }
-    } else if (exception instanceof Error) {
-      message = exception.message || 'Internal server error';
     }
 
     if (status >= 500) {
+      const rawError = exception instanceof Error ? exception.message : String(exception);
+      const stack = exception instanceof Error ? exception.stack : '';
       this.logger.error(
-        `HTTP Status: ${status} Error Message: ${message}`,
-        exception instanceof Error ? exception.stack : '',
+        `HTTP Status: ${status} | Path: ${request.url} | Internal Error: ${rawError}`,
+        stack,
       );
+
+      // In production or on internal server errors, mask raw messages to prevent info disclosure
+      message = 'Internal server error';
+      errorName = 'Internal Server Error';
     }
 
     response.status(status).send({

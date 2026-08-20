@@ -3,8 +3,10 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TenantContextService } from '../common/context/tenant-context.service';
 
 interface CachedUserRecord {
   memberships: Array<{
@@ -39,7 +41,10 @@ export function invalidateUserTenantCache(userId?: string) {
 
 @Injectable()
 export class TenantGuard implements CanActivate {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Optional() private tenantContext?: TenantContextService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -52,22 +57,31 @@ export class TenantGuard implements CanActivate {
 
     const now = Date.now();
 
-    // Check if user is platform Super Admin
-    const userRecord = await this.prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
-        memberships: {
-          where: { status: 'ACTIVE' },
+    // Check user and resolve tenant memberships in a user-isolated context
+    const userRecord = await this.prisma.withTenantContext(
+      { userId: user.id },
+      async (tx) => {
+        return tx.user.findUnique({
+          where: { id: user.id },
           include: {
-            role: { include: { permissions: true } },
-            tenant: true,
+            memberships: {
+              where: { status: 'ACTIVE' },
+              include: {
+                role: { include: { permissions: true } },
+                tenant: true,
+              },
+            },
           },
-        },
+        });
       },
-    });
+    );
 
     if (!userRecord) {
       throw new UnauthorizedException('User account not found');
+    }
+
+    if (userRecord.status !== 'ACTIVE') {
+      throw new UnauthorizedException('User account is deactivated or suspended');
     }
 
     if (userRecord.isSuperAdmin) {
@@ -91,6 +105,14 @@ export class TenantGuard implements CanActivate {
         isActive: true,
       };
       request.isSuperAdmin = true;
+
+      this.tenantContext?.setContext({
+        userId: user.id,
+        tenantId: effectiveTenantId,
+        isSuperAdmin: true,
+        userRole: request.userRole,
+      });
+
       return true;
     }
 
@@ -114,7 +136,17 @@ export class TenantGuard implements CanActivate {
 
     request.tenantId = membership.tenantId;
     request.userRole = membership.role;
+    request.isSuperAdmin = false;
+
+    this.tenantContext?.setContext({
+      userId: user.id,
+      tenantId: membership.tenantId,
+      isSuperAdmin: false,
+      userRole: membership.role,
+    });
+
     return true;
   }
 }
+
 

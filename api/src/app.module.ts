@@ -4,7 +4,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { EncryptionModule } from './common/encryption/encryption.module';
+import { TenantContextModule } from './common/context/tenant-context.module';
 import { AuthModule } from './auth/auth.module';
+import { SuperAdminModule } from './super-admin/super-admin.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { CompaniesModule } from './companies/companies.module';
 import { LeadsModule } from './leads/leads.module';
@@ -19,7 +21,6 @@ import { SystemModule } from './system/system.module';
 import { SupportModule } from './support/support.module';
 import { AiModule } from './ai/ai.module';
 import { CustomersModule } from './customers/customers.module';
-import { SuperAdminModule } from './super-admin/super-admin.module';
 
 @Module({
   imports: [
@@ -27,10 +28,12 @@ import { SuperAdminModule } from './super-admin/super-admin.module';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+    TenantContextModule, // Global: Request-scoped TenantContextService available everywhere
     EncryptionModule, // Global: EncryptionService available everywhere
     PrismaModule,
     AuthModule,
     SuperAdminModule,
+
     ContactsModule,
     CompaniesModule,
     LeadsModule,

@@ -1,6 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
+function escapeHtml(str: any): string {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 @Injectable()
 export class SupportService {
   private readonly logger = new Logger(SupportService.name);
@@ -32,17 +42,32 @@ export class SupportService {
       .padStart(6, '0');
     const ticketId = `CRM-${year}-${randomNum}`;
 
-    const totalSize = attachments.reduce(
-      (acc, curr) => acc + curr.content.length,
-      0,
-    );
-    const maxSize = 25 * 1024 * 1024;
+    const safeSubject = escapeHtml(subject);
+    const safeCategory = escapeHtml(category);
+    const safePriority = escapeHtml(priority);
+    const safeDescription = escapeHtml(description);
 
-    if (totalSize > maxSize) {
-      this.logger.warn(
-        `Attachments total size (${totalSize} bytes) exceeds SMTP limit of 25MB.`,
-      );
-    }
+    const safeDiagnostics = {
+      currentUserName: escapeHtml(diagnostics?.currentUserName || 'N/A'),
+      email: escapeHtml(diagnostics?.email || 'N/A'),
+      userId: escapeHtml(diagnostics?.userId || 'N/A'),
+      role: escapeHtml(diagnostics?.role || 'N/A'),
+      currentUrl: escapeHtml(diagnostics?.currentUrl || 'N/A'),
+      browser: escapeHtml(diagnostics?.browser || 'N/A'),
+      operatingSystem: escapeHtml(diagnostics?.operatingSystem || 'N/A'),
+      deviceType: escapeHtml(diagnostics?.deviceType || 'N/A'),
+      screenResolution: escapeHtml(diagnostics?.screenResolution || 'N/A'),
+      timezone: escapeHtml(diagnostics?.timezone || 'N/A'),
+      appVersion: escapeHtml(diagnostics?.appVersion || 'N/A'),
+      timestamp: escapeHtml(diagnostics?.timestamp || new Date().toISOString()),
+    };
+
+    const priorityColor =
+      priority === 'Critical'
+        ? '#ef4444'
+        : priority === 'High'
+          ? '#f97316'
+          : '#eab308';
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
@@ -50,58 +75,31 @@ export class SupportService {
           <h2 style="color: white; margin: 0;">Clixpro CRM Support Ticket</h2>
         </div>
         <div style="padding: 20px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
-          <p><strong>Ticket ID:</strong> ${ticketId}</p>
-          <p><strong>Subject:</strong> ${subject}</p>
-          <p><strong>Category:</strong> ${category}</p>
-          <p><strong>Priority:</strong> <span style="background-color: ${
-            priority === 'Critical'
-              ? '#ef4444'
-              : priority === 'High'
-                ? '#f97316'
-                : '#eab308'
-          }; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${priority}</span></p>
+          <p><strong>Ticket ID:</strong> ${escapeHtml(ticketId)}</p>
+          <p><strong>Subject:</strong> ${safeSubject}</p>
+          <p><strong>Category:</strong> ${safeCategory}</p>
+          <p><strong>Priority:</strong> <span style="background-color: ${priorityColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${safePriority}</span></p>
           
           <div style="margin: 20px 0; padding: 15px; background-color: #f8fafc; border-radius: 4px; white-space: pre-wrap;">
             <strong>Description:</strong><br/>
-            ${description}
+            ${safeDescription}
           </div>
           
           <h3 style="border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">User & System Diagnostics</h3>
           <table style="width: 100%; font-size: 13px; text-align: left; border-collapse: collapse;">
             <tbody>
-              <tr><th style="padding: 4px;">User Name:</th><td>${
-                diagnostics?.currentUserName || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">Email:</th><td>${
-                diagnostics?.email || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">Role:</th><td>${
-                diagnostics?.role || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">Current URL:</th><td>${
-                diagnostics?.currentUrl || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">Browser:</th><td>${
-                diagnostics?.browser || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">OS:</th><td>${
-                diagnostics?.operatingSystem || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">Device:</th><td>${
-                diagnostics?.deviceType || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">Resolution:</th><td>${
-                diagnostics?.screenResolution || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">Timezone:</th><td>${
-                diagnostics?.timezone || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">App Version:</th><td>${
-                diagnostics?.appVersion || 'N/A'
-              }</td></tr>
-              <tr><th style="padding: 4px;">Submitted At:</th><td>${
-                diagnostics?.timestamp || 'N/A'
-              }</td></tr>
+              <tr><th style="padding: 4px;">User Name:</th><td>${safeDiagnostics.currentUserName}</td></tr>
+              <tr><th style="padding: 4px;">Email:</th><td>${safeDiagnostics.email}</td></tr>
+              <tr><th style="padding: 4px;">User ID:</th><td>${safeDiagnostics.userId}</td></tr>
+              <tr><th style="padding: 4px;">Role:</th><td>${safeDiagnostics.role}</td></tr>
+              <tr><th style="padding: 4px;">Current URL:</th><td>${safeDiagnostics.currentUrl}</td></tr>
+              <tr><th style="padding: 4px;">Browser:</th><td>${safeDiagnostics.browser}</td></tr>
+              <tr><th style="padding: 4px;">OS:</th><td>${safeDiagnostics.operatingSystem}</td></tr>
+              <tr><th style="padding: 4px;">Device:</th><td>${safeDiagnostics.deviceType}</td></tr>
+              <tr><th style="padding: 4px;">Resolution:</th><td>${safeDiagnostics.screenResolution}</td></tr>
+              <tr><th style="padding: 4px;">Timezone:</th><td>${safeDiagnostics.timezone}</td></tr>
+              <tr><th style="padding: 4px;">App Version:</th><td>${safeDiagnostics.appVersion}</td></tr>
+              <tr><th style="padding: 4px;">Submitted At:</th><td>${safeDiagnostics.timestamp}</td></tr>
             </tbody>
           </table>
           
@@ -112,16 +110,25 @@ export class SupportService {
       </div>
     `;
 
+    const supportRecipient =
+      process.env.SUPPORT_EMAIL || 'support@clixprocrm.com';
+
     if (process.env.SMTP_HOST && process.env.SMTP_USER) {
-      await this.transporter.sendMail({
-        from: `"Clixpro Support" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-        to: 'manibct1817@gmail.com',
-        subject: `[ClientRise CRM] Support Ticket #${ticketId}`,
-        html: htmlContent,
-        attachments,
-      });
+      try {
+        await this.transporter.sendMail({
+          from: `"Clixpro Support" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+          to: supportRecipient,
+          subject: `[ClixProCRM Support] #${ticketId} - ${subject.slice(0, 80)}`,
+          html: htmlContent,
+          attachments,
+        });
+      } catch (mailError: any) {
+        this.logger.error(
+          `Failed to deliver support email for ticket ${ticketId}: ${mailError?.message || mailError}`,
+        );
+      }
     } else {
-      this.logger.warn('SMTP configuration not found, skipping email sending.');
+      this.logger.warn('SMTP configuration not found, skipping email dispatch.');
     }
 
     return { ticketId, estimatedResponseTime: 'Within 24 hours' };

@@ -43,22 +43,39 @@ export class PermissionsGuard implements CanActivate {
 
     const matchesPermission = (required: string, userMod: string) => {
       if (!required || !userMod) return false;
-      if (userMod === 'ALL' || userMod === 'all') return true;
+      if (userMod === 'ALL' || userMod === 'all' || userMod === '*') return true;
       if (required === userMod) return true;
-      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      const normalize = (s: string) => s.toLowerCase().trim();
       const reqNorm = normalize(required);
       const userNorm = normalize(userMod);
+
       if (reqNorm === userNorm) return true;
-      if (reqNorm.startsWith(userNorm) || userNorm.startsWith(reqNorm)) return true;
-      if (
-        (reqNorm.includes('role') && userNorm.includes('role')) ||
-        (reqNorm.includes('report') && userNorm.includes('report')) ||
-        (reqNorm.includes('employee') && userNorm.includes('employee')) ||
-        (reqNorm.includes('support') && userNorm.includes('support'))
-      ) {
+
+      // Handle standard 'Module:Action' structured permissions (e.g. 'Employees:View', 'Roles:Manage')
+      const [reqModule, reqAction] = reqNorm.includes(':')
+        ? reqNorm.split(':')
+        : [reqNorm, undefined];
+      const [userModule, userAction] = userNorm.includes(':')
+        ? userNorm.split(':')
+        : [userNorm, undefined];
+
+      // Cross-module access is strictly prohibited
+      if (reqModule !== userModule) {
+        return false;
+      }
+
+      // Full module grant (e.g., 'Employees' or 'Employees:Manage' or 'Employees:*') satisfies sub-actions
+      if (!userAction || userAction === '*' || userAction === 'manage' || userAction === 'admin') {
         return true;
       }
-      return false;
+
+      // Read-only grant ('view' / 'read') CANNOT satisfy 'manage', 'edit', 'delete', or 'create'
+      if (userAction === 'view' || userAction === 'read') {
+        return reqAction === 'view' || reqAction === 'read';
+      }
+
+      return userAction === reqAction;
     };
 
     const hasPermission = userRole.permissions?.some(

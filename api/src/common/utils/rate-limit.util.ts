@@ -21,6 +21,13 @@ export const RATE_LIMITS = {
   AI: { maxRequests: 20, windowMs: 60 * 1000 },
   ADMIN: { maxRequests: 60, windowMs: 60 * 1000 },
   SEARCH: { maxRequests: 60, windowMs: 60 * 1000 },
+  MFA_VERIFY: { maxRequests: 5, windowMs: 5 * 60 * 1000 },
+  MFA_RECOVERY: { maxRequests: 3, windowMs: 15 * 60 * 1000 },
+  SESSIONS_LIST: { maxRequests: 60, windowMs: 60 * 1000 },
+  SESSION_REVOKE: { maxRequests: 20, windowMs: 60 * 1000 },
+  SESSION_REVOKE_ALL: { maxRequests: 10, windowMs: 60 * 1000 },
+  CHANGE_PASSWORD: { maxRequests: 5, windowMs: 15 * 60 * 1000 },
+  SECURITY_ACTIVITY: { maxRequests: 60, windowMs: 60 * 1000 },
 };
 
 type RateLimitRecord = {
@@ -30,12 +37,24 @@ type RateLimitRecord = {
 
 const store = new Map<string, RateLimitRecord>();
 
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-const redisClient =
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.REDIS_TOKEN;
+let redisClient =
   redisUrl && redisToken
     ? new Redis({ url: redisUrl, token: redisToken })
     : null;
+
+export function getSharedRedisClient(): Redis | null {
+  if (redisClient) return redisClient;
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.REDIS_TOKEN;
+  if (url && token) {
+    redisClient = new Redis({ url, token });
+    return redisClient;
+  }
+  return null;
+}
+
 
 const ratelimiters = new Map<string, Ratelimit>();
 

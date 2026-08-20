@@ -64,7 +64,36 @@ client.interceptors.request.use(
 
 client.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    if (typeof window !== "undefined" && error?.response?.status === 401) {
+      const msg = String(error.response?.data?.message || "");
+      const isSessionExpiry =
+        msg.includes("expired") ||
+        msg.includes("revoked") ||
+        msg.includes("inactivity") ||
+        msg.includes("duration reached");
+
+      const pathname = window.location.pathname;
+      const isAuthPage =
+        pathname === "/login" ||
+        pathname === "/register" ||
+        pathname === "/forgot-password" ||
+        pathname === "/reset-password";
+
+      if (isSessionExpiry && !isAuthPage) {
+        try {
+          const supabase = createClient();
+          await supabase.auth.signOut();
+        } catch {}
+        if (!sessionStorage.getItem("clixpro_session_redirected")) {
+          sessionStorage.setItem("clixpro_session_redirected", "true");
+          setTimeout(() => {
+            sessionStorage.removeItem("clixpro_session_redirected");
+          }, 3000);
+          window.location.href = `/login?reason=session_expired`;
+        }
+      }
+    }
     return Promise.reject(error);
   }
 );

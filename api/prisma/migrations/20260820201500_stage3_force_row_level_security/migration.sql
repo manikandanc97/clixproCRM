@@ -1,0 +1,33 @@
+-- ============================================================================
+-- Migration: 20260820201500_stage3_force_row_level_security
+-- Stage 3 Defense-in-Depth PostgreSQL Row-Level Security (RLS)
+-- Enables FORCE ROW LEVEL SECURITY on all tenant-scoped tables.
+-- Ensures RLS policies are strictly enforced even for table owners.
+-- ============================================================================
+
+-- 1. Direct and Relational Tenant-Scoped Tables (25 tables)
+ALTER TABLE "Lead" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Customer" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Deal" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Task" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Meeting" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Quotation" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Invoice" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "InvoiceCounter" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Note" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Attachment" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "TimelineEvent" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Product" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "RevenueTarget" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Notification" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "TenantAiConfig" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "AiConversation" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "AiMessage" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Document" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "DocumentChunk" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Company" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Role" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "RolePermission" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Department" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Invitation" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "TenantUser" FORCE ROW LEVEL SECURITY;

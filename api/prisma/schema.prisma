@@ -26,6 +26,7 @@ model Tenant {
   timezone        String           @default("utc")
   logo            String?
   brandPrimaryColor String?
+  mfaPolicy       String           @default("OPTIONAL")
 
   attachments     Attachment[]
   customers       Customer[]
@@ -81,6 +82,7 @@ model User {
   ownedDeals         Deal[]           @relation("DealOwner")
   completedTasks     Task[]           @relation("TaskCompletedBy")
   ownedMeetings      Meeting[]        @relation("MeetingOwner")
+  sessions           UserSession[]
 }
 
 model TenantUser {
@@ -292,13 +294,34 @@ model AuditLog {
   details      Json?
   ipAddress    String?
   userAgent    String?
+  previousHash String?
+  recordHash   String?
   createdAt    DateTime @default(now())
-  targetUser   User?    @relation("AuditLogTarget", fields: [targetUserId], references: [id])
-  user         User?    @relation("AuditLogActor", fields: [userId], references: [id])
+  targetUser   User?               @relation("AuditLogTarget", fields: [targetUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user         User?               @relation("AuditLogActor", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  archiveOutbox AuditArchiveOutbox?
 
   @@index([userId])
   @@index([targetUserId])
   @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([createdAt])
+}
+
+model AuditArchiveOutbox {
+  id            String    @id @default(uuid())
+  auditLogId    String    @unique
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  lastAttemptAt DateTime?
+  archivedAt    DateTime?
+  lastError     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  auditLog      AuditLog  @relation(fields: [auditLogId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
 }
 
 model Invitation {
@@ -813,4 +836,37 @@ model PlatformModule {
   @@index([group, sortOrder])
   @@index([parentId])
 }
+
+model MfaRecoveryCode {
+  id        String    @id @default(uuid())
+  userId    String
+  codeHash  String
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, used])
+}
+
+model UserSession {
+  id               String    @id @default(uuid())
+  userId           String
+  sessionId        String    @unique
+  refreshTokenHash String?
+  deviceType       String?
+  browser          String?
+  operatingSystem  String?
+  userAgent        String?
+  ipAddress        String?
+  createdAt        DateTime  @default(now())
+  lastActiveAt     DateTime  @default(now())
+  expiresAt        DateTime?
+  revokedAt        DateTime?
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([sessionId])
+}
+
 

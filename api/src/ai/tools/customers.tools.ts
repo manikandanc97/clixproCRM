@@ -48,13 +48,17 @@ export function buildCustomersTools(
           const whereClause: any = { ...visibilityFilter };
           if (status) whereClause.status = status;
 
-          const customers = await prisma.customer.findMany({
-            where: whereClause,
-            orderBy: { createdAt: 'desc' },
-            // Fetch more when search is active so we can filter post-decryption
-            take: search ? Math.min(safeLimit * 10, 200) : safeLimit,
-            select: { id: true, name: true, company: true, email: true, status: true, revenue: true, createdAt: true },
-          });
+          const customers = await prisma.withTenantContext(
+            { tenantId: userContext.tenantId },
+            async (tx) =>
+              tx.customer.findMany({
+                where: whereClause,
+                orderBy: { createdAt: 'desc' },
+                // Fetch more when search is active so we can filter post-decryption
+                take: search ? Math.min(safeLimit * 10, 200) : safeLimit,
+                select: { id: true, name: true, company: true, email: true, status: true, revenue: true, createdAt: true },
+              }),
+          );
 
           // Decrypt PII
           const decrypted = customers.map((c) => ({

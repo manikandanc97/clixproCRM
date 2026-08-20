@@ -39,16 +39,20 @@ export function buildTasksTools(
           if (status) whereClause.status = status;
           if (priority) whereClause.priority = priority;
 
-          const tasks = await prisma.task.findMany({
-            where: whereClause,
-            orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }],
-            take: safeLimit,
-            select: {
-              id: true, title: true, description: true, status: true, priority: true,
-              visibility: true, dueDate: true, assignedToId: true, createdById: true,
-              assignedTo: { select: { name: true, email: true } },
-            },
-          });
+          const tasks = await prisma.withTenantContext(
+            { tenantId: userContext.tenantId },
+            async (tx) =>
+              tx.task.findMany({
+                where: whereClause,
+                orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }],
+                take: safeLimit,
+                select: {
+                  id: true, title: true, description: true, status: true, priority: true,
+                  visibility: true, dueDate: true, assignedToId: true, createdById: true,
+                  assignedTo: { select: { name: true, email: true } },
+                },
+              }),
+          );
 
           await aiSecurityService.logToolExecution(userContext, toolName, 'ALLOWED', { count: tasks.length });
 
@@ -111,20 +115,24 @@ export function buildTasksTools(
             }
           }
 
-          const newTask = await prisma.task.create({
-            data: {
-              tenantId: userContext.tenantId,
-              createdById: userContext.userId,
-              assignedToId: targetAssigneeId,
-              title,
-              description: description || null,
-              dueDate: dueDate ? new Date(dueDate) : null,
-              priority: priority as any,
-              visibility: visibility as any,
-              status: 'PENDING',
-            },
-            select: { id: true, title: true, priority: true, status: true, visibility: true, dueDate: true, createdAt: true },
-          });
+          const newTask = await prisma.withTenantContext(
+            { tenantId: userContext.tenantId },
+            async (tx) =>
+              tx.task.create({
+                data: {
+                  tenantId: userContext.tenantId,
+                  createdById: userContext.userId,
+                  assignedToId: targetAssigneeId,
+                  title,
+                  description: description || null,
+                  dueDate: dueDate ? new Date(dueDate) : null,
+                  priority: priority as any,
+                  visibility: visibility as any,
+                  status: 'PENDING',
+                },
+                select: { id: true, title: true, priority: true, status: true, visibility: true, dueDate: true, createdAt: true },
+              }),
+          );
 
           await aiSecurityService.logToolExecution(userContext, toolName, 'ALLOWED', {
             taskId: newTask.id, title: newTask.title,
@@ -168,11 +176,32 @@ export function buildTasksTools(
           const { taskId, status } = args;
           const visibilityFilter = aiSecurityService.getTasksVisibilityFilter(userContext);
 
-          const existingTask = await prisma.task.findFirst({
-            where: { ...visibilityFilter, id: taskId },
-          });
+          const result = await prisma.withTenantContext(
+            { tenantId: userContext.tenantId },
+            async (tx) => {
+              const existingTask = await tx.task.findFirst({
+                where: { ...visibilityFilter, id: taskId },
+              });
 
-          if (!existingTask) {
+              if (!existingTask) {
+                return null;
+              }
+
+              const updatedTask = await tx.task.update({
+                where: { id: taskId },
+                data: {
+                  status: status as any,
+                  completedAt: status === 'COMPLETED' ? new Date() : null,
+                  completedById: status === 'COMPLETED' ? userContext.userId : null,
+                },
+                select: { id: true, title: true, status: true, updatedAt: true },
+              });
+
+              return { existingTask, updatedTask };
+            },
+          );
+
+          if (!result) {
             await aiSecurityService.logToolExecution(userContext, toolName, 'DENIED', {
               taskId, reason: 'Task not found or not visible',
             });
@@ -182,24 +211,14 @@ export function buildTasksTools(
             };
           }
 
-          const updatedTask = await prisma.task.update({
-            where: { id: taskId },
-            data: {
-              status: status as any,
-              completedAt: status === 'COMPLETED' ? new Date() : null,
-              completedById: status === 'COMPLETED' ? userContext.userId : null,
-            },
-            select: { id: true, title: true, status: true, updatedAt: true },
-          });
-
           await aiSecurityService.logToolExecution(userContext, toolName, 'ALLOWED', {
-            taskId, oldStatus: existingTask.status, newStatus: status,
+            taskId, oldStatus: result.existingTask.status, newStatus: status,
           });
 
           return {
             success: true,
-            message: `Task "${updatedTask.title}" status updated to ${updatedTask.status}.`,
-            task: updatedTask,
+            message: `Task "${result.updatedTask.title}" status updated to ${result.updatedTask.status}.`,
+            task: result.updatedTask,
           };
         } catch (e: any) {
           await aiSecurityService.logToolExecution(userContext, toolName, 'ERROR', { error: e.message });
@@ -231,16 +250,20 @@ export function buildTasksTools(
           const whereClause: any = { ...visibilityFilter };
           if (startDate) whereClause.startTime = { gte: new Date(startDate) };
 
-          const meetings = await prisma.meeting.findMany({
-            where: whereClause,
-            orderBy: { startTime: 'asc' },
-            take: safeLimit,
-            select: {
-              id: true, title: true, description: true, startTime: true, endTime: true,
-              location: true, isOnline: true, status: true, visibility: true,
-              ownerId: true, assignedToId: true,
-            },
-          });
+          const meetings = await prisma.withTenantContext(
+            { tenantId: userContext.tenantId },
+            async (tx) =>
+              tx.meeting.findMany({
+                where: whereClause,
+                orderBy: { startTime: 'asc' },
+                take: safeLimit,
+                select: {
+                  id: true, title: true, description: true, startTime: true, endTime: true,
+                  location: true, isOnline: true, status: true, visibility: true,
+                  ownerId: true, assignedToId: true,
+                },
+              }),
+          );
 
           await aiSecurityService.logToolExecution(userContext, toolName, 'ALLOWED', { count: meetings.length });
 

@@ -17,79 +17,82 @@ export class SearchService {
 
     const employeeFilter = isEmployee ? { ownerId: userId } : {};
 
-    const [leads, customers, companies, deals, tasks] = await Promise.all([
-      // Leads
-      this.prisma.lead.findMany({
-        where: {
-          tenantId,
-          deletedAt: null,
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { company: { contains: query, mode: 'insensitive' } },
-          ],
-          ...employeeFilter,
-        },
-        take: 10,
-        select: { id: true, name: true, email: true, company: true },
-      }),
-      // Customers
-      this.prisma.customer.findMany({
-        where: {
-          tenantId,
-          deletedAt: null,
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { company: { contains: query, mode: 'insensitive' } },
-          ],
-          ...employeeFilter,
-        },
-        take: 10,
-        select: { id: true, name: true, email: true, company: true },
-      }),
-      // Companies
-      this.prisma.company.findMany({
-        where: {
-          tenantId,
-          deletedAt: null,
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-          ],
-          ...employeeFilter,
-        },
-        take: 10,
-        select: { id: true, name: true, email: true },
-      }),
-      // Deals
-      this.prisma.deal.findMany({
-        where: {
-          tenantId,
-          deletedAt: null,
-          OR: [{ name: { contains: query, mode: 'insensitive' } }],
-          ...employeeFilter,
-        },
-        take: 10,
-        select: { id: true, name: true, value: true },
-      }),
-      // Tasks
-      this.prisma.task.findMany({
-        where: {
-          tenantId,
-          deletedAt: null,
-          OR: [{ title: { contains: query, mode: 'insensitive' } }],
-        },
-        take: 30,
-        select: {
-          id: true,
-          title: true,
-          priority: true,
-          assignedToId: true,
-          createdById: true,
-        },
-      }),
-    ]);
+    const [leads, customers, companies, deals, tasks] =
+      await this.prisma.withTenantContext({ tenantId }, async (tx) => {
+        return Promise.all([
+          // Leads
+          tx.lead.findMany({
+            where: {
+              tenantId,
+              deletedAt: null,
+              OR: [
+                { name: { contains: query, mode: 'insensitive' } },
+                { email: { contains: query, mode: 'insensitive' } },
+                { company: { contains: query, mode: 'insensitive' } },
+              ],
+              ...employeeFilter,
+            },
+            take: 10,
+            select: { id: true, name: true, email: true, company: true },
+          }),
+          // Customers
+          tx.customer.findMany({
+            where: {
+              tenantId,
+              deletedAt: null,
+              OR: [
+                { name: { contains: query, mode: 'insensitive' } },
+                { email: { contains: query, mode: 'insensitive' } },
+                { company: { contains: query, mode: 'insensitive' } },
+              ],
+              ...employeeFilter,
+            },
+            take: 10,
+            select: { id: true, name: true, email: true, company: true },
+          }),
+          // Companies
+          tx.company.findMany({
+            where: {
+              tenantId,
+              deletedAt: null,
+              OR: [
+                { name: { contains: query, mode: 'insensitive' } },
+                { email: { contains: query, mode: 'insensitive' } },
+              ],
+              ...employeeFilter,
+            },
+            take: 10,
+            select: { id: true, name: true, email: true },
+          }),
+          // Deals
+          tx.deal.findMany({
+            where: {
+              tenantId,
+              deletedAt: null,
+              OR: [{ name: { contains: query, mode: 'insensitive' } }],
+              ...employeeFilter,
+            },
+            take: 10,
+            select: { id: true, name: true, value: true },
+          }),
+          // Tasks
+          tx.task.findMany({
+            where: {
+              tenantId,
+              deletedAt: null,
+              OR: [{ title: { contains: query, mode: 'insensitive' } }],
+            },
+            take: 30,
+            select: {
+              id: true,
+              title: true,
+              priority: true,
+              assignedToId: true,
+              createdById: true,
+            },
+          }),
+        ]);
+      });
 
     const filteredTasks = isEmployee
       ? tasks.filter(

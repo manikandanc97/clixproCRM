@@ -19,6 +19,7 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/components/auth-provider";
+import { MfaChallengeModal } from "@/features/auth/components/MfaChallengeModal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function LoginPage() {
   
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [showMfaChallenge, setShowMfaChallenge] = useState(false);
 
   // Reset loading states on back navigation (bfcache), tab focus, or visibility change
   useEffect(() => {
@@ -135,9 +137,13 @@ export default function LoginPage() {
       setFieldErrors({});
       setGeneralError(null);
       await login(email, password, staySignedIn);
-      toast.success("Login successful");
       // Redirect is handled by PublicRoute once auth state is confirmed.
-    } catch (error: unknown) {
+    } catch (error: any) {
+      if (error?.message === "MFA_REQUIRED") {
+        setShowMfaChallenge(true);
+        return;
+      }
+
       const { fieldErrors, generalError } = parseApiErrors(error, "Login failed");
       setFieldErrors(fieldErrors);
       setGeneralError(generalError);
@@ -312,6 +318,20 @@ export default function LoginPage() {
           Create Account
         </Link>
       </p>
+
+      {/* Two-Factor Authentication Modal */}
+      <MfaChallengeModal
+        open={showMfaChallenge}
+        onOpenChange={setShowMfaChallenge}
+        onSuccess={async () => {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("has_session", "1");
+          }
+          await refreshUser();
+          router.push("/dashboard");
+        }}
+      />
     </>
   );
 }
+

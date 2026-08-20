@@ -13,90 +13,94 @@ export class DealsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDeals(tenantId: string, page = 1, limit = 10, search = '') {
-    page = Math.max(1, page);
-    limit = Math.max(1, Math.min(limit, 10000));
-    const skip = (page - 1) * limit;
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      page = Math.max(1, page);
+      limit = Math.max(1, Math.min(limit, 10000));
+      const skip = (page - 1) * limit;
 
-    const where: Prisma.DealWhereInput = { tenantId, deletedAt: null };
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { company: { name: { contains: search, mode: 'insensitive' } } },
-        { customer: { name: { contains: search, mode: 'insensitive' } } },
-      ];
-    }
+      const where: Prisma.DealWhereInput = { tenantId, deletedAt: null };
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { company: { name: { contains: search, mode: 'insensitive' } } },
+          { customer: { name: { contains: search, mode: 'insensitive' } } },
+        ];
+      }
 
-    const [deals, total] = await Promise.all([
-      this.prisma.deal.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: {
-          company: { select: { id: true, name: true } },
-          customer: { select: { id: true, name: true } },
-          owner: { select: { id: true, name: true } },
-        },
-      }),
-      this.prisma.deal.count({ where }),
-    ]);
+      const [deals, total] = await Promise.all([
+        tx.deal.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+          include: {
+            company: { select: { id: true, name: true } },
+            customer: { select: { id: true, name: true } },
+            owner: { select: { id: true, name: true } },
+          },
+        }),
+        tx.deal.count({ where }),
+      ]);
 
-    return {
-      deals,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
+      return {
+        deals,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    });
   }
 
   async getDealById(tenantId: string, id: string) {
-    return this.prisma.deal.findFirst({
-      where: { id, tenantId, deletedAt: null },
-      include: {
-        company: {
-          select: {
-            id: true,
-            name: true,
-            industry: true,
-            website: true,
-            email: true,
-            phone: true,
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      return tx.deal.findFirst({
+        where: { id, tenantId, deletedAt: null },
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+              industry: true,
+              website: true,
+              email: true,
+              phone: true,
+            },
           },
-        },
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            company: true,
-            status: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              company: true,
+              status: true,
+            },
           },
+          owner: { select: { id: true, name: true, email: true } },
+          tasks: {
+            where: { deletedAt: null },
+            take: 50,
+            orderBy: { createdAt: 'desc' },
+          },
+          meetings: { take: 20, orderBy: { startTime: 'desc' } },
+          quotations: {
+            where: { deletedAt: null },
+            take: 20,
+            orderBy: { createdAt: 'desc' },
+          },
+          invoices: { take: 20, orderBy: { createdAt: 'desc' } },
+          timelineEvents: { orderBy: { createdAt: 'desc' }, take: 50 },
         },
-        owner: { select: { id: true, name: true, email: true } },
-        tasks: {
-          where: { deletedAt: null },
-          take: 50,
-          orderBy: { createdAt: 'desc' },
-        },
-        meetings: { take: 20, orderBy: { startTime: 'desc' } },
-        quotations: {
-          where: { deletedAt: null },
-          take: 20,
-          orderBy: { createdAt: 'desc' },
-        },
-        invoices: { take: 20, orderBy: { createdAt: 'desc' } },
-        timelineEvents: { orderBy: { createdAt: 'desc' }, take: 50 },
-      },
+      });
     });
   }
 
   async createDeal(tenantId: string, userId: string, data: CreateDealDto) {
-    if (data.ownerId && data.ownerId !== userId) {
-      const isValidOwner = await this.prisma.tenantUser.findFirst({
-        where: { userId: data.ownerId, tenantId, status: 'ACTIVE' },
-      });
-      if (!isValidOwner) throw new BadRequestException('Invalid deal owner');
-    }
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      if (data.ownerId && data.ownerId !== userId) {
+        const isValidOwner = await tx.tenantUser.findFirst({
+          where: { userId: data.ownerId, tenantId, status: 'ACTIVE' },
+        });
+        if (!isValidOwner) throw new BadRequestException('Invalid deal owner');
+      }
 
-    return this.prisma.$transaction(async (tx) => {
       const deal = await tx.deal.create({
         data: {
           tenantId,
@@ -137,37 +141,37 @@ export class DealsService {
     userId: string,
     data: UpdateDealDto,
   ) {
-    const oldDeal = await this.prisma.deal.findUnique({
-      where: { id, tenantId },
-    });
-    if (!oldDeal) throw new NotFoundException('Deal not found');
-
-    const {
-      wonReason,
-      actualRevenue,
-      notes,
-      competitor,
-      lostReason,
-      ...cleanData
-    } = data;
-
-    if (
-      cleanData.ownerId &&
-      cleanData.ownerId !== oldDeal.ownerId &&
-      cleanData.ownerId !== userId
-    ) {
-      const isValidOwner = await this.prisma.tenantUser.findFirst({
-        where: { userId: cleanData.ownerId, tenantId, status: 'ACTIVE' },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const oldDeal = await tx.deal.findUnique({
+        where: { id, tenantId },
       });
-      if (!isValidOwner) throw new BadRequestException('Invalid deal owner');
-    }
+      if (!oldDeal) throw new NotFoundException('Deal not found');
 
-    const updateData: any = { ...cleanData };
-    if (cleanData.expectedCloseDate) {
-      updateData.expectedCloseDate = new Date(cleanData.expectedCloseDate);
-    }
+      const {
+        wonReason,
+        actualRevenue,
+        notes,
+        competitor,
+        lostReason,
+        ...cleanData
+      } = data;
 
-    return this.prisma.$transaction(async (tx) => {
+      if (
+        cleanData.ownerId &&
+        cleanData.ownerId !== oldDeal.ownerId &&
+        cleanData.ownerId !== userId
+      ) {
+        const isValidOwner = await tx.tenantUser.findFirst({
+          where: { userId: cleanData.ownerId, tenantId, status: 'ACTIVE' },
+        });
+        if (!isValidOwner) throw new BadRequestException('Invalid deal owner');
+      }
+
+      const updateData: any = { ...cleanData };
+      if (cleanData.expectedCloseDate) {
+        updateData.expectedCloseDate = new Date(cleanData.expectedCloseDate);
+      }
+
       const deal = await tx.deal.update({
         where: { id, tenantId },
         data: updateData,
@@ -212,16 +216,21 @@ export class DealsService {
   }
 
   async deleteDeal(tenantId: string, id: string) {
-    return this.prisma.deal.update({
-      where: { id, tenantId },
-      data: { deletedAt: new Date(), status: 'INACTIVE' },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      return tx.deal.update({
+        where: { id, tenantId },
+        data: { deletedAt: new Date(), status: 'INACTIVE' },
+      });
     });
   }
 
   async bulkDeleteDeals(tenantId: string, ids: string[]) {
-    return this.prisma.deal.updateMany({
-      where: { id: { in: ids }, tenantId },
-      data: { deletedAt: new Date(), status: 'INACTIVE' },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      return tx.deal.updateMany({
+        where: { id: { in: ids }, tenantId },
+        data: { deletedAt: new Date(), status: 'INACTIVE' },
+      });
     });
   }
+
 }

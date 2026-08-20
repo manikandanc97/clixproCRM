@@ -52,7 +52,8 @@ export class InvoicesService {
     userId: string,
     data: CreateInvoiceDto,
   ) {
-    return this.prisma.$transaction(
+    return this.prisma.withTenantContext(
+      { tenantId },
       async (tx) => {
         // 1. Atomically allocate the next invoice number for this tenant
         const invoiceNumber = await this.allocateInvoiceNumber(tenantId, tx);
@@ -88,8 +89,7 @@ export class InvoicesService {
 
         return invoice;
       },
-      { timeout: 30000 },
-    ); // 30 second timeout for remote DB (Supabase over PgBouncer)
+    );
   }
 
   async updateInvoice(
@@ -97,104 +97,110 @@ export class InvoicesService {
     id: string,
     data: Partial<CreateInvoiceDto>,
   ) {
-    const existing = await this.prisma.invoice.findFirst({
-      where: { id, tenantId },
-    });
-    if (!existing) throw new NotFoundException('Invoice not found');
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const existing = await tx.invoice.findFirst({
+        where: { id, tenantId },
+      });
+      if (!existing) throw new NotFoundException('Invoice not found');
 
-    return this.prisma.invoice.update({
-      where: { id },
-      data: {
-        ...(data.amount !== undefined && { amount: data.amount }),
-        ...(data.status && { status: data.status }),
-        ...(data.dueDate !== undefined && {
-          dueDate: data.dueDate ? new Date(data.dueDate) : null,
-        }),
-        ...(data.customerId && { customerId: data.customerId }),
-        ...(data.dealId !== undefined && { dealId: data.dealId }),
-      },
+      return tx.invoice.update({
+        where: { id, tenantId },
+        data: {
+          ...(data.amount !== undefined && { amount: data.amount }),
+          ...(data.status && { status: data.status }),
+          ...(data.dueDate !== undefined && {
+            dueDate: data.dueDate ? new Date(data.dueDate) : null,
+          }),
+          ...(data.customerId && { customerId: data.customerId }),
+          ...(data.dealId !== undefined && { dealId: data.dealId }),
+        },
+      });
     });
   }
 
   async getInvoices(tenantId: string, page = 1, limit = 20) {
-    page = Math.max(1, page);
-    limit = Math.max(1, Math.min(limit, 10000));
-    const skip = (page - 1) * limit;
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      page = Math.max(1, page);
+      limit = Math.max(1, Math.min(limit, 10000));
+      const skip = (page - 1) * limit;
 
-    const where: Prisma.InvoiceWhereInput = { tenantId };
+      const where: Prisma.InvoiceWhereInput = { tenantId };
 
-    const [invoices, total, currency] = await Promise.all([
-      this.prisma.invoice.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.invoice.count({ where }),
-      this.getTenantCurrency(tenantId),
-    ]);
+      const [invoices, total, currency] = await Promise.all([
+        tx.invoice.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        tx.invoice.count({ where }),
+        this.getTenantCurrency(tenantId),
+      ]);
 
-    const stats = await this.prisma.invoice.groupBy({
-      by: ['status'],
-      where: { tenantId },
-      _count: { id: true },
-      _sum: { amount: true },
+      const stats = await tx.invoice.groupBy({
+        by: ['status'],
+        where: { tenantId },
+        _count: { id: true },
+        _sum: { amount: true },
+      });
+
+      const totalCount = stats.reduce((s, r) => s + r._count.id, 0);
+      const totalRevenue = stats.reduce((s, r) => s + toNumber(r._sum.amount), 0);
+      const paidRevenue =
+        stats.find((r) => r.status === 'PAID')?._sum.amount ?? 0;
+
+      return {
+        stats: [
+          { title: 'Total Invoices', value: totalCount.toString() },
+          {
+            title: 'Total Revenue',
+            value: formatCurrency(totalRevenue, currency),
+            valueAmount: totalRevenue,
+          },
+          {
+            title: 'Paid Revenue',
+            value: formatCurrency(toNumber(paidRevenue), currency),
+            valueAmount: toNumber(paidRevenue),
+          },
+          {
+            title: 'Outstanding',
+            value: formatCurrency(totalRevenue - toNumber(paidRevenue), currency),
+            valueAmount: totalRevenue - toNumber(paidRevenue),
+          },
+        ],
+        invoices: invoices.map((inv) => ({
+          id: inv.id,
+          tenantId: inv.tenantId,
+          customerId: inv.customerId,
+          dealId: inv.dealId,
+          invoiceNumber: inv.invoiceNumber,
+          amount: toNumber(inv.amount),
+          amountFormatted: formatCurrency(toNumber(inv.amount), currency),
+          status: inv.status,
+          dueDate: inv.dueDate ? inv.dueDate.toISOString() : null,
+          createdAt: inv.createdAt.toISOString(),
+          updatedAt: inv.updatedAt.toISOString(),
+        })),
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
     });
-
-    const totalCount = stats.reduce((s, r) => s + r._count.id, 0);
-    const totalRevenue = stats.reduce((s, r) => s + toNumber(r._sum.amount), 0);
-    const paidRevenue =
-      stats.find((r) => r.status === 'PAID')?._sum.amount ?? 0;
-
-    return {
-      stats: [
-        { title: 'Total Invoices', value: totalCount.toString() },
-        {
-          title: 'Total Revenue',
-          value: formatCurrency(totalRevenue, currency),
-          valueAmount: totalRevenue,
-        },
-        {
-          title: 'Paid Revenue',
-          value: formatCurrency(toNumber(paidRevenue), currency),
-          valueAmount: toNumber(paidRevenue),
-        },
-        {
-          title: 'Outstanding',
-          value: formatCurrency(totalRevenue - toNumber(paidRevenue), currency),
-          valueAmount: totalRevenue - toNumber(paidRevenue),
-        },
-      ],
-      invoices: invoices.map((inv) => ({
-        id: inv.id,
-        tenantId: inv.tenantId,
-        customerId: inv.customerId,
-        dealId: inv.dealId,
-        invoiceNumber: inv.invoiceNumber,
-        amount: toNumber(inv.amount),
-        amountFormatted: formatCurrency(toNumber(inv.amount), currency),
-        status: inv.status,
-        dueDate: inv.dueDate ? inv.dueDate.toISOString() : null,
-        createdAt: inv.createdAt.toISOString(),
-        updatedAt: inv.updatedAt.toISOString(),
-      })),
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
   }
 
   async getInvoiceById(tenantId: string, id: string) {
-    const invoice = await this.prisma.invoice.findFirst({
-      where: { id, tenantId },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const invoice = await tx.invoice.findFirst({
+        where: { id, tenantId },
+      });
+      if (!invoice) return null;
+      return {
+        ...invoice,
+        amount: toNumber(invoice.amount),
+      };
     });
-    if (!invoice) return null;
-    return {
-      ...invoice,
-      amount: toNumber(invoice.amount),
-    };
   }
 
   async deleteInvoice(tenantId: string, id: string, userId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
       const invoice = await tx.invoice.findFirst({ where: { id, tenantId } });
       if (!invoice) throw new NotFoundException('Invoice not found');
 
@@ -220,18 +226,21 @@ export class InvoicesService {
   }
 
   async updateInvoiceStatus(tenantId: string, id: string, status: string) {
-    const invoice = await this.prisma.invoice.findFirst({
-      where: { id, tenantId },
-    });
-    if (!invoice) throw new NotFoundException('Invoice not found');
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const invoice = await tx.invoice.findFirst({
+        where: { id, tenantId },
+      });
+      if (!invoice) throw new NotFoundException('Invoice not found');
 
-    if (invoice.status === 'PAID' && status === 'DRAFT') {
-      throw new BadRequestException('Cannot revert a PAID invoice to DRAFT.');
-    }
+      if (invoice.status === 'PAID' && status === 'DRAFT') {
+        throw new BadRequestException('Cannot revert a PAID invoice to DRAFT.');
+      }
 
-    return this.prisma.invoice.update({
-      where: { id, tenantId },
-      data: { status },
+      return tx.invoice.update({
+        where: { id, tenantId },
+        data: { status },
+      });
     });
   }
+
 }

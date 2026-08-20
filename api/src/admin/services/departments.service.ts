@@ -6,16 +6,17 @@ export class DepartmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDepartments(tenantId: string) {
-    const departments = await this.prisma.department.findMany({
-      where: { tenantId },
-      include: {
-        _count: {
-          select: { users: true },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      return tx.department.findMany({
+        where: { tenantId },
+        include: {
+          _count: {
+            select: { users: true },
+          },
         },
-      },
-      orderBy: { name: 'asc' },
+        orderBy: { name: 'asc' },
+      });
     });
-    return departments;
   }
 
   async createDepartment(
@@ -24,33 +25,35 @@ export class DepartmentsService {
     name: string,
     description?: string,
   ) {
-    const existing = await this.prisma.department.findFirst({
-      where: { tenantId, name },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const existing = await tx.department.findFirst({
+        where: { tenantId, name },
+      });
+
+      if (existing) {
+        throw new Error('Department already exists');
+      }
+
+      const department = await tx.department.create({
+        data: {
+          tenantId,
+          name,
+          description,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          userId,
+          action: 'CREATE_DEPARTMENT',
+          module: 'Employees',
+          details: { name: department.name },
+        },
+      });
+
+      return department;
     });
-
-    if (existing) {
-      throw new Error('Department already exists');
-    }
-
-    const department = await this.prisma.department.create({
-      data: {
-        tenantId,
-        name,
-        description,
-      },
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        tenantId,
-        userId,
-        action: 'CREATE_DEPARTMENT',
-        module: 'Employees',
-        details: { name: department.name },
-      },
-    });
-
-    return department;
   }
 
   async updateDepartment(
@@ -60,42 +63,44 @@ export class DepartmentsService {
     name?: string,
     description?: string,
   ) {
-    const existing = await this.prisma.department.findFirst({
-      where: { tenantId, id: departmentId },
-    });
-
-    if (!existing) {
-      throw new HttpException('Department not found', HttpStatus.NOT_FOUND);
-    }
-
-    if (name && name !== existing.name) {
-      const duplicate = await this.prisma.department.findFirst({
-        where: { tenantId, name },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const existing = await tx.department.findFirst({
+        where: { tenantId, id: departmentId },
       });
-      if (duplicate) {
-        throw new HttpException(
-          'Department name already in use',
-          HttpStatus.BAD_REQUEST,
-        );
+
+      if (!existing) {
+        throw new HttpException('Department not found', HttpStatus.NOT_FOUND);
       }
-    }
 
-    const updatedDepartment = await this.prisma.department.update({
-      where: { id: departmentId },
-      data: { name, description },
+      if (name && name !== existing.name) {
+        const duplicate = await tx.department.findFirst({
+          where: { tenantId, name },
+        });
+        if (duplicate) {
+          throw new HttpException(
+            'Department name already in use',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
+
+      const updatedDepartment = await tx.department.update({
+        where: { id: departmentId },
+        data: { name, description },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          userId,
+          action: 'UPDATE_DEPARTMENT',
+          module: 'Employees',
+          details: { departmentId, name: updatedDepartment.name },
+        },
+      });
+
+      return updatedDepartment;
     });
-
-    await this.prisma.auditLog.create({
-      data: {
-        tenantId,
-        userId,
-        action: 'UPDATE_DEPARTMENT',
-        module: 'Employees',
-        details: { departmentId, name: updatedDepartment.name },
-      },
-    });
-
-    return updatedDepartment;
   }
 
   async deleteDepartment(
@@ -103,40 +108,43 @@ export class DepartmentsService {
     departmentId: string,
     userId: string,
   ) {
-    const existing = await this.prisma.department.findFirst({
-      where: { tenantId, id: departmentId },
-      include: {
-        _count: {
-          select: { users: true },
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const existing = await tx.department.findFirst({
+        where: { tenantId, id: departmentId },
+        include: {
+          _count: {
+            select: { users: true },
+          },
         },
-      },
+      });
+
+      if (!existing) {
+        throw new HttpException('Department not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (existing._count.users > 0) {
+        throw new HttpException(
+          'Cannot delete department with assigned users',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      await tx.department.delete({
+        where: { id: departmentId },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          userId,
+          action: 'DELETE_DEPARTMENT',
+          module: 'Employees',
+          details: { departmentName: existing.name },
+        },
+      });
+
+      return true;
     });
-
-    if (!existing) {
-      throw new HttpException('Department not found', HttpStatus.NOT_FOUND);
-    }
-
-    if (existing._count.users > 0) {
-      throw new HttpException(
-        'Cannot delete department with assigned users',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    await this.prisma.department.delete({
-      where: { id: departmentId },
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        tenantId,
-        userId,
-        action: 'DELETE_DEPARTMENT',
-        module: 'Employees',
-        details: { departmentName: existing.name },
-      },
-    });
-
-    return true;
   }
 }
+

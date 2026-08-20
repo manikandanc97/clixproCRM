@@ -19,25 +19,27 @@ export class PipelineService {
   }
 
   async getPipeline(tenantId: string) {
-    const [currency, deals] = await Promise.all([
-      this.getTenantCurrency(tenantId),
-      this.prisma.deal.findMany({
-        where: { tenantId, deletedAt: null },
-        orderBy: [{ stage: 'asc' }, { updatedAt: 'desc' }],
-        select: {
-          id: true,
-          name: true,
-          value: true,
-          stage: true,
-          probability: true,
-          expectedCloseDate: true,
-          createdAt: true,
-          updatedAt: true,
-          company: { select: { name: true } },
-          customer: { select: { name: true } },
-        },
-      }),
-    ]);
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      const [currency, deals] = await Promise.all([
+        this.getTenantCurrency(tenantId),
+        tx.deal.findMany({
+          where: { tenantId, deletedAt: null },
+          orderBy: [{ stage: 'asc' }, { updatedAt: 'desc' }],
+          select: {
+            id: true,
+            name: true,
+            value: true,
+            stage: true,
+            probability: true,
+            expectedCloseDate: true,
+            createdAt: true,
+            updatedAt: true,
+            company: { select: { name: true } },
+            customer: { select: { name: true } },
+          },
+        }),
+      ]);
+
 
     const openDeals = deals.filter(
       (deal) => !['WON', 'LOST'].includes(deal.stage),
@@ -145,34 +147,36 @@ export class PipelineService {
       };
     });
 
-    return {
-      stats: [
-        {
-          title: 'Total Value',
-          value: formatCurrency(totalValue, currency),
-          valueAmount: totalValue,
-        },
-        {
-          title: 'Weighted Value',
-          value: formatCurrency(weightedPipeline, currency),
-          valueAmount: weightedPipeline,
-        },
-        {
-          title: 'Active Deals',
-          value: `${openDeals.length} Deals`,
-          valueAmount: openDeals.length,
-          sparklineData: sparklineActiveDeals,
-          ...calculateTrend(openDeals.length, previousOpenDeals),
-        },
-        {
-          title: 'Win Rate',
-          value: formatPercentage(winRate),
-          valueAmount: winRate,
-          sparklineData: sparklineWinRate,
-          ...calculateTrend(winRate, previousWinRate),
-        },
-      ],
-      items,
-    };
+      return {
+        stats: [
+          {
+            title: 'Total Value',
+            value: formatCurrency(totalValue, currency),
+            valueAmount: totalValue,
+          },
+          {
+            title: 'Weighted Value',
+            value: formatCurrency(weightedPipeline, currency),
+            valueAmount: weightedPipeline,
+          },
+          {
+            title: 'Active Deals',
+            value: `${openDeals.length} Deals`,
+            valueAmount: openDeals.length,
+            sparklineData: sparklineActiveDeals,
+            ...calculateTrend(openDeals.length, previousOpenDeals),
+          },
+          {
+            title: 'Win Rate',
+            value: formatPercentage(winRate),
+            valueAmount: winRate,
+            sparklineData: sparklineWinRate,
+            ...calculateTrend(winRate, previousWinRate),
+          },
+        ],
+        items,
+      };
+    });
   }
 }
+

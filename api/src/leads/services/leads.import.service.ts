@@ -24,100 +24,121 @@ export class LeadsImportService {
     leadsData: any[],
     duplicateStrategy: 'skip' | 'update' | 'create',
   ) {
-    let imported = 0;
-    let skipped = 0;
-    let failed = 0;
-    const failedRows = [];
+    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
+      let imported = 0;
+      let skipped = 0;
+      let failed = 0;
+      const failedRows = [];
 
-    const defaults = {
-      stage: 'NEW' as LeadStage,
-      priority: 'MEDIUM' as LeadPriority,
-    };
+      const defaults = {
+        stage: 'NEW' as LeadStage,
+        priority: 'MEDIUM' as LeadPriority,
+      };
 
-    for (let i = 0; i < leadsData.length; i++) {
-      const row = leadsData[i];
-      try {
-        if (!row.name || !row.email) {
-          failed++;
-          failedRows.push({
-            ...row,
-            ErrorReason: 'Missing required fields (Name or Email)',
-          });
-          continue;
-        }
-
-        const stageToUse = (
-          row.stage ||
-          row.status ||
-          defaults.stage
-        ).toUpperCase();
-        let priorityToUse = defaults.priority;
-        if (row.priority) {
-          priorityToUse = String(row.priority).toUpperCase() as LeadPriority;
-        }
-
-        let valueToUse = 0;
-        if (row.valueAmount !== undefined) {
-          valueToUse =
-            parseFloat(String(row.valueAmount).replace(/[^0-9.-]+/g, '')) || 0;
-        } else if (row.value !== undefined) {
-          valueToUse =
-            parseFloat(String(row.value).replace(/[^0-9.-]+/g, '')) || 0;
-        }
-
-        const companyName = (row.company || 'Unknown Company').trim();
-        let companyId: string | null = null;
-        if (companyName && companyName !== 'Unknown Company') {
-          // Exact-match on encrypted company name via nameHash
-          const companyNameHash = this.enc.hash(companyName);
-          let company = await this.prisma.company.findFirst({
-            where: { tenantId, nameHash: companyNameHash, deletedAt: null },
-          });
-          if (!company) {
-            const { encrypted: encName, hash: nameHash } =
-              this.enc.encryptWithHash(companyName);
-            company = await this.prisma.company.create({
-              data: {
-                tenantId,
-                name: encName!,
-                nameHash,
-                ownerId: userId,
-                status: 'ACTIVE',
-              },
+      for (let i = 0; i < leadsData.length; i++) {
+        const row = leadsData[i];
+        try {
+          if (!row.name || !row.email) {
+            failed++;
+            failedRows.push({
+              ...row,
+              ErrorReason: 'Missing required fields (Name or Email)',
             });
-          }
-          companyId = company.id;
-        }
-
-        // Duplicate detection via emailHash (deterministic, no plaintext scan)
-        const emailHash = this.enc.hash(row.email);
-        const existing = await this.prisma.lead.findFirst({
-          where: { tenantId, emailHash, deletedAt: null },
-        });
-
-        if (existing) {
-          if (duplicateStrategy === 'skip') {
-            skipped++;
             continue;
-          } else if (duplicateStrategy === 'update') {
-            await this.prisma.lead.update({
-              where: { id: existing.id },
-              data: {
-                name: this.enc.encrypt(row.name)!,
-                company: this.enc.encrypt(companyName)!,
-                companyId: companyId || existing.companyId,
-                phone: this.enc.encrypt(row.phone),
-                value: valueToUse,
-                stage: stageToUse as LeadStage,
-                priority: priorityToUse,
-                assignedToId: row.assignedToId || existing.assignedToId,
-              },
+          }
+
+          const stageToUse = (
+            row.stage ||
+            row.status ||
+            defaults.stage
+          ).toUpperCase();
+          let priorityToUse = defaults.priority;
+          if (row.priority) {
+            priorityToUse = String(row.priority).toUpperCase() as LeadPriority;
+          }
+
+          let valueToUse = 0;
+          if (row.valueAmount !== undefined) {
+            valueToUse =
+              parseFloat(String(row.valueAmount).replace(/[^0-9.-]+/g, '')) || 0;
+          } else if (row.value !== undefined) {
+            valueToUse =
+              parseFloat(String(row.value).replace(/[^0-9.-]+/g, '')) || 0;
+          }
+
+          const companyName = (row.company || 'Unknown Company').trim();
+          let companyId: string | null = null;
+          if (companyName && companyName !== 'Unknown Company') {
+            // Exact-match on encrypted company name via nameHash
+            const companyNameHash = this.enc.hash(companyName);
+            let company = await tx.company.findFirst({
+              where: { tenantId, nameHash: companyNameHash, deletedAt: null },
             });
-            imported++;
-          } else if (duplicateStrategy === 'create') {
+            if (!company) {
+              const { encrypted: encName, hash: nameHash } =
+                this.enc.encryptWithHash(companyName);
+              company = await tx.company.create({
+                data: {
+                  tenantId,
+                  name: encName!,
+                  nameHash,
+                  ownerId: userId,
+                  status: 'ACTIVE',
+                },
+              });
+            }
+            companyId = company.id;
+          }
+
+          // Duplicate detection via emailHash (deterministic, no plaintext scan)
+          const emailHash = this.enc.hash(row.email);
+          const existing = await tx.lead.findFirst({
+            where: { tenantId, emailHash, deletedAt: null },
+          });
+
+          if (existing) {
+            if (duplicateStrategy === 'skip') {
+              skipped++;
+              continue;
+            } else if (duplicateStrategy === 'update') {
+              await tx.lead.update({
+                where: { id: existing.id },
+                data: {
+                  name: this.enc.encrypt(row.name)!,
+                  company: this.enc.encrypt(companyName)!,
+                  companyId: companyId || existing.companyId,
+                  phone: this.enc.encrypt(row.phone),
+                  value: valueToUse,
+                  stage: stageToUse as LeadStage,
+                  priority: priorityToUse,
+                  assignedToId: row.assignedToId || existing.assignedToId,
+                },
+              });
+              imported++;
+            } else if (duplicateStrategy === 'create') {
+              const { encrypted: encEmail, hash: newEmailHash } =
+                this.enc.encryptWithHash(row.email);
+              await tx.lead.create({
+                data: {
+                  tenantId,
+                  name: this.enc.encrypt(row.name)!,
+                  company: this.enc.encrypt(companyName)!,
+                  companyId,
+                  email: encEmail!,
+                  emailHash: newEmailHash,
+                  phone: this.enc.encrypt(row.phone),
+                  value: valueToUse,
+                  stage: stageToUse as LeadStage,
+                  priority: priorityToUse,
+                  assignedToId: row.assignedToId || null,
+                },
+              });
+              imported++;
+            }
+          } else {
             const { encrypted: encEmail, hash: newEmailHash } =
               this.enc.encryptWithHash(row.email);
-            await this.prisma.lead.create({
+            await tx.lead.create({
               data: {
                 tenantId,
                 name: this.enc.encrypt(row.name)!,
@@ -134,47 +155,28 @@ export class LeadsImportService {
             });
             imported++;
           }
-        } else {
-          const { encrypted: encEmail, hash: newEmailHash } =
-            this.enc.encryptWithHash(row.email);
-          await this.prisma.lead.create({
-            data: {
-              tenantId,
-              name: this.enc.encrypt(row.name)!,
-              company: this.enc.encrypt(companyName)!,
-              companyId,
-              email: encEmail!,
-              emailHash: newEmailHash,
-              phone: this.enc.encrypt(row.phone),
-              value: valueToUse,
-              stage: stageToUse as LeadStage,
-              priority: priorityToUse,
-              assignedToId: row.assignedToId || null,
-            },
+        } catch (err: any) {
+          failed++;
+          failedRows.push({
+            ...row,
+            ErrorReason: err.message || 'Database error',
           });
-          imported++;
         }
-      } catch (err: any) {
-        failed++;
-        failedRows.push({
-          ...row,
-          ErrorReason: err.message || 'Database error',
+      }
+
+      if (imported > 0) {
+        await tx.auditLog.create({
+          data: {
+            tenantId,
+            userId,
+            action: 'BULK_IMPORT_LEADS',
+            module: 'PIPELINE',
+            details: { imported, skipped, failed },
+          },
         });
       }
-    }
 
-    if (imported > 0) {
-      await this.prisma.auditLog.create({
-        data: {
-          tenantId,
-          userId,
-          action: 'BULK_IMPORT_LEADS',
-          module: 'PIPELINE',
-          details: { imported, skipped, failed },
-        },
-      });
-    }
-
-    return { imported, skipped, failed, failedRows };
+      return { imported, skipped, failed, failedRows };
+    });
   }
 }
