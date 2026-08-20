@@ -6,9 +6,10 @@ import { PermissionsGuard } from './permissions.guard';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PrismaModule } from '../prisma/prisma.module';
+import { WorkspaceModule } from '../workspace/workspace.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, WorkspaceModule],
   controllers: [AuthController],
   providers: [
     AuthService,

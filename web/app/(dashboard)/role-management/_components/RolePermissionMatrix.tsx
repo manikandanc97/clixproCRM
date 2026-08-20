@@ -5,8 +5,10 @@ import { Building, Calendar, Sparkles, ShieldCheck } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { cn } from "@/shared/lib/utils";
+import { usePlatformNavigation } from "@/shared/hooks/use-platform-navigation";
+import { getDynamicIcon } from "@/shared/lib/icons/dynamic-icon";
 
-export const PERMISSION_CATEGORIES = [
+export const DEFAULT_PERMISSION_CATEGORIES = [
   {
     name: "CRM & Sales",
     icon: Building,
@@ -47,6 +49,8 @@ export const PERMISSION_CATEGORIES = [
   },
 ];
 
+export const PERMISSION_CATEGORIES = DEFAULT_PERMISSION_CATEGORIES;
+
 interface RolePermissionMatrixProps {
   permissions: string[];
   onChange: (permissions: string[]) => void;
@@ -60,6 +64,47 @@ export function RolePermissionMatrix({
   isSystemAdminRole,
   roleName,
 }: RolePermissionMatrixProps) {
+  const { rawModules } = usePlatformNavigation();
+
+  // Dynamically build categories based on active platform modules if available
+  const permissionCategories = React.useMemo(() => {
+    if (!rawModules || rawModules.length === 0) {
+      return DEFAULT_PERMISSION_CATEGORIES;
+    }
+
+    const groupMap = new Map<string, { id: string; label: string }[]>();
+    const groupOrder: string[] = [];
+
+    for (const mod of rawModules) {
+      const groupName = mod.group || "Core";
+      if (!groupMap.has(groupName)) {
+        groupMap.set(groupName, []);
+        groupOrder.push(groupName);
+      }
+      groupMap.get(groupName)!.push({
+        id: mod.permission || mod.label,
+        label: mod.label,
+      });
+    }
+
+    return groupOrder.map((groupName) => {
+      let icon = Building;
+      if (groupName.toLowerCase().includes("operation") || groupName.toLowerCase().includes("core")) {
+        icon = Calendar;
+      } else if (groupName.toLowerCase().includes("admin")) {
+        icon = ShieldCheck;
+      } else if (groupName.toLowerCase().includes("insight") || groupName.toLowerCase().includes("hrm")) {
+        icon = Sparkles;
+      }
+
+      return {
+        name: groupName,
+        icon,
+        modules: groupMap.get(groupName) || [],
+      };
+    });
+  }, [rawModules]);
+
   const handleToggleModule = (moduleId: string, checked: boolean) => {
     if (checked) {
       onChange([...permissions, moduleId]);
@@ -96,7 +141,7 @@ export function RolePermissionMatrix({
               variant="ghost"
               size="xs"
               onClick={() => {
-                const allModuleIds = PERMISSION_CATEGORIES.flatMap((c) =>
+                const allModuleIds = permissionCategories.flatMap((c) =>
                   c.modules.map((m) => m.id),
                 );
                 onChange(allModuleIds);
@@ -131,7 +176,7 @@ export function RolePermissionMatrix({
         </div>
       ) : (
         <div className="space-y-4">
-          {PERMISSION_CATEGORIES.map((category) => {
+          {permissionCategories.map((category) => {
             const catModuleIds = category.modules.map((m) => m.id);
             const allSelected = catModuleIds.every((id) =>
               permissions.includes(id),

@@ -55,14 +55,10 @@ export function toNumber(value: unknown): number {
   return Number(value || 0);
 }
 
-export function formatCurrency(value: unknown, currency?: string): string {
-  const globalCurrency = useCRMStore.getState().currency || "INR";
-  const selectedCurrency = getSupportedCurrency(currency || globalCurrency);
-  const format = CURRENCY_FORMATS[selectedCurrency];
-
-  return new Intl.NumberFormat(format.locale, {
+export function formatCurrency(value: unknown, _currency?: string): string {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: selectedCurrency,
+    currency: "INR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(toNumber(value));

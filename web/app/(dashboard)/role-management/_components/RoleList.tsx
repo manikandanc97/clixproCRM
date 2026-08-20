@@ -16,6 +16,7 @@ import {
   CRMTableBody,
   CRMTableRow,
   CRMTableHeaderCell,
+  CRMPagination,
 } from "@/shared/components/crm";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
@@ -169,6 +170,10 @@ export function RoleList({ onCreateRoleTrigger }: { onCreateRoleTrigger?: () => 
 
   const isLoading = isRolesLoading;
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   // Filter roles by search
   const filteredRoles = useMemo(() => {
     if (!debouncedSearch.trim()) return roles;
@@ -179,6 +184,14 @@ export function RoleList({ onCreateRoleTrigger }: { onCreateRoleTrigger?: () => 
         (r.description && r.description.toLowerCase().includes(q)),
     );
   }, [roles, debouncedSearch]);
+
+  const totalPages = Math.ceil(filteredRoles.length / rowsPerPage) || 1;
+  const paginatedRoles = useMemo(() => {
+    return filteredRoles.slice(
+      (currentPage - 1) * rowsPerPage,
+      currentPage * rowsPerPage
+    );
+  }, [filteredRoles, currentPage, rowsPerPage]);
 
   const availableReplacementRoles = useMemo(() => {
     if (!deletingRole) return [];
@@ -397,7 +410,7 @@ export function RoleList({ onCreateRoleTrigger }: { onCreateRoleTrigger?: () => 
         </CRMTableHeader>
         <CRMTableBody>
           <RoleTableRows
-            roles={filteredRoles}
+            roles={paginatedRoles}
             canManageRoles={canManageRoles}
             currentUserRole={currentUserRole}
             getRoleColor={getRoleColor}
@@ -407,6 +420,20 @@ export function RoleList({ onCreateRoleTrigger }: { onCreateRoleTrigger?: () => 
           />
         </CRMTableBody>
       </DataTable>
+
+      <CRMPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredRoles.length}
+        rowsPerPage={rowsPerPage}
+        onPageChange={setCurrentPage}
+        onRowsPerPageChange={(size) => {
+          setRowsPerPage(size);
+          setCurrentPage(1);
+        }}
+        itemName="Roles"
+        pageSizeOptions={[10, 25, 50, 100]}
+      />
 
       {/* ── Create / Edit Role Modal ── */}
       <RoleEditorModal

@@ -31,8 +31,11 @@ type AuthUser = {
   role: string;
   roleName?: string;
   displayName?: string;
-  avatar?: string;
+  avatar?: string | null;
   status?: string;
+  tenantId?: string | null;
+  companyName?: string;
+  companyLogo?: string | null;
   permissions?: string[];
   routes?: string[];
   dashboardWidgets?: string[];

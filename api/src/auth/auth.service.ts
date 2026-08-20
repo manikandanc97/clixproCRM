@@ -8,6 +8,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
 import { SYSTEM_ROLE_PERMISSIONS } from '../common/role-permissions.constants';
 
+import { BrandingService } from '../workspace/services/branding.service';
+
 interface CachedUserProfile {
   data: any;
   expiresAt: number;
@@ -31,7 +33,10 @@ export function invalidateGetMeCache(userId?: string) {
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly brandingService: BrandingService,
+  ) {}
 
   async getMe(userId: string, tenantId?: string, email?: string) {
     const cacheKey = `${userId}:${tenantId || ''}`;
@@ -94,6 +99,7 @@ export class AuthService {
           name: user.name,
           email: user.email,
           phone: user.phone,
+          avatar: (user as any).avatar || null,
           status: user.status,
           tenantId: null,
           companyName: 'ClixProCRM Platform',
@@ -141,9 +147,12 @@ export class AuthService {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        avatar: (user as any).avatar || null,
         status: user.status,
         tenantId: membership.tenantId,
         companyName: membership.tenant?.name || 'My Workspace',
+        companyLogo: membership.tenant?.logo || null,
+        brandPrimaryColor: (membership.tenant as any)?.brandPrimaryColor || null,
         role: roleName,
         isSuperAdmin: false,
         permissions,
@@ -165,13 +174,47 @@ export class AuthService {
       data: {
         ...(data.name && { name: data.name }),
         ...(data.phone !== undefined && { phone: data.phone }),
+        ...(data.avatar !== undefined && { avatar: data.avatar }),
       },
     });
     return { user: updated };
   }
 
+  async uploadAvatar(
+    userId: string,
+    rawBuffer: Buffer,
+    originalFilename?: string,
+  ) {
+    const { storageUrl } = await this.brandingService.processAndUploadAvatar(
+      userId,
+      rawBuffer,
+      originalFilename,
+    );
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        avatar: storageUrl,
+      },
+    });
+
+    invalidateGetMeCache(userId);
+
+    return {
+      success: true,
+      avatar: updated.avatar,
+      user: updated,
+    };
+  }
+
   async register(
-    data: { userId: string; name: string; email: string; companyName: string },
+    data: {
+      userId: string;
+      name: string;
+      email: string;
+      companyName: string;
+      logoFile?: { buffer: Buffer; filename?: string } | null;
+    },
     reqInfo: { ip?: string; userAgent?: string },
   ) {
     const existingUser = await this.prisma.user.findUnique({
@@ -222,6 +265,32 @@ export class AuthService {
       const tenant = await tx.tenant.create({
         data: { name: data.companyName, slug },
       });
+
+      // Handle optional logo upload during initial workspace creation
+      if (data.logoFile && data.logoFile.buffer && data.logoFile.buffer.length > 0) {
+        try {
+          const { storageUrl, dominantColor } =
+            await this.brandingService.processAndUploadLogo(
+              tenant.id,
+              data.logoFile.buffer,
+              data.logoFile.filename,
+            );
+
+          await tx.tenant.update({
+            where: { id: tenant.id },
+            data: {
+              logo: storageUrl,
+              brandPrimaryColor: dominantColor,
+            },
+          });
+          tenant.logo = storageUrl;
+          tenant.brandPrimaryColor = dominantColor;
+        } catch (logoErr: any) {
+          this.logger.warn(
+            `Initial branding processing notice during register: ${logoErr?.message || logoErr}`,
+          );
+        }
+      }
 
       // Seed default ADMIN system role with full canonical permissions.
       // Workspace admins can create, customize, and manage custom roles & permissions.

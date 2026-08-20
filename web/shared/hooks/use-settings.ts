@@ -12,6 +12,7 @@ import {
   updateNotificationSettings,
   updateSecuritySettings,
   updateWorkspaceData,
+  uploadWorkspaceLogo,
 } from "@/shared/lib/api/crm";
 
 import { useAuth } from "@/features/auth/components/auth-provider";
@@ -30,6 +31,17 @@ export function useUpdateWorkspace() {
   const { token } = useAuth();
   return useMutation({
     mutationFn: updateWorkspaceData,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workspace", token] });
+    },
+  });
+}
+
+export function useUploadWorkspaceLogo() {
+  const queryClient = useQueryClient();
+  const { token } = useAuth();
+  return useMutation({
+    mutationFn: uploadWorkspaceLogo,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspace", token] });
     },

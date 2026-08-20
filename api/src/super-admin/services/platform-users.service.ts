@@ -19,7 +19,7 @@ export class PlatformUsersService {
     limit?: number;
   }) {
     const page = Math.max(1, query.page || 1);
-    const limit = Math.max(1, Math.min(query.limit || 20, 100));
+    const limit = Math.max(1, Math.min(query.limit || 20, 1000));
     const skip = (page - 1) * limit;
 
     const where: any = {};

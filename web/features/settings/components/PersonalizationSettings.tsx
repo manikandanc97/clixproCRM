@@ -18,6 +18,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/shared/lib/utils";
 import { CRMCard } from "@/shared/components/crm";
 import { useSettings, type AccentColor } from "@/features/dashboard/components/SettingsContext";
+import { toValidHex7 } from "@/shared/lib/utils/color-utils";
 import { ClixProLogo } from "@/shared/ui/logo";
 
 const accentColors: { name: string; id: AccentColor; value: string }[] = [
@@ -125,7 +126,7 @@ const PersonalizationSettings = () => {
                   <span className="text-[10px] text-muted-foreground font-medium">Color Wheel:</span>
                   <input 
                     type="color" 
-                    value={accentColor.startsWith("#") ? accentColor : "#10b981"} 
+                    value={toValidHex7(accentColor)} 
                     onChange={(e) => setAccentColor(e.target.value)}
                     className="w-6 h-6 rounded-full border-0 p-0 cursor-pointer bg-transparent"
                     title="Choose custom color from wheel"

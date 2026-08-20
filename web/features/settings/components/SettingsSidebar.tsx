@@ -52,7 +52,7 @@ const categories = [
   },
 ];
 
-const SettingsSidebar = ({ activeSection, onSectionChange }: SettingsSidebarProps) => {
+const SettingsSidebar = React.memo(({ activeSection, onSectionChange }: SettingsSidebarProps) => {
   return (
     <div className="flex flex-col gap-6">
       {categories.map((category) => (
@@ -67,6 +67,7 @@ const SettingsSidebar = ({ activeSection, onSectionChange }: SettingsSidebarProp
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => onSectionChange(item.id)}
                 className={cn(
                   "w-full group flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-150 relative",
@@ -97,7 +98,9 @@ const SettingsSidebar = ({ activeSection, onSectionChange }: SettingsSidebarProp
       ))}
     </div>
   );
-};
+});
+
+SettingsSidebar.displayName = "SettingsSidebar";
 
 export default SettingsSidebar;
 

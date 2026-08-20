@@ -78,7 +78,7 @@ export default function SuperAdminDashboardPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-2xl bg-slate-950 p-6 md:p-8 shadow-xl border border-white/5"
+        className="relative overflow-hidden rounded-2xl bg-slate-950 p-5 sm:p-6 shadow-xl border border-white/5"
       >
         {/* Dynamic Theme Reactive Ambient Gradients */}
         <div 
@@ -95,12 +95,12 @@ export default function SuperAdminDashboardPage() {
           }}
         />
 
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex-1 space-y-4">
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="flex-1 space-y-3">
             <div className="flex items-center gap-3">
               {/* Dynamic Status Badge */}
               <div 
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border"
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border"
                 style={{
                   backgroundColor: "color-mix(in srgb, var(--primary) 12%, transparent)",
                   borderColor: "color-mix(in srgb, var(--primary) 28%, transparent)",
@@ -113,10 +113,10 @@ export default function SuperAdminDashboardPage() {
             </div>
 
             <div className="space-y-1">
-              <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Welcome back, <span className="capitalize font-extrabold transition-colors duration-300" style={{ color: "var(--primary)" }}>{user?.displayName || user?.name || "Platform Admin"}</span>
               </h1>
-              <div className="text-slate-400 text-sm md:text-base max-w-2xl leading-relaxed">
+              <div className="text-slate-400 text-xs sm:text-sm max-w-2xl leading-relaxed">
                 Your platform is running with <span className="font-semibold transition-colors duration-300" style={{ color: "var(--primary)" }}>{metrics.activeOrganizations} active</span> tenant organizations and <span className="font-semibold transition-colors duration-300" style={{ color: "var(--primary)" }}>{metrics.activeUsers}</span> global users. All multi-tenant services are operating smoothly.
               </div>
             </div>

@@ -18,6 +18,9 @@ import {
   Plus,
   Upload,
   Sparkles,
+  BarChart3,
+  BrainCircuit,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -33,7 +36,9 @@ export type CRMModuleType =
   | "quotations"
   | "invoices"
   | "products"
-  | "documents";
+  | "documents"
+  | "reports"
+  | "analytics";
 
 export interface EmptyStateAction {
   label: string;
@@ -79,7 +84,7 @@ export const MODULE_PRESETS: Record<
       "Capture and manage prospective customers in one central pipeline.",
     defaultPrimaryLabel: "Create Lead",
     defaultPrimaryIcon: Plus,
-    defaultSecondaryLabel: "Import CSV",
+    defaultSecondaryLabel: "Import Data",
     defaultSecondaryIcon: Upload,
   },
   customers: {
@@ -159,6 +164,26 @@ export const MODULE_PRESETS: Record<
       "Store contracts, presentations, and client files securely.",
     defaultPrimaryLabel: "Upload File",
     defaultPrimaryIcon: Upload,
+  },
+  reports: {
+    icon: BarChart3,
+    title: "No reports data yet",
+    description:
+      "Capture leads, close deals, and record sales activities to generate real-time business intelligence and performance reports.",
+    defaultPrimaryLabel: "Go to Dashboard",
+    defaultPrimaryIcon: LayoutDashboard,
+    defaultSecondaryLabel: "Create Lead",
+    defaultSecondaryIcon: Plus,
+  },
+  analytics: {
+    icon: BrainCircuit,
+    title: "No analytics data available",
+    description:
+      "Start logging leads, activities, and revenue milestones to activate neural forecasts and AI insights.",
+    defaultPrimaryLabel: "Go to Dashboard",
+    defaultPrimaryIcon: LayoutDashboard,
+    defaultSecondaryLabel: "Create Lead",
+    defaultSecondaryIcon: Plus,
   },
 };
 
@@ -302,8 +327,8 @@ export function EmptyState({
         isSmall
           ? "p-6 min-h-[200px]"
           : isLarge
-          ? "p-8 sm:p-12 md:p-16 min-h-[380px]"
-          : "p-6 sm:p-10 md:p-12 min-h-[300px]",
+          ? "flex-1 h-full p-8 sm:p-12 md:p-16 min-h-[380px]"
+          : "flex-1 h-full p-6 sm:p-10 md:p-12 min-h-[300px]",
         className
       )}
       role="region"
@@ -317,7 +342,7 @@ export function EmptyState({
         <div className="h-48 w-96 rounded-full bg-gradient-to-tr from-primary/15 via-primary/5 to-transparent blur-3xl" />
       </div>
 
-      <div className="max-w-xl mx-auto flex flex-col items-center">
+      <div className="max-w-xl mx-auto flex flex-col items-center my-auto">
         {/* Icon Pill */}
         <div className="relative mb-4 group shrink-0">
           <div

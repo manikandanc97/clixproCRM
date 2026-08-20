@@ -22,9 +22,10 @@ model Tenant {
   // Workspace Settings
   taxId           String?
   address         String?
-  currency        String           @default("USD")
+  currency        String           @default("INR")
   timezone        String           @default("utc")
   logo            String?
+  brandPrimaryColor String?
 
   attachments     Attachment[]
   customers       Customer[]
@@ -55,6 +56,7 @@ model User {
   name               String
   email              String           @unique
   phone              String?
+  avatar             String?
   status             UserStatus       @default(ACTIVE)
   isSuperAdmin       Boolean          @default(false)
   deletedAt          DateTime?
@@ -462,7 +464,7 @@ model RevenueTarget {
   tenantId   String
   periodType TargetPeriod @default(MONTHLY)
   value      Decimal      @default(0) @db.Decimal(12, 2)
-  currency   String       @default("USD")
+  currency   String       @default("INR")
   startDate  DateTime
   endDate    DateTime
   isActive   Boolean      @default(true)
@@ -785,3 +787,30 @@ model InvoiceCounter {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
+
+model PlatformModule {
+  id          String           @id @default(uuid())
+  key         String           @unique
+  label       String
+  icon        String           @default("Layers")
+  route       String
+  group       String           @default("Core")
+  parentId    String?
+  sortOrder   Int              @default(0)
+  isEnabled   Boolean          @default(true)
+  isVisible   Boolean          @default(true)
+  isSystem    Boolean          @default(false)
+  permission  String?
+  badge       String?
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  parent      PlatformModule?  @relation("ModuleHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    PlatformModule[] @relation("ModuleHierarchy")
+
+  @@index([isEnabled, sortOrder])
+  @@index([group, sortOrder])
+  @@index([parentId])
+}
+

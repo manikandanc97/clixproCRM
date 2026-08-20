@@ -64,15 +64,15 @@ export default function CreateNewMenu() {
           <DropdownMenuItem 
             key={action.label} 
             onClick={() => action.onClick ? action.onClick() : router.push(action.path!)}
-            className={`cursor-pointer py-3 px-3 rounded-xl focus:bg-accent group flex items-center justify-between ${action.color} transition-all duration-300`}
+            className="cursor-pointer py-2.5 px-3 rounded-xl hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary group flex items-center justify-between transition-all duration-200"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-muted dark:bg-slate-800 flex items-center justify-center group-focus:bg-card/70 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-muted dark:bg-slate-800 flex items-center justify-center group-hover:bg-primary/15 group-focus:bg-primary/15 transition-colors">
                 {action.icon}
               </div>
-              <span className="font-bold text-sm">{action.label}</span>
+              <span className="font-semibold text-sm">{action.label}</span>
             </div>
-            <ArrowRight className="w-3 h-3 opacity-0 group-focus:opacity-100 transition-all" />
+            <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 group-focus:opacity-100 group-focus:translate-x-0 transition-all text-primary" />
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

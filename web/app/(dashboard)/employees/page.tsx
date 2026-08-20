@@ -27,7 +27,8 @@ import {
   CRMToolbar,
   CRMStatusBadge,
   ActivityTimeline,
-  CRMPageSection
+  CRMPageSection,
+  CRMPagination,
 } from "@/shared/components/crm";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { Button } from "@/shared/ui/button";
@@ -95,12 +96,21 @@ export default function EmployeesPage() {
     }
   }, [searchParams]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const filteredEmployees = employees.filter(emp => {
     const nameMatch = getSafeStr(emp.name).toLowerCase().includes(searchQuery.toLowerCase());
     const emailMatch = getSafeStr(emp.email).toLowerCase().includes(searchQuery.toLowerCase());
     const roleMatch = getSafeStr(emp.role).toLowerCase().includes(searchQuery.toLowerCase());
     return nameMatch || emailMatch || roleMatch;
   });
+
+  const totalPages = Math.ceil(filteredEmployees.length / rowsPerPage) || 1;
+  const paginatedEmployees = filteredEmployees.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
   if (loading) {
     return <EmployeesSkeleton viewMode={viewMode} />;
@@ -174,7 +184,7 @@ export default function EmployeesPage() {
                   </CRMTableHeader>
                   <CRMTableBody>
                     {filteredEmployees.length > 0 ? (
-                      filteredEmployees.map((emp) => (
+                      paginatedEmployees.map((emp) => (
                         <CRMTableRow key={emp.id} className="cursor-default">
                           <CRMTableCell>
                             <div className="flex items-center gap-3">
@@ -261,7 +271,7 @@ export default function EmployeesPage() {
                 </DataTable>
               ) : filteredEmployees.length > 0 ? (
                 <EmployeesGrid
-                  employees={filteredEmployees}
+                  employees={paginatedEmployees}
                   onViewDetails={(emp) => { setSelectedEmployee(emp); setIsViewModalOpen(true); }}
                   onEdit={(emp) => { setSelectedEmployee(emp); setIsEditModalOpen(true); }}
                   onDelete={(emp) => { setSelectedEmployee(emp); setIsDeleteModalOpen(true); }}
@@ -280,6 +290,20 @@ export default function EmployeesPage() {
                   description="No employees match the current search or filters."
                 />
               )}
+
+              <CRMPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredEmployees.length}
+                rowsPerPage={rowsPerPage}
+                onPageChange={setCurrentPage}
+                onRowsPerPageChange={(size) => {
+                  setRowsPerPage(size);
+                  setCurrentPage(1);
+                }}
+                itemName="Employees"
+                pageSizeOptions={[10, 25, 50, 100]}
+              />
             </motion.div>
           </AnimatePresence>
         </div>

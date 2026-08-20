@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { useAuth } from "@/features/auth/components/auth-provider";
+import { usePlatformNavigation } from "@/shared/hooks/use-platform-navigation";
 import { getRoleMenu } from "@/shared/lib/auth/rbac";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const { user, access } = useAuth();
-  const navItems = getRoleMenu(user?.role, access.permissions)
+  const { groups } = usePlatformNavigation();
+  const navItems = groups
     .flatMap((group) => group.items)
     .slice(0, 4)
     .map((item) => ({

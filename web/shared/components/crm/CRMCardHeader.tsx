@@ -26,19 +26,19 @@ export function CRMCardHeader({
   className,
 }: CRMCardHeaderProps) {
   return (
-    <CardHeader className={cn("flex flex-row items-center justify-between z-10 relative pb-6 px-6 pt-6", className)}>
-      <div className="flex items-center gap-4">
+    <CardHeader className={cn("flex flex-row items-center justify-between z-10 relative pb-3 px-4 sm:px-5 pt-4 sm:pt-5", className)}>
+      <div className="flex items-center gap-3">
         {Icon && (
-          <div className={cn("p-2.5 rounded-xl transition-all duration-300 group-hover/card:scale-110", iconBg)}>
-            <Icon className={cn("w-5 h-5", iconColor)} />
+          <div className={cn("p-2 rounded-lg transition-all duration-300 group-hover/card:scale-105", iconBg)}>
+            <Icon className={cn("w-4 h-4", iconColor)} />
           </div>
         )}
         <div className="flex flex-col">
-          <CardTitle className="text-base font-bold tracking-tight text-foreground/90 leading-none mb-1.5">
+          <CardTitle className="text-sm sm:text-base font-bold tracking-tight text-foreground leading-tight mb-1">
             {title}
           </CardTitle>
           {subtitle && (
-            <CardDescription className="text-xs font-medium text-muted-foreground/80 leading-none">
+            <CardDescription className="text-xs text-muted-foreground leading-normal">
               {subtitle}
             </CardDescription>
           )}

@@ -51,7 +51,8 @@ const ConversionChart = ({ data, loading }: ConversionChartProps) => {
           <ChartContainer 
             height="100%" 
             loading={loading}
-            hasData={data && data.length > 0}
+            hasData={Boolean(data && data.some((d) => (d.value || 0) > 0))}
+            emptyMessage="No conversion data recorded yet"
             className="mt-4 flex-1"
           >
             <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>

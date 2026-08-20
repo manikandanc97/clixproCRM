@@ -81,7 +81,7 @@ export default function SuperAdminAnalyticsPage() {
         <CRMMetricsGrid cols={4}>
           <CRMMetricCard
             title="Estimated MRR"
-            value={`$${totals.estimatedMRR.toLocaleString()}`}
+            value={`₹${totals.estimatedMRR.toLocaleString()}`}
             change="Monthly Recurring SaaS"
             trend="up"
             icon={CreditCard}
@@ -90,7 +90,7 @@ export default function SuperAdminAnalyticsPage() {
           />
           <CRMMetricCard
             title="Projected ARR"
-            value={`$${totals.estimatedARR.toLocaleString()}`}
+            value={`₹${totals.estimatedARR.toLocaleString()}`}
             change="Annual Run Rate"
             trend="up"
             icon={TrendingUp}
@@ -121,17 +121,17 @@ export default function SuperAdminAnalyticsPage() {
       {/* 3. Main Charts & Revenue Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Monthly Workspace Growth Chart */}
-        <div className="lg:col-span-2 rounded-2xl bg-card border border-border shadow-card p-6 space-y-5">
+        <div className="lg:col-span-2 rounded-2xl bg-card border border-border shadow-card p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-foreground">
+              <h3 className="text-sm sm:text-base font-bold text-foreground">
                 Organization Growth (Last 6 Months)
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
                 New workspace signups and onboarding trajectory
               </p>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
               <Activity className="h-3.5 w-3.5" />
               <span>Platform Expanding</span>
             </div>
@@ -168,8 +168,8 @@ export default function SuperAdminAnalyticsPage() {
         </div>
 
         {/* Plan Revenue Breakdown */}
-        <div className="rounded-2xl bg-card border border-border shadow-card p-6 space-y-4">
-          <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+        <div className="rounded-2xl bg-card border border-border shadow-card p-5 sm:p-6 space-y-4">
+          <h3 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
             <Layers className="h-4 w-4 text-emerald-600" />
             <span>Revenue by Tier</span>
           </h3>
@@ -186,12 +186,12 @@ export default function SuperAdminAnalyticsPage() {
                       {item.plan} Tier
                     </span>
                     <span className="font-black text-emerald-600">
-                      ${item.monthlyRevenue}/mo
+                      ₹{item.monthlyRevenue.toLocaleString()}/mo
                     </span>
                   </div>
                   <div className="flex justify-between text-[11px] text-muted-foreground">
                     <span>{item.count} active workspaces</span>
-                    <span>${item.price}/mo per org</span>
+                    <span>₹{item.price.toLocaleString()}/mo per org</span>
                   </div>
                 </div>
               ))

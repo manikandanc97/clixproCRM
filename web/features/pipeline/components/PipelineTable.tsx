@@ -29,7 +29,8 @@ import {
   CRMTableBody, 
   CRMTableRow, 
   CRMTableCell, 
-  CRMTableHeaderCell 
+  CRMTableHeaderCell,
+  CRMPagination,
 } from "@/shared/components/crm";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import { cn } from "@/shared/lib/utils";
@@ -158,75 +159,19 @@ export const PipelineTable: React.FC<PipelineTableProps> = ({ items, onSelectDea
         </CRMDataTable>
       </div>
 
-      {items.length > 10 && (
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0">
-          <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
-            Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–<span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, items.length)}</span> of <span className="font-bold text-foreground">{new Intl.NumberFormat().format(items.length)}</span> Deals
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold">
-                    {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[4rem]">
-                  {[10, 25, 50, 100].map(size => (
-                    <DropdownMenuItem key={size} onClick={() => { setRowsPerPage(size); setCurrentPage(1); }} className="font-medium text-sm cursor-pointer hover:bg-muted">
-                      {size}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronsLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
-                Page {currentPage}
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronsRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CRMPagination
+        currentPage={currentPage}
+        totalPages={totalPages || 1}
+        totalItems={items.length}
+        rowsPerPage={rowsPerPage}
+        onPageChange={setCurrentPage}
+        onRowsPerPageChange={(size) => {
+          setRowsPerPage(size);
+          setCurrentPage(1);
+        }}
+        itemName="Deals"
+        pageSizeOptions={[10, 25, 50, 100]}
+      />
     </div>
   );
 };

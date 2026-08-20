@@ -334,7 +334,7 @@ export class ReportsService {
     ];
 
     const insights = [];
-    if (conversionRate > 20) {
+    if (conversionRate > 20 && wonDealsCount > 0) {
       insights.push({
         id: 'ins-1',
         type: 'leads',
@@ -350,7 +350,7 @@ export class ReportsService {
       });
     }
 
-    if (topCustomers.length > 0) {
+    if (topCustomers.length > 0 && topCustomers[0].revenue > 0) {
       insights.push({
         id: 'ins-2',
         type: 'revenue',
@@ -359,21 +359,12 @@ export class ReportsService {
       });
     }
 
-    if (performance.length > 0) {
+    if (performance.length > 0 && performance[0].dealsClosed > 0) {
       insights.push({
         id: 'ins-3',
         type: 'team',
         title: 'Top Sales Rep',
         description: `${performance[0].name} leads the team with ${performance[0].dealsClosed} deals.`,
-      });
-    }
-
-    if (insights.length === 0) {
-      insights.push({
-        id: 'ins-0',
-        type: 'revenue',
-        title: 'Ready for Action',
-        description: 'Start closing deals to see dynamic insights here.',
       });
     }
 

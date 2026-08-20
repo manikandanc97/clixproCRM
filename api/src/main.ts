@@ -22,7 +22,9 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter(),
+    new FastifyAdapter({
+      bodyLimit: 30 * 1024 * 1024, // 30MB
+    }),
   );
 
   // Register fastify-multipart to support file uploads

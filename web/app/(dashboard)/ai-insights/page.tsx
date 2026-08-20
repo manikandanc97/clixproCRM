@@ -106,8 +106,9 @@ export default function AiInsightsPage() {
           iconColor="text-indigo-500"
         />
 
-        <div className="flex-1 min-h-[420px] flex items-center justify-center pt-6">
+        <div className="flex-1 min-h-0 flex flex-col pt-2">
           <EmptyState
+            module="analytics"
             icon={BrainCircuit}
             title="AI Intelligence will activate with your data"
             description="Once you have active leads, customer engagements, and deal milestones recorded, the AI Neural Engine will provide predictive win-rates, lead scoring, and automated growth recommendations."

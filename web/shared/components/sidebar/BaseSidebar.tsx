@@ -145,12 +145,12 @@ export function BaseSidebarContent({
                         className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-[13.5px] group relative ${
                           isActive
                             ? `${themeClasses.itemActiveText} ${themeClasses.itemActiveBg} font-bold shadow-sm border border-sidebar-primary/15`
-                            : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 font-medium"
+                            : "text-sidebar-foreground/70 hover:text-primary hover:bg-primary/10 font-medium"
                         }`}
                       >
                         <Icon
                           className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                            isActive ? themeClasses.itemActiveText : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80"
+                            isActive ? themeClasses.itemActiveText : "text-sidebar-foreground/50 group-hover:text-primary"
                           }`}
                         />
                         <span className="truncate flex-1">{item.title}</span>
@@ -304,7 +304,7 @@ export function BaseSidebarContent({
                                 className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all duration-200 group relative ${
                                   isActive
                                     ? `${themeClasses.itemActiveText} ${themeClasses.itemActiveCollapsedBg} font-semibold shadow-sm`
-                                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                                    : "text-sidebar-foreground/60 hover:text-primary hover:bg-primary/10"
                                 }`}
                               >
                                 <motion.div
@@ -319,7 +319,7 @@ export function BaseSidebarContent({
                                     className={`w-5 h-5 shrink-0 transition-colors ${
                                       isActive
                                         ? themeClasses.itemActiveText
-                                        : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground"
+                                        : "text-sidebar-foreground/60 group-hover:text-primary"
                                     }`}
                                   />
                                 </motion.div>
@@ -327,7 +327,7 @@ export function BaseSidebarContent({
                                   className={`text-[10px] leading-tight mt-1 text-center font-medium truncate max-w-[60px] ${
                                     isActive
                                       ? `${themeClasses.itemActiveText} font-bold`
-                                      : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground"
+                                      : "text-sidebar-foreground/70 group-hover:text-primary"
                                   }`}
                                 >
                                   {item.title}
@@ -359,7 +359,7 @@ export function BaseSidebarContent({
                           className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-[13.5px] group relative ${
                             isActive
                               ? `${themeClasses.itemActiveText} ${themeClasses.itemActiveBg} font-bold shadow-sm`
-                              : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40 font-medium"
+                              : "text-sidebar-foreground/70 hover:text-primary hover:bg-primary/10 font-medium"
                           }`}
                         >
                           {isActive && (
@@ -380,7 +380,7 @@ export function BaseSidebarContent({
                               className={`w-[18px] h-[18px] transition-colors ${
                                 isActive
                                   ? themeClasses.itemActiveText
-                                  : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80"
+                                  : "text-sidebar-foreground/50 group-hover:text-primary"
                               }`}
                             />
                           </motion.div>

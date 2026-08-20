@@ -1,18 +1,32 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { User, Mail, ShieldCheck, CheckCircle2, Phone, Save, Loader2, AlertTriangle, Trash2 } from "lucide-react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { 
+  User, 
+  Mail, 
+  ShieldCheck, 
+  CheckCircle2, 
+  Phone, 
+  Save, 
+  Loader2, 
+  AlertTriangle, 
+  Trash2,
+  ImagePlus,
+  Camera
+} from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { useAuth } from "@/features/auth/components/auth-provider";
-import { motion } from "framer-motion";
 import { CRMCard } from "@/shared/components/crm";
 import { useMutation } from "@tanstack/react-query";
-import { updateProfile } from "@/shared/lib/api/auth";
+import { updateProfile, uploadUserAvatar } from "@/shared/lib/api/auth";
+import { ImageCropperModal } from "@/shared/components/ImageCropperModal";
 import { DeleteAccountModal } from "./DeleteAccountModal";
+import { toast } from "sonner";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 function formatRole(role?: string) {
   if (!role) return "";
@@ -36,63 +50,210 @@ function getInitials(name?: string) {
 const ProfileSettings = () => {
   const { user, refreshUser } = useAuth();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [selectedRawFile, setSelectedRawFile] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
   });
-  
-  const avatarPreview = null;
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+      });
+    }
+  }, [user]);
 
   const initials = getInitials(user?.name);
   
   const mutation = useMutation({
     mutationFn: updateProfile,
     onSuccess: () => {
-      refreshUser();
+      void refreshUser();
+      toast.success("Profile details updated successfully!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to update profile");
     }
   });
 
   const completion = useMemo(() => {
     let score = 0;
-    if (user?.name) score += 30;
-    if (user?.email) score += 30;
+    if (user?.name) score += 25;
+    if (user?.email) score += 25;
     if (user?.role) score += 20;
-    if (user?.phone) score += 20;
+    if (user?.phone) score += 15;
+    if (user?.avatar) score += 15;
     return score;
   }, [user]);
 
+  const handleSelectRawFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload a valid image file (PNG, JPG, or WebP)");
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Image file size must be less than 5MB");
+      return;
+    }
+
+    setSelectedRawFile(file);
+    setCropModalOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleSelectRawFile(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleSelectRawFile(file);
+    }
+  };
+
+  const handleCropComplete = async (croppedFile: File) => {
+    setUploadingAvatar(true);
+    try {
+      const result = await uploadUserAvatar(croppedFile);
+      if (result?.avatar) {
+        await refreshUser();
+        toast.success("Profile photo updated successfully!");
+      }
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || err?.message || "Failed to upload profile photo"
+      );
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setUploadingAvatar(true);
+    try {
+      await updateProfile({ avatar: null });
+      await refreshUser();
+      toast.success("Profile photo removed successfully");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || err?.message || "Failed to remove profile photo"
+      );
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleSave = () => {
     mutation.mutate(formData);
   };
 
-  const hasChanges = formData.name !== user?.name || formData.email !== user?.email || formData.phone !== (user?.phone || "");
+  const hasChanges =
+    formData.name !== (user?.name || "") ||
+    formData.email !== (user?.email || "") ||
+    formData.phone !== (user?.phone || "");
 
   return (
     <div className="space-y-5">
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Image Cropper Modal */}
+      <ImageCropperModal
+        open={cropModalOpen}
+        onOpenChange={setCropModalOpen}
+        imageFile={selectedRawFile}
+        onCropComplete={(croppedFile) => {
+          void handleCropComplete(croppedFile);
+        }}
+        title="Crop & Align Profile Photo"
+        description="Position and crop your photo with proper 1:1 aspect ratio for optimal display across the CRM."
+      />
+
       {/* Profile Identity Card */}
       <CRMCard>
         <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
-          <div className="relative group shrink-0">
-            <motion.div className="relative">
-              <Avatar className="w-20 h-20 rounded-xl border-2 border-border shadow-sm overflow-hidden">
-                {avatarPreview ? (
-                  <AvatarImage src={avatarPreview} />
-                ) : (
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-xl font-bold">
-                    {initials}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-            </motion.div>
+          {/* Avatar Upload Dropzone Box */}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => !uploadingAvatar && fileInputRef.current?.click()}
+            className={`relative group cursor-pointer w-20 h-20 sm:w-22 sm:h-22 rounded-2xl border-2 transition-all flex items-center justify-center overflow-hidden bg-card/80 backdrop-blur-sm shadow-inner shrink-0 ${
+              isDragging
+                ? "border-primary bg-primary/10 ring-4 ring-primary/20 scale-[1.02]"
+                : "border-dashed border-border/80 hover:border-primary/60 hover:bg-muted/40"
+            }`}
+          >
+            {uploadingAvatar ? (
+              <div className="flex flex-col items-center justify-center p-2 text-center gap-1">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span className="text-[9px] font-semibold text-muted-foreground">Uploading...</span>
+              </div>
+            ) : user?.avatar ? (
+              <div className="relative w-full h-full flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={user.avatar}
+                  alt={user.name || "Profile Photo"}
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white rounded-2xl gap-0.5">
+                  <ImagePlus className="w-4 h-4" />
+                  <span className="text-[9px] font-semibold">Change</span>
+                </div>
+              </div>
+            ) : (
+              <div className="relative w-full h-full flex items-center justify-center">
+                <div className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-xl font-bold w-full h-full rounded-2xl flex items-center justify-center select-none">
+                  {initials}
+                </div>
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white rounded-2xl gap-0.5">
+                  <Camera className="w-4 h-4" />
+                  <span className="text-[9px] font-semibold">Upload</span>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="flex-1 space-y-2 text-center sm:text-left">
+          <div className="flex-1 space-y-2 text-center sm:text-left min-w-0">
             <div>
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 mb-1">
-                <h2 className="text-xl font-bold tracking-tight text-foreground">
+                <h2 className="text-xl font-bold tracking-tight text-foreground truncate">
                   {user?.name || "User Name"}
                 </h2>
                 {completion === 100 && (
@@ -101,15 +262,47 @@ const ProfileSettings = () => {
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground font-medium">{user?.email}</p>
+              <p className="text-sm text-muted-foreground font-medium truncate">{user?.email}</p>
             </div>
 
-            <div className="flex flex-wrap justify-center sm:justify-start gap-4">
+            <div className="flex flex-wrap justify-center sm:justify-start items-center gap-3 pt-0.5">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                <ShieldCheck className="w-3 h-3" />
+                <ShieldCheck className="w-3.5 h-3.5 text-primary" />
                 {formatRole(user?.role)}
               </div>
+
+              <div className="h-3 w-px bg-border/60 hidden sm:block" />
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs font-semibold px-2.5 rounded-lg border-border/60 hover:bg-muted/60"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                >
+                  <ImagePlus className="w-3.5 h-3.5 mr-1 text-primary" />
+                  {user?.avatar ? "Change Photo" : "Upload Photo"}
+                </Button>
+                {user?.avatar && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs font-semibold px-2.5 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                    onClick={handleRemoveAvatar}
+                    disabled={uploadingAvatar}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    Remove
+                  </Button>
+                )}
+              </div>
             </div>
+            <p className="text-[10.5px] text-muted-foreground pt-0.5">
+              PNG, JPG, or WebP (max 5MB)
+            </p>
           </div>
         </div>
       </CRMCard>
@@ -127,7 +320,7 @@ const ProfileSettings = () => {
             size="sm" 
             onClick={handleSave} 
             disabled={!hasChanges || mutation.isPending}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 font-semibold shadow-sm"
           >
             {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Changes
@@ -143,7 +336,7 @@ const ProfileSettings = () => {
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Full name"
-                className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all"
+                className="pl-9 h-10 rounded-lg border-border/60 bg-muted/30 focus:bg-card focus:border-primary/30 transition-all font-medium"
               />
             </div>
           </div>
@@ -247,15 +440,3 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
-
-
-
-
-
-
-
-
-
-
-
-

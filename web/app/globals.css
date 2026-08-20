@@ -96,9 +96,9 @@
   --muted: oklch(0.96 0.004 250);
   --muted-foreground: oklch(0.52 0.015 255);
 
-  /* Accent — Soft Emerald */
-  --accent: oklch(0.96 0.02 157);
-  --accent-foreground: oklch(0.58 0.165 157);
+  /* Accent */
+  --accent: oklch(0.96 0.02 250);
+  --accent-foreground: var(--primary);
 
   /* Destructive */
   --destructive: oklch(0.58 0.22 25);
@@ -133,9 +133,9 @@
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.45 0.015 255);
   --sidebar-border: oklch(0.93 0.005 255);
-  --sidebar-accent: oklch(0.97 0.015 157);
-  --sidebar-accent-foreground: oklch(0.58 0.165 157);
-  --sidebar-primary: oklch(0.58 0.165 157);
+  --sidebar-accent: oklch(0.97 0.015 250);
+  --sidebar-accent-foreground: var(--sidebar-primary);
+  --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: oklch(1 0 0);
 
   /* Charts */
@@ -243,113 +243,153 @@
 [data-accent="emerald"] {
   --primary: oklch(0.58 0.165 157);
   --accent: oklch(0.96 0.02 157);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.58 0.165 157);
   --sidebar-accent: oklch(0.97 0.015 157);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="emerald"], [data-accent="emerald"].dark {
   --primary: oklch(0.68 0.16 157);
   --accent: oklch(0.25 0.05 157);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.68 0.16 157);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 [data-accent="blue"] {
   --primary: oklch(0.55 0.19 250);
   --accent: oklch(0.96 0.02 250);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.55 0.19 250);
   --sidebar-accent: oklch(0.97 0.015 250);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="blue"], [data-accent="blue"].dark {
   --primary: oklch(0.68 0.16 250);
   --accent: oklch(0.25 0.05 250);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.68 0.16 250);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 [data-accent="violet"] {
   --primary: oklch(0.54 0.22 295);
   --accent: oklch(0.96 0.02 295);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.54 0.22 295);
   --sidebar-accent: oklch(0.97 0.015 295);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="violet"], [data-accent="violet"].dark {
   --primary: oklch(0.68 0.18 295);
   --accent: oklch(0.25 0.05 295);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.68 0.18 295);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 [data-accent="amber"] {
   --primary: oklch(0.62 0.17 75);
   --accent: oklch(0.96 0.02 75);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.62 0.17 75);
   --sidebar-accent: oklch(0.97 0.015 75);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="amber"], [data-accent="amber"].dark {
   --primary: oklch(0.75 0.16 75);
   --accent: oklch(0.3 0.05 75);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.75 0.16 75);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 [data-accent="rose"] {
   --primary: oklch(0.56 0.21 15);
   --accent: oklch(0.96 0.02 15);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.56 0.21 15);
   --sidebar-accent: oklch(0.97 0.015 15);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="rose"], [data-accent="rose"].dark {
   --primary: oklch(0.70 0.18 15);
   --accent: oklch(0.3 0.05 15);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.70 0.18 15);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 [data-accent="indigo"] {
   --primary: oklch(0.55 0.22 265);
   --accent: oklch(0.96 0.02 265);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.55 0.22 265);
   --sidebar-accent: oklch(0.97 0.015 265);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="indigo"], [data-accent="indigo"].dark {
   --primary: oklch(0.68 0.18 265);
   --accent: oklch(0.25 0.05 265);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.68 0.18 265);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 [data-accent="purple"] {
   --primary: oklch(0.56 0.24 315);
   --accent: oklch(0.96 0.02 315);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.56 0.24 315);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="purple"], [data-accent="purple"].dark {
   --primary: oklch(0.68 0.20 315);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.68 0.20 315);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 [data-accent="red"] {
   --primary: oklch(0.57 0.22 27);
   --accent: oklch(0.96 0.02 27);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.57 0.22 27);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="red"], [data-accent="red"].dark {
   --primary: oklch(0.68 0.20 27);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.68 0.20 27);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 [data-accent="teal"] {
   --primary: oklch(0.58 0.15 180);
   --accent: oklch(0.96 0.02 180);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.58 0.15 180);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="teal"], [data-accent="teal"].dark {
   --primary: oklch(0.68 0.15 180);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.68 0.15 180);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 [data-accent="cyan"] {
   --primary: oklch(0.60 0.16 210);
   --accent: oklch(0.96 0.02 210);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.60 0.16 210);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 .dark [data-accent="cyan"], [data-accent="cyan"].dark {
   --primary: oklch(0.70 0.16 210);
+  --accent-foreground: var(--primary);
   --sidebar-primary: oklch(0.70 0.16 210);
+  --sidebar-accent-foreground: var(--sidebar-primary);
 }
 
 /* Font Family Overrides */
@@ -498,19 +538,19 @@
   }
 
   .crm-page-title {
-    @apply text-3xl font-bold tracking-normal text-foreground sm:text-4xl;
+    @apply text-xl font-bold tracking-tight text-foreground sm:text-2xl;
   }
 
   .crm-section-title {
-    @apply text-xl font-semibold tracking-normal text-foreground;
+    @apply text-base font-semibold tracking-tight text-foreground sm:text-lg;
   }
 
   .crm-description {
-    @apply text-sm font-medium leading-relaxed text-muted-foreground;
+    @apply text-xs sm:text-sm font-normal leading-relaxed text-muted-foreground;
   }
 
   .crm-icon-box {
-    @apply flex size-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm;
+    @apply flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-xs;
   }
 
   .crm-toolbar {
@@ -518,11 +558,11 @@
   }
 
   .crm-segment {
-    @apply inline-flex h-10 items-center gap-1 rounded-md border border-border bg-muted/50 p-1;
+    @apply inline-flex h-9 items-center gap-1 rounded-md border border-border bg-muted/50 p-1;
   }
 
   .crm-empty-state {
-    @apply flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-card/60 px-6 py-10 text-center shadow-sm;
+    @apply flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-card/60 px-6 py-10 text-center shadow-xs;
   }
 
   .crm-table-wrap {
@@ -530,11 +570,11 @@
   }
 
   .crm-table-th {
-    @apply h-12 px-6 text-left align-middle text-xs font-bold uppercase tracking-wider text-muted-foreground;
+    @apply h-10 px-4 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
   }
 
   .crm-table-td {
-    @apply h-16 px-6 align-middle text-sm;
+    @apply h-13 px-4 align-middle text-xs sm:text-sm;
   }
 
   .crm-muted-panel {

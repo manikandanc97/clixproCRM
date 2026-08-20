@@ -9,6 +9,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { SettingsService } from '../services/settings.service';
+import { WorkspaceService } from '../services/workspace.service';
 import { SupabaseAuthGuard } from '../../auth/supabase.guard';
 import { TenantGuard } from '../../auth/tenant.guard';
 import { RolesGuard } from '../../auth/roles.guard';
@@ -23,7 +24,20 @@ import {
 @Controller('crm/settings')
 @UseGuards(SupabaseAuthGuard, TenantGuard, RolesGuard)
 export class SettingsController {
-  constructor(private readonly settingsService: SettingsService) {}
+  constructor(
+    private readonly settingsService: SettingsService,
+    private readonly workspaceService: WorkspaceService,
+  ) {}
+
+  @Patch('workspace')
+  @Roles('ADMIN')
+  async updateWorkspace(@Req() req: any, @Body() data: any) {
+    const updated = await this.workspaceService.updateWorkspace(
+      req.tenantId,
+      data,
+    );
+    return { success: true, data: updated };
+  }
 
   @Get('security')
   @Roles('ADMIN', 'MANAGER', 'USER')

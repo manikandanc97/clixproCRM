@@ -70,7 +70,7 @@ export const CRMCard = ({
         "overflow-hidden",
         crmSurface.card,
         hoverable && crmSurface.interactive,
-        !noPadding && "p-6",
+        !noPadding && "p-4 sm:p-5",
         withAccent && "border-l-4",
         withAccent && finalAccentColor,
         className,

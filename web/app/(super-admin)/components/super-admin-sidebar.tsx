@@ -14,6 +14,7 @@ import {
   Crown,
   LogOut,
   ArrowLeftRight,
+  Layers,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/features/auth/components/auth-provider";
@@ -34,6 +35,11 @@ const superAdminNavGroups: NavGroup[] = [
         title: "Organizations",
         href: "/super-admin/organizations",
         icon: Building2,
+      },
+      {
+        title: "Platform Modules",
+        href: "/super-admin/modules",
+        icon: Layers,
       },
       {
         title: "Platform Users",

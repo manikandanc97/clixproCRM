@@ -58,7 +58,8 @@ const RevenueChart = ({ data, loading }: RevenueChartProps) => {
           <ChartContainer 
             height="100%" 
             loading={loading}
-            hasData={data && data.length > 0}
+            hasData={Boolean(data && data.some((d) => (d.total || 0) > 0))}
+            emptyMessage="No revenue recorded for this period"
             className="mt-4 flex-1"
           >
             <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 15 }}>

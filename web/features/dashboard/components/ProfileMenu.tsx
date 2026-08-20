@@ -33,13 +33,16 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
 import { useSettings, AccentColor, FontFamily } from "./SettingsContext";
+import { toValidHex7 } from "@/shared/lib/utils/color-utils";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/features/auth/components/auth-provider";
 import { useCRMStore } from "@/shared/store/useCRMStore";
+import { getRoleBadge } from "@/shared/lib/auth/rbac";
+import { Shield, ArrowLeftRight } from "lucide-react";
 
 type ProfileMenuProps = {
-  user: { name?: string; email?: string; role?: string; roleName?: string; displayName?: string; avatar?: string; } | null;
+  user: { name?: string; email?: string; role?: string; roleName?: string; displayName?: string; avatar?: string | null; } | null;
   initials: string;
 };
 
@@ -119,7 +122,9 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
   const [fontSearch, setFontSearch] = useState("");
   const { accentColor, setAccentColor, fontFamily, setFontFamily } = useSettings();
   const router = useRouter();
-  const { logout } = useAuth();
+  const pathname = usePathname();
+  const isSuperAdminPath = pathname?.startsWith("/super-admin");
+  const { logout, access } = useAuth();
 
   const handleLogout = async () => {
     setShowLogoutConfirm(false);
@@ -133,47 +138,119 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
     f.category.toLowerCase().includes(fontSearch.toLowerCase())
   );
 
+  const displayName = user?.displayName || user?.name || "User";
+  const roleDisplay = access?.roleName || user?.roleName || user?.role || "Admin";
+  const { style: badgeStyle, Icon: RoleIcon } = getRoleBadge(user?.role);
+
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
         <button 
-          className="relative flex items-center justify-center p-1 rounded-xl hover:bg-sidebar-accent/50 transition-all duration-200 group outline-none cursor-pointer"
+          className="relative flex items-center gap-2.5 p-1 sm:py-1 sm:pl-1 sm:pr-2.5 rounded-xl hover:bg-sidebar-accent/50 transition-all duration-200 group outline-none cursor-pointer text-left"
           aria-label="User Profile Menu"
         >
           <div className="relative shrink-0">
-            <div 
-              className="flex justify-center items-center rounded-xl w-[36px] h-[36px] font-bold text-xs text-primary-foreground shadow-sm border border-white/20 transition-all duration-300"
-              style={{
-                background: "linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 65%, black))"
-              }}
-            >
-              {initials}
-            </div>
+            {user?.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.avatar}
+                alt={displayName}
+                className="rounded-xl w-[36px] h-[36px] object-cover shadow-sm border border-white/20"
+              />
+            ) : (
+              <div 
+                className="flex justify-center items-center rounded-xl w-[36px] h-[36px] font-bold text-xs text-primary-foreground shadow-sm border border-white/20 transition-all duration-300"
+                style={{
+                  background: "linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 65%, black))"
+                }}
+              >
+                {initials}
+              </div>
+            )}
             {/* Online Indicator */}
             <div 
               className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300"
               style={{ backgroundColor: "var(--primary)" }}
             />
           </div>
+          <div className="hidden sm:flex flex-col min-w-0 pr-0.5 items-start">
+            <span className="text-xs font-semibold text-sidebar-foreground truncate max-w-[120px] leading-tight">
+              {displayName}
+            </span>
+            <div className="mt-0.5">
+              <span className={`inline-flex items-center gap-1 text-[9.5px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider border leading-none ${badgeStyle.badge}`}>
+                <RoleIcon className="w-2.5 h-2.5 shrink-0" />
+                {roleDisplay}
+              </span>
+            </div>
+          </div>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-64 rounded-xl p-2 shadow-elevated border-border bg-popover/95 backdrop-blur-xl" align="end" sideOffset={8}>
+      <DropdownMenuContent className="w-68 rounded-xl p-2 shadow-elevated border-border bg-popover/95 backdrop-blur-xl" align="end" sideOffset={8}>
         <DropdownMenuLabel className="px-3 py-3">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-bold leading-none">{user?.displayName || user?.name}</p>
-            <p className="text-[10px] font-medium leading-none text-muted-foreground mt-1 truncate">
-              {user?.email || "user@clixprocrm.com"}
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="relative shrink-0">
+              {user?.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={user.avatar}
+                  alt={displayName}
+                  className="rounded-xl w-10 h-10 object-cover shadow-sm border border-border"
+                />
+              ) : (
+                <div 
+                  className="flex justify-center items-center rounded-xl w-10 h-10 font-bold text-xs text-primary-foreground shadow-sm border border-white/20"
+                  style={{
+                    background: "linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 65%, black))"
+                  }}
+                >
+                  {initials}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col space-y-1 min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1.5">
+                <p className="text-sm font-bold leading-none truncate">{displayName}</p>
+                <span className={`inline-flex items-center gap-1 text-[8.5px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider border shrink-0 leading-none ${badgeStyle.badge}`}>
+                  <RoleIcon className="w-2.5 h-2.5 shrink-0" />
+                  {roleDisplay}
+                </span>
+              </div>
+              <p className="text-[11px] font-medium leading-none text-muted-foreground truncate">
+                {user?.email || "user@clixprocrm.com"}
+              </p>
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer py-2.5 rounded-xl focus:bg-accent group">
-            <Settings className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="font-semibold text-sm">Settings</span>
-          </DropdownMenuItem>
+          {isSuperAdminPath ? (
+            <>
+              <DropdownMenuItem onClick={() => router.push("/super-admin/settings")} className="cursor-pointer py-2.5 rounded-xl">
+                <Settings className="mr-3 h-4 w-4 text-emerald-600 transition-colors" />
+                <span className="font-semibold text-sm">Platform Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/dashboard")} className="cursor-pointer py-2.5 rounded-xl">
+                <ArrowLeftRight className="mr-3 h-4 w-4 text-primary transition-colors" />
+                <span className="font-semibold text-sm">Switch to Tenant CRM</span>
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <>
+              <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer py-2.5 rounded-xl">
+                <Settings className="mr-3 h-4 w-4 text-muted-foreground transition-colors" />
+                <span className="font-semibold text-sm">Workspace Settings</span>
+              </DropdownMenuItem>
+              {(user?.role?.toUpperCase() === "SUPER_ADMIN" || user?.role?.toUpperCase() === "SUPERADMIN") && (
+                <DropdownMenuItem onClick={() => router.push("/super-admin")} className="cursor-pointer py-2.5 rounded-xl">
+                  <Shield className="mr-3 h-4 w-4 text-emerald-600 transition-colors" />
+                  <span className="font-semibold text-sm">Super Admin Portal</span>
+                </DropdownMenuItem>
+              )}
+            </>
+          )}
         </DropdownMenuGroup>
         
         <DropdownMenuSeparator />
@@ -181,8 +258,8 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
         <DropdownMenuGroup>
           {/* Accent Color Submenu */}
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="py-2.5 rounded-xl group">
-              <Palette className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <DropdownMenuSubTrigger className="py-2.5 rounded-xl">
+              <Palette className="mr-3 h-4 w-4 text-muted-foreground transition-colors" />
               <span className="font-semibold text-sm">Accent Color</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -213,7 +290,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1 mb-1.5">
                     Custom Color Wheel
                   </div>
-                  <label className="flex items-center justify-between cursor-pointer rounded-lg p-2 hover:bg-accent border border-border/50 group transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer rounded-lg p-2 hover:bg-primary/10 hover:text-primary border border-border/50 group transition-colors">
                     <div className="flex items-center gap-2.5">
                       <div className="w-6 h-6 rounded-full border border-white/20 shadow-sm flex items-center justify-center bg-[conic-gradient(from_0deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)]" />
                       <div className="flex flex-col">
@@ -225,7 +302,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
                     </div>
                     <input 
                       type="color" 
-                      value={accentColor.startsWith("#") ? accentColor : "#10b981"}
+                      value={toValidHex7(accentColor)}
                       onChange={(e) => setAccentColor(e.target.value)}
                       className="w-7 h-7 rounded-full border-0 p-0 cursor-pointer bg-transparent outline-none"
                     />
@@ -237,8 +314,8 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
 
           {/* Typography Submenu (Google Fonts with Search) */}
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="py-2.5 rounded-xl group">
-              <Type className="mr-3 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <DropdownMenuSubTrigger className="py-2.5 rounded-xl">
+              <Type className="mr-3 h-4 w-4 text-muted-foreground transition-colors" />
               <span className="font-semibold text-sm">Typography</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -270,7 +347,7 @@ export default function ProfileMenu({ user, initials }: ProfileMenuProps) {
                       <DropdownMenuItem 
                         key={item.name} 
                         onClick={() => setFontFamily(item.name)}
-                        className="rounded-lg flex items-center justify-between py-2 px-2.5 cursor-pointer hover:bg-accent focus:bg-accent"
+                        className="rounded-lg flex items-center justify-between py-2 px-2.5 cursor-pointer hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary"
                       >
                         <div className="flex flex-col">
                           <span className="text-xs font-semibold">{item.name}</span>

@@ -1,7 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useCRMStore } from "@/shared/store/useCRMStore";
+import { generateBrandPalette } from "@/shared/lib/utils/color-utils";
 
 export type AccentColor = string;
 export type FontFamily = string;
@@ -58,35 +60,57 @@ const PRESET_ACCENTS: Record<string, { primary: string; accent: string }> = {
   cyan: { primary: "#06b6d4", accent: "rgba(6, 182, 212, 0.12)" },
   amber: { primary: "#f59e0b", accent: "rgba(245, 158, 11, 0.12)" },
   rose: { primary: "#f43f5e", accent: "rgba(244, 63, 94, 0.12)" },
+  slate: { primary: "#475569", accent: "rgba(71, 85, 105, 0.12)" },
 };
+
+const AUTH_ROUTES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/onboarding",
+];
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const { accentColor, setAccentColor, fontFamily, setFontFamily } = useCRMStore();
+  const pathname = usePathname();
+
+  const isAuthPage = pathname
+    ? AUTH_ROUTES.some((route) => pathname.startsWith(route))
+    : false;
 
   // Update body classes and data attributes
   useEffect(() => {
     const root = document.documentElement;
     
-    // Handle accent color (preset vs custom color hex)
-    root.setAttribute("data-accent", accentColor || "emerald");
+    // Auth pages (login, register, forgot-password, etc.) always use the default ClixPro emerald theme.
+    // Custom account/admin colors only reflect across the dashboard and internal screens.
+    let activeHex = "#10b981";
 
-    let primaryColor = "#10b981";
-    let accentBg = "rgba(16, 185, 129, 0.12)";
-
-    if (accentColor && accentColor.startsWith("#")) {
-      primaryColor = accentColor;
-      accentBg = `${accentColor}20`;
+    if (isAuthPage) {
+      activeHex = "#10b981";
+      root.setAttribute("data-accent", "emerald");
+    } else if (accentColor && accentColor.startsWith("#")) {
+      activeHex = accentColor;
+      root.setAttribute("data-accent", "custom");
     } else if (PRESET_ACCENTS[accentColor]) {
-      primaryColor = PRESET_ACCENTS[accentColor].primary;
-      accentBg = PRESET_ACCENTS[accentColor].accent;
+      activeHex = PRESET_ACCENTS[accentColor].primary;
+      root.setAttribute("data-accent", accentColor);
+    } else {
+      root.setAttribute("data-accent", "emerald");
     }
 
-    root.style.setProperty("--primary", primaryColor);
-    root.style.setProperty("--sidebar-primary", primaryColor);
-    root.style.setProperty("--ring", primaryColor);
-    root.style.setProperty("--accent", accentBg);
-    root.style.setProperty("--color-primary", primaryColor);
-    root.style.setProperty("--color-accent", accentBg);
+    const palette = generateBrandPalette(activeHex);
+
+    root.style.setProperty("--primary", palette.primary);
+    root.style.setProperty("--primary-hover", palette.primaryHover);
+    root.style.setProperty("--primary-active", palette.primaryActive);
+    root.style.setProperty("--primary-light", palette.primaryLight);
+    root.style.setProperty("--sidebar-primary", palette.primary);
+    root.style.setProperty("--ring", palette.ring);
+    root.style.setProperty("--accent", palette.accentBg);
+    root.style.setProperty("--color-primary", palette.primary);
+    root.style.setProperty("--color-accent", palette.accentBg);
     
     // Handle font family & Google Fonts dynamic loading
     const targetFont = fontFamily || "inter";
@@ -101,8 +125,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       root.style.setProperty("--font-display", fontFamilyStyle);
       document.body.style.fontFamily = fontFamilyStyle;
     }
-  }, [accentColor, fontFamily]);
-
+  }, [accentColor, fontFamily, isAuthPage]);
 
   return (
     <SettingsContext.Provider value={{ 

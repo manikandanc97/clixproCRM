@@ -55,7 +55,39 @@ export function fetchNotificationSettings() {
 }
 
 export function updateWorkspaceData(data: Partial<WorkspaceDataType>) {
-  return unwrapResponse<WorkspaceDataType>(client.patch("/crm/settings/workspace", data));
+  return unwrapResponse<WorkspaceDataType>(client.patch("/crm/workspace", data));
+}
+
+export async function uploadWorkspaceLogo(
+  file: File | { fileData: string; fileName?: string }
+) {
+  if (file instanceof File) {
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+
+    return unwrapResponse<{
+      success: boolean;
+      logo: string;
+      brandPrimaryColor: string;
+      workspace: WorkspaceDataType;
+    }>(
+      client.post("/crm/workspace/logo", {
+        fileData: base64Data,
+        fileName: file.name,
+      })
+    );
+  }
+
+  return unwrapResponse<{
+    success: boolean;
+    logo: string;
+    brandPrimaryColor: string;
+    workspace: WorkspaceDataType;
+  }>(client.post("/crm/workspace/logo", file));
 }
 
 export function updateSecuritySettings(data: Partial<SecuritySettingsDataType>) {

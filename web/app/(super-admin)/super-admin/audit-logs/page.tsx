@@ -30,6 +30,7 @@ import {
   CRMMetricsGrid,
   CRMMetricCard,
   CRMToolbar,
+  CRMPagination,
 } from "@/shared/components/crm";
 import { EmptyState } from "@/shared/components/EmptyState";
 import {
@@ -54,10 +55,9 @@ export default function SuperAdminAuditLogsPage() {
     try {
       setLoading(true);
       const res = await fetchPlatformAuditLogs({
-        search: search || undefined,
-        module: moduleFilter || undefined,
+        limit: 1000,
       });
-      setLogs(res.logs);
+      setLogs(res.logs || []);
     } catch (err: any) {
       toast.error("Failed to load audit logs.");
     } finally {
@@ -208,7 +208,7 @@ export default function SuperAdminAuditLogsPage() {
       <div className="rounded-2xl bg-card border border-border shadow-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-card shadow-xs">
               <tr className="border-b border-border bg-muted/20 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 <th className="h-12 px-6 py-4">Action</th>
                 <th className="h-12 px-6 py-4">Module</th>
@@ -305,82 +305,16 @@ export default function SuperAdminAuditLogsPage() {
       </div>
 
       {/* Pagination */}
-      {filteredLogs.length > 0 && (
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0">
-          <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
-            Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–<span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, filteredLogs.length)}</span> of <span className="font-bold text-foreground">{new Intl.NumberFormat().format(filteredLogs.length)}</span> Logs
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold">
-                    {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[4rem]">
-                  {[10, 25, 50, 100].map(size => (
-                    <DropdownMenuItem key={size} onClick={() => { setRowsPerPage(size); setCurrentPage(1); }} className="font-medium text-sm cursor-pointer hover:bg-muted">
-                      {size}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                aria-label="First page"
-              >
-                <ChevronsLeft className="w-4 h-4" />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-
-              <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
-                Page {currentPage} of {totalPages}
-              </div>
-
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                aria-label="Next page"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                aria-label="Last page"
-              >
-                <ChevronsRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+      {!loading && filteredLogs.length > 0 && (
+        <CRMPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredLogs.length}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setCurrentPage}
+          onRowsPerPageChange={setRowsPerPage}
+          itemName="Logs"
+        />
       )}
 
       {/* 5. Details Modal */}

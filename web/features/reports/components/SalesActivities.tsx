@@ -38,7 +38,8 @@ const SalesActivities = ({ data, loading }: SalesActivitiesProps) => {
           <ChartContainer 
             height="100%" 
             loading={loading}
-            hasData={data && data.length > 0}
+            hasData={Boolean(data && data.some((d) => (d.value || 0) > 0))}
+            emptyMessage="No sales activities logged yet"
             className="mt-4 flex-1"
           >
             <ResponsiveContainer width="100%" height="100%">

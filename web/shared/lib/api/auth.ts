@@ -23,14 +23,19 @@ interface ResetPasswordPayload {
   newPassword: string;
 }
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   name: string;
   email: string;
   phone?: string;
+  avatar?: string | null;
   role: string;
   roleName?: string;
   description?: string;
+  tenantId?: string | null;
+  companyName?: string;
+  companyLogo?: string | null;
+  brandPrimaryColor?: string | null;
   permissions?: string[];
   routes?: string[];
   dashboardWidgets?: string[];
@@ -160,6 +165,42 @@ export const logoutUser = async () => {
 export const updateProfile = async (data: Record<string, ReturnType<typeof JSON.parse>>) => {
   const response = await client.patch<AuthResponse>("/auth/me", data);
   return response.data;
+};
+
+export const uploadUserAvatar = async (
+  file: File | { fileData: string; fileName?: string }
+) => {
+  if (file instanceof File) {
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+
+    const response = await client.post<{
+      success: boolean;
+      data: {
+        success: boolean;
+        avatar: string;
+        user: any;
+      };
+    }>("/auth/avatar", {
+      fileData: base64Data,
+      fileName: file.name,
+    });
+    return response.data?.data;
+  }
+
+  const response = await client.post<{
+    success: boolean;
+    data: {
+      success: boolean;
+      avatar: string;
+      user: any;
+    };
+  }>("/auth/avatar", file);
+  return response.data?.data;
 };
 
 /**

@@ -31,6 +31,7 @@
     "@nestjs/platform-fastify": "^11.1.28",
     "@prisma/client": "^6.19.3",
     "@supabase/supabase-js": "^2.112.2",
+    "@types/sharp": "^0.31.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.2",
     "ai": "^7.0.59",
@@ -39,6 +40,7 @@
     "nodemailer": "^9.0.5",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sharp": "^0.35.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {

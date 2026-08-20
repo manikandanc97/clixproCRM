@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Receipt, Plus, DollarSign, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Receipt, Plus, IndianRupee, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { useInvoices } from "@/shared/hooks/use-crm";
 import { useCurrency } from "@/shared/hooks/use-currency";
 import { Button } from "@/shared/ui/button";
@@ -118,7 +118,7 @@ export default function InvoicesPage() {
                 value={formatCurrency(totalBilled)}
                 change="0%"
                 trend="up"
-                icon={DollarSign}
+                icon={IndianRupee}
                 color="indigo"
                 delay={0.1}
               />

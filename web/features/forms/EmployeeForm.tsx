@@ -14,7 +14,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createEmployee, updateEmployee } from "@/shared/lib/api/crm";
 import client from "@/shared/lib/api/client";
 import { toast } from "sonner";
-import { Key } from "lucide-react";
+import { Key, Building2 } from "lucide-react";
+import { useWorkspace } from "@/shared/hooks/use-settings";
+import { useAuth } from "@/features/auth/components/auth-provider";
 
 const basePasswordSchema = z.string()
   .min(8, "Password must be at least 8 characters")
@@ -173,11 +175,29 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
     }
   };
 
+  const { data: workspace } = useWorkspace();
+  const { user } = useAuth();
+  const companyName = workspace?.name || user?.companyName || "Organization Workspace";
+  const companyLogo = workspace?.logo ?? user?.companyLogo;
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-muted/40 border border-border/50 text-xs text-muted-foreground">
+          <div className="w-5 h-5 rounded-md overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
+            {companyLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={companyLogo} alt={companyName} className="w-full h-full object-cover" />
+            ) : (
+              <Building2 className="w-3 h-3 text-primary" />
+            )}
+          </div>
+          <span className="truncate">
+            Company Workspace: <strong className="text-foreground">{companyName}</strong>
+          </span>
+        </div>
+
         <FormInput name="name" label="Name" placeholder="Name" />
         
         <FormInput name="email" label="Email" placeholder="Email" />

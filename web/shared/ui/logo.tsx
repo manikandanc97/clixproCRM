@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
 import { useCRMStore } from "@/shared/store/useCRMStore";
 
@@ -34,6 +35,14 @@ const THEME_LOGO_MAP: Record<string, string> = {
   rose: "/brand/clixpro-logo-rose.png",
 };
 
+const AUTH_ROUTES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/onboarding",
+];
+
 /**
  * Exact ClixPro Emblem image that dynamically switches its color scheme
  * based on the active CRM Theme (Emerald, Blue, Violet, Amber, Rose).
@@ -48,7 +57,11 @@ export function ClixProIcon({
   pixelSize?: number;
 }) {
   const storeAccent = useCRMStore((state) => state.accentColor);
-  const activeAccent = storeAccent || "emerald";
+  const pathname = usePathname();
+  const isAuthPage = pathname
+    ? AUTH_ROUTES.some((route) => pathname.startsWith(route))
+    : false;
+  const activeAccent = isAuthPage ? "emerald" : storeAccent || "emerald";
   const targetSize = pixelSize || sizeConfig[size]?.px || 30;
   const logoSrc = THEME_LOGO_MAP[activeAccent] || "/brand/clixpro-logo.png";
 

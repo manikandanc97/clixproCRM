@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { AuthService } from '../src/auth/auth.service';
 
 const prisma = new PrismaClient();
-const authService = new AuthService(prisma as any);
+const authService = new AuthService(prisma as any, {} as any);
 
 async function runTests() {
   console.log('--- Starting Enterprise Account Deletion Flow Tests ---');

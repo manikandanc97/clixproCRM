@@ -90,7 +90,8 @@ const LeadSourceChart = ({ data, loading }: LeadSourceChartProps) => {
           <ChartContainer 
             height="100%" 
             loading={loading}
-            hasData={data && data.length > 0}
+            hasData={Boolean(data && data.length > 0 && data.some((d) => (d.value || 0) > 0))}
+            emptyMessage="No lead source distribution data"
             className="flex-1 min-h-[220px]"
           >
             <ResponsiveContainer width="100%" height="100%">

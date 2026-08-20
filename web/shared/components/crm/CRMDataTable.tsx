@@ -13,11 +13,11 @@ export const crmTableStyles = {
   container: "overflow-hidden",
   table: "w-full border-collapse text-left text-sm",
   header: "border-b border-border bg-muted/20",
-  body: "divide-y divide-border/50",
-  row: "group h-16 border-b border-border/50 align-middle",
-  rowInteractive: "cursor-pointer transition-colors duration-150 hover:bg-muted/[0.02]",
-  cell: "h-16 px-6 py-4 align-middle text-sm",
-  headerCell: "h-12 px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground",
+  body: "divide-y divide-border/40",
+  row: "group h-13 border-b border-border/40 align-middle",
+  rowInteractive: "cursor-pointer transition-colors duration-150 hover:bg-muted/[0.03]",
+  cell: "h-13 px-4 sm:px-5 py-3 align-middle text-xs sm:text-sm",
+  headerCell: "h-10 px-4 sm:px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
 } as const;
 
 export const CRMDataTable = ({

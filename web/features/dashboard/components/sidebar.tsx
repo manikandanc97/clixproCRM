@@ -6,20 +6,37 @@ import { usePathname } from "next/navigation";
 import { LifeBuoy } from "lucide-react";
 import { useSidebar } from "@/features/dashboard/components/SidebarContext";
 import { useAuth } from "@/features/auth/components/auth-provider";
+import { useWorkspace } from "@/shared/hooks/use-settings";
+import { usePlatformNavigation } from "@/shared/hooks/use-platform-navigation";
 import { getRoleMenu } from "@/shared/lib/auth/rbac";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
 import { BaseSidebar, BaseSidebarContent } from "@/shared/components/sidebar/BaseSidebar";
+import { ClixProIcon } from "@/shared/ui/logo";
 
 export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
   const { isCollapsed, toggleSidebar } = useSidebar();
   const { user, access } = useAuth();
+  const { data: workspace } = useWorkspace();
+  const { groups: menuGroups } = usePlatformNavigation();
 
-  const menuGroups = getRoleMenu(user?.role, access.permissions);
-  const roleName = access.roleName;
+  const companyName = workspace?.name || user?.companyName || "Clixpro Workspace";
+  const companyLogo = workspace?.logo ?? user?.companyLogo;
+
   const hasHelpAccess = access.permissions.includes("Help Center") || user?.role?.toUpperCase() === "ADMIN";
 
   const isHelpActive = pathname === "/help";
+
+  const logoElement = companyLogo ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={companyLogo}
+      alt={companyName}
+      className="w-full h-full object-cover rounded-xl"
+    />
+  ) : (
+    <ClixProIcon pixelSize={isMobile ? 24 : 26} />
+  );
 
   const helpFooter = hasHelpAccess ? (
     <Link
@@ -27,7 +44,7 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
       className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-[13.5px] font-medium outline-none ${
         isHelpActive
           ? "text-sidebar-primary bg-sidebar-primary/10 dark:bg-sidebar-primary/20 font-bold shadow-sm border border-sidebar-primary/15"
-          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40"
+          : "text-sidebar-foreground/70 hover:text-primary hover:bg-primary/10"
       }`}
     >
       <LifeBuoy className="w-[18px] h-[18px] transition-colors shrink-0" />
@@ -44,7 +61,7 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
             className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all duration-200 outline-none ${
               isHelpActive
                 ? "text-sidebar-primary bg-sidebar-primary/15 dark:bg-sidebar-primary/20 shadow-sm border border-sidebar-primary/20 font-bold"
-                : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                : "text-sidebar-foreground/60 hover:text-primary hover:bg-primary/10"
             }`}
           >
             <LifeBuoy className="w-5 h-5 shrink-0" />
@@ -66,11 +83,9 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
     <BaseSidebarContent
       groups={menuGroups}
       header={{
-        title: user?.displayName || user?.name || "Clixpro",
+        title: companyName,
         subtitle: "Workspace",
-        badge: {
-          text: roleName,
-        },
+        logo: logoElement,
         collapsedTag: "CRM",
       }}
       footer={helpFooter}
@@ -87,13 +102,27 @@ export function SidebarContent({ isMobile = false }: { isMobile?: boolean }) {
 export default function Sidebar() {
   const { isCollapsed, toggleSidebar } = useSidebar();
   const { user, access } = useAuth();
+  const { data: workspace } = useWorkspace();
+  const { groups: menuGroups } = usePlatformNavigation();
   const pathname = usePathname();
 
-  const menuGroups = getRoleMenu(user?.role, access.permissions);
-  const roleName = access.roleName;
+  const companyName = workspace?.name || user?.companyName || "Clixpro Workspace";
+  const companyLogo = workspace?.logo ?? user?.companyLogo;
+
   const hasHelpAccess = access.permissions.includes("Help Center") || user?.role?.toUpperCase() === "ADMIN";
 
   const isHelpActive = pathname === "/help";
+
+  const logoElement = companyLogo ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={companyLogo}
+      alt={companyName}
+      className="w-full h-full object-cover rounded-xl"
+    />
+  ) : (
+    <ClixProIcon pixelSize={26} />
+  );
 
   const helpFooter = hasHelpAccess ? (
     <Link
@@ -101,7 +130,7 @@ export default function Sidebar() {
       className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-[13.5px] font-medium outline-none ${
         isHelpActive
           ? "text-sidebar-primary bg-sidebar-primary/10 dark:bg-sidebar-primary/20 font-bold shadow-sm"
-          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40"
+          : "text-sidebar-foreground/70 hover:text-primary hover:bg-primary/10"
       }`}
     >
       <LifeBuoy className="w-[18px] h-[18px] transition-colors shrink-0" />
@@ -118,7 +147,7 @@ export default function Sidebar() {
             className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all duration-200 outline-none ${
               isHelpActive
                 ? "text-sidebar-primary bg-sidebar-primary/15 dark:bg-sidebar-primary/20 shadow-sm border border-sidebar-primary/20 font-bold"
-                : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                : "text-sidebar-foreground/60 hover:text-primary hover:bg-primary/10"
             }`}
           >
             <LifeBuoy className="w-5 h-5 shrink-0" />
@@ -140,11 +169,9 @@ export default function Sidebar() {
     <BaseSidebar
       groups={menuGroups}
       header={{
-        title: user?.displayName || user?.name || "Clixpro",
+        title: companyName,
         subtitle: "Workspace",
-        badge: {
-          text: roleName,
-        },
+        logo: logoElement,
         collapsedTag: "CRM",
       }}
       footer={helpFooter}

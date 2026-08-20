@@ -15,7 +15,7 @@ export class PlatformOrganizationsService {
     limit?: number;
   }) {
     const page = Math.max(1, query.page || 1);
-    const limit = Math.max(1, Math.min(query.limit || 20, 100));
+    const limit = Math.max(1, Math.min(query.limit || 20, 1000));
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -292,105 +292,117 @@ export class PlatformOrganizationsService {
       throw new NotFoundException('Organization not found');
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Delete audit logs associated with this tenant
-      await tx.auditLog.deleteMany({
-        where: { tenantId: id },
-      });
+    return this.prisma.$transaction(
+      async (tx) => {
+        // 1. Delete audit logs associated with this tenant
+        await tx.auditLog.deleteMany({
+          where: { tenantId: id },
+        });
 
-      // 2. Cascade cleanup of all tenant-scoped data
-      await tx.aiMessage.deleteMany({
-        where: { conversation: { tenantId: id } },
-      });
-      await tx.aiConversation.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.tenantAiConfig.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.documentChunk.deleteMany({
-        where: { document: { tenantId: id } },
-      });
-      await tx.document.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.timelineEvent.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.note.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.attachment.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.invoice.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.quotation.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.task.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.meeting.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.deal.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.customer.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.lead.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.company.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.product.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.revenueTarget.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.notification.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.invitation.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.tenantUser.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.rolePermission.deleteMany({
-        where: { role: { tenantId: id } },
-      });
-      await tx.role.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.department.deleteMany({
-        where: { tenantId: id },
-      });
-      await tx.invoiceCounter.deleteMany({
-        where: { tenantId: id },
-      });
+        // 2. Cascade cleanup of all tenant-scoped data
+        // Clear self-referential relations first to prevent foreign key errors
+        await tx.tenantUser.updateMany({
+          where: { tenantId: id },
+          data: { reportingManagerId: null },
+        });
 
-      // 3. Delete the tenant
-      const deletedTenant = await tx.tenant.delete({
-        where: { id },
-      });
+        await tx.aiMessage.deleteMany({
+          where: { conversation: { tenantId: id } },
+        });
+        await tx.aiConversation.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.tenantAiConfig.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.documentChunk.deleteMany({
+          where: { document: { tenantId: id } },
+        });
+        await tx.document.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.timelineEvent.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.note.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.attachment.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.invoice.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.quotation.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.task.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.meeting.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.deal.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.customer.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.lead.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.company.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.product.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.revenueTarget.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.notification.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.invitation.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.tenantUser.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.rolePermission.deleteMany({
+          where: { role: { tenantId: id } },
+        });
+        await tx.role.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.department.deleteMany({
+          where: { tenantId: id },
+        });
+        await tx.invoiceCounter.deleteMany({
+          where: { tenantId: id },
+        });
 
-      // 4. Log the deletion in super-admin audit trail
-      await tx.auditLog.create({
-        data: {
-          userId: adminActorId,
-          action: 'ORGANIZATION_DELETED',
-          module: 'SuperAdmin',
-          details: { id: existing.id, name: existing.name, slug: existing.slug },
-        },
-      });
+        // 3. Delete the tenant
+        const deletedTenant = await tx.tenant.delete({
+          where: { id },
+        });
 
-      return deletedTenant;
-    });
+        // 4. Log the deletion in super-admin audit trail
+        await tx.auditLog.create({
+          data: {
+            userId: adminActorId,
+            action: 'ORGANIZATION_DELETED',
+            module: 'SuperAdmin',
+            details: { id: existing.id, name: existing.name, slug: existing.slug },
+          },
+        });
+
+        return deletedTenant;
+      },
+      {
+        maxWait: 15000,
+        timeout: 60000,
+      },
+    );
   }
 }

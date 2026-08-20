@@ -42,6 +42,7 @@ import { LeadType, LeadStatus } from "@/shared/types/lead";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { DataTable } from "@/shared/components/DataTable";
 import { StatusBadge, StatusVariant } from "@/shared/components/StatusBadge";
+import { CRMPagination } from "@/shared/components/crm";
 import { cn } from "@/shared/lib/utils";
 import { useLeads } from "../hooks/useLeads";
 import { Badge } from "@/shared/ui/badge";
@@ -672,83 +673,19 @@ const LeadsTable = ({
       />
 
       {/* Pagination */}
-      {sortedLeads.length > 10 && (
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0">
-          <div className="text-sm text-muted-foreground font-medium w-full md:w-auto text-center md:text-left">
-            Showing <span className="font-bold text-foreground">{(currentPage - 1) * rowsPerPage + 1}</span>–<span className="font-bold text-foreground">{Math.min(currentPage * rowsPerPage, sortedLeads.length)}</span> of <span className="font-bold text-foreground">{new Intl.NumberFormat().format(sortedLeads.length)}</span> Leads
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto justify-center md:justify-end">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground font-medium">Rows per page:</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-1 font-semibold">
-                    {rowsPerPage} <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[4rem]">
-                  {[10, 25, 50, 100].map(size => (
-                    <DropdownMenuItem key={size} onClick={() => { setRowsPerPage(size); setCurrentPage(1); }} className="font-medium text-sm cursor-pointer hover:bg-muted">
-                      {size}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                aria-label="First page"
-              >
-                <ChevronsLeft className="w-4 h-4" />
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              
-              <div className="flex items-center justify-center px-4 text-sm font-semibold text-foreground min-w-[5rem]">
-                Page {currentPage}
-              </div>
-
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                aria-label="Next page"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                aria-label="Last page"
-              >
-                <ChevronsRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CRMPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedLeads.length}
+        rowsPerPage={rowsPerPage}
+        onPageChange={setCurrentPage}
+        onRowsPerPageChange={(size) => {
+          setRowsPerPage(size);
+          setCurrentPage(1);
+        }}
+        itemName="Leads"
+        pageSizeOptions={[10, 25, 50, 100]}
+      />
 
       {/* Bulk Action Toolbar */}
       <LeadBulkActionToolbar

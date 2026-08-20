@@ -51,11 +51,11 @@ export default function DashboardOnboardingHub() {
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 sm:gap-5">
           <div className="max-w-2xl space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
+              <Sparkles className="w-3 h-3" />
               Workspace Setup
             </div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
               Welcome to ClixProCRM,{" "}
               <span className="text-primary">{user?.displayName || user?.name || "there"}</span>!
             </h1>
@@ -96,7 +96,7 @@ export default function DashboardOnboardingHub() {
           onClick: () => setIsLeadModalOpen(true),
         }}
         secondaryAction={{
-          label: "Import CSV",
+          label: "Import Data",
           icon: Upload,
           onClick: () => setIsImportModalOpen(true),
         }}

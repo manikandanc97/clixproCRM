@@ -1,5 +1,4 @@
-"use client";
-
+import React, { memo } from "react";
 import { Settings2 } from "lucide-react";
 import { CRMPageHeader } from "@/shared/components/crm";
 
@@ -44,10 +43,13 @@ const sectionInfo: Record<string, { title: string; description: string }> = {
     title: "Settings",
     description: "Protect your account with advanced security controls.",
   },
+  targets: {
+    title: "Settings",
+    description: "Set and manage your sales and revenue targets.",
+  },
 };
 
-const SettingsHeader = ({ activeSection }: SettingsHeaderProps) => {
-
+const SettingsHeader = memo(({ activeSection }: SettingsHeaderProps) => {
   const info = sectionInfo[activeSection] || sectionInfo.profile;
 
   return (
@@ -58,6 +60,8 @@ const SettingsHeader = ({ activeSection }: SettingsHeaderProps) => {
       badge="Workspace"
     />
   );
-};
+});
+
+SettingsHeader.displayName = "SettingsHeader";
 
 export default SettingsHeader;

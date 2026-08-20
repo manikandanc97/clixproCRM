@@ -202,3 +202,17 @@ export const roleIcon: Record<RoleKey, React.ComponentType<{ className?: string 
   [CRM_ROLES.SUPPORT]: Ticket,
   [CRM_ROLES.EMPLOYEE]: UserSquare2,
 };
+
+export function getRoleBadge(role?: string) {
+  const roleKey = normalizeRole(role);
+  return {
+    roleKey,
+    style: {
+      badge: "bg-primary/10 text-primary border-primary/20",
+      text: "text-primary",
+      bg: "bg-primary/10",
+    },
+    Icon: roleIcon[roleKey] || roleIcon[CRM_ROLES.EMPLOYEE],
+  };
+}
+

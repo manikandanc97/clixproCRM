@@ -12,6 +12,8 @@ import { PlatformAuditLogsController } from './controllers/platform-audit-logs.c
 import { PlatformAuditLogsService } from './services/platform-audit-logs.service';
 import { PlatformSettingsController } from './controllers/platform-settings.controller';
 import { PlatformSettingsService } from './services/platform-settings.service';
+import { PlatformModulesController } from './controllers/platform-modules.controller';
+import { PlatformModulesService } from './services/platform-modules.service';
 
 @Module({
   imports: [PrismaModule],
@@ -22,6 +24,7 @@ import { PlatformSettingsService } from './services/platform-settings.service';
     PlatformAnalyticsController,
     PlatformAuditLogsController,
     PlatformSettingsController,
+    PlatformModulesController,
   ],
   providers: [
     PlatformDashboardService,
@@ -30,6 +33,7 @@ import { PlatformSettingsService } from './services/platform-settings.service';
     PlatformAnalyticsService,
     PlatformAuditLogsService,
     PlatformSettingsService,
+    PlatformModulesService,
   ],
   exports: [
     PlatformDashboardService,
@@ -38,6 +42,8 @@ import { PlatformSettingsService } from './services/platform-settings.service';
     PlatformAnalyticsService,
     PlatformAuditLogsService,
     PlatformSettingsService,
+    PlatformModulesService,
   ],
 })
 export class SuperAdminModule {}
+

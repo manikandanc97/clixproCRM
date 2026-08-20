@@ -94,7 +94,8 @@ const SalesFunnel = ({ data }: { data: FunnelPointType[] }) => {
         <CardContent className="p-4 pt-2 min-w-0 flex-1 flex flex-col relative z-10">
           <ChartContainer 
             height="100%" 
-            hasData={data && data.length > 0}
+            hasData={Boolean(data && data.some((d) => (d.count || 0) > 0))}
+            emptyMessage="No pipeline funnel data yet"
             className="flex-1 min-h-[220px]"
           >
             <ResponsiveContainer width="100%" height="100%">

@@ -2,6 +2,7 @@ export interface WorkspaceDataType {
   name: string | null;
   plan: string | null;
   logo: string | null;
+  brandPrimaryColor?: string | null;
   taxId: string | null;
   currency: string | null;
   timezone: string | null;

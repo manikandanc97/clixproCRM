@@ -243,13 +243,13 @@ export const CRMMetricCard = ({
         // ── Rounded corners matching CRM design system ──
         "rounded-xl",
         // ── Breathing layout ──
-        "p-6 flex flex-col justify-between h-full",
+        "p-4 sm:p-5 flex flex-col justify-between h-full",
         // ── Soft ambient card shadow ──
         "shadow-[0_1px_3px_0_rgb(0_0_0/0.06),0_1px_2px_-1px_rgb(0_0_0/0.04)]",
         // ── Premium hover: lift + deep shadow + border glow ──
         "transition-all duration-300 ease-out",
-        "hover:-translate-y-1.5",
-        "hover:shadow-[0_8px_25px_-8px_rgb(0_0_0/0.12),0_4px_12px_-4px_rgb(0_0_0/0.06)]",
+        "hover:-translate-y-1",
+        "hover:shadow-[0_6px_20px_-6px_rgb(0_0_0/0.1),0_3px_8px_-3px_rgb(0_0_0/0.05)]",
         t.hoverBorder,
         "hover:border-t-border/70 hover:border-r-border/70 hover:border-b-border/70",
         className
@@ -258,26 +258,26 @@ export const CRMMetricCard = ({
       {/* ── Ambient Radial Glow (top-right) ── */}
       <div
         className={cn(
-          "pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full",
+          "pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full",
           "blur-2xl opacity-[0.06] transition-opacity duration-500",
-          "group-hover:opacity-[0.13]",
+          "group-hover:opacity-[0.12]",
           t.glowBg
         )}
       />
 
       {/* ── Top Row: Label + Icon ── */}
-      <div className="flex items-start justify-between gap-4 mb-5 min-w-0">
-        <div className="space-y-1.5 flex-1 min-w-0">
-          {/* Uppercase label */}
-          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/70 truncate leading-none">
+      <div className="flex items-start justify-between gap-3 mb-3.5 min-w-0">
+        <div className="space-y-1 flex-1 min-w-0">
+          {/* Label */}
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80 truncate leading-none">
             {title}
           </p>
 
-          {/* Large metric value */}
+          {/* Metric value */}
           {loading ? (
-            <Skeleton className="h-9 w-28 mt-1 rounded-lg" />
+            <Skeleton className="h-7 w-24 mt-1 rounded-md" />
           ) : (
-            <h3 className="text-[2rem] sm:text-[2.25rem] font-extrabold tracking-tight tabular-nums truncate text-foreground leading-none mt-1">
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight tabular-nums truncate text-foreground leading-tight mt-1">
               {value}
             </h3>
           )}
@@ -287,36 +287,36 @@ export const CRMMetricCard = ({
         {Icon && (
           <div
             className={cn(
-              "flex shrink-0 size-11 items-center justify-center",
-              "rounded-xl border",
+              "flex shrink-0 size-9 sm:size-10 items-center justify-center",
+              "rounded-lg border",
               "transition-all duration-300",
-              "group-hover:scale-110 group-hover:rotate-3",
+              "group-hover:scale-105 group-hover:rotate-2",
               // Premium icon glow on hover
-              "group-hover:shadow-[0_4px_14px_-4px_currentColor]",
+              "group-hover:shadow-[0_3px_10px_-3px_currentColor]",
               t.iconBg,
               t.iconText,
               iconColor // optional override
             )}
           >
-            <Icon className="h-5 w-5 stroke-[2]" />
+            <Icon className="h-4.5 w-4.5 stroke-[2]" />
           </div>
         )}
       </div>
 
       {/* ── Bottom Row: Trend Badge + Sparkline ── */}
-      <div className="flex items-end justify-between gap-4 mt-auto min-w-0">
+      <div className="flex items-center justify-between gap-2 mt-auto pt-1 min-w-0">
         {/* Trend badge + comparison text */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {loading && !hideBottomSkeletons ? (
-            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-4.5 w-14 rounded-full" />
           ) : (
             change && (
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                 {/* Pill badge */}
                 <div
                   className={cn(
-                    "inline-flex items-center gap-1 text-[10px] font-bold",
-                    "px-2 py-0.5 rounded-full border uppercase tracking-wider",
+                    "inline-flex items-center gap-1 text-[10px] font-semibold",
+                    "px-2 py-0.5 rounded-full border tracking-normal shrink-0",
                     isUp
                       ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400"
                       : isDown
@@ -324,17 +324,17 @@ export const CRMMetricCard = ({
                       : "bg-muted/60 text-muted-foreground border-border/60"
                   )}
                 >
-                  {isUp && <TrendingUp className="w-3 h-3 shrink-0" />}
-                  {isDown && <TrendingDown className="w-3 h-3 shrink-0" />}
+                  {isUp && <TrendingUp className="w-2.5 h-2.5 shrink-0" />}
+                  {isDown && <TrendingDown className="w-2.5 h-2.5 shrink-0" />}
                   {!isUp && !isDown && (
-                    <Minus className="w-3 h-3 shrink-0" />
+                    <Minus className="w-2.5 h-2.5 shrink-0" />
                   )}
-                  <span>{change}</span>
+                  <span className="truncate max-w-[120px]">{change}</span>
                 </div>
 
                 {/* Comparison context text */}
                 {comparisonText && (
-                  <span className="text-[11px] font-medium text-muted-foreground/65 tracking-tight whitespace-nowrap">
+                  <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground/65 tracking-tight truncate">
                     {comparisonText}
                   </span>
                 )}
@@ -345,7 +345,7 @@ export const CRMMetricCard = ({
 
         {/* Sparkline chart */}
         {(sparklineData || (loading && !hideBottomSkeletons)) && (
-          <div className="h-10 w-24 -mr-1 -mb-1 min-h-[40px] min-w-0 shrink-0">
+          <div className="h-8 w-20 -mr-1 min-h-[32px] min-w-0 shrink-0">
             <ChartContainer
               height="100%"
               loading={loading}

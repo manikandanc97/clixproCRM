@@ -35,7 +35,7 @@ const TopCustomers = ({ data, loading: _loading }: TopCustomersProps) => {
         </CardHeader>
 
         <CardContent className="p-0 min-w-0 flex-1 overflow-y-auto max-h-[400px]">
-          {!data || data.length === 0 ? (
+          {!data || data.length === 0 || !data.some((c) => (c.revenue || 0) > 0) ? (
             <div className="p-6">
               <EmptyStateCard 
                 icon={Users} 

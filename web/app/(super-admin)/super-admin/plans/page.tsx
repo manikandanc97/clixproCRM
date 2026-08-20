@@ -43,7 +43,7 @@ const INITIAL_PLANS: PlanConfig[] = [
   {
     id: "free",
     name: "Free Sandbox",
-    price: "$0",
+    price: "₹0",
     priceNum: 0,
     billing: "forever",
     description: "Essential CRM tooling for solo founders and pre-revenue startups.",
@@ -61,8 +61,8 @@ const INITIAL_PLANS: PlanConfig[] = [
   {
     id: "starter",
     name: "Starter Growth",
-    price: "$29",
-    priceNum: 29,
+    price: "₹1,999",
+    priceNum: 1999,
     billing: "per month",
     description: "Empower growing sales teams with automation and lead tracking.",
     features: [
@@ -80,16 +80,16 @@ const INITIAL_PLANS: PlanConfig[] = [
   {
     id: "pro",
     name: "Professional",
-    price: "$79",
-    priceNum: 79,
+    price: "₹4,999",
+    priceNum: 4999,
     billing: "per month",
-    description: "Advanced intelligence, deep analytics, and multi-currency billing.",
+    description: "Advanced intelligence, deep analytics, and rupee invoicing.",
     features: [
       "Up to 30 Team Members",
       "Unlimited Leads & Deals",
       "AI Smart Summary & Copilot",
       "Advanced Revenue Analytics",
-      "Multi-Currency Invoicing",
+      "Rupee Invoicing (₹)",
       "Custom Role Permissions",
       "24/7 Priority Support",
     ],
@@ -101,8 +101,8 @@ const INITIAL_PLANS: PlanConfig[] = [
   {
     id: "enterprise",
     name: "Enterprise",
-    price: "$199",
-    priceNum: 199,
+    price: "₹14,999",
+    priceNum: 14999,
     billing: "per month",
     description: "Dedicated infrastructure, audit logs, and bespoke compliance for large orgs.",
     features: [
@@ -193,7 +193,7 @@ export default function SuperAdminPlansPage() {
           />
           <CRMMetricCard
             title="Estimated Monthly MRR"
-            value={`$${totalMonthlyMRR.toLocaleString()}`}
+            value={`₹${totalMonthlyMRR.toLocaleString()}`}
             change="Monthly Recurring SaaS"
             trend="up"
             icon={Zap}
@@ -202,7 +202,7 @@ export default function SuperAdminPlansPage() {
           />
           <CRMMetricCard
             title="Projected Annual ARR"
-            value={`$${(totalMonthlyMRR * 12).toLocaleString()}`}
+            value={`₹${(totalMonthlyMRR * 12).toLocaleString()}`}
             change="12-Month Run Rate"
             trend="up"
             icon={CreditCard}
@@ -242,7 +242,7 @@ export default function SuperAdminPlansPage() {
 
                 <div className="pt-2">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-foreground">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-foreground">
                       {plan.price}
                     </span>
                     <span className="text-xs text-muted-foreground font-semibold">
@@ -339,7 +339,7 @@ export default function SuperAdminPlansPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Price ($/mo)</Label>
+                  <Label className="text-xs font-semibold">Price (₹/mo)</Label>
                   <Input
                     type="number"
                     value={editingPlan.priceNum}

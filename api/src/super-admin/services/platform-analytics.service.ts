@@ -54,12 +54,12 @@ export class PlatformAnalyticsService {
       }
     });
 
-    // Plan pricing model estimates for MRR
+    // Plan pricing model estimates for MRR in INR
     const planPrices: Record<string, number> = {
       free: 0,
-      starter: 29,
-      pro: 79,
-      enterprise: 199,
+      starter: 1999,
+      pro: 4999,
+      enterprise: 14999,
     };
 
     const planStats = await this.prisma.tenant.groupBy({

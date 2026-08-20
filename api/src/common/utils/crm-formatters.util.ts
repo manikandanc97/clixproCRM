@@ -16,11 +16,7 @@ export const PIPELINE_STAGE_LABELS: Record<string, string> = {
 };
 
 const CURRENCY_FORMATS: Record<string, { locale: string; currency: string }> = {
-  USD: { locale: 'en-US', currency: 'USD' },
   INR: { locale: 'en-IN', currency: 'INR' },
-  EUR: { locale: 'en-IE', currency: 'EUR' },
-  GBP: { locale: 'en-GB', currency: 'GBP' },
-  AED: { locale: 'en-AE', currency: 'AED' },
 };
 
 const longDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -34,17 +30,13 @@ export function toNumber(value: unknown): number {
 }
 
 function getSupportedCurrency(value?: string | null): string {
-  const currency = String(value || 'INR').toUpperCase();
-  return CURRENCY_FORMATS[currency] ? currency : 'INR';
+  return 'INR';
 }
 
 export function formatCurrency(value: unknown, currency?: string): string {
-  const selectedCurrency = getSupportedCurrency(currency || 'INR');
-  const format = CURRENCY_FORMATS[selectedCurrency];
-
-  return new Intl.NumberFormat(format.locale, {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: selectedCurrency,
+    currency: 'INR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(toNumber(value));

@@ -38,15 +38,36 @@ const ReportsPage = () => {
 
   const hasReportsData = useMemo(() => {
     if (!data) return false;
+
+    // Check if any metric in stats is non-zero
+    const hasNonZeroStats = (data.stats || []).some((s) => {
+      const num = typeof s.value === "string" 
+        ? parseFloat(s.value.replace(/[^0-9.-]+/g, "")) 
+        : Number(s.value);
+      return !isNaN(num) && num > 0;
+    });
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hasRevenue = data.revenueChart?.some((r: any) => Number(r.revenue || r.total || r.value) > 0);
-    const hasPerformance = data.performance?.some((p) => Number(p.dealsClosed || p.revenueValue) > 0);
+    const hasRevenue = (data.revenueChart || []).some((r: any) => Number(r.revenue ?? r.total ?? r.value ?? 0) > 0);
+    const hasPerformance = (data.performance || []).some((p) => Number(p.dealsClosed || p.revenueValue || 0) > 0);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hasFunnel = data.funnel?.some((f: any) => Number(f.count || f.value) > 0);
-    const hasActivities = (data.recentActivities?.length || 0) > 0 || (data.salesActivities?.length || 0) > 0;
-    const hasCustomers = (data.topCustomers?.length || 0) > 0;
-    const hasNonZeroStats = data.stats?.some((s) => s.value !== "0" && s.value !== "₹0" && s.value !== "$0" && s.value !== "0%" && s.value !== "0.0%");
-    return Boolean(hasRevenue || hasPerformance || hasFunnel || hasActivities || hasCustomers || hasNonZeroStats);
+    const hasFunnel = (data.funnel || []).some((f: any) => Number(f.count || f.value || 0) > 0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasSalesActivities = (data.salesActivities || []).some((s: any) => Number(s.value || 0) > 0);
+    const hasRecentActivities = (data.recentActivities?.length || 0) > 0;
+    const hasTopCustomers = (data.topCustomers || []).some((c) => Number(c.revenue || 0) > 0);
+    const hasUpcomingFollowUps = (data.upcomingFollowUps?.length || 0) > 0;
+
+    return Boolean(
+      hasNonZeroStats ||
+      hasRevenue ||
+      hasPerformance ||
+      hasFunnel ||
+      hasSalesActivities ||
+      hasRecentActivities ||
+      hasTopCustomers ||
+      hasUpcomingFollowUps
+    );
   }, [data]);
 
   const handleTimePeriod = () => {
@@ -128,13 +149,19 @@ const ReportsPage = () => {
           subtitle="Comprehensive breakdown of your sales performance, revenue targets, and team efficiency."
           icon={BarChart3}
           badge="Business Intelligence"
+          actions={[
+            {
+              label: "Refresh",
+              icon: RefreshCcw,
+              onClick: handleRefresh,
+              variant: "outline",
+            },
+          ]}
         />
 
-        <div className="flex-1 min-h-[420px] flex items-center justify-center pt-6">
+        <div className="flex-1 min-h-0 flex flex-col pt-2">
           <EmptyState
-            icon={BarChart3}
-            title="Reports will appear here"
-            description="Once you start recording leads, closing deals, and generating sales activities, your live performance trends and business intelligence reports will populate here automatically."
+            module="reports"
             action={{
               label: "Go to Dashboard",
               onClick: () => router.push("/dashboard"),
