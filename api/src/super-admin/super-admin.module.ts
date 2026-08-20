@@ -17,8 +17,12 @@ import { PlatformModulesController } from './controllers/platform-modules.contro
 import { PlatformModulesService } from './services/platform-modules.service';
 import { PlatformAuditIntegrityController } from './controllers/platform-audit-integrity.controller';
 import { PlatformSecurityCenterController } from './controllers/platform-security-center.controller';
+import { PlatformSecurityOperationsController } from './controllers/platform-security-operations.controller';
+import { PlatformSecurityGovernanceController } from './controllers/platform-security-governance.controller';
 import { EmergencySecurityService } from './services/emergency-security.service';
 import { SecurityIncidentsService } from './services/security-incidents.service';
+import { SecurityOperationsService } from './services/security-operations.service';
+import { SecurityGovernanceService } from './services/security-governance.service';
 
 @Module({
   imports: [PrismaModule, SystemModule],
@@ -30,6 +34,8 @@ import { SecurityIncidentsService } from './services/security-incidents.service'
     PlatformAuditLogsController,
     PlatformAuditIntegrityController,
     PlatformSecurityCenterController,
+    PlatformSecurityOperationsController,
+    PlatformSecurityGovernanceController,
     PlatformSettingsController,
     PlatformModulesController,
   ],
@@ -43,6 +49,8 @@ import { SecurityIncidentsService } from './services/security-incidents.service'
     PlatformModulesService,
     EmergencySecurityService,
     SecurityIncidentsService,
+    SecurityOperationsService,
+    SecurityGovernanceService,
   ],
   exports: [
     PlatformDashboardService,
@@ -54,6 +62,8 @@ import { SecurityIncidentsService } from './services/security-incidents.service'
     PlatformModulesService,
     EmergencySecurityService,
     SecurityIncidentsService,
+    SecurityOperationsService,
+    SecurityGovernanceService,
   ],
 })
 export class SuperAdminModule {}

@@ -457,6 +457,166 @@ export const disablePlatformEmergency = async (reason: string) => {
   return response.data;
 };
 
+export interface ComponentHealthInfo {
+  status: "HEALTHY" | "DEGRADED" | "CRITICAL" | "UNKNOWN";
+  latencyMs?: number;
+  message?: string;
+  details?: Record<string, any>;
+}
+
+export interface SecurityHealthData {
+  overallStatus: "HEALTHY" | "DEGRADED" | "CRITICAL" | "UNKNOWN";
+  database: ComponentHealthInfo;
+  redis: ComponentHealthInfo;
+  auditIntegrity: ComponentHealthInfo;
+  wormArchive: ComponentHealthInfo;
+  incidentSystem: ComponentHealthInfo;
+  sessions: ComponentHealthInfo;
+  mfa: ComponentHealthInfo;
+  hardening: {
+    cors: "HEALTHY" | "DEGRADED" | "CRITICAL";
+    csp: "HEALTHY" | "DEGRADED" | "CRITICAL";
+    ssrf: "HEALTHY" | "DEGRADED" | "CRITICAL";
+    uploadSecurity: "HEALTHY" | "DEGRADED" | "CRITICAL";
+    rateLimiting: "HEALTHY" | "DEGRADED" | "CRITICAL";
+  };
+  lastCheckedAt: string;
+}
+
+export interface SecurityMetricsData {
+  period: "24h" | "7d" | "30d";
+  metrics: {
+    loginSuccessCount: number;
+    loginFailureCount: number;
+    newDeviceCount: number;
+    mfaFailureCount: number;
+    sessionRevocationCount: number;
+    lockedUsersCount: number;
+    lockedTenantsCount: number;
+    openIncidentsCount: number;
+    criticalIncidentsCount: number;
+    auditIntegrityFailures: number;
+    wormArchiveFailures: number;
+    staleOutboxItems: number;
+    emergencyMode: boolean;
+  };
+  anomaliesDetected: {
+    metric: string;
+    value: number;
+    threshold: number;
+    severity: "MEDIUM" | "HIGH" | "CRITICAL";
+    message: string;
+  }[];
+  generatedAt: string;
+}
+
+export const fetchSecOpsHealth = async (): Promise<SecurityHealthData> => {
+  const response = await client.get<{ success: boolean; data: SecurityHealthData }>(
+    "/super-admin/security/operations/health"
+  );
+  return response.data.data;
+};
+
+export const fetchSecOpsMetrics = async (
+  period: "24h" | "7d" | "30d" = "24h"
+): Promise<SecurityMetricsData> => {
+  const response = await client.get<{ success: boolean; data: SecurityMetricsData }>(
+    "/super-admin/security/operations/metrics",
+    { params: { period } }
+  );
+  return response.data.data;
+};
+
+export const fetchSecOpsTimeline = async (limit: number = 25): Promise<any[]> => {
+  const response = await client.get<{ success: boolean; data: any[] }>(
+    "/super-admin/security/operations/timeline",
+    { params: { limit } }
+  );
+  return response.data.data;
+};
+
+export const fetchSecOpsConfig = async (): Promise<any> => {
+  const response = await client.get<{ success: boolean; data: any }>(
+    "/super-admin/security/operations/config"
+  );
+  return response.data.data;
+};
+
+export interface SecurityPostureData {
+  overallStatus: "HEALTHY" | "DEGRADED" | "CRITICAL" | "UNKNOWN";
+  securityReadinessScore: number;
+  controlsSummary: {
+    total: number;
+    verified: number;
+    configured: number;
+    degraded: number;
+    notConfigured: number;
+  };
+  complianceReadiness: {
+    framework: string;
+    readinessStatus: "HIGH" | "MEDIUM" | "LOW";
+    verifiedControlsCount: number;
+  }[];
+  configurationReadiness: {
+    ready: boolean;
+    validCount: number;
+    totalCount: number;
+    issues: string[];
+  };
+  backupReadiness: {
+    wormConfigured: boolean;
+    complianceRetentionDays: number;
+    archiveStatus: string;
+  };
+  incidentReadiness: {
+    openIncidents: number;
+    criticalIncidents: number;
+    emergencyLockdownActive: boolean;
+  };
+  lastEvaluatedAt: string;
+}
+
+export interface GovernanceControlData {
+  controlId: string;
+  category: string;
+  name: string;
+  status: "VERIFIED" | "CONFIGURED" | "DEGRADED" | "NOT_CONFIGURED";
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  evidence: string;
+  lastVerifiedAt: string;
+}
+
+export const fetchGovernancePosture = async (): Promise<SecurityPostureData> => {
+  const response = await client.get<{ success: boolean; data: SecurityPostureData }>(
+    "/super-admin/security/governance/posture"
+  );
+  return response.data.data;
+};
+
+export const fetchGovernanceControls = async (): Promise<GovernanceControlData[]> => {
+  const response = await client.get<{ success: boolean; data: GovernanceControlData[] }>(
+    "/super-admin/security/governance/controls"
+  );
+  return response.data.data;
+};
+
+export const fetchGovernanceRls = async (): Promise<any> => {
+  const response = await client.get<{ success: boolean; data: any }>(
+    "/super-admin/security/governance/rls"
+  );
+  return response.data.data;
+};
+
+export const generateGovernanceEvidence = async (
+  format: "json" | "csv" = "json"
+): Promise<{ format: string; filename: string; content: string; checksum: string }> => {
+  const response = await client.post<{
+    success: boolean;
+    data: { format: string; filename: string; content: string; checksum: string };
+  }>("/super-admin/security/governance/evidence", { format });
+  return response.data.data;
+};
+
 export const fetchPlatformSettings = async () => {
   const response = await client.get<{ success: boolean; data: any }>(
     "/super-admin/settings"

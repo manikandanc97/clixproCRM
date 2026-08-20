@@ -296,4 +296,36 @@ export class AuditArchiveService implements OnModuleInit {
       },
     };
   }
+
+  /**
+   * Retrieves aggregate statistics for the AuditArchiveOutbox.
+   */
+  async getOutboxStats(): Promise<{
+    pending: number;
+    archived: number;
+    failed: number;
+    stale: number;
+  }> {
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+
+    const [pending, archived, failed, stale] = await Promise.all([
+      (this.prisma as any).auditArchiveOutbox.count({
+        where: { status: 'PENDING' },
+      }),
+      (this.prisma as any).auditArchiveOutbox.count({
+        where: { status: 'ARCHIVED' },
+      }),
+      (this.prisma as any).auditArchiveOutbox.count({
+        where: { status: 'FAILED' },
+      }),
+      (this.prisma as any).auditArchiveOutbox.count({
+        where: {
+          status: { in: ['PENDING', 'PROCESSING'] },
+          createdAt: { lt: thirtyMinutesAgo },
+        },
+      }),
+    ]);
+
+    return { pending, archived, failed, stale };
+  }
 }

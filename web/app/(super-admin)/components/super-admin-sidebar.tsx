@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import {
+  Activity,
   LayoutDashboard,
   Building2,
   Users,
@@ -61,6 +62,11 @@ const superAdminNavGroups: NavGroup[] = [
         title: "Security Center",
         href: "/super-admin/security",
         icon: ShieldAlert,
+      },
+      {
+        title: "SecOps Telemetry",
+        href: "/super-admin/security/operations",
+        icon: Activity,
       },
       {
         title: "Audit Logs",
