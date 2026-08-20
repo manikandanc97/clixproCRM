@@ -1,24 +1,24 @@
 "use client";
 
 import React from "react";
-import { CalendarDays, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { EmptyState as GlobalEmptyState } from "@/shared/components/EmptyState";
 
 interface EmptyStateProps {
   onNewEvent: () => void;
+  className?: string;
 }
 
-export function EmptyState({ onNewEvent }: EmptyStateProps) {
+export function EmptyState({ onNewEvent, className }: EmptyStateProps) {
   return (
     <GlobalEmptyState
-      icon={CalendarDays}
-      title="No meetings scheduled"
-      description="No events match the current date range or filters."
+      module="meetings"
       action={{
-        label: "Create Event",
+        label: "Schedule Meeting",
         onClick: onNewEvent,
         icon: Plus,
       }}
+      className={className}
     />
   );
 }

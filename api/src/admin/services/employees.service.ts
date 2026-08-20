@@ -102,7 +102,7 @@ export class EmployeesService {
     });
     if (!roleObj) {
       roleObj = await this.prisma.role.create({
-        data: { name: roleName, tenantId, isSystem: true },
+        data: { name: roleName, tenantId, isSystem: false },
       });
     }
 

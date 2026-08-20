@@ -35,9 +35,13 @@ export function MeetingsTab({ leadId }: { leadId: string }) {
         </div>
       ) : meetings.length === 0 ? (
         <EmptyState
-          icon={Calendar}
-          title="No meetings scheduled"
+          module="meetings"
           description="Schedule a meeting to connect with this lead."
+          action={{
+            label: "Schedule Meeting",
+            onClick: () => setIsScheduling(true),
+            icon: Calendar,
+          }}
           size="sm"
         />
       ) : viewMode === "list" || viewMode === "table" ? (

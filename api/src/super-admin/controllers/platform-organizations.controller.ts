@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -105,6 +106,16 @@ export class PlatformOrganizationsController {
       success: true,
       data,
       message: `Organization ${body.status.toLowerCase()} successfully`,
+    };
+  }
+
+  @Delete(':id')
+  async deleteOrganization(@Req() req: any, @Param('id') id: string) {
+    const data = await this.orgsService.deleteOrganization(id, req.user.id);
+    return {
+      success: true,
+      data,
+      message: 'Organization deleted successfully',
     };
   }
 }

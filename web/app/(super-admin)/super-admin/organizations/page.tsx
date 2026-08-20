@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   Building2,
   Plus,
-  Ban,
   ShieldCheck,
   RefreshCw,
   Users,
@@ -13,6 +12,9 @@ import {
   MoreHorizontal,
   Download,
   FileText,
+  Trash2,
+  AlertTriangle,
+  Loader2,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -22,7 +24,7 @@ import {
 import {
   fetchPlatformOrganizations,
   createPlatformOrganization,
-  updateOrganizationStatus,
+  deletePlatformOrganization,
   fetchPlatformOrganizationDetails,
   PlatformOrganization,
 } from "@/shared/lib/api/super-admin.api";
@@ -46,13 +48,13 @@ import {
   CRMToolbar,
 } from "@/shared/components/crm";
 import { StatusBadge } from "@/shared/components/StatusBadge";
+import { PlanBadge } from "@/shared/components/PlanBadge";
 import { EmptyState } from "@/shared/components/EmptyState";
 
 export default function SuperAdminOrganizationsPage() {
   const [organizations, setOrganizations] = useState<PlatformOrganization[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ACTIVE" | "SUSPENDED" | "ALL">("ALL");
   const [planFilter, setPlanFilter] = useState<string>("ALL");
 
   // Pagination State
@@ -72,12 +74,15 @@ export default function SuperAdminOrganizationsPage() {
   const [selectedOrgDetails, setSelectedOrgDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  // Delete Confirmation State
+  const [orgToDelete, setOrgToDelete] = useState<PlatformOrganization | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const loadOrganizations = async () => {
     try {
       setLoading(true);
       const res = await fetchPlatformOrganizations({
         search: search || undefined,
-        status: statusFilter === "ALL" ? undefined : statusFilter,
         plan: planFilter === "ALL" ? undefined : planFilter,
       });
       setOrganizations(res.organizations);
@@ -91,7 +96,7 @@ export default function SuperAdminOrganizationsPage() {
   useEffect(() => {
     loadOrganizations();
     setCurrentPage(1);
-  }, [statusFilter, planFilter]);
+  }, [planFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -128,28 +133,25 @@ export default function SuperAdminOrganizationsPage() {
     }
   };
 
-  const handleToggleStatus = async (org: PlatformOrganization) => {
-    const newStatus = org.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-    const actionLabel = newStatus === "ACTIVE" ? "activate" : "suspend";
-
-    if (
-      !confirm(
-        `Are you sure you want to ${actionLabel} "${org.name}"? ${
-          newStatus === "SUSPENDED"
-            ? "Users in this workspace will be immediately blocked from CRM actions."
-            : "Users will regain access immediately."
-        }`
-      )
-    ) {
-      return;
-    }
-
+  const handleDeleteOrg = async (org: PlatformOrganization) => {
     try {
-      await updateOrganizationStatus(org.id, newStatus);
-      toast.success(`Organization "${org.name}" is now ${newStatus.toLowerCase()}.`);
-      loadOrganizations();
+      setDeleting(true);
+      await deletePlatformOrganization(org.id);
+      toast.success(`Workspace "${org.name}" deleted successfully.`);
+      setOrgToDelete(null);
+      if (selectedOrgDetails?.id === org.id) {
+        setDetailsModalOpen(false);
+        setSelectedOrgDetails(null);
+      }
+      await loadOrganizations();
     } catch (err: any) {
-      toast.error(`Failed to ${actionLabel} organization.`);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to delete organization."
+      );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -196,7 +198,6 @@ export default function SuperAdminOrganizationsPage() {
   };
 
   const totalActive = organizations.filter((o) => o.status === "ACTIVE").length;
-  const totalSuspended = organizations.filter((o) => o.status === "SUSPENDED").length;
   const totalPro = organizations.filter((o) => o.plan?.toLowerCase() === "pro" || o.plan?.toLowerCase() === "enterprise").length;
 
   const filteredOrganizations = organizations.filter((org) => {
@@ -254,9 +255,9 @@ export default function SuperAdminOrganizationsPage() {
             loading={loading}
           />
           <CRMMetricCard
-            title="Active Tenants"
+            title="Active Workspaces"
             value={totalActive}
-            change={`${totalSuspended} suspended`}
+            change={`${totalActive} Active`}
             trend={totalActive > 0 ? "up" : "neutral"}
             icon={ShieldCheck}
             color="emerald"
@@ -280,24 +281,7 @@ export default function SuperAdminOrganizationsPage() {
         setSearchQuery={setSearch}
         placeholder="Search by workspace name or slug..."
       >
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Status Tabs */}
-          <div className="flex items-center bg-muted/60 p-1 rounded-xl border border-border/60 shadow-sm">
-            {(["ALL", "ACTIVE", "SUSPENDED"] as const).map((st) => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  statusFilter === st
-                    ? "bg-card text-foreground shadow-sm font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {st === "ALL" ? "All" : st.charAt(0) + st.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
-
+        <div className="flex items-center gap-2">
           {/* Plan Selector */}
           <select
             value={planFilter}
@@ -378,9 +362,7 @@ export default function SuperAdminOrganizationsPage() {
 
                     {/* Plan */}
                     <td className="px-6 py-4">
-                      <span className="capitalize text-xs font-bold px-2.5 py-1 rounded-lg bg-muted/60 border border-border text-foreground">
-                        {org.plan}
-                      </span>
+                      <PlanBadge plan={org.plan} />
                     </td>
 
                     {/* Users */}
@@ -444,19 +426,12 @@ export default function SuperAdminOrganizationsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleToggleStatus(org)}
-                              className={`text-xs gap-2 cursor-pointer font-medium ${
-                                org.status === "ACTIVE"
-                                  ? "text-rose-500 focus:text-rose-500"
-                                  : "text-emerald-500 focus:text-emerald-500"
-                              }`}
+                              variant="destructive"
+                              onClick={() => setOrgToDelete(org)}
+                              className="text-xs gap-2 cursor-pointer font-semibold text-rose-600 focus:text-rose-600 focus:bg-rose-500/10 dark:text-rose-400 dark:focus:text-rose-400 dark:focus:bg-rose-500/20"
                             >
-                              <Ban className="h-3.5 w-3.5" />
-                              <span>
-                                {org.status === "ACTIVE"
-                                  ? "Suspend Workspace"
-                                  : "Activate Workspace"}
-                              </span>
+                              <Trash2 className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                              <span className="text-rose-600 dark:text-rose-400">Delete Workspace</span>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -693,17 +668,46 @@ export default function SuperAdminOrganizationsPage() {
                   <h3 className="text-lg font-bold text-foreground">
                     {selectedOrgDetails?.name}
                   </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Slug: /{selectedOrgDetails?.slug} • Plan: {selectedOrgDetails?.plan?.toUpperCase()}
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs text-muted-foreground font-mono">/{selectedOrgDetails?.slug}</span>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <PlanBadge plan={selectedOrgDetails?.plan} size="sm" />
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={() => setDetailsModalOpen(false)}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => {
+                    const org = organizations.find((o) => o.id === selectedOrgDetails?.id) || {
+                      id: selectedOrgDetails?.id,
+                      name: selectedOrgDetails?.name || "Organization",
+                      slug: selectedOrgDetails?.slug || "",
+                      plan: selectedOrgDetails?.plan || "free",
+                      status: selectedOrgDetails?.status || "ACTIVE",
+                      userCount: selectedOrgDetails?.members?.length || 0,
+                      leadCount: selectedOrgDetails?.counts?.leads || 0,
+                      customerCount: selectedOrgDetails?.counts?.customers || 0,
+                      dealCount: selectedOrgDetails?.counts?.deals || 0,
+                      taskCount: selectedOrgDetails?.counts?.tasks || 0,
+                      createdAt: selectedOrgDetails?.createdAt || new Date().toISOString(),
+                      updatedAt: selectedOrgDetails?.updatedAt || new Date().toISOString(),
+                    };
+                    setOrgToDelete(org as PlatformOrganization);
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive text-xs font-semibold gap-1.5 h-8 px-2.5 rounded-lg"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete</span>
+                </Button>
+                <button
+                  onClick={() => setDetailsModalOpen(false)}
+                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {loadingDetails ? (
@@ -791,6 +795,66 @@ export default function SuperAdminOrganizationsPage() {
                 </div>
               </div>
             ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* 7. Delete Workspace Confirmation Modal */}
+      {orgToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-foreground">
+                  Delete Workspace
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  This action is permanent and irreversible.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Are you sure you want to permanently delete{" "}
+              <strong className="text-foreground">{orgToDelete.name}</strong>{" "}
+              (<span className="font-mono text-[11px]">/{orgToDelete.slug}</span>)? All associated users, CRM leads, deals, quotations, invoices, and activity history will be completely removed.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setOrgToDelete(null)}
+                disabled={deleting}
+                className="rounded-xl text-xs font-semibold h-9 px-4"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDeleteOrg(orgToDelete)}
+                disabled={deleting}
+                className="rounded-xl text-xs font-bold h-9 px-4 gap-1.5"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete Workspace</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}

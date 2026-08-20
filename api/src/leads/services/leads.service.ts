@@ -10,19 +10,32 @@ import { ConvertLeadDto } from '../dto/convert-lead.dto';
 import { UpdateLeadDto } from '../dto/update-lead.dto';
 import { LeadsQueryService } from './leads.query.service';
 import { LeadsConvertService } from './leads.convert.service';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 
 /**
  * @file leads/services/leads.service.ts
  * Leads core CRUD service.
  * Query & formatting logic is in leads.query.service.ts.
  * Conversion logic is in leads.convert.service.ts.
+ *
+ * ENCRYPTION: Lead.name, Lead.email, Lead.phone, Lead.company are AES-256-GCM encrypted.
+ *             Lead.emailHash is an HMAC-SHA256 deterministic hash for exact-match lookups.
+ *             Note.message is AES-256-GCM encrypted.
+ *             Decryption happens transparently on every read path.
  */
+
+/** Fields encrypted on Lead records. */
+const LEAD_ENCRYPTED_FIELDS = ['name', 'email', 'phone', 'company'] as const;
+/** Fields encrypted on Note records. */
+const NOTE_ENCRYPTED_FIELDS = ['message'] as const;
+
 @Injectable()
 export class LeadsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly leadsQueryService: LeadsQueryService,
     private readonly leadsConvertService: LeadsConvertService,
+    private readonly enc: EncryptionService,
   ) {}
 
   // ─── Query Delegation ───────────────────────────────────────────────────────
@@ -67,18 +80,21 @@ export class LeadsService {
       const isWon = data.stage === 'WON';
       let companyId = null;
       const companyName = data.company ? data.company.trim() : null;
+
       if (companyName) {
+        // Use nameHash for exact-match lookup on encrypted company name
+        const companyNameHash = this.enc.hash(companyName);
         let company = await tx.company.findFirst({
-          where: {
-            tenantId,
-            name: { equals: companyName, mode: 'insensitive' },
-          },
+          where: { tenantId, nameHash: companyNameHash, deletedAt: null },
         });
         if (!company) {
+          const { encrypted: encName, hash: nameHash } =
+            this.enc.encryptWithHash(companyName);
           company = await tx.company.create({
             data: {
               tenantId,
-              name: companyName,
+              name: encName!,
+              nameHash,
               ownerId: userId,
               status: 'ACTIVE',
             },
@@ -87,14 +103,18 @@ export class LeadsService {
         companyId = company.id;
       }
 
+      const { encrypted: encEmail, hash: emailHash } =
+        this.enc.encryptWithHash(data.email);
+
       const lead = await tx.lead.create({
         data: {
           tenantId,
-          name: data.name,
-          company: companyName || 'Unknown Company',
+          name: this.enc.encrypt(data.name)!,
+          company: this.enc.encrypt(companyName || 'Unknown Company')!,
           companyId,
-          email: data.email,
-          phone: data.phone,
+          email: encEmail!,
+          emailHash,
+          phone: this.enc.encrypt(data.phone),
           source: data.source || 'Direct',
           stage: data.stage || 'NEW',
           priority: data.priority || 'MEDIUM',
@@ -120,7 +140,8 @@ export class LeadsService {
         },
       });
 
-      return lead;
+      // Return decrypted lead for immediate API response
+      return this.decryptLead(lead);
     });
   }
 
@@ -143,7 +164,7 @@ export class LeadsService {
       },
     });
     if (!lead) throw new NotFoundException('Lead not found');
-    return lead;
+    return this.decryptLead(lead);
   }
 
   async updateLead(
@@ -161,6 +182,7 @@ export class LeadsService {
           name: true,
           company: true,
           email: true,
+          emailHash: true,
           phone: true,
           assignedToId: true,
           customerId: true,
@@ -177,20 +199,27 @@ export class LeadsService {
       let finalCompanyId = undefined;
       let finalCompanyName = undefined;
 
-      if (data.company !== undefined && data.company !== existingLead.company) {
+      // Decrypt existing for comparison
+      const existingCompanyPlain = this.enc.decrypt(existingLead.company);
+
+      if (
+        data.company !== undefined &&
+        data.company !== existingCompanyPlain
+      ) {
         finalCompanyName = data.company.trim();
         if (finalCompanyName) {
+          const companyNameHash = this.enc.hash(finalCompanyName);
           let company = await tx.company.findFirst({
-            where: {
-              tenantId,
-              name: { equals: finalCompanyName, mode: 'insensitive' },
-            },
+            where: { tenantId, nameHash: companyNameHash, deletedAt: null },
           });
           if (!company) {
+            const { encrypted: encName, hash: nameHash } =
+              this.enc.encryptWithHash(finalCompanyName);
             company = await tx.company.create({
               data: {
                 tenantId,
-                name: finalCompanyName,
+                name: encName!,
+                nameHash,
                 ownerId: userId,
                 status: 'ACTIVE',
               },
@@ -220,12 +249,25 @@ export class LeadsService {
 
       let customerId = existingLead.customerId;
       if (isWon && !wasWon && !customerId) {
+        const encName = this.enc.encrypt(
+          data.name || this.enc.decrypt(existingLead.name) || '',
+        );
+        const encEmail = this.enc.encrypt(
+          data.email || this.enc.decrypt(existingLead.email) || '',
+        );
+        const emailHash = this.enc.hash(
+          data.email || this.enc.decrypt(existingLead.email) || '',
+        );
+        const encCompany = this.enc.encrypt(
+          finalCompanyName || existingCompanyPlain || '',
+        );
         const customer = await tx.customer.create({
           data: {
             tenantId,
-            name: data.name || existingLead.name,
-            email: data.email || existingLead.email || null,
-            company: finalCompanyName || existingLead.company || '',
+            name: encName!,
+            email: encEmail,
+            emailHash,
+            company: encCompany!,
             companyId: finalCompanyId,
             status: 'ACTIVE',
           },
@@ -233,36 +275,43 @@ export class LeadsService {
         customerId = customer.id;
       }
 
+      // Build encrypted update payload
+      const updateData: any = {};
+      if (data.name) updateData.name = this.enc.encrypt(data.name);
+      if (finalCompanyName !== undefined)
+        updateData.company = this.enc.encrypt(finalCompanyName);
+      if (finalCompanyId !== undefined) updateData.companyId = finalCompanyId;
+      if (data.email) {
+        const { encrypted, hash } = this.enc.encryptWithHash(data.email);
+        updateData.email = encrypted;
+        updateData.emailHash = hash;
+      }
+      if (data.phone !== undefined)
+        updateData.phone = this.enc.encrypt(data.phone);
+      if (data.source) updateData.source = data.source;
+      if (data.value !== undefined) updateData.value = data.value;
+      if (data.valueAmount !== undefined && data.value === undefined)
+        updateData.value = data.valueAmount;
+      if (data.stage) updateData.stage = data.stage;
+      if (data.priority) updateData.priority = data.priority;
+      if (data.expectedCloseDate !== undefined) {
+        updateData.expectedCloseDate = data.expectedCloseDate
+          ? new Date(data.expectedCloseDate)
+          : null;
+      }
+      if (data.tags) updateData.tags = data.tags;
+      if (data.assignedToId) updateData.assignedToId = data.assignedToId;
+      if (isWon && !wasWon) {
+        updateData.isConverted = true;
+        updateData.convertedAt = new Date();
+        updateData.customerId = customerId;
+      }
+      updateData.updatedById = userId;
+      updateData.lastActivityAt = new Date();
+
       const lead = await tx.lead.update({
         where: { id, tenantId },
-        data: {
-          ...(data.name && { name: data.name }),
-          ...(finalCompanyName !== undefined && { company: finalCompanyName }),
-          ...(finalCompanyId !== undefined && { companyId: finalCompanyId }),
-          ...(data.email && { email: data.email }),
-          ...(data.phone !== undefined && { phone: data.phone }),
-          ...(data.source && { source: data.source }),
-          ...(data.value !== undefined && { value: data.value }),
-          ...(data.valueAmount !== undefined &&
-            data.value === undefined && { value: data.valueAmount }),
-          ...(data.stage && { stage: data.stage }),
-          ...(data.priority && { priority: data.priority }),
-          ...(data.expectedCloseDate !== undefined && {
-            expectedCloseDate: data.expectedCloseDate
-              ? new Date(data.expectedCloseDate)
-              : null,
-          }),
-          ...(data.tags && { tags: data.tags }),
-          ...(data.assignedToId && { assignedToId: data.assignedToId }),
-          ...(isWon &&
-            !wasWon && {
-              isConverted: true,
-              convertedAt: new Date(),
-              customerId,
-            }),
-          updatedById: userId,
-          lastActivityAt: new Date(),
-        },
+        data: updateData,
       });
 
       if (stageChanged) {
@@ -295,7 +344,7 @@ export class LeadsService {
           },
         });
       }
-      return lead;
+      return this.decryptLead(lead);
     });
   }
 
@@ -387,13 +436,18 @@ export class LeadsService {
   }
 
   async getLeadNotes(tenantId: string, leadId: string) {
-    return this.prisma.note.findMany({
+    const notes = await this.prisma.note.findMany({
       where: { tenantId, leadId },
       include: {
         user: { select: { name: true, email: true, id: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
+    // Decrypt Note.message on read
+    return notes.map((n) => ({
+      ...n,
+      message: this.enc.decrypt(n.message),
+    }));
   }
 
   async createLeadNote(
@@ -407,7 +461,7 @@ export class LeadsService {
         tenantId,
         leadId,
         userId,
-        message: data.content,
+        message: this.enc.encrypt(data.content)!, // Encrypt Note.message
       },
       include: {
         user: { select: { name: true, email: true, id: true } },
@@ -424,7 +478,8 @@ export class LeadsService {
       },
     });
 
-    return note;
+    // Return decrypted for API response
+    return { ...note, message: this.enc.decrypt(note.message) };
   }
 
   async getLeadTimeline(tenantId: string, leadId: string) {
@@ -481,5 +536,11 @@ export class LeadsService {
       return leads;
     });
   }
-}
 
+  // ─── Private Helpers ─────────────────────────────────────────────────────────
+
+  /** Decrypts all PII fields on a lead object in-place and returns it. */
+  private decryptLead<T extends Record<string, any>>(lead: T): T {
+    return this.enc.decryptFields(lead, LEAD_ENCRYPTED_FIELDS as any);
+  }
+}

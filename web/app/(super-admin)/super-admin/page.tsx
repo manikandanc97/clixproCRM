@@ -31,6 +31,7 @@ import {
   CRMMetricsGrid,
 } from "@/shared/components/crm";
 import { StatusBadge } from "@/shared/components/StatusBadge";
+import { PlanBadge } from "@/shared/components/PlanBadge";
 import { EmptyState } from "@/shared/components/EmptyState";
 
 export default function SuperAdminDashboardPage() {
@@ -337,9 +338,7 @@ export default function SuperAdminDashboardPage() {
                         </div>
                       </td>
                       <td className="px-4">
-                        <span className="capitalize text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-muted/60 border border-border text-foreground">
-                          {org.plan}
-                        </span>
+                        <PlanBadge plan={org.plan} size="sm" />
                       </td>
                       <td className="px-4 text-xs text-muted-foreground font-medium">
                         <span className="text-foreground font-semibold">{org.userCount}</span> users

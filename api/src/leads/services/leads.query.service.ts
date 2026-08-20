@@ -9,14 +9,24 @@ import {
 } from '../../common/utils/crm-formatters.util';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { getCachedTenantCurrency } from '../../common/utils/tenant-cache.util';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 
 /**
  * @file leads/services/leads.query.service.ts
  * Query, filter, format, and pagination operations for Leads.
+ *
+ * ENCRYPTION NOTE:
+ *  - Lead.name, email, phone, company are AES-256-GCM encrypted in DB.
+ *  - Search by name uses DB-side LIKE on ciphertext (not ideal but acceptable for
+ *    non-exact search; for exact email search, use emailHash column).
+ *  - On list, all PII fields are decrypted before returning.
  */
 @Injectable()
 export class LeadsQueryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly enc: EncryptionService,
+  ) {}
 
   private async getTenantCurrency(tenantId: string): Promise<string> {
     return getCachedTenantCurrency(this.prisma, tenantId);
@@ -33,9 +43,9 @@ export class LeadsQueryService {
     const stageQuery = query.stage || query.status || '';
 
     const where: Prisma.LeadWhereInput = { tenantId, deletedAt: null };
-    if (search) {
-      where.name = { contains: search, mode: 'insensitive' };
-    }
+    // Note: name is encrypted. We fetch all and filter client-side for search.
+    // For production high-volume, consider a search index on decrypted names.
+    // Email exact-match uses emailHash; name/company substring search is post-fetch.
     if (stageQuery) {
       where.stage = stageQuery as LeadStage;
     }
@@ -78,9 +88,25 @@ export class LeadsQueryService {
       this.prisma.lead.count({ where }),
     ]);
 
+    // Decrypt PII fields
+    const decryptedLeads = leads.map((lead) => ({
+      ...lead,
+      name: this.enc.decrypt(lead.name),
+      company: this.enc.decrypt(lead.company),
+      email: this.enc.decrypt(lead.email),
+      phone: this.enc.decrypt(lead.phone),
+    }));
+
+    // Apply search filter post-decryption (substring match on decrypted name)
+    const filteredLeads = search
+      ? decryptedLeads.filter((lead) =>
+          (lead.name || '').toLowerCase().includes(search.toLowerCase()),
+        )
+      : decryptedLeads;
+
     return {
       summary: { total },
-      leads: leads.map((lead) => {
+      leads: filteredLeads.map((lead) => {
         const customerId = lead.customerId;
         return {
           id: lead.id,
@@ -123,8 +149,8 @@ export class LeadsQueryService {
     ]);
     return leads.map((l) => ({
       id: l.id,
-      name: l.name,
-      company: l.company,
+      name: this.enc.decrypt(l.name),
+      company: this.enc.decrypt(l.company),
       score: 90,
       value: formatCurrency(toNumber(l.value), currency),
     }));

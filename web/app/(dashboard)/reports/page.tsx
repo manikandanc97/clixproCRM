@@ -23,12 +23,31 @@ const RecentActivities = dynamic(() => import("@/features/reports/components/Rec
 const UpcomingFollowUps = dynamic(() => import("@/features/reports/components/UpcomingFollowUps"));
 const AIInsights = dynamic(() => import("@/features/reports/components/AIInsights"));
 
+import { EmptyState } from "@/shared/components/EmptyState";
+import { useRouter } from "next/navigation";
+import { LayoutDashboard, UserPlus } from "lucide-react";
+import React, { useMemo } from "react";
+
 const ReportsPage = () => {
+  const router = useRouter();
   const [filters, setFilters] = useState<{ startDate?: string, endDate?: string, assignedToId?: string }>({});
   
   const { data, isLoading: loading, error, refetch, isFetching } = useReports(filters);
   
   const { CurrencyIcon } = useCurrency();
+
+  const hasReportsData = useMemo(() => {
+    if (!data) return false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasRevenue = data.revenueChart?.some((r: any) => Number(r.revenue || r.total || r.value) > 0);
+    const hasPerformance = data.performance?.some((p) => Number(p.dealsClosed || p.revenueValue) > 0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasFunnel = data.funnel?.some((f: any) => Number(f.count || f.value) > 0);
+    const hasActivities = (data.recentActivities?.length || 0) > 0 || (data.salesActivities?.length || 0) > 0;
+    const hasCustomers = (data.topCustomers?.length || 0) > 0;
+    const hasNonZeroStats = data.stats?.some((s) => s.value !== "0" && s.value !== "₹0" && s.value !== "$0" && s.value !== "0%" && s.value !== "0.0%");
+    return Boolean(hasRevenue || hasPerformance || hasFunnel || hasActivities || hasCustomers || hasNonZeroStats);
+  }, [data]);
 
   const handleTimePeriod = () => {
     // Demo implementation for toggling this month filter
@@ -98,6 +117,37 @@ const ReportsPage = () => {
         message={(error as Error).message || "An error occurred"}
         onRetry={() => { refetch(); }}
       />
+    );
+  }
+
+  if (!hasReportsData) {
+    return (
+      <CRMPageContainer>
+        <CRMPageHeader 
+          title="Reports & Analytics"
+          subtitle="Comprehensive breakdown of your sales performance, revenue targets, and team efficiency."
+          icon={BarChart3}
+          badge="Business Intelligence"
+        />
+
+        <div className="flex-1 min-h-[420px] flex items-center justify-center pt-6">
+          <EmptyState
+            icon={BarChart3}
+            title="Reports will appear here"
+            description="Once you start recording leads, closing deals, and generating sales activities, your live performance trends and business intelligence reports will populate here automatically."
+            action={{
+              label: "Go to Dashboard",
+              onClick: () => router.push("/dashboard"),
+              icon: LayoutDashboard,
+            }}
+            secondaryAction={{
+              label: "Create First Lead",
+              onClick: () => router.push("/contacts?status=lead"),
+              icon: UserPlus,
+            }}
+          />
+        </div>
+      </CRMPageContainer>
     );
   }
 

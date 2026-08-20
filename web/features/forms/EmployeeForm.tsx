@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,8 +10,9 @@ import { FormInput, FormSelect } from "@/shared/components/form-fields";
 import { Button } from "@/shared/ui/button";
 import { FormSubmitButton } from "@/shared/components/form-submit-button";
 import { useDirtyForm } from "@/shared/hooks/use-dirty-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createEmployee, updateEmployee } from "@/shared/lib/api/crm";
+import client from "@/shared/lib/api/client";
 import { toast } from "sonner";
 import { Key } from "lucide-react";
 
@@ -26,7 +27,7 @@ const employeeSchemaCreate = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: basePasswordSchema,
-  role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
+  role: z.string().min(1, "Role is required"),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
 });
 
@@ -34,7 +35,7 @@ const employeeSchemaEdit = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: basePasswordSchema.optional().or(z.literal("")),
-  role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
+  role: z.string().min(1, "Role is required"),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
 });
 
@@ -44,7 +45,7 @@ interface EmployeeInitialData {
   id?: string;
   name?: string;
   email?: string;
-  role?: "EMPLOYEE" | "ADMIN" | "MANAGER" | "SALES";
+  role?: string;
   status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
 }
 
@@ -57,6 +58,30 @@ interface EmployeeFormProps {
 export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormProps) => {
   const queryClient = useQueryClient();
   const isEditing = !!initialData;
+
+  const { data: rolesData } = useQuery<{
+    success: boolean;
+    data: Array<{ id: string; name: string; isActive?: boolean }>;
+  }>({
+    queryKey: ["roles"],
+    queryFn: async () => {
+      const res = await client.get("/crm/roles");
+      return res.data;
+    },
+  });
+
+  const roleOptions = useMemo(() => {
+    const list = rolesData?.data || [];
+    if (list.length > 0) {
+      return list
+        .filter((r) => r.isActive !== false)
+        .map((r) => ({
+          label: r.name,
+          value: r.name,
+        }));
+    }
+    return [{ label: "Admin", value: "ADMIN" }];
+  }, [rolesData]);
   
   const createMutation = useMutation({
     mutationFn: createEmployee,
@@ -98,7 +123,7 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
       name: initialData?.name || "",
       email: initialData?.email || "",
       password: "",
-      role: initialData?.role || "EMPLOYEE",
+      role: initialData?.role || "ADMIN",
       status: initialData?.status || "ACTIVE",
     },
   });
@@ -111,7 +136,7 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
         name: initialData.name || "",
         email: initialData.email || "",
         password: "",
-        role: initialData.role || "EMPLOYEE",
+        role: initialData.role || "ADMIN",
         status: initialData.status || "ACTIVE",
       });
     }
@@ -161,12 +186,7 @@ export const EmployeeForm = ({ initialData, onSuccess, onCancel }: EmployeeFormP
           <FormSelect 
             name="role" 
             label="Role" 
-            options={[
-              { label: "Admin", value: "ADMIN" },
-              { label: "Manager", value: "MANAGER" },
-              { label: "Sales", value: "SALES" },
-              { label: "Employee", value: "EMPLOYEE" },
-            ]} 
+            options={roleOptions} 
           />
           <FormSelect 
             name="status" 

@@ -109,9 +109,12 @@ model Customer {
   id             String          @id @default(uuid())
   tenantId       String
   assignedToId   String?
+  // AES-256-GCM encrypted PII fields
   name           String
   company        String
   email          String?
+  // HMAC-SHA256 lookup hash for encrypted email (exact-match search)
+  emailHash      String?
   status         CustomerStatus  @default(ACTIVE)
   revenue        Decimal         @default(0) @db.Decimal(12, 2)
   lastContactAt  DateTime?
@@ -135,15 +138,19 @@ model Customer {
   @@index([tenantId, deletedAt, createdAt])
   @@index([tenantId, assignedToId, deletedAt])
   @@index([assignedToId])
+  @@index([tenantId, emailHash])
 }
 
 model Lead {
   id                String          @id @default(uuid())
   tenantId          String
   assignedToId      String?
+  // AES-256-GCM encrypted PII fields
   name              String
   company           String
   email             String
+  // HMAC-SHA256 lookup hash for encrypted email (used for dedup/import exact-match)
+  emailHash         String?
   value             Decimal         @default(0) @db.Decimal(12, 2)
   deletedAt         DateTime?
   createdAt         DateTime        @default(now())
@@ -183,6 +190,7 @@ model Lead {
   @@index([assignedToId])
   @@index([customerId])
   @@index([createdAt])
+  @@index([tenantId, emailHash])
 }
 
 model Task {
@@ -389,6 +397,7 @@ model Meeting {
   title        String
   startTime    DateTime
   endTime      DateTime
+  // AES-256-GCM encrypted sensitive fields
   location     String?
   isOnline     Boolean    @default(false)
   createdAt    DateTime   @default(now())
@@ -407,11 +416,8 @@ model Meeting {
   quotationId  String?
   ownerId      String?
   visibility   EventVisibility @default(PRIVATE)
-  cancelledBy  String?
   cancelledAt  DateTime?
   cancellationReason String?
-  oldStartAt   DateTime?
-  oldEndAt     DateTime?
   
   assignedTo   User?      @relation("MeetingAssignedTo", fields: [assignedToId], references: [id])
   owner        User?      @relation("MeetingOwner", fields: [ownerId], references: [id])
@@ -700,7 +706,10 @@ enum DealStage {
 model Company {
   id        String   @id @default(uuid())
   tenantId  String
+  // AES-256-GCM encrypted PII fields
   name      String
+  // HMAC-SHA256 lookup hash for encrypted name (exact-match search in lead create/convert)
+  nameHash  String?
   industry  String?
   website   String?
   email     String?
@@ -722,6 +731,7 @@ model Company {
 
   @@index([tenantId])
   @@index([ownerId])
+  @@index([tenantId, nameHash])
 }
 
 model Deal {

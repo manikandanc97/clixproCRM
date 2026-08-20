@@ -1,56 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { LucideIcon } from "lucide-react";
-import { EmptyState as GlobalEmptyState, EmptyStateAction } from "@/shared/components/EmptyState";
+import {
+  EmptyState as GlobalEmptyState,
+  EmptyStateProps as GlobalEmptyStateProps,
+  EmptyStateAction,
+} from "@/shared/components/EmptyState";
 
-export interface LegacyEmptyStateProps {
-  icon?: LucideIcon;
-  title: string;
-  description: string;
+export interface LegacyEmptyStateProps extends Omit<GlobalEmptyStateProps, "action"> {
   action?: EmptyStateAction;
-  primaryAction?: {
-    label: string;
-    onClick: () => void;
-    icon?: LucideIcon;
-  };
-  secondaryAction?: {
-    label: string;
-    onClick: () => void;
-  };
-  size?: "default" | "sm";
-  className?: string;
-  children?: React.ReactNode;
+  primaryAction?: EmptyStateAction;
+  secondaryAction?: EmptyStateAction;
 }
 
-export function EmptyState({
-  icon,
-  title,
-  description,
-  action,
-  primaryAction,
-  size = "default",
-  className,
-  children,
-}: LegacyEmptyStateProps) {
-  const resolvedAction = action || (primaryAction ? {
-    label: primaryAction.label,
-    onClick: primaryAction.onClick,
-    icon: primaryAction.icon,
-  } : undefined);
-
-  return (
-    <GlobalEmptyState
-      icon={icon}
-      title={title}
-      description={description}
-      action={resolvedAction}
-      size={size}
-      className={className}
-    >
-      {children}
-    </GlobalEmptyState>
-  );
+export function EmptyState(props: LegacyEmptyStateProps) {
+  return <GlobalEmptyState {...props} />;
 }
 
 export * from "@/shared/components/EmptyState";

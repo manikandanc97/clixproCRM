@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import dynamic from "next/dynamic";
 import { DashboardSkeleton } from "@/features/dashboard/components/DashboardSkeleton";
 import { DashboardWidgetSkeleton } from "@/shared/components/skeletons";
@@ -10,13 +10,14 @@ import {
   useMeetings,
   useTasks,
   useHotLeads,
-  useCustomers
+  useCustomers,
+  useLeads,
+  usePipeline,
 } from "@/shared/hooks/use-dashboard";
 import { useAnalytics } from "@/shared/hooks/use-analytics";
 import { Button } from "@/shared/ui/button";
 import { CRMPageContainer } from "@/shared/components/crm";
 import { useCRMStore } from "@/shared/store/useCRMStore";
-
 
 // Standard dynamic imports
 const RecentActivities = dynamic(() => import("@/features/dashboard/components/RecentActivities"));
@@ -29,6 +30,7 @@ import { DashboardWidgetWrapper } from "@/features/dashboard/components/Dashboar
 import CreateNewMenu from "@/features/dashboard/components/CreateNewMenu";
 import DashboardKPIs from "@/features/dashboard/components/DashboardKPIs";
 import DashboardFilterMenu from "@/features/dashboard/components/DashboardFilterMenu";
+import DashboardOnboardingHub from "@/features/dashboard/components/DashboardOnboardingHub";
 
 const AIInsights = dynamic(() => import("@/features/reports/components/AIInsights"));
 const RevenueTarget = dynamic(() => import("@/features/reports/components/RevenueTarget"));
@@ -107,9 +109,42 @@ const DashboardPage = () => {
   const activeTimeframe = useCRMStore(state => state.activeTimeframe);
   const setActiveTimeframe = useCRMStore(state => state.setActiveTimeframe);
 
-  const { 
-    isInitializing,
-  } = useDashboardInitializer(activeTimeframe);
+  const { isInitializing } = useDashboardInitializer(activeTimeframe);
+  const { data: dashboardData, isLoading: isDashboardLoading } = useDashboardData();
+  const { data: leadsData, isLoading: isLeadsLoading } = useLeads();
+  const { data: pipelineData, isLoading: isPipelineLoading } = usePipeline();
+
+  const isWorkspaceEmpty = useMemo(() => {
+    if (isDashboardLoading || isLeadsLoading || isPipelineLoading) return false;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const leads = (leadsData as any)?.leads || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const totalLeadsCount = (leadsData as any)?.total ?? leads.length;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pipelineItems = (pipelineData as any)?.items || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const totalDealsCount = (pipelineData as any)?.totalDeals ?? pipelineItems.length;
+
+    const stats = dashboardData?.stats || [];
+    const revenueVal = stats.find(s => s.title === "Revenue")?.valueAmount || 0;
+    const activitiesCount = dashboardData?.recentActivities?.length || 0;
+
+    return (
+      totalLeadsCount === 0 &&
+      totalDealsCount === 0 &&
+      revenueVal === 0 &&
+      activitiesCount === 0
+    );
+  }, [
+    isDashboardLoading,
+    isLeadsLoading,
+    isPipelineLoading,
+    leadsData,
+    pipelineData,
+    dashboardData,
+  ]);
 
   if (isInitializing) {
     return (
@@ -118,6 +153,15 @@ const DashboardPage = () => {
       </CRMPageContainer>
     );
   }
+
+  if (isWorkspaceEmpty) {
+    return (
+      <CRMPageContainer>
+        <DashboardOnboardingHub />
+      </CRMPageContainer>
+    );
+  }
+
   return (
     <CRMPageContainer>
       <div className="flex flex-col gap-6">
@@ -150,11 +194,9 @@ const DashboardPage = () => {
         {/* Row 2: KPI Grid */}
         <DashboardKPIs />
 
-
         {/* Row 4 & 5: Operational Layout */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           <div className="xl:col-span-3 flex flex-col gap-6">
-            
             <div className="grid grid-cols-1 gap-6">
               <RevenueChartWidget />
             </div>
@@ -172,28 +214,21 @@ const DashboardPage = () => {
             <div className="grid grid-cols-1 gap-6">
               <RecentCustomersWidget />
             </div>
-
           </div>
 
           {/* Right Sidebar (Sticky) */}
           <div className="flex flex-col gap-6 w-full xl:sticky xl:top-24 self-start">
-            
             <RevenueTargetWidget />
 
             <React.Suspense fallback={<DashboardWidgetSkeleton />}>
               <AIInsights />
             </React.Suspense>
 
-            <DashboardWidgetWrapper 
-              id="calendarWidget" 
-              title="Calendar"
-              delay={1.3}
-            >
+            <DashboardWidgetWrapper id="calendarWidget" title="Calendar" delay={1.3}>
               <CalendarWidget />
             </DashboardWidgetWrapper>
           </div>
         </div>
-
       </div>
     </CRMPageContainer>
   );

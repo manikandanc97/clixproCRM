@@ -1,10 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, CustomerStatus } from '@prisma/client';
+import { EncryptionService } from '../common/encryption/encryption.service';
 
+/**
+ * ENCRYPTION NOTE:
+ *  - Customer.name, Customer.email, Customer.company are AES-256-GCM encrypted.
+ *  - Customer.emailHash is used for exact-match email lookups.
+ *  - Search is applied post-decryption for substring match.
+ */
 @Injectable()
 export class CustomersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly enc: EncryptionService,
+  ) {}
 
   async getCustomers(tenantId: string, page = 1, limit = 10, search = '') {
     page = Math.max(1, page);
@@ -12,14 +22,6 @@ export class CustomersService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.CustomerWhereInput = { tenantId, deletedAt: null };
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { company: { contains: search, mode: 'insensitive' } },
-      ];
-    }
 
     const [customers, total] = await Promise.all([
       this.prisma.customer.findMany({
@@ -44,15 +46,30 @@ export class CustomersService {
         .filter((d) => d.stage !== 'LOST')
         .reduce((sum, d) => sum + Number(d.value || 0), 0);
 
-      return {
+      // Decrypt PII fields
+      const decrypted = {
         ...c,
+        name: this.enc.decrypt(c.name),
+        email: this.enc.decrypt(c.email),
+        company: this.enc.decrypt(c.company),
         dealsCount: c._count.deals,
         revenueValue: dealsRevenue > 0 ? dealsRevenue : Number(c.revenue || 0),
       };
+      return decrypted;
     });
 
+    // Apply search post-decryption
+    const filtered = search
+      ? mappedCustomers.filter(
+          (c) =>
+            (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+            (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
+            (c.company || '').toLowerCase().includes(search.toLowerCase()),
+        )
+      : mappedCustomers;
+
     return {
-      customers: mappedCustomers,
+      customers: filtered,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
@@ -68,11 +85,15 @@ export class CustomersService {
       status?: CustomerStatus;
     },
   ) {
+    const { encrypted: encEmail, hash: emailHash } = this.enc.encryptWithHash(
+      data.email,
+    );
     return this.prisma.customer.create({
       data: {
-        name: data.name,
-        company: data.company,
-        email: data.email,
+        name: this.enc.encrypt(data.name)!,
+        company: this.enc.encrypt(data.company)!,
+        email: encEmail,
+        emailHash,
         tenantId,
         revenue: data.revenue || 0,
         status: data.status || 'ACTIVE',
@@ -86,9 +107,22 @@ export class CustomersService {
     id: string,
     data: Partial<Prisma.CustomerUpdateInput>,
   ) {
+    // Encrypt PII fields if provided
+    const updateData: any = { ...data };
+    if (typeof data.name === 'string') {
+      updateData.name = this.enc.encrypt(data.name);
+    }
+    if (typeof data.email === 'string') {
+      const { encrypted, hash } = this.enc.encryptWithHash(data.email);
+      updateData.email = encrypted;
+      updateData.emailHash = hash;
+    }
+    if (typeof data.company === 'string') {
+      updateData.company = this.enc.encrypt(data.company);
+    }
     return this.prisma.customer.update({
       where: { id, tenantId },
-      data,
+      data: updateData,
     });
   }
 

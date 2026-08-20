@@ -64,12 +64,26 @@ interface InsightStat {
   iconName?: string;
 }
 
+import { EmptyState } from "@/shared/components/EmptyState";
+import { useRouter } from "next/navigation";
+import { LayoutDashboard, UserPlus } from "lucide-react";
+import React, { useMemo } from "react";
+
 export default function AiInsightsPage() {
+  const router = useRouter();
   const { data: insightsData, isLoading: loading } = useAiInsights();
 
   const recommendations = insightsData?.recommendations || [];
   const aiStats = insightsData?.stats || [];
   const aiTimeline = insightsData?.timeline || [];
+
+  const hasAiData = useMemo(() => {
+    if (!insightsData) return false;
+    const hasRecs = recommendations.length > 0;
+    const hasTimeline = aiTimeline.length > 0;
+    const hasMeaningfulStats = aiStats.some(s => s.value && s.value !== "0" && s.value !== "0%" && s.value !== "0.0%");
+    return Boolean(hasRecs || hasTimeline || hasMeaningfulStats);
+  }, [insightsData, recommendations, aiTimeline, aiStats]);
 
   const handleAskAI = () => {
     toast.success("AI Assistant", {
@@ -79,6 +93,38 @@ export default function AiInsightsPage() {
 
   if (loading) {
     return <AISkeleton />;
+  }
+
+  if (!hasAiData) {
+    return (
+      <CRMPageContainer>
+        <CRMPageHeader
+          title="AI Intelligence Hub"
+          subtitle="Harness neural forecasting and intelligent recommendations to scale your business."
+          badge="Neural Engine v4.2"
+          icon={BrainCircuit}
+          iconColor="text-indigo-500"
+        />
+
+        <div className="flex-1 min-h-[420px] flex items-center justify-center pt-6">
+          <EmptyState
+            icon={BrainCircuit}
+            title="AI Intelligence will activate with your data"
+            description="Once you have active leads, customer engagements, and deal milestones recorded, the AI Neural Engine will provide predictive win-rates, lead scoring, and automated growth recommendations."
+            action={{
+              label: "Go to Dashboard",
+              onClick: () => router.push("/dashboard"),
+              icon: LayoutDashboard,
+            }}
+            secondaryAction={{
+              label: "Create First Lead",
+              onClick: () => router.push("/contacts?status=lead"),
+              icon: UserPlus,
+            }}
+          />
+        </div>
+      </CRMPageContainer>
+    );
   }
 
   return (

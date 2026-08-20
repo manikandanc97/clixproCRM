@@ -3,10 +3,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMeetingDto } from '../dto/create-meeting.dto';
 import { UpdateMeetingDto } from '../dto/update-meeting.dto';
 import { formatDate } from '../../common/utils/crm-formatters.util';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 
 @Injectable()
 export class MeetingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly enc: EncryptionService,
+  ) {}
 
   private async checkConflict(tenantId: string, ownerId: string, startTime: Date, endTime: Date, excludeMeetingId?: string) {
     const conflict = await this.prisma.meeting.findFirst({
@@ -51,10 +55,10 @@ export class MeetingsService {
           title: data.title,
           startTime: start,
           endTime: end,
-          location: data.location || null,
+          location: this.enc.encrypt(data.location || null),
           isOnline: data.isOnline || false,
           type: data.type || 'MEETING',
-          description: data.description || null,
+          description: this.enc.encrypt(data.description || null),
           isAllDay: data.isAllDay || false,
           assignedToId: assignedToId,
           ownerId: ownerId,
@@ -65,7 +69,7 @@ export class MeetingsService {
           dealId: data.dealId || null,
           status: data.isLog ? 'COMPLETED' : data.status || 'SCHEDULED',
           duration: data.duration || 30,
-          meetingNotes: data.meetingNotes || null,
+          meetingNotes: this.enc.encrypt(data.meetingNotes || null),
         },
         include: {
           assignedTo: { select: { name: true, email: true, id: true } },
@@ -124,9 +128,9 @@ export class MeetingsService {
         ...(data.title && { title: data.title }),
         ...(data.startTime && { startTime: new Date(data.startTime) }),
         ...(data.endTime && { endTime: new Date(data.endTime) }),
-        ...(data.location !== undefined && { location: data.location }),
+        ...(data.location !== undefined && { location: this.enc.encrypt(data.location) }),
         ...(data.isOnline !== undefined && { isOnline: data.isOnline }),
-        ...(data.description !== undefined && { description: data.description }),
+        ...(data.description !== undefined && { description: this.enc.encrypt(data.description) }),
         ...(data.assignedToId && { assignedToId: data.assignedToId }),
         ...(data.status && { status: data.status }),
         ...(data.visibility && { visibility: data.visibility }),
@@ -134,9 +138,6 @@ export class MeetingsService {
       };
 
       if (data.startTime && new Date(data.startTime).getTime() !== existing.startTime.getTime()) {
-         updateData.oldStartAt = existing.startTime;
-         updateData.oldEndAt = existing.endTime;
-         
          await tx.auditLog.create({
             data: { tenantId, userId, action: 'MEETING_RESCHEDULED', module: 'CALENDAR', details: { meetingId: id, oldStartAt: existing.startTime, newStartAt: data.startTime } }
          });
@@ -183,7 +184,6 @@ export class MeetingsService {
       where: { id, tenantId },
       data: {
         status: 'CANCELLED',
-        cancelledBy: userId,
         cancelledAt: new Date()
       }
     });
@@ -261,7 +261,7 @@ export class MeetingsService {
       date: formatDate(m.startTime),
       startTime: m.startTime,
       endTime: m.endTime,
-      location: m.location || 'Virtual',
+      location: this.enc.decrypt(m.location) || 'Virtual',
       isOnline: m.isOnline,
       status: m.status,
       type: m.type,
@@ -291,12 +291,19 @@ export class MeetingsService {
   }
 
   async getLeadMeetings(tenantId: string, leadId: string) {
-    return this.prisma.meeting.findMany({
+    const meetings = await this.prisma.meeting.findMany({
       where: { tenantId, leadId },
       include: {
         assignedTo: { select: { name: true, email: true, id: true } },
       },
       orderBy: { startTime: 'desc' },
     });
+    // Decrypt sensitive meeting fields
+    return meetings.map((m) => ({
+      ...m,
+      location: this.enc.decrypt(m.location),
+      description: this.enc.decrypt(m.description),
+      meetingNotes: this.enc.decrypt(m.meetingNotes),
+    }));
   }
 }

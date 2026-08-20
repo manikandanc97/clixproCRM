@@ -12,10 +12,14 @@ import {
   formatDate,
 } from '../../common/utils/crm-formatters.util';
 import { getCachedTenantCurrency } from '../../common/utils/tenant-cache.util';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 
 @Injectable()
 export class QuotationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly enc: EncryptionService,
+  ) {}
 
   private async getTenantCurrency(tenantId: string): Promise<string> {
     return getCachedTenantCurrency(this.prisma, tenantId);
@@ -46,17 +50,17 @@ export class QuotationsService {
           tenantId,
           leadId: data.leadId,
           quoteNumber,
-          client: data.client,
+          client: this.enc.encrypt(data.client)!, // Encrypt client name
           amount: data.amount || 0,
           status: data.status || 'DRAFT',
           validTill: data.validTill ? new Date(data.validTill) : null,
           items: data.items || [],
-          notes: data.notes || '',
+          notes: this.enc.encrypt(data.notes || ''), // Encrypt notes
           discount: data.discount || 0,
           tax: data.tax || 0,
         },
       });
-      return quotation;
+      return { ...quotation, client: this.enc.decrypt(quotation.client), notes: this.enc.decrypt(quotation.notes) };
     });
   }
 
@@ -73,8 +77,8 @@ export class QuotationsService {
     return this.prisma.quotation.update({
       where: { id },
       data: {
-        ...(data.client && { client: data.client }),
-        ...(data.leadId && { leadId: data.leadId }),
+        ...(data.client && { client: this.enc.encrypt(data.client) ?? data.client }),
+        ...(data.leadId && { lead: { connect: { id: data.leadId } } }),
         ...(data.amount !== undefined && { amount: data.amount }),
         ...(data.status && { status: data.status }),
         ...(data.validTill !== undefined && {
@@ -82,7 +86,7 @@ export class QuotationsService {
         }),
         ...(data.quoteNumber && { quoteNumber: data.quoteNumber }),
         ...(data.items !== undefined && { items: data.items }),
-        ...(data.notes !== undefined && { notes: data.notes }),
+        ...(data.notes !== undefined && { notes: this.enc.encrypt(data.notes) }),
         ...(data.discount !== undefined && { discount: data.discount }),
         ...(data.tax !== undefined && { tax: data.tax }),
       },
@@ -204,15 +208,15 @@ export class QuotationsService {
       quotations: quotations.map((q) => ({
         id: q.id,
         quoteId: q.quoteNumber,
-        client: q.client,
+        client: this.enc.decrypt(q.client),
         leadId: q.leadId,
-        leadName: q.lead?.name || q.client,
+        leadName: q.lead?.name ? this.enc.decrypt(q.lead.name) : this.enc.decrypt(q.client),
         leadDetails: q.lead
           ? {
-              name: q.lead.name,
-              email: q.lead.email,
-              phone: q.lead.phone,
-              company: q.lead.company,
+              name: this.enc.decrypt(q.lead.name),
+              email: this.enc.decrypt(q.lead.email),
+              phone: this.enc.decrypt(q.lead.phone),
+              company: this.enc.decrypt(q.lead.company),
             }
           : undefined,
         amount: formatCurrency(toNumber(q.amount), currency),
@@ -223,7 +227,7 @@ export class QuotationsService {
           ? new Date(q.validTill).toISOString()
           : null,
         items: q.items,
-        notes: q.notes,
+        notes: this.enc.decrypt(q.notes),
         discount: toNumber(q.discount),
         tax: toNumber(q.tax),
       })),

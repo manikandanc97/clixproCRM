@@ -13,6 +13,7 @@ import {
 } from "@/shared/ui/select";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
+import { PlanBadge } from "@/shared/components/PlanBadge";
 import { CRMCard } from "@/shared/components/crm";
 import { ClixProIcon } from "@/shared/ui/logo";
 import Image from "next/image";
@@ -92,12 +93,7 @@ const WorkspaceSettings = () => {
             </p>
           </div>
           {workspace?.plan && (
-            <Badge
-              variant="outline"
-              className="rounded-md px-2.5 py-0.5 bg-primary/8 text-primary border-primary/20 font-bold text-[9px] uppercase tracking-widest"
-            >
-              {workspace.plan}
-            </Badge>
+            <PlanBadge plan={workspace.plan} size="sm" />
           )}
           </div>
   

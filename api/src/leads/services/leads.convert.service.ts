@@ -5,14 +5,23 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConvertLeadDto } from '../dto/convert-lead.dto';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 
 /**
  * @file leads/services/leads.convert.service.ts
  * Lead conversion transaction logic: resolving company/customer, creating deal, updating lead stage.
+ *
+ * ENCRYPTION NOTE:
+ *  - Company name lookup uses nameHash (HMAC-SHA256 deterministic hash).
+ *  - Customer email lookup uses emailHash.
+ *  - All created records have PII fields encrypted.
  */
 @Injectable()
 export class LeadsConvertService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly enc: EncryptionService,
+  ) {}
 
   async convertLead(
     tenantId: string,
@@ -29,22 +38,23 @@ export class LeadsConvertService {
       throw new BadRequestException('Lead is already converted');
 
     return this.prisma.$transaction(async (tx) => {
-      // 1. Resolve Company
+      // 1. Resolve Company (via nameHash for exact-match)
       let finalCompanyId = data.companyId;
       if (!finalCompanyId && data.companyName) {
+        const companyNameHash = this.enc.hash(data.companyName);
         const existingCompany = await tx.company.findFirst({
-          where: {
-            tenantId,
-            name: { equals: data.companyName, mode: 'insensitive' },
-          },
+          where: { tenantId, nameHash: companyNameHash, deletedAt: null },
         });
         if (existingCompany) {
           finalCompanyId = existingCompany.id;
         } else {
+          const { encrypted: encName, hash: nameHash } =
+            this.enc.encryptWithHash(data.companyName);
           const newCompany = await tx.company.create({
             data: {
               tenantId,
-              name: data.companyName,
+              name: encName!,
+              nameHash,
               ownerId: data.ownerId || userId,
               status: 'ACTIVE',
             },
@@ -53,36 +63,51 @@ export class LeadsConvertService {
         }
       }
 
-      // 2. Resolve Customer
+      // 2. Resolve Customer (via emailHash for exact-match, then name+company)
       let finalCustomerId = data.customerId;
       if (!finalCustomerId && data.customerName) {
         if (data.customerEmail) {
+          const emailHash = this.enc.hash(data.customerEmail);
           const existing = await tx.customer.findFirst({
-            where: { tenantId, email: data.customerEmail, deletedAt: null },
+            where: { tenantId, emailHash, deletedAt: null },
           });
           if (existing) finalCustomerId = existing.id;
         }
 
         if (!finalCustomerId) {
-          const existingByName = await tx.customer.findFirst({
-            where: {
-              tenantId,
-              name: { equals: data.customerName, mode: 'insensitive' },
-              company: { equals: data.companyName || '', mode: 'insensitive' },
-              deletedAt: null,
-            },
+          // Fallback: find by decrypting all — iterate over tenant customers
+          // For performance, we limit this to active customers and check name match
+          const candidates = await tx.customer.findMany({
+            where: { tenantId, deletedAt: null },
+            select: { id: true, name: true, company: true },
           });
-          if (existingByName) finalCustomerId = existingByName.id;
+          const leadCompanyPlain = this.enc.decrypt(lead.company) || '';
+          const matchCompanyName = data.companyName || leadCompanyPlain;
+          for (const c of candidates) {
+            const decName = this.enc.decrypt(c.name) || '';
+            const decCompany = this.enc.decrypt(c.company) || '';
+            if (
+              decName.toLowerCase() === (data.customerName || '').toLowerCase() &&
+              decCompany.toLowerCase() === matchCompanyName.toLowerCase()
+            ) {
+              finalCustomerId = c.id;
+              break;
+            }
+          }
         }
 
         if (!finalCustomerId) {
+          const encEmail = this.enc.encrypt(data.customerEmail || this.enc.decrypt(lead.email) || '');
+          const emailHash = this.enc.hash(data.customerEmail || this.enc.decrypt(lead.email) || '');
+          const encCompany = this.enc.encrypt(data.companyName || this.enc.decrypt(lead.company) || '');
           const newCustomer = await tx.customer.create({
             data: {
               tenantId,
-              name: data.customerName,
-              email: data.customerEmail || lead.email,
+              name: this.enc.encrypt(data.customerName)!,
+              email: encEmail,
+              emailHash,
               companyId: finalCompanyId,
-              company: data.companyName || lead.company || '',
+              company: encCompany!,
               revenue: data.createDeal ? data.dealValue || lead.value : 0,
               status: 'ACTIVE',
               assignedToId: data.ownerId || userId,
@@ -95,10 +120,11 @@ export class LeadsConvertService {
       // 3. Create Deal
       let deal = null;
       if (data.createDeal) {
+        const leadNamePlain = this.enc.decrypt(lead.name) || '';
         deal = await tx.deal.create({
           data: {
             tenantId,
-            name: data.dealName || `${lead.name} Deal`,
+            name: data.dealName || `${leadNamePlain} Deal`,
             companyId: finalCompanyId,
             customerId: finalCustomerId,
             value: data.dealValue || lead.value,

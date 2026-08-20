@@ -65,9 +65,13 @@ export function AttachmentsTab({ leadId }: { leadId: string }) {
         </div>
       ) : attachments.length === 0 ? (
         <EmptyState
-          icon={Paperclip}
-          title="No documents found"
+          module="documents"
           description="Upload proposals, contracts, and other related documents."
+          action={{
+            label: "Upload File",
+            onClick: () => fileInputRef.current?.click(),
+            icon: UploadCloud,
+          }}
           size="sm"
         />
       ) : viewMode === "list" || viewMode === "table" ? (

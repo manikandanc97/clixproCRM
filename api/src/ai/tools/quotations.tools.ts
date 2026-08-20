@@ -1,17 +1,21 @@
-﻿import { tool } from 'ai';
+import { tool } from 'ai';
 import { z } from 'zod';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiSecurityService, UserSecurityContext } from '../ai-security.service';
 import { PERMISSION_MODULES } from '../../common/role-permissions.constants';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 
 /**
  * @file ai/tools/quotations.tools.ts
  * AI tool implementations for Quotations.
+ *
+ * ENCRYPTION: Quotation.client is decrypted before returning to AI.
  */
 export function buildQuotationsTools(
   prisma: PrismaService,
   aiSecurityService: AiSecurityService,
   userContext: UserSecurityContext,
+  enc: EncryptionService,
 ) {
   return {
     getQuotations: tool({
@@ -51,7 +55,7 @@ export function buildQuotationsTools(
 
           return quotations.map((q) => ({
             quoteNumber: q.quoteNumber,
-            client: q.client,
+            client: enc.decrypt(q.client),
             amount: q.amount ? Number(q.amount) : 0,
             status: q.status,
             validTill: q.validTill ? q.validTill.toISOString() : null,

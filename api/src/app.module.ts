@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { EncryptionModule } from './common/encryption/encryption.module';
 import { AuthModule } from './auth/auth.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { CompaniesModule } from './companies/companies.module';
@@ -26,6 +27,7 @@ import { SuperAdminModule } from './super-admin/super-admin.module';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+    EncryptionModule, // Global: EncryptionService available everywhere
     PrismaModule,
     AuthModule,
     SuperAdminModule,

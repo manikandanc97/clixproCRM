@@ -161,121 +161,140 @@ const TasksPage = () => {
         ]}
       />
 
-      {/* Metric Cards */}
-      <div className="shrink-0">
-        <CRMMetricsGrid>
-          <CRMMetricCard
-            title="Total Tasks"
-            value={stats.total}
-            change={`${stats.completionRate}% Done`}
-            trend="up"
-            icon={CheckSquare}
-            color="blue"
-            delay={0.05}
+      {safeTasks.length === 0 ? (
+        <div className="flex-1 min-h-0 flex flex-col pt-2">
+          <EmptyState
+            module="tasks"
+            action={{
+              label: "Create Task",
+              onClick: handleNewTask,
+              icon: Plus,
+            }}
           />
-          <CRMMetricCard
-            title="Completed"
-            value={stats.completed}
-            change={`${stats.completionRate}%`}
-            trend="up"
-            icon={CheckCircle2}
-            color="emerald"
-            delay={0.1}
-          />
-          <CRMMetricCard
-            title="In Progress"
-            value={stats.inProgress}
-            change={`${stats.pending} Pending`}
-            trend="up"
-            icon={Target}
-            color="orange"
-            delay={0.15}
-          />
-          <CRMMetricCard
-            title="Overdue"
-            value={stats.overdue}
-            change={stats.overdue > 0 ? "Requires Action" : "Clean"}
-            trend={stats.overdue > 0 ? "down" : "up"}
-            icon={AlertCircle}
-            color="pink"
-            delay={0.2}
-          />
-        </CRMMetricsGrid>
-      </div>
-
-      <div className="flex-1 flex flex-col gap-4">
-        {/* Toolbar */}
-        <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-          <CRMToolbar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            viewOptions={VIEW_MODES}
-            placeholder="Search tasks, assignees, tags..."
-          >
-            {/* Status filters */}
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-full">
-              {STATUS_FILTERS.map((s) => {
-                const isActive = statusFilter === s.id;
-                return (
-                  <Button
-                    key={s.id}
-                    variant={isActive ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setStatusFilter(s.id)}
-                    className="h-9 px-3 text-xs font-semibold"
-                  >
-                    {s.label}
-                  </Button>
-                );
-              })}
-            </div>
-          </CRMToolbar>
         </div>
-
-        {/* Main content */}
-        <div className="flex-1 min-h-0 flex flex-col">
-          <AnimatePresence mode="wait">
-            {filteredTasks.length > 0 ? (
-              <motion.div
-                key={viewMode}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex-1 flex flex-col min-h-0"
-              >
-                {(viewMode === "list" || viewMode === "table") && (
-                  <TasksTable tasks={filteredTasks} onTaskClick={setSelectedTask} onScheduleMeeting={handleScheduleMeeting} onEditTask={setTaskToEdit} />
-                )}
-                {(viewMode === "grid" || viewMode === "cards") && (
-                  <TasksGrid tasks={filteredTasks} onTaskClick={setSelectedTask} />
-                )}
-                {viewMode === "kanban" && (
-                  <KanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} onAddTask={() => setIsAddModalOpen(true)} onScheduleMeeting={handleScheduleMeeting} onEditTask={setTaskToEdit} />
-                )}
-                {viewMode === "calendar" && (
-                  <CalendarView tasks={filteredTasks} onTaskClick={setSelectedTask} />
-                )}
-                {viewMode === "timeline" && (
-                  <TimelineView tasks={filteredTasks} onTaskClick={setSelectedTask} />
-                )}
-              </motion.div>
-            ) : (
-              <EmptyState
+      ) : (
+        <>
+          {/* Metric Cards */}
+          <div className="shrink-0">
+            <CRMMetricsGrid>
+              <CRMMetricCard
+                title="Total Tasks"
+                value={stats.total}
+                change={`${stats.completionRate}% Done`}
+                trend="up"
                 icon={CheckSquare}
-                title="No tasks found"
-                description="No tasks match the current search or status filter."
-                action={{
-                  label: "Create Task",
-                  onClick: handleNewTask,
-                }}
+                color="blue"
+                delay={0.05}
               />
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+              <CRMMetricCard
+                title="Completed"
+                value={stats.completed}
+                change={`${stats.completionRate}%`}
+                trend="up"
+                icon={CheckCircle2}
+                color="emerald"
+                delay={0.1}
+              />
+              <CRMMetricCard
+                title="In Progress"
+                value={stats.inProgress}
+                change={`${stats.pending} Pending`}
+                trend="up"
+                icon={Target}
+                color="orange"
+                delay={0.15}
+              />
+              <CRMMetricCard
+                title="Overdue"
+                value={stats.overdue}
+                change={stats.overdue > 0 ? "Requires Action" : "Clean"}
+                trend={stats.overdue > 0 ? "down" : "up"}
+                icon={AlertCircle}
+                color="pink"
+                delay={0.2}
+              />
+            </CRMMetricsGrid>
+          </div>
+
+          <div className="flex-1 flex flex-col gap-4">
+            {/* Toolbar */}
+            <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+              <CRMToolbar
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                viewOptions={VIEW_MODES}
+                placeholder="Search tasks, assignees, tags..."
+              >
+                {/* Status filters */}
+                <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-full">
+                  {STATUS_FILTERS.map((s) => {
+                    const isActive = statusFilter === s.id;
+                    return (
+                      <Button
+                        key={s.id}
+                        variant={isActive ? "secondary" : "ghost"}
+                        size="sm"
+                        onClick={() => setStatusFilter(s.id)}
+                        className="h-9 px-3 text-xs font-semibold"
+                      >
+                        {s.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </CRMToolbar>
+            </div>
+
+            {/* Main content */}
+            <div className="flex-1 min-h-0 flex flex-col">
+              <AnimatePresence mode="wait">
+                {filteredTasks.length > 0 ? (
+                  <motion.div
+                    key={viewMode}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex-1 flex flex-col min-h-0"
+                  >
+                    {(viewMode === "list" || viewMode === "table") && (
+                      <TasksTable tasks={filteredTasks} onTaskClick={setSelectedTask} onScheduleMeeting={handleScheduleMeeting} onEditTask={setTaskToEdit} />
+                    )}
+                    {(viewMode === "grid" || viewMode === "cards") && (
+                      <TasksGrid tasks={filteredTasks} onTaskClick={setSelectedTask} />
+                    )}
+                    {viewMode === "kanban" && (
+                      <KanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} onAddTask={() => setIsAddModalOpen(true)} onScheduleMeeting={handleScheduleMeeting} onEditTask={setTaskToEdit} />
+                    )}
+                    {viewMode === "calendar" && (
+                      <CalendarView tasks={filteredTasks} onTaskClick={setSelectedTask} />
+                    )}
+                    {viewMode === "timeline" && (
+                      <TimelineView tasks={filteredTasks} onTaskClick={setSelectedTask} />
+                    )}
+                  </motion.div>
+                ) : (
+                  <EmptyState
+                    icon={CheckSquare}
+                    title="No tasks found"
+                    description="No tasks match the current search or status filter."
+                    action={{
+                      label: "Clear Filters",
+                      onClick: () => {
+                        setSearchQuery("");
+                        setStatusFilter("all");
+                      },
+                      variant: "outline",
+                    }}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </>
+      )}
 
       <TaskDetailsModal
         task={selectedTask}

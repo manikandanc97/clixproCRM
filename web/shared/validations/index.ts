@@ -57,7 +57,7 @@ export const employeeSchema = z.object({
   password: z.string().optional().or(z.literal("")).superRefine((val, ctx) => {
     if (val) passwordRefinement(val, ctx);
   }),
-  role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
+  role: z.string().min(1, "Role is required"),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(), // Employee API might take status
 }).strict();
 
@@ -117,7 +117,7 @@ export const userSchema = z.object({
   password: z.string().optional().or(z.literal("")).superRefine((val, ctx) => {
     if (val) passwordRefinement(val, ctx);
   }),
-  role: z.enum(["ADMIN", "MANAGER", "SALES", "EMPLOYEE"]),
+  role: z.string().min(1, "Role is required"),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]),
 }).strict();
 

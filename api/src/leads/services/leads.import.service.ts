@@ -1,10 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LeadStage, LeadPriority } from '@prisma/client';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 
+/**
+ * @file leads/services/leads.import.service.ts
+ *
+ * ENCRYPTION NOTE:
+ *  - Duplicate detection uses emailHash (HMAC-SHA256) for exact-match lookup.
+ *  - All PII fields (name, email, phone, company) are encrypted before insert/update.
+ *  - Company name dedup uses nameHash for exact-match.
+ */
 @Injectable()
 export class LeadsImportService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly enc: EncryptionService,
+  ) {}
 
   async bulkImportLeads(
     tenantId: string,
@@ -56,17 +68,19 @@ export class LeadsImportService {
         const companyName = (row.company || 'Unknown Company').trim();
         let companyId: string | null = null;
         if (companyName && companyName !== 'Unknown Company') {
+          // Exact-match on encrypted company name via nameHash
+          const companyNameHash = this.enc.hash(companyName);
           let company = await this.prisma.company.findFirst({
-            where: {
-              tenantId,
-              name: { equals: companyName, mode: 'insensitive' },
-            },
+            where: { tenantId, nameHash: companyNameHash, deletedAt: null },
           });
           if (!company) {
+            const { encrypted: encName, hash: nameHash } =
+              this.enc.encryptWithHash(companyName);
             company = await this.prisma.company.create({
               data: {
                 tenantId,
-                name: companyName,
+                name: encName!,
+                nameHash,
                 ownerId: userId,
                 status: 'ACTIVE',
               },
@@ -75,8 +89,10 @@ export class LeadsImportService {
           companyId = company.id;
         }
 
+        // Duplicate detection via emailHash (deterministic, no plaintext scan)
+        const emailHash = this.enc.hash(row.email);
         const existing = await this.prisma.lead.findFirst({
-          where: { tenantId, email: row.email, deletedAt: null },
+          where: { tenantId, emailHash, deletedAt: null },
         });
 
         if (existing) {
@@ -87,10 +103,10 @@ export class LeadsImportService {
             await this.prisma.lead.update({
               where: { id: existing.id },
               data: {
-                name: row.name,
-                company: companyName,
+                name: this.enc.encrypt(row.name)!,
+                company: this.enc.encrypt(companyName)!,
                 companyId: companyId || existing.companyId,
-                phone: row.phone || existing.phone,
+                phone: this.enc.encrypt(row.phone),
                 value: valueToUse,
                 stage: stageToUse as LeadStage,
                 priority: priorityToUse,
@@ -99,14 +115,17 @@ export class LeadsImportService {
             });
             imported++;
           } else if (duplicateStrategy === 'create') {
+            const { encrypted: encEmail, hash: newEmailHash } =
+              this.enc.encryptWithHash(row.email);
             await this.prisma.lead.create({
               data: {
                 tenantId,
-                name: row.name,
-                company: companyName,
+                name: this.enc.encrypt(row.name)!,
+                company: this.enc.encrypt(companyName)!,
                 companyId,
-                email: row.email,
-                phone: row.phone,
+                email: encEmail!,
+                emailHash: newEmailHash,
+                phone: this.enc.encrypt(row.phone),
                 value: valueToUse,
                 stage: stageToUse as LeadStage,
                 priority: priorityToUse,
@@ -116,14 +135,17 @@ export class LeadsImportService {
             imported++;
           }
         } else {
+          const { encrypted: encEmail, hash: newEmailHash } =
+            this.enc.encryptWithHash(row.email);
           await this.prisma.lead.create({
             data: {
               tenantId,
-              name: row.name,
-              company: companyName,
+              name: this.enc.encrypt(row.name)!,
+              company: this.enc.encrypt(companyName)!,
               companyId,
-              email: row.email,
-              phone: row.phone,
+              email: encEmail!,
+              emailHash: newEmailHash,
+              phone: this.enc.encrypt(row.phone),
               value: valueToUse,
               stage: stageToUse as LeadStage,
               priority: priorityToUse,

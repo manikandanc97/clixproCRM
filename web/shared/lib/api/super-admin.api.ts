@@ -181,6 +181,13 @@ export const updateOrganizationStatus = async (
   return response.data;
 };
 
+export const deletePlatformOrganization = async (id: string) => {
+  const response = await client.delete<{ success: boolean; data: any; message: string }>(
+    `/super-admin/organizations/${id}`
+  );
+  return response.data;
+};
+
 export const fetchPlatformUsers = async (params?: {
   search?: string;
   status?: string;

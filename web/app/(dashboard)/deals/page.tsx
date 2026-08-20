@@ -178,167 +178,191 @@ const DealsPage = () => {
         ]}
       />
 
-      <div className="shrink-0">
-        <CRMMetricsGrid cols={3}>
-          <CRMMetricCard 
-            title="Total Opportunities"
-            value={viewMode === "pipeline" ? safePipelineItems.length : safeDeals.length}
-            change="0%"
-            trend="up"
-            icon={Target}
-            color="blue"
-            delay={0.1}
-          />
-          <CRMMetricCard 
-            title={viewMode === "pipeline" ? "Stuck Deals" : "Deals Won"}
-            value={viewMode === "pipeline" ? safePipelineItems.filter(item => item.isStuck).length : wonDeals.length}
-            change="0%"
-            trend={viewMode === "pipeline" && safePipelineItems.filter(item => item.isStuck).length > 0 ? "down" : "up"}
-            icon={TrendingUp}
-            color={viewMode === "pipeline" ? "pink" : "emerald"}
-            delay={0.2}
-          />
-          <CRMMetricCard 
-            title="Pipeline Value"
-            value={formatCurrency(
-              viewMode === "pipeline" ? safePipelineItems.reduce((acc, item) => acc + (item.valueAmount || 0), 0) : totalValue, 
-              currency
-            )}
-            change="0%"
-            trend="up"
-            icon={Banknote}
-            color="purple"
-            delay={0.3}
-          />
-        </CRMMetricsGrid>
-      </div>
-
-      <div className="flex-1 flex flex-col gap-4">
-        <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-          <CRMToolbar 
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            viewMode={viewMode}
-            setViewMode={(m: string) => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              setViewMode(m as any);
-              const params = new URLSearchParams(searchParams.toString());
-              if (m === "pipeline") {
-                params.set("view", "pipeline");
-              } else {
-                params.delete("view");
-              }
-              window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+      {(viewMode === "pipeline" ? safePipelineItems.length === 0 : safeDeals.length === 0) ? (
+        <div className="flex-1 min-h-0 flex flex-col pt-2">
+          <EmptyState
+            module="deals"
+            action={{
+              label: "Create Deal",
+              onClick: () => handleNewDeal(),
+              icon: Plus,
             }}
-            viewOptions={[
-              { id: "list", icon: List, label: "List View" },
-              { id: "grid", icon: Grid, label: "Grid View" },
-              { id: "pipeline", icon: GitBranch, label: "Pipeline" },
-            ]}
-            placeholder="Search deals by name or company..."
-          >
-            {viewMode === "pipeline" ? (
-              <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 border-dashed">
-                      <Filter className="w-4 h-4 mr-2" />
-                      Filter
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuRadioGroup value={pipelineFilter} onValueChange={setPipelineFilter}>
-                      <DropdownMenuRadioItem value="all">All Deals</DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="hot">Hot Deals</DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="stuck">Stuck Deals</DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 border-dashed">
-                      <ArrowUpDown className="w-4 h-4 mr-2" />
-                      Sort
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuRadioGroup value={pipelineSort} onValueChange={setPipelineSort}>
-                      <DropdownMenuRadioItem value="created_desc">Newest First</DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="value_desc">Highest Value</DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="prob_desc">Highest Probability</DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-                {["All", "New", "Qualified", "Proposal", "Negotiation", "Won", "Lost"].map((stage) => (
-                  <Button
-                    key={stage}
-                    variant={stageFilter === stage.toLowerCase() ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setStageFilter(stage.toLowerCase())}
-                    className="h-8 px-3 text-xs font-semibold whitespace-nowrap"
-                  >
-                    {stage.replace("_", " ")}
-                  </Button>
-                ))}
-              </div>
-            )}
-          </CRMToolbar>
+          />
         </div>
-
-        <div className="flex-1 min-h-0 flex flex-col">
-          <AnimatePresence mode="wait">
-            {(viewMode === "pipeline" ? filteredPipelineItems.length > 0 : filteredDeals.length > 0) ? (
-              <motion.div
-                key={viewMode}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col min-h-0"
-              >
-                {viewMode === "list" && (
-                  <DealsTable 
-                    deals={filteredDeals} 
-                    onEdit={(deal) => {
-                      setSelectedDeal(deal);
-                      setIsAddModalOpen(true);
-                    }}
-                    onDelete={(id) => {
-                      if (id.includes(",")) deleteDealsBulk.mutate(id.split(","));
-                      else deleteDeal.mutate(id);
-                    }}
-                  />
-                )}
-                {viewMode === "grid" && (
-                  <DealsGrid 
-                    deals={filteredDeals} 
-                    onEdit={(deal) => {
-                      setSelectedDeal(deal);
-                      setIsAddModalOpen(true);
-                    }}
-                    onDelete={(id) => deleteDeal.mutate(id)}
-                  />
-                )}
-                {viewMode === "pipeline" && (
-                  <PipelineBoard 
-                    items={filteredPipelineItems} 
-                    onAddDeal={handleNewDeal} 
-                  />
-                )}
-              </motion.div>
-            ) : (
-              <EmptyState
-                icon={Handshake}
-                title="No deals found"
-                description="No deals match the current search or filters."
+      ) : (
+        <>
+          <div className="shrink-0">
+            <CRMMetricsGrid cols={3}>
+              <CRMMetricCard 
+                title="Total Opportunities"
+                value={viewMode === "pipeline" ? safePipelineItems.length : safeDeals.length}
+                change="0%"
+                trend="up"
+                icon={Target}
+                color="blue"
+                delay={0.1}
               />
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+              <CRMMetricCard 
+                title={viewMode === "pipeline" ? "Stuck Deals" : "Deals Won"}
+                value={viewMode === "pipeline" ? safePipelineItems.filter(item => item.isStuck).length : wonDeals.length}
+                change="0%"
+                trend={viewMode === "pipeline" && safePipelineItems.filter(item => item.isStuck).length > 0 ? "down" : "up"}
+                icon={TrendingUp}
+                color={viewMode === "pipeline" ? "pink" : "emerald"}
+                delay={0.2}
+              />
+              <CRMMetricCard 
+                title="Pipeline Value"
+                value={formatCurrency(
+                  viewMode === "pipeline" ? safePipelineItems.reduce((acc, item) => acc + (item.valueAmount || 0), 0) : totalValue, 
+                  currency
+                )}
+                change="0%"
+                trend="up"
+                icon={Banknote}
+                color="purple"
+                delay={0.3}
+              />
+            </CRMMetricsGrid>
+          </div>
+
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+              <CRMToolbar 
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                viewMode={viewMode}
+                setViewMode={(m: string) => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  setViewMode(m as any);
+                  const params = new URLSearchParams(searchParams.toString());
+                  if (m === "pipeline") {
+                    params.set("view", "pipeline");
+                  } else {
+                    params.delete("view");
+                  }
+                  window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+                }}
+                viewOptions={[
+                  { id: "list", icon: List, label: "List View" },
+                  { id: "grid", icon: Grid, label: "Grid View" },
+                  { id: "pipeline", icon: GitBranch, label: "Pipeline" },
+                ]}
+                placeholder="Search deals by name or company..."
+              >
+                {viewMode === "pipeline" ? (
+                  <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8 border-dashed">
+                          <Filter className="w-4 h-4 mr-2" />
+                          Filter
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuRadioGroup value={pipelineFilter} onValueChange={setPipelineFilter}>
+                          <DropdownMenuRadioItem value="all">All Deals</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="hot">Hot Deals</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="stuck">Stuck Deals</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8 border-dashed">
+                          <ArrowUpDown className="w-4 h-4 mr-2" />
+                          Sort
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuRadioGroup value={pipelineSort} onValueChange={setPipelineSort}>
+                          <DropdownMenuRadioItem value="created_desc">Newest First</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="value_desc">Highest Value</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="prob_desc">Highest Probability</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+                    {["All", "New", "Qualified", "Proposal", "Negotiation", "Won", "Lost"].map((stage) => (
+                      <Button
+                        key={stage}
+                        variant={stageFilter === stage.toLowerCase() ? "secondary" : "ghost"}
+                        size="sm"
+                        onClick={() => setStageFilter(stage.toLowerCase())}
+                        className="h-8 px-3 text-xs font-semibold whitespace-nowrap"
+                      >
+                        {stage.replace("_", " ")}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </CRMToolbar>
+            </div>
+
+            <div className="flex-1 min-h-0 flex flex-col">
+              <AnimatePresence mode="wait">
+                {(viewMode === "pipeline" ? filteredPipelineItems.length > 0 : filteredDeals.length > 0) ? (
+                  <motion.div
+                    key={viewMode}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex-1 flex flex-col min-h-0"
+                  >
+                    {viewMode === "list" && (
+                      <DealsTable 
+                        deals={filteredDeals} 
+                        onEdit={(deal) => {
+                          setSelectedDeal(deal);
+                          setIsAddModalOpen(true);
+                        }}
+                        onDelete={(id) => {
+                          if (id.includes(",")) deleteDealsBulk.mutate(id.split(","));
+                          else deleteDeal.mutate(id);
+                        }}
+                      />
+                    )}
+                    {viewMode === "grid" && (
+                      <DealsGrid 
+                        deals={filteredDeals} 
+                        onEdit={(deal) => {
+                          setSelectedDeal(deal);
+                          setIsAddModalOpen(true);
+                        }}
+                        onDelete={(id) => deleteDeal.mutate(id)}
+                      />
+                    )}
+                    {viewMode === "pipeline" && (
+                      <PipelineBoard 
+                        items={filteredPipelineItems} 
+                        onAddDeal={handleNewDeal} 
+                      />
+                    )}
+                  </motion.div>
+                ) : (
+                  <EmptyState
+                    icon={Handshake}
+                    title="No deals found"
+                    description="No deals match the current search or filters."
+                    action={{
+                      label: "Clear Filters",
+                      onClick: () => {
+                        setSearchQuery("");
+                        setStageFilter("all");
+                        setPipelineFilter("all");
+                      },
+                      variant: "outline",
+                    }}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </>
+      )}
 
       <FormModal
         title={selectedDeal ? "Edit Deal" : "Create New Deal"}

@@ -159,104 +159,164 @@ const ContactsPage = () => {
         ]}
       />
 
-      <div className="shrink-0">
-        <CRMMetricsGrid cols={3}>
-          <CRMMetricCard
-            title="Total Contacts"
-            value={combinedContacts.length}
-            change="0%"
-            trend="up"
-            icon={Users}
-            color="indigo"
-            delay={0.1}
-          />
-          <CRMMetricCard
-            title="Active Customers"
-            value={safeCustomers.length}
-            change="0%"
-            trend="up"
-            icon={Star}
-            color="emerald"
-            delay={0.2}
-          />
-          <CRMMetricCard
-            title="Active Leads"
-            value={safeLeads.length}
-            change="0%"
-            trend="up"
-            icon={Filter}
-            color="orange"
-            delay={0.3}
-          />
-        </CRMMetricsGrid>
-      </div>
-
-      <div className="flex-1 flex flex-col gap-4">
-        <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-          <CRMToolbar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            placeholder="Search contacts by name, email, company, or phone..."
-          >
-            <div className="flex items-center gap-2">
-              {[
-                { label: "All", value: "all" },
-                { label: "Leads", value: "lead" },
-                { label: "Customers", value: "customer" },
-                { label: "Inactive", value: "inactive" },
-              ].map((statusObj) => (
-                <Button
-                  key={statusObj.value}
-                  variant={statusFilter === statusObj.value ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => setStatusFilter(statusObj.value)}
-                  className="h-8 px-3 text-xs font-semibold"
-                >
-                  {statusObj.label}
-                </Button>
-              ))}
-            </div>
-          </CRMToolbar>
+      {combinedContacts.length === 0 ? (
+        <div className="flex-1 min-h-0 flex flex-col pt-2">
+          {statusFilter === "lead" ? (
+            <EmptyState
+              module="leads"
+              action={{
+                label: "Create Lead",
+                onClick: () => setIsLeadModalOpen(true),
+                icon: UserPlus,
+              }}
+              secondaryAction={{
+                label: "Import Leads",
+                onClick: () => setIsBulkImportModalOpen(true),
+                icon: Upload,
+              }}
+            />
+          ) : statusFilter === "customer" ? (
+            <EmptyState
+              module="customers"
+              action={{
+                label: "Add Customer",
+                onClick: () => setIsCustomerModalOpen(true),
+                icon: UserPlus,
+              }}
+              secondaryAction={{
+                label: "Import Customers",
+                onClick: () => setIsBulkImportModalOpen(true),
+                icon: Upload,
+              }}
+            />
+          ) : (
+            <EmptyState
+              module="leads"
+              title="How to get the most out of your contacts?"
+              description="Start building your network by creating your first lead or adding a customer account."
+              action={{
+                label: "Create Lead",
+                onClick: () => setIsLeadModalOpen(true),
+                icon: UserPlus,
+              }}
+              secondaryAction={{
+                label: "Import Contacts",
+                onClick: () => setIsBulkImportModalOpen(true),
+                icon: Upload,
+              }}
+            />
+          )}
         </div>
-
-        <div className="flex-1 min-h-0 flex flex-col">
-          <AnimatePresence mode="wait">
-            {filteredContacts.length > 0 ? (
-              <motion.div
-                key={viewMode}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col min-h-0"
-              >
-                <ContactsTable
-                  contacts={filteredContacts}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  onEditLead={(lead: any) => {
-                    setSelectedLead(lead);
-                    setIsLeadModalOpen(true);
-                  }}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  onEditCustomer={(customer: any) => {
-                    setSelectedCustomer(customer);
-                    setIsCustomerModalOpen(true);
-                  }}
-                  onDeleteLead={(id: string) => deleteLead(id)}
-                  onDeleteCustomer={(id: string) => deleteCustomer(id)}
-                />
-              </motion.div>
-            ) : (
-              <EmptyState
+      ) : (
+        <>
+          <div className="shrink-0">
+            <CRMMetricsGrid cols={3}>
+              <CRMMetricCard
+                title="Total Contacts"
+                value={combinedContacts.length}
+                change="0%"
+                trend="up"
                 icon={Users}
-                title="No contacts found"
-                description="Try adjusting your filters or search query."
+                color="indigo"
+                delay={0.1}
               />
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+              <CRMMetricCard
+                title="Active Customers"
+                value={safeCustomers.length}
+                change="0%"
+                trend="up"
+                icon={Star}
+                color="emerald"
+                delay={0.2}
+              />
+              <CRMMetricCard
+                title="Active Leads"
+                value={safeLeads.length}
+                change="0%"
+                trend="up"
+                icon={Filter}
+                color="orange"
+                delay={0.3}
+              />
+            </CRMMetricsGrid>
+          </div>
+
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+              <CRMToolbar
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                placeholder="Search contacts by name, email, company, or phone..."
+              >
+                <div className="flex items-center gap-2">
+                  {[
+                    { label: "All", value: "all" },
+                    { label: "Leads", value: "lead" },
+                    { label: "Customers", value: "customer" },
+                    { label: "Inactive", value: "inactive" },
+                  ].map((statusObj) => (
+                    <Button
+                      key={statusObj.value}
+                      variant={statusFilter === statusObj.value ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setStatusFilter(statusObj.value)}
+                      className="h-8 px-3 text-xs font-semibold"
+                    >
+                      {statusObj.label}
+                    </Button>
+                  ))}
+                </div>
+              </CRMToolbar>
+            </div>
+
+            <div className="flex-1 min-h-0 flex flex-col">
+              <AnimatePresence mode="wait">
+                {filteredContacts.length > 0 ? (
+                  <motion.div
+                    key={viewMode}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex-1 flex flex-col min-h-0"
+                  >
+                    <ContactsTable
+                      contacts={filteredContacts}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      onEditLead={(lead: any) => {
+                        setSelectedLead(lead);
+                        setIsLeadModalOpen(true);
+                      }}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      onEditCustomer={(customer: any) => {
+                        setSelectedCustomer(customer);
+                        setIsCustomerModalOpen(true);
+                      }}
+                      onDeleteLead={(id: string) => deleteLead(id)}
+                      onDeleteCustomer={(id: string) => deleteCustomer(id)}
+                    />
+                  </motion.div>
+                ) : (
+                  <EmptyState
+                    icon={Users}
+                    title="No contacts found"
+                    description="No contacts match your current search or filter criteria."
+                    action={{
+                      label: "Clear Filters",
+                      onClick: () => {
+                        setSearchQuery("");
+                        setStatusFilter("all");
+                      },
+                      variant: "outline",
+                    }}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </>
+      )}
 
       <FormModal
         title={selectedLead ? "Edit Lead" : "Create New Lead"}

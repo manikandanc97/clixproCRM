@@ -1,17 +1,22 @@
-﻿import { tool } from 'ai';
+import { tool } from 'ai';
 import { z } from 'zod';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiSecurityService, UserSecurityContext } from '../ai-security.service';
 import { PERMISSION_MODULES } from '../../common/role-permissions.constants';
+import { EncryptionService } from '../../common/encryption/encryption.service';
 
 /**
  * @file ai/tools/customers.tools.ts
  * AI tool implementations for Customers.
+ *
+ * ENCRYPTION: Customer.name, email, company are decrypted before returning to AI.
+ * Search is applied post-decryption since fields are encrypted in DB.
  */
 export function buildCustomersTools(
   prisma: PrismaService,
   aiSecurityService: AiSecurityService,
   userContext: UserSecurityContext,
+  enc: EncryptionService,
 ) {
   return {
     getCustomers: tool({
@@ -39,29 +44,43 @@ export function buildCustomersTools(
           const safeLimit = Math.max(1, Math.min(limit, 50));
           const visibilityFilter = aiSecurityService.getCustomersVisibilityFilter(userContext);
 
+          // Note: search on encrypted fields must be done post-decryption
           const whereClause: any = { ...visibilityFilter };
           if (status) whereClause.status = status;
-          if (search) {
-            whereClause.OR = [
-              { name: { contains: search, mode: 'insensitive' } },
-              { company: { contains: search, mode: 'insensitive' } },
-            ];
-          }
 
           const customers = await prisma.customer.findMany({
             where: whereClause,
             orderBy: { createdAt: 'desc' },
-            take: safeLimit,
+            // Fetch more when search is active so we can filter post-decryption
+            take: search ? Math.min(safeLimit * 10, 200) : safeLimit,
             select: { id: true, name: true, company: true, email: true, status: true, revenue: true, createdAt: true },
           });
 
-          await aiSecurityService.logToolExecution(userContext, toolName, 'ALLOWED', { count: customers.length });
-
-          return customers.map((c) => ({
-            id: c.id, name: c.name, company: c.company, email: c.email,
-            status: c.status, revenue: c.revenue ? Number(c.revenue) : 0,
+          // Decrypt PII
+          const decrypted = customers.map((c) => ({
+            id: c.id,
+            name: enc.decrypt(c.name),
+            company: enc.decrypt(c.company),
+            email: enc.decrypt(c.email),
+            status: c.status,
+            revenue: c.revenue ? Number(c.revenue) : 0,
             createdAt: c.createdAt.toISOString(),
           }));
+
+          // Post-decryption search filter
+          const filtered = search
+            ? decrypted
+                .filter(
+                  (c) =>
+                    (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+                    (c.company || '').toLowerCase().includes(search.toLowerCase()),
+                )
+                .slice(0, safeLimit)
+            : decrypted;
+
+          await aiSecurityService.logToolExecution(userContext, toolName, 'ALLOWED', { count: filtered.length });
+
+          return filtered;
         } catch (e: any) {
           await aiSecurityService.logToolExecution(userContext, toolName, 'ERROR', { error: e.message });
           return { error: 'Failed to fetch customers.', details: e.message };

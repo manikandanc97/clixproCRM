@@ -46,9 +46,9 @@ export default function DashboardShell({
         </div>
 
         {/* Scrollable page content — only this region scrolls */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide min-h-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide min-h-0 flex flex-col">
           <motion.div
-            className="w-full h-full"
+            className="w-full flex-1 flex flex-col min-h-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, ease: "easeOut" }}

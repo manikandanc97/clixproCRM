@@ -20,7 +20,7 @@ export const CRMPageContainer = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       className={cn(
-        "mx-auto flex min-h-full w-full flex-col gap-4 md:gap-6 px-4 sm:px-6 lg:px-10 pt-6 md:pt-8 pb-6 md:pb-8 relative",
+        "mx-auto flex flex-1 min-h-full w-full flex-col gap-3.5 sm:gap-4 px-3 sm:px-6 lg:px-10 pt-3 sm:pt-3.5 pb-3 relative",
         maxWidth,
         className
       )}

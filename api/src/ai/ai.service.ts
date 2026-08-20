@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiSecurityService, UserSecurityContext } from './ai-security.service';
+import { EncryptionService } from '../common/encryption/encryption.service';
 import { buildDealsTools } from './tools/deals.tools';
 import { buildLeadsTools } from './tools/leads.tools';
 import { buildCustomersTools } from './tools/customers.tools';
@@ -33,6 +34,7 @@ export class AiService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly aiSecurityService: AiSecurityService,
+    private readonly enc: EncryptionService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (apiKey) {
@@ -65,10 +67,10 @@ CRITICAL SECURITY RULES:
   public getAuthorizedTools(userContext: UserSecurityContext): Record<string, any> {
     return {
       ...buildDealsTools(this.prisma, this.aiSecurityService, userContext),
-      ...buildLeadsTools(this.prisma, this.aiSecurityService, userContext),
-      ...buildCustomersTools(this.prisma, this.aiSecurityService, userContext),
+      ...buildLeadsTools(this.prisma, this.aiSecurityService, userContext, this.enc),
+      ...buildCustomersTools(this.prisma, this.aiSecurityService, userContext, this.enc),
       ...buildTasksTools(this.prisma, this.aiSecurityService, userContext),
-      ...buildQuotationsTools(this.prisma, this.aiSecurityService, userContext),
+      ...buildQuotationsTools(this.prisma, this.aiSecurityService, userContext, this.enc),
     };
   }
 

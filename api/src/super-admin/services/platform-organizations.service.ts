@@ -173,35 +173,25 @@ export class PlatformOrganizationsService {
         },
       });
 
-      // Seed standard system roles
-      const STANDARD_ROLES = ['ADMIN', 'MANAGER', 'SALES', 'EMPLOYEE'] as const;
-      for (const roleName of STANDARD_ROLES) {
-        const r = await tx.role.create({
-          data: {
-            name: roleName,
-            tenantId: tenant.id,
-            isSystem: true,
-            priority:
-              roleName === 'ADMIN'
-                ? 100
-                : roleName === 'MANAGER'
-                  ? 70
-                  : roleName === 'SALES'
-                    ? 40
-                    : 10,
-          },
-        });
+      // Seed default ADMIN system role
+      const adminRole = await tx.role.create({
+        data: {
+          name: 'ADMIN',
+          tenantId: tenant.id,
+          isSystem: true,
+          priority: 100,
+        },
+      });
 
-        const moduleList = SYSTEM_ROLE_PERMISSIONS[roleName] || [];
-        if (moduleList.length > 0) {
-          await tx.rolePermission.createMany({
-            data: moduleList.map((module: string) => ({
-              roleId: r.id,
-              module,
-              hasAccess: true,
-            })),
-          });
-        }
+      const moduleList = SYSTEM_ROLE_PERMISSIONS['ADMIN'] || [];
+      if (moduleList.length > 0) {
+        await tx.rolePermission.createMany({
+          data: moduleList.map((module: string) => ({
+            roleId: adminRole.id,
+            module,
+            hasAccess: true,
+          })),
+        });
       }
 
       // Record platform audit log
@@ -290,5 +280,117 @@ export class PlatformOrganizationsService {
     });
 
     return updated;
+  }
+
+  async deleteOrganization(id: string, adminActorId: string) {
+    const existing = await this.prisma.tenant.findUnique({
+      where: { id },
+      select: { id: true, name: true, slug: true },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Delete audit logs associated with this tenant
+      await tx.auditLog.deleteMany({
+        where: { tenantId: id },
+      });
+
+      // 2. Cascade cleanup of all tenant-scoped data
+      await tx.aiMessage.deleteMany({
+        where: { conversation: { tenantId: id } },
+      });
+      await tx.aiConversation.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.tenantAiConfig.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.documentChunk.deleteMany({
+        where: { document: { tenantId: id } },
+      });
+      await tx.document.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.timelineEvent.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.note.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.attachment.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.invoice.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.quotation.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.task.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.meeting.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.deal.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.customer.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.lead.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.company.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.product.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.revenueTarget.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.notification.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.invitation.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.tenantUser.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.rolePermission.deleteMany({
+        where: { role: { tenantId: id } },
+      });
+      await tx.role.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.department.deleteMany({
+        where: { tenantId: id },
+      });
+      await tx.invoiceCounter.deleteMany({
+        where: { tenantId: id },
+      });
+
+      // 3. Delete the tenant
+      const deletedTenant = await tx.tenant.delete({
+        where: { id },
+      });
+
+      // 4. Log the deletion in super-admin audit trail
+      await tx.auditLog.create({
+        data: {
+          userId: adminActorId,
+          action: 'ORGANIZATION_DELETED',
+          module: 'SuperAdmin',
+          details: { id: existing.id, name: existing.name, slug: existing.slug },
+        },
+      });
+
+      return deletedTenant;
+    });
   }
 }
