@@ -11,6 +11,7 @@ import {
   ScrollText,
   Settings,
   Shield,
+  ShieldAlert,
   Crown,
   LogOut,
   ArrowLeftRight,
@@ -55,6 +56,11 @@ const superAdminNavGroups: NavGroup[] = [
         title: "Analytics",
         href: "/super-admin/analytics",
         icon: BarChart3,
+      },
+      {
+        title: "Security Center",
+        href: "/super-admin/security",
+        icon: ShieldAlert,
       },
       {
         title: "Audit Logs",

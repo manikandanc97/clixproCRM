@@ -27,6 +27,7 @@ model Tenant {
   logo            String?
   brandPrimaryColor String?
   mfaPolicy       String           @default("OPTIONAL")
+  securityStatus  String           @default("ACTIVE")
 
   attachments     Attachment[]
   customers       Customer[]
@@ -59,6 +60,7 @@ model User {
   phone              String?
   avatar             String?
   status             UserStatus       @default(ACTIVE)
+  securityStatus     String           @default("ACTIVE")
   isSuperAdmin       Boolean          @default(false)
   deletedAt          DateTime?
   createdAt          DateTime         @default(now())
@@ -322,6 +324,43 @@ model AuditArchiveOutbox {
   auditLog      AuditLog  @relation(fields: [auditLogId], references: [id], onDelete: Cascade)
 
   @@index([status, nextAttemptAt])
+}
+
+model SecurityIncident {
+  id             String    @id @default(uuid())
+  incidentNumber String    @unique
+  severity       String
+  status         String    @default("OPEN")
+  title          String
+  description    String
+  incidentType   String    @default("SECURITY_ALERT")
+  detectedAt     DateTime  @default(now())
+  detectedBy     String
+  tenantId       String?
+  affectedUserId String?
+  createdBy      String
+  resolvedBy     String?
+  resolvedAt     DateTime?
+  resolutionNotes String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status, severity])
+  @@index([tenantId])
+  @@index([affectedUserId])
+  @@index([createdAt])
+}
+
+model PlatformSecurityState {
+  id               String    @id @default("global")
+  emergencyMode    Boolean   @default(false)
+  reason           String?
+  confirmationCode String?
+  enabledAt        DateTime?
+  enabledBy        String?
+  disabledAt       DateTime?
+  disabledBy       String?
+  updatedAt        DateTime  @updatedAt
 }
 
 model Invitation {

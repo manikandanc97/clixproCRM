@@ -255,6 +255,208 @@ export const fetchPlatformAuditLogs = async (params?: {
   return response.data.data;
 };
 
+export interface AuditIntegrityReport {
+  status: "HEALTHY" | "WARNING" | "CRITICAL";
+  scope: string;
+  checkedRecords: number;
+  brokenLinks: number;
+  missingArchives: number;
+  hashMismatches: number;
+  missingHashes: number;
+  timestampAnomalies: number;
+  failedArchives: number;
+  staleOutboxRecords: number;
+  archiveCoveragePercent: number;
+  firstFailureId: string | null;
+  lastCheckAt: string;
+  reason: string | null;
+}
+
+export const fetchAuditIntegrityStatus = async (): Promise<AuditIntegrityReport> => {
+  const response = await client.get<{ success: boolean; data: AuditIntegrityReport }>(
+    "/super-admin/audit-integrity/status"
+  );
+  return response.data.data;
+};
+
+export const triggerAuditIntegrityVerify = async (
+  tenantId?: string
+): Promise<AuditIntegrityReport> => {
+  const response = await client.post<{ success: boolean; data: AuditIntegrityReport }>(
+    "/super-admin/audit-integrity/verify",
+    undefined,
+    { params: tenantId ? { tenantId } : undefined }
+  );
+  return response.data.data;
+};
+
+export const triggerAuditDrVerify = async (
+  recordId: string
+): Promise<{ restorable: boolean; reason: string | null }> => {
+  const response = await client.post<{
+    success: boolean;
+    data: { restorable: boolean; reason: string | null };
+  }>(`/super-admin/audit-integrity/dr-verify/${recordId}`);
+  return response.data.data;
+};
+
+export interface SecurityIncidentItem {
+  id: string;
+  incidentNumber: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  status: "OPEN" | "INVESTIGATING" | "CONTAINED" | "RESOLVED" | "FALSE_POSITIVE";
+  title: string;
+  description: string;
+  incidentType: string;
+  detectedAt: string;
+  detectedBy: string;
+  tenantId: string | null;
+  affectedUserId: string | null;
+  createdBy: string;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  resolutionNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SecurityCenterStatus {
+  emergencyMode: boolean;
+  emergencyReason: string | null;
+  openIncidents: number;
+  criticalIncidents: number;
+  lockedUsers: number;
+  lockedTenants: number;
+  auditIntegrityStatus: "HEALTHY" | "WARNING" | "CRITICAL";
+  archiveCoveragePercent: number;
+  checkedRecords: number;
+  brokenChains: number;
+  failedArchives: number;
+  lastCheckAt: string;
+}
+
+export const fetchSecurityCenterStatus = async (): Promise<SecurityCenterStatus> => {
+  const response = await client.get<{ success: boolean; data: SecurityCenterStatus }>(
+    "/super-admin/security/center/status"
+  );
+  return response.data.data;
+};
+
+export const fetchSecurityIncidents = async (params?: {
+  severity?: string;
+  status?: string;
+  tenantId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{
+  incidents: SecurityIncidentItem[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}> => {
+  const response = await client.get<{
+    success: boolean;
+    data: {
+      incidents: SecurityIncidentItem[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    };
+  }>("/super-admin/security/incidents", { params });
+  return response.data.data;
+};
+
+export const createSecurityIncident = async (data: {
+  title: string;
+  description: string;
+  severity: string;
+  incidentType?: string;
+  tenantId?: string;
+  affectedUserId?: string;
+}): Promise<SecurityIncidentItem> => {
+  const response = await client.post<{ success: boolean; data: SecurityIncidentItem }>(
+    "/super-admin/security/incidents",
+    data
+  );
+  return response.data.data;
+};
+
+export const resolveSecurityIncident = async (
+  id: string,
+  resolutionNotes: string
+): Promise<SecurityIncidentItem> => {
+  const response = await client.post<{ success: boolean; data: SecurityIncidentItem }>(
+    `/super-admin/security/incidents/${id}/resolve`,
+    { resolutionNotes }
+  );
+  return response.data.data;
+};
+
+export const emergencyLockUser = async (
+  userId: string,
+  reason: string,
+  confirmation: string
+) => {
+  const response = await client.post<{ success: boolean; message: string }>(
+    `/super-admin/security/emergency/lock-user/${userId}`,
+    { reason, confirmation }
+  );
+  return response.data;
+};
+
+export const emergencyUnlockUser = async (userId: string, reason: string) => {
+  const response = await client.post<{ success: boolean; message: string }>(
+    `/super-admin/security/emergency/unlock-user/${userId}`,
+    { reason }
+  );
+  return response.data;
+};
+
+export const emergencyLockTenant = async (
+  tenantId: string,
+  reason: string,
+  confirmation: string
+) => {
+  const response = await client.post<{ success: boolean; message: string }>(
+    `/super-admin/security/emergency/lock-tenant/${tenantId}`,
+    { reason, confirmation }
+  );
+  return response.data;
+};
+
+export const emergencyUnlockTenant = async (tenantId: string, reason: string) => {
+  const response = await client.post<{ success: boolean; message: string }>(
+    `/super-admin/security/emergency/unlock-tenant/${tenantId}`,
+    { reason }
+  );
+  return response.data;
+};
+
+export const generateBreakGlassCode = async (): Promise<string> => {
+  const response = await client.post<{
+    success: boolean;
+    data: { confirmationCode: string };
+  }>("/super-admin/security/emergency/generate-break-glass-code");
+  return response.data.data.confirmationCode;
+};
+
+export const enablePlatformEmergency = async (
+  reason: string,
+  confirmation: string,
+  confirmationCode: string
+) => {
+  const response = await client.post<{ success: boolean; message: string }>(
+    "/super-admin/security/emergency/platform-lockdown",
+    { reason, confirmation, confirmationCode }
+  );
+  return response.data;
+};
+
+export const disablePlatformEmergency = async (reason: string) => {
+  const response = await client.post<{ success: boolean; message: string }>(
+    "/super-admin/security/emergency/platform-unlock",
+    { reason }
+  );
+  return response.data;
+};
+
 export const fetchPlatformSettings = async () => {
   const response = await client.get<{ success: boolean; data: any }>(
     "/super-admin/settings"

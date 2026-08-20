@@ -6,17 +6,15 @@ import {
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { SecurityConfigValidator } from './common/utils/security-config.validator';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
-  // Fail-fast startup validation for required backend configuration
-  const requiredEnvVars = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
-  const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key]);
-  if (missingEnvVars.length > 0) {
-    logger.error(
-      `[FATAL] Missing required environment variables: ${missingEnvVars.join(', ')}. Backend cannot start.`,
-    );
+  // Comprehensive fail-fast startup security validation
+  const validation = SecurityConfigValidator.validateEnvironment();
+  if (!validation.valid && process.env.NODE_ENV === 'production') {
+    logger.error('[FATAL] Production security configuration check failed. Refusing to boot.');
     process.exit(1);
   }
 

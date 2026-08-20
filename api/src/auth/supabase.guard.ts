@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  ForbiddenException,
   Optional,
   Logger,
 } from '@nestjs/common';
@@ -264,9 +265,58 @@ export class SupabaseAuthGuard implements CanActivate {
     let sessionCreatedAt = now;
     let sessionLastActiveAt = now;
 
-    // Check DB for session revocation, absolute timeout, and idle timeout
+    // Check DB for session revocation, absolute timeout, idle timeout, and P4 security status
     if (this.prisma) {
       try {
+        // P4 Server-Side Check 1: Global Platform Emergency Mode Check
+        const platformState = await (this.prisma as any).platformSecurityState
+          ?.findUnique({ where: { id: 'global' } })
+          .catch(() => null);
+
+        if (platformState?.emergencyMode) {
+          const isSuperAdmin = user.isSuperAdmin === true;
+          const isAal2 = user.aal === 'aal2';
+          if (!isSuperAdmin || !isAal2) {
+            tokenUserCache.delete(token);
+            throw new ForbiddenException(
+              'Platform is in emergency lockdown mode. Access restricted to verified Super Admins with AAL2 authentication.',
+            );
+          }
+        }
+
+        // P4 Server-Side Check 2: User Account Lock Check
+        const dbUser = await (this.prisma as any).user
+          ?.findUnique({
+            where: { id: user.id },
+            select: { securityStatus: true, isSuperAdmin: true },
+          })
+          .catch(() => null);
+
+        if (dbUser && dbUser.securityStatus === 'LOCKED') {
+          revokedSessionsSet.add(sessionId);
+          tokenUserCache.delete(token);
+          throw new ForbiddenException(
+            'Your account has been locked due to security policy. Please contact your system administrator.',
+          );
+        }
+
+        // P4 Server-Side Check 3: Tenant Organization Lockdown Check
+        if (request.tenantId && !user.isSuperAdmin) {
+          const dbTenant = await (this.prisma as any).tenant
+            ?.findUnique({
+              where: { id: request.tenantId },
+              select: { securityStatus: true },
+            })
+            .catch(() => null);
+
+          if (dbTenant && dbTenant.securityStatus === 'LOCKED') {
+            tokenUserCache.delete(token);
+            throw new ForbiddenException(
+              'Your organization has been temporarily locked for security verification. Please contact support.',
+            );
+          }
+        }
+
         const sessionRecord = await this.prisma.userSession.findUnique({
           where: { sessionId },
           select: {
@@ -582,7 +632,7 @@ export class SupabaseAuthGuard implements CanActivate {
           }
         }
       } catch (dbErr: any) {
-        if (dbErr instanceof UnauthorizedException) {
+        if (dbErr instanceof UnauthorizedException || dbErr instanceof ForbiddenException) {
           throw dbErr;
         }
         // Suppress other non-fatal session registry DB errors

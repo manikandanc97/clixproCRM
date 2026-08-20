@@ -21,6 +21,10 @@ import {
 import {
   fetchPlatformAuditLogs,
   PlatformAuditLog,
+  fetchAuditIntegrityStatus,
+  triggerAuditIntegrityVerify,
+  triggerAuditDrVerify,
+  AuditIntegrityReport,
 } from "@/shared/lib/api/super-admin.api";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
@@ -47,6 +51,12 @@ export default function SuperAdminAuditLogsPage() {
   const [moduleFilter, setModuleFilter] = useState("");
   const [selectedLog, setSelectedLog] = useState<PlatformAuditLog | null>(null);
 
+  // Integrity Status State
+  const [integrityReport, setIntegrityReport] = useState<AuditIntegrityReport | null>(null);
+  const [verifyingIntegrity, setVerifyingIntegrity] = useState(false);
+  const [drResult, setDrResult] = useState<{ restorable: boolean; reason: string | null } | null>(null);
+  const [verifyingDr, setVerifyingDr] = useState(false);
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -54,14 +64,52 @@ export default function SuperAdminAuditLogsPage() {
   const loadLogs = async () => {
     try {
       setLoading(true);
-      const res = await fetchPlatformAuditLogs({
-        limit: 1000,
-      });
+      const [res, integrity] = await Promise.all([
+        fetchPlatformAuditLogs({ limit: 1000 }),
+        fetchAuditIntegrityStatus().catch(() => null),
+      ]);
       setLogs(res.logs || []);
+      if (integrity) setIntegrityReport(integrity);
     } catch (err: any) {
       toast.error("Failed to load audit logs.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyIntegrity = async () => {
+    try {
+      setVerifyingIntegrity(true);
+      const res = await triggerAuditIntegrityVerify();
+      setIntegrityReport(res);
+      if (res.status === "HEALTHY") {
+        toast.success(`Audit integrity verified: ${res.checkedRecords} records valid.`);
+      } else if (res.status === "WARNING") {
+        toast.warning(`Integrity check warning: ${res.reason || "Outbox or coverage notice"}`);
+      } else {
+        toast.error(`CRITICAL integrity failure: ${res.reason}`);
+      }
+    } catch (err: any) {
+      toast.error("Integrity verification request failed.");
+    } finally {
+      setVerifyingIntegrity(false);
+    }
+  };
+
+  const handleDrVerify = async (recordId: string) => {
+    try {
+      setVerifyingDr(true);
+      const res = await triggerAuditDrVerify(recordId);
+      setDrResult(res);
+      if (res.restorable) {
+        toast.success("Disaster recovery dry run: 100% restorable from WORM S3 archive.");
+      } else {
+        toast.error(`DR dry run failure: ${res.reason}`);
+      }
+    } catch (err: any) {
+      toast.error("DR dry run request failed.");
+    } finally {
+      setVerifyingDr(false);
     }
   };
 
@@ -150,7 +198,58 @@ export default function SuperAdminAuditLogsPage() {
       />
 
       {/* 2. Standard CRM KPI Metrics Grid */}
-      <div className="shrink-0">
+      <div className="shrink-0 space-y-4">
+        {/* Continuous Audit Integrity & WORM Archival Status Banner */}
+        {integrityReport && (
+          <div className="p-4 rounded-2xl bg-card border border-border/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div
+                className={`p-2.5 rounded-xl flex items-center justify-center ${
+                  integrityReport.status === "HEALTHY"
+                    ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                    : integrityReport.status === "WARNING"
+                    ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                    : "bg-red-500/10 text-red-600 border border-red-500/20"
+                }`}
+              >
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-foreground">Audit Integrity & WORM Status</span>
+                  <span
+                    className={`text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                      integrityReport.status === "HEALTHY"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                        : integrityReport.status === "WARNING"
+                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                        : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+                    }`}
+                  >
+                    {integrityReport.status}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  HMAC-SHA256 Chained • S3 Object Lock Compliance • Coverage: {integrityReport.archiveCoveragePercent}% • Checked: {integrityReport.checkedRecords}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end md:self-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleVerifyIntegrity}
+                disabled={verifyingIntegrity}
+                className="gap-2 text-xs font-semibold"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${verifyingIntegrity ? "animate-spin" : ""}`} />
+                <span>{verifyingIntegrity ? "Verifying..." : "Verify Integrity Now"}</span>
+              </Button>
+            </div>
+          </div>
+        )}
+
         <CRMMetricsGrid cols={3}>
           <CRMMetricCard
             title="Recorded Events"
@@ -377,6 +476,20 @@ export default function SuperAdminAuditLogsPage() {
                 <pre className="p-3 rounded-xl bg-black/90 text-emerald-400 font-mono text-[11px] overflow-x-auto max-h-56 border border-border/40">
                   {JSON.stringify(selectedLog.details, null, 2)}
                 </pre>
+              </div>
+
+              {/* Disaster Recovery Verification Action */}
+              <div className="pt-2 border-t border-border/40 flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDrVerify(selectedLog.id)}
+                  disabled={verifyingDr}
+                  className="gap-2 text-xs w-full"
+                >
+                  <Shield className={`h-3.5 w-3.5 ${verifyingDr ? "animate-spin" : "text-emerald-600"}`} />
+                  <span>{verifyingDr ? "Testing DR Restore..." : "Test WORM Disaster Recovery Restore"}</span>
+                </Button>
               </div>
             </div>
           </div>
