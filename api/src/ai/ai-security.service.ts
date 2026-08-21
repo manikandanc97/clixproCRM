@@ -28,63 +28,78 @@ export class AiSecurityService {
     userId: string,
     tenantId: string,
     userRole?: any,
+    isSuperAdminUser = false,
   ): Promise<UserSecurityContext> {
-    return this.prisma.withTenantContext({ tenantId }, async (tx) => {
-      const tenantUser = await tx.tenantUser.findFirst({
-        where: { tenantId, userId, status: 'ACTIVE' },
-        include: {
-          role: {
+    const isSuperAdmin =
+      isSuperAdminUser ||
+      (typeof userRole === 'object' && userRole?.name === 'SUPER_ADMIN') ||
+      (typeof userRole === 'string' && userRole === 'SUPER_ADMIN');
+
+    return this.prisma.withTenantContext(
+      { tenantId: tenantId || '', isSuperAdmin, userId },
+      async (tx) => {
+        let tenantUser: any = null;
+        if (tenantId) {
+          tenantUser = await tx.tenantUser.findFirst({
+            where: { tenantId, userId, status: 'ACTIVE' },
             include: {
-              permissions: true,
-            },
-          },
-        },
-      });
-
-      const role = userRole || tenantUser?.role;
-      const rawRole = typeof role === 'object' ? role?.name || '' : String(role || '');
-      const roleName = rawRole.toUpperCase();
-      const normRole = roleName.replace(/[\s_]+/g, '');
-      const isSystemAdmin =
-        normRole === 'SUPERADMIN' || normRole === 'ADMIN' || normRole === 'OWNER';
-      const isRoleActive = role ? role.isActive !== false : true;
-
-      let subordinateUserIds: string[] = [];
-      let teamUserIds: string[] = [];
-
-      if (tenantUser) {
-        const [subordinates, teamMembers] = await Promise.all([
-          tx.tenantUser.findMany({
-            where: { tenantId, reportingManagerId: tenantUser.id, status: 'ACTIVE' },
-            select: { userId: true },
-          }),
-          tenantUser.departmentId
-            ? tx.tenantUser.findMany({
-                where: {
-                  tenantId,
-                  departmentId: tenantUser.departmentId,
-                  status: 'ACTIVE',
+              role: {
+                include: {
+                  permissions: true,
                 },
-                select: { userId: true },
-              })
-            : Promise.resolve([]),
-        ]);
+              },
+            },
+          });
+        }
 
-        subordinateUserIds = (subordinates || []).map((s) => s.userId);
-        teamUserIds = (teamMembers || []).map((t) => t.userId);
-      }
+        const role = userRole || tenantUser?.role;
+        const rawRole = typeof role === 'object' ? role?.name || '' : String(role || '');
+        const roleName = rawRole.toUpperCase() || (isSuperAdmin ? 'SUPER_ADMIN' : '');
+        const normRole = roleName.replace(/[\s_]+/g, '');
+        const isSystemAdmin =
+          isSuperAdmin ||
+          normRole === 'SUPERADMIN' ||
+          normRole === 'ADMIN' ||
+          normRole === 'OWNER';
+        const isRoleActive = role ? role.isActive !== false : true;
 
-      return {
-        userId,
-        tenantId,
-        roleName,
-        isSystemAdmin,
-        permissions: isRoleActive ? (role?.permissions || []) : [],
-        departmentId: tenantUser?.departmentId || null,
-        subordinateUserIds,
-        teamUserIds,
-      };
-    });
+        let subordinateUserIds: string[] = [];
+        let teamUserIds: string[] = [];
+
+        if (tenantUser && tenantId) {
+          const [subordinates, teamMembers] = await Promise.all([
+            tx.tenantUser.findMany({
+              where: { tenantId, reportingManagerId: tenantUser.id, status: 'ACTIVE' },
+              select: { userId: true },
+            }),
+            tenantUser.departmentId
+              ? tx.tenantUser.findMany({
+                  where: {
+                    tenantId,
+                    departmentId: tenantUser.departmentId,
+                    status: 'ACTIVE',
+                  },
+                  select: { userId: true },
+                })
+              : Promise.resolve([]),
+          ]);
+
+          subordinateUserIds = (subordinates || []).map((s) => s.userId);
+          teamUserIds = (teamMembers || []).map((t) => t.userId);
+        }
+
+        return {
+          userId,
+          tenantId: tenantId || '',
+          roleName: roleName || (isSuperAdmin ? 'SUPER_ADMIN' : 'USER'),
+          isSystemAdmin,
+          permissions: isRoleActive ? (role?.permissions || [{ module: 'ALL', hasAccess: true }]) : [],
+          departmentId: tenantUser?.departmentId || null,
+          subordinateUserIds,
+          teamUserIds,
+        };
+      },
+    );
   }
 
   /**

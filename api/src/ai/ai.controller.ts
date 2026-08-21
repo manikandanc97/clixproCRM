@@ -23,6 +23,7 @@ export class AiController {
       const tenantId = req.tenantId;
       const userId = req.user?.id || req.user?.sub;
       const userRole = req.userRole;
+      const isSuperAdmin = req.isSuperAdmin || false;
 
       // Build full RBAC and hierarchy security context
       const securityContext =
@@ -30,6 +31,7 @@ export class AiController {
           userId,
           tenantId,
           userRole,
+          isSuperAdmin,
         );
 
       const streamResult = await this.aiService.generateStream(

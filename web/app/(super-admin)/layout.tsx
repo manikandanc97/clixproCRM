@@ -6,6 +6,7 @@ import { SuperAdminSidebar } from "./components/super-admin-sidebar";
 import { SuperAdminHeader } from "./components/super-admin-header";
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { SuperAdminMfaModal } from "@/features/auth/components/SuperAdminMfaModal";
+import FloatingAssistantWrapper from "@/components/ai/floating-assistant-wrapper";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SuperAdminLayout({
@@ -75,6 +76,9 @@ export default function SuperAdminLayout({
               window.dispatchEvent(new CustomEvent("clixpro:aal2-verified"));
             }}
           />
+
+          {/* Floating AI Chat Assistant */}
+          <FloatingAssistantWrapper />
         </div>
       </TooltipProvider>
     </SuperAdminRoute>
