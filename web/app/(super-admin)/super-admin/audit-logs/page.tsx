@@ -37,6 +37,7 @@ import {
   CRMPagination,
 } from "@/shared/components/crm";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { cn } from "@/shared/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -289,140 +290,118 @@ export default function SuperAdminAuditLogsPage() {
         </CRMMetricsGrid>
       </div>
 
-      {/* 3. Standard CRM Toolbar & Filter Controls */}
+      {/* 3. Filter Controls & Table Workspace */}
       <CRMToolbar
         searchQuery={search}
         setSearchQuery={setSearch}
-        placeholder="Search by action, module, or user email..."
+        placeholder="Filter audit logs by actor, action, details..."
       >
-        <div className="flex items-center gap-2">
-          <select
-            value={moduleFilter}
-            onChange={(e) => setModuleFilter(e.target.value)}
-            className="h-9 px-3 rounded-xl bg-card border border-border text-xs font-semibold text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="">All Modules</option>
-            {modules.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </div>
-      </CRMToolbar>
+          <div className="flex items-center gap-2">
+            <select
+              value={moduleFilter}
+              onChange={(e) => setModuleFilter(e.target.value)}
+              className="h-9 px-3 rounded-xl bg-card border border-border text-xs font-semibold text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="">All Modules</option>
+              {modules.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+        </CRMToolbar>
 
-      {/* 4. Standard CRM Data Table */}
-      <div className="rounded-2xl bg-card border border-border shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead className="sticky top-0 z-10 bg-card shadow-xs">
-              <tr className="border-b border-border bg-muted/20 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                <th className="h-12 px-6 py-4">Action</th>
-                <th className="h-12 px-6 py-4">Module</th>
-                <th className="h-12 px-6 py-4">Organization</th>
-                <th className="h-12 px-6 py-4">Actor</th>
-                <th className="h-12 px-6 py-4">Timestamp</th>
-                <th className="h-12 px-6 py-4 text-right">Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse h-16">
-                    <td className="px-6 py-4"><div className="h-4 w-32 bg-muted rounded" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-16 bg-muted rounded-full" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-28 bg-muted rounded" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-24 bg-muted rounded" /></td>
-                    <td className="px-6 py-4"><div className="h-3.5 w-20 bg-muted rounded" /></td>
-                    <td className="px-6 py-4 text-right"><div className="h-8 w-14 bg-muted rounded-lg ml-auto" /></td>
-                  </tr>
-                ))
-              ) : paginatedLogs.length > 0 ? (
-                paginatedLogs.map((log) => (
-                  <tr key={log.id} className="group h-16 hover:bg-muted/[0.03] transition-colors">
-                    {/* Action */}
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-xs text-foreground font-mono bg-muted/50 px-2 py-1 rounded-md border border-border">
-                        {log.action}
-                      </span>
-                    </td>
-
-                    {/* Module */}
-                    <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 rounded-lg bg-muted/60 border border-border text-xs font-bold text-foreground">
-                        {log.module}
-                      </span>
-                    </td>
-
-                    {/* Organization */}
-                    <td className="px-6 py-4 text-xs">
-                      <div className="flex items-center gap-1.5 text-foreground font-medium">
-                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="font-bold">{log.organizationName}</span>
-                      </div>
-                    </td>
-
-                    {/* Actor */}
-                    <td className="px-6 py-4 text-xs">
-                      <div>
-                        <p className="font-bold text-foreground">{log.actor}</p>
-                        {log.actorEmail && (
-                          <p className="text-[11px] text-muted-foreground">{log.actorEmail}</p>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Timestamp */}
-                    <td className="px-6 py-4 text-xs text-muted-foreground font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>{new Date(log.createdAt).toLocaleString()}</span>
-                      </div>
-                    </td>
-
-                    {/* Action */}
-                    <td className="px-6 py-4 text-right">
-                      <Button
-                        onClick={() => setSelectedLog(log)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-3 text-xs rounded-lg gap-1.5 hover:bg-muted font-semibold"
-                      >
-                        <Eye className="h-3.5 w-3.5 text-emerald-600" />
-                        <span>View</span>
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="p-4 border-0">
-                    <EmptyState
-                      icon={ScrollText}
-                      title="No audit logs found"
-                      description="No recorded audit activities match the selected search query or module."
-                      className="border-none bg-transparent shadow-none p-8 min-h-[220px]"
-                    />
-                  </td>
+        {/* 4. Standard CRM Data Table */}
+        <div className={cn("crm-table-wrap", (loading || filteredLogs.length === 0) && "crm-table-no-pagination")}>
+          <div className="overflow-auto flex-1 min-h-0">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="sticky top-0 z-20 bg-card shadow-xs">
+                <tr className="border-b border-border bg-muted/20 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <th className="h-12 px-6 py-4 bg-card">Action</th>
+                  <th className="h-12 px-6 py-4 bg-card">Module</th>
+                  <th className="h-12 px-6 py-4 bg-card">Organization</th>
+                  <th className="h-12 px-6 py-4 bg-card">Actor</th>
+                  <th className="h-12 px-6 py-4 bg-card">Timestamp</th>
+                  <th className="h-12 px-6 py-4 text-right bg-card">Details</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse h-16">
+                      <td className="px-6 py-4"><div className="h-4 w-24 bg-muted rounded" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-20 bg-muted rounded" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-32 bg-muted rounded" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-28 bg-muted rounded" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-20 bg-muted rounded" /></td>
+                      <td className="px-6 py-4 text-right"><div className="h-8 w-16 bg-muted rounded-lg ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : paginatedLogs.length > 0 ? (
+                  paginatedLogs.map((log) => (
+                    <tr
+                      key={log.id}
+                      className="group h-16 hover:bg-muted/[0.03] transition-colors"
+                    >
+                      <td className="px-6 py-4 font-mono text-xs font-bold text-foreground">
+                        {log.action}
+                      </td>
+                      <td className="px-6 py-4 text-xs font-semibold text-muted-foreground">
+                        <span className="px-2 py-0.5 rounded-full bg-muted border border-border">
+                          {log.module}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs font-semibold text-foreground">
+                        {log.organizationName}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-muted-foreground">
+                        {log.actor}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-muted-foreground">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedLog(log)}
+                          className="h-8 px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+                        >
+                          View
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="p-4 border-0">
+                      <EmptyState
+                        icon={ScrollText}
+                        title="No audit logs found"
+                        description="No logs match your filter criteria."
+                        className="border-none bg-transparent shadow-none p-8 min-h-[220px]"
+                      />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
 
-      {/* Pagination */}
-      {!loading && filteredLogs.length > 0 && (
-        <CRMPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredLogs.length}
-          rowsPerPage={rowsPerPage}
-          onPageChange={setCurrentPage}
-          onRowsPerPageChange={setRowsPerPage}
-          itemName="Logs"
-        />
-      )}
+        {/* 5. Pagination */}
+        {!loading && filteredLogs.length > 0 && (
+          <CRMPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredLogs.length}
+            rowsPerPage={rowsPerPage}
+            onPageChange={setCurrentPage}
+            onRowsPerPageChange={setRowsPerPage}
+            itemName="Logs"
+          />
+        )}
 
       {/* 5. Details Modal */}
       {selectedLog && (

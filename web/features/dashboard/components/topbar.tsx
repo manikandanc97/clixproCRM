@@ -36,7 +36,7 @@ export default function Topbar() {
   }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-40 w-full px-3 sm:px-6 lg:px-10 pt-3 pb-0">
+    <header className="sticky top-0 z-40 w-full px-3 sm:px-6 lg:px-10 pt-3 pb-3 sm:pb-3.5 shrink-0">
       {/* ── Single Floating Card Container ── */}
       <div className="flex items-center justify-between gap-3 sm:gap-4 bg-sidebar text-sidebar-foreground border border-sidebar-border/80 dark:border-white/10 shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/40 rounded-2xl px-3.5 sm:px-5 backdrop-blur-md h-[66px]">
         {/* Left: Mobile Nav Drawer & Search */}

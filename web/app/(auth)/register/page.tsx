@@ -30,31 +30,25 @@ export default function RegisterPage() {
   // Loading
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleLoadingText, setGoogleLoadingText] = useState("Continue with Google");
   
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
 
-  // Reset loading states on back navigation (bfcache), tab focus, or visibility change
+  // Reset loading states on back navigation (bfcache)
   useEffect(() => {
-    const handleResetLoading = () => {
-      setGoogleLoading(false);
-      setLoading(false);
+    const handleResetLoading = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        setGoogleLoading(false);
+        setGoogleLoadingText("Continue with Google");
+        setLoading(false);
+      }
     };
 
     window.addEventListener("pageshow", handleResetLoading);
-    window.addEventListener("focus", handleResetLoading);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        setGoogleLoading(false);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.removeEventListener("pageshow", handleResetLoading);
-      window.removeEventListener("focus", handleResetLoading);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -81,14 +75,18 @@ export default function RegisterPage() {
     }
 
     setGoogleLoading(true);
+    setGoogleLoadingText("Connecting to Google...");
     void startGoogleOAuth(popup);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const startGoogleOAuth = async (popup: Window) => {
     try {
+      setGoogleLoading(true);
+      setGoogleLoadingText("Connecting to Google...");
       const result = await signInWithGoogle(popup);
       if (result?.success && !result?.redirected) {
+        setGoogleLoadingText("Signing in...");
         if (typeof window !== "undefined") {
           localStorage.setItem("has_session", "1");
         }
@@ -96,28 +94,41 @@ export default function RegisterPage() {
         try {
           const user = await fetchCurrentUser();
           if (user) {
-            router.push("/dashboard");
+            setGoogleLoadingText("Opening dashboard...");
+            const isSuperAdmin =
+              user.role?.toUpperCase() === "SUPER_ADMIN" ||
+              user.role?.toUpperCase() === "SUPER ADMIN" ||
+              (user as any)?.isSuperAdmin === true;
+            if (isSuperAdmin) {
+              router.push("/super-admin");
+            } else {
+              router.push("/dashboard");
+            }
           } else {
             router.push("/login");
+            setGoogleLoading(false);
           }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           if (err?.message === "NEEDS_ONBOARDING") {
+            setGoogleLoadingText("Opening onboarding...");
             router.push("/onboarding");
           } else {
+            setGoogleLoading(false);
             throw err;
           }
         }
+      } else {
+        setGoogleLoading(false);
       }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+      setGoogleLoading(false);
       if (error?.message === "Google sign-in was cancelled.") {
         toast.info("Google sign-in was cancelled.");
       } else {
         toast.error(error.message || "Unable to sign in with Google.");
       }
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -378,7 +389,7 @@ export default function RegisterPage() {
             </svg>
           )}
           <span className="text-foreground text-sm font-medium">
-            {googleLoading ? "Connecting to Google..." : "Continue with Google"}
+            {googleLoading ? googleLoadingText : "Continue with Google"}
           </span>
         </Button>
       </form>

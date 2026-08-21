@@ -280,112 +280,111 @@ export default function SecurityCenterPage() {
         </CRMMetricsGrid>
       </div>
 
-      {/* 3. Filter Toolbar */}
+      {/* 3. Incidents Filter & Workspace Area */}
       <CRMToolbar
-        placeholder="Search incidents by ID, title, tenant..."
         searchQuery={search}
         setSearchQuery={setSearch}
+        placeholder="Filter incidents by title, ID, or IP address..."
       >
-        <select
-          value={severityFilter}
-          onChange={(e) => setSeverityFilter(e.target.value)}
-          aria-label="Filter incidents by severity"
-          className="h-9 px-3 rounded-xl bg-background border border-border text-xs focus:ring-1 focus:ring-primary outline-none"
-        >
-          <option value="">All Severities</option>
-          <option value="CRITICAL">Critical</option>
-          <option value="HIGH">High</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="LOW">Low</option>
-        </select>
-      </CRMToolbar>
+          <select
+            value={severityFilter}
+            onChange={(e) => setSeverityFilter(e.target.value)}
+            className="h-9 px-3 rounded-xl bg-card border border-border text-xs font-semibold text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="ALL">All Severities</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+        </CRMToolbar>
 
-      {/* 4. Incidents Table */}
-      <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-muted/50 text-muted-foreground font-semibold uppercase tracking-wider text-[11px] border-b border-border/60">
-              <tr>
-                <th className="py-3.5 px-4">Incident #</th>
-                <th className="py-3.5 px-4">Severity</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4">Title</th>
-                <th className="py-3.5 px-4">Detected</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40">
-              {paginatedIncidents.length === 0 ? (
+        {/* 4. Incidents Table */}
+        <div className="crm-table-wrap">
+          <div className="overflow-auto flex-1 min-h-0">
+            <table className="w-full text-left text-xs">
+              <thead className="sticky top-0 z-20 bg-card text-muted-foreground font-semibold uppercase tracking-wider text-[11px] border-b border-border/60 shadow-xs">
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-muted-foreground">
-                    <ShieldCheck className="h-8 w-8 mx-auto text-emerald-500 mb-2" />
-                    <p className="font-semibold text-foreground">No matching security incidents found</p>
-                    <p className="text-xs text-muted-foreground">All systems healthy and operating normally.</p>
-                  </td>
+                  <th className="py-3.5 px-4 bg-card">Incident #</th>
+                  <th className="py-3.5 px-4 bg-card">Severity</th>
+                  <th className="py-3.5 px-4 bg-card">Status</th>
+                  <th className="py-3.5 px-4 bg-card">Title</th>
+                  <th className="py-3.5 px-4 bg-card">Detected</th>
+                  <th className="py-3.5 px-4 text-right bg-card">Actions</th>
                 </tr>
-              ) : (
-                paginatedIncidents.map((inc) => (
-                  <tr key={inc.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4 font-mono font-bold text-foreground">{inc.incidentNumber}</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                          inc.severity === "CRITICAL"
-                            ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
-                            : inc.severity === "HIGH"
-                            ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
-                            : inc.severity === "MEDIUM"
-                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                            : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-                        }`}
-                      >
-                        {inc.severity}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                          inc.status === "RESOLVED"
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                            : inc.status === "OPEN"
-                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                            : "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
-                        }`}
-                      >
-                        {inc.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 font-medium text-foreground max-w-xs truncate">{inc.title}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{new Date(inc.createdAt).toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setSelectedIncident(inc)}
-                        className="gap-1.5 text-xs h-7"
-                      >
-                        <Eye className="h-3.5 w-3.5 text-emerald-600" />
-                        <span>Inspect</span>
-                      </Button>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {paginatedIncidents.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                      <ShieldCheck className="h-8 w-8 mx-auto text-emerald-500 mb-2" />
+                      <p className="font-semibold text-foreground">No matching security incidents found</p>
+                      <p className="text-xs text-muted-foreground">All systems healthy and operating normally.</p>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  paginatedIncidents.map((inc) => (
+                    <tr key={inc.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-foreground">{inc.incidentNumber}</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                            inc.severity === "CRITICAL"
+                              ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                              : inc.severity === "HIGH"
+                              ? "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300"
+                              : inc.severity === "MEDIUM"
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                              : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                          }`}
+                        >
+                          {inc.severity}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                            inc.status === "RESOLVED"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                              : inc.status === "OPEN"
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                              : "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
+                          }`}
+                        >
+                          {inc.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 font-medium text-foreground max-w-xs truncate">{inc.title}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{new Date(inc.createdAt).toLocaleString()}</td>
+                      <td className="py-3 px-4 text-right">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedIncident(inc)}
+                          className="gap-1.5 text-xs h-7"
+                        >
+                          <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                          <span>Inspect</span>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-        <div className="p-3 border-t border-border/60">
-          <CRMPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredIncidents.length}
-            rowsPerPage={rowsPerPage}
-            onPageChange={setCurrentPage}
-            onRowsPerPageChange={setRowsPerPage}
-          />
+          <div className="p-3 border-t border-border/60">
+            <CRMPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredIncidents.length}
+              rowsPerPage={rowsPerPage}
+              onPageChange={setCurrentPage}
+              onRowsPerPageChange={setRowsPerPage}
+            />
+          </div>
         </div>
-      </div>
 
       {/* Incident Details & Resolution Modal */}
       {selectedIncident && (

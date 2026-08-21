@@ -49,7 +49,7 @@ export function CRMPagination({
   return (
     <div
       className={cn(
-        "flex flex-col md:flex-row items-center justify-between gap-4 mt-4 bg-card border border-border rounded-xl p-4 shadow-sm flex-shrink-0 transition-all",
+        "flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 bg-card border border-border rounded-2xl p-3.5 sm:p-4 shadow-card shrink-0 w-full transition-all",
         className
       )}
     >

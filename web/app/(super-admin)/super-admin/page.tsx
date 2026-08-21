@@ -401,15 +401,15 @@ export default function SuperAdminDashboardPage() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-border/60">
+          <div className="overflow-auto rounded-xl border border-border/60">
             <table className="w-full text-left text-sm border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-20 bg-card shadow-xs">
                 <tr className="border-b border-border bg-muted/20 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  <th className="h-11 px-4">Organization</th>
-                  <th className="h-11 px-4">Plan</th>
-                  <th className="h-11 px-4">Users</th>
-                  <th className="h-11 px-4">Status</th>
-                  <th className="h-11 px-4 text-right">Created</th>
+                  <th className="h-11 px-4 bg-card">Organization</th>
+                  <th className="h-11 px-4 bg-card">Plan</th>
+                  <th className="h-11 px-4 bg-card">Users</th>
+                  <th className="h-11 px-4 bg-card">Status</th>
+                  <th className="h-11 px-4 text-right bg-card">Created</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">

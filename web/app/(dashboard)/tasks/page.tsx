@@ -216,36 +216,34 @@ const TasksPage = () => {
             </CRMMetricsGrid>
           </div>
 
-          <div className="flex-1 flex flex-col gap-4">
+          <div className="flex-1 flex flex-col gap-4 min-h-0">
             {/* Toolbar */}
-            <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-              <CRMToolbar
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                viewOptions={VIEW_MODES}
-                placeholder="Search tasks, assignees, tags..."
-              >
-                {/* Status filters */}
-                <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-full">
-                  {STATUS_FILTERS.map((s) => {
-                    const isActive = statusFilter === s.id;
-                    return (
-                      <Button
-                        key={s.id}
-                        variant={isActive ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => setStatusFilter(s.id)}
-                        className="h-9 px-3 text-xs font-semibold"
-                      >
-                        {s.label}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </CRMToolbar>
-            </div>
+            <CRMToolbar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              viewOptions={VIEW_MODES}
+              placeholder="Search tasks, assignees, tags..."
+            >
+              {/* Status filters */}
+              <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-full">
+                {STATUS_FILTERS.map((s) => {
+                  const isActive = statusFilter === s.id;
+                  return (
+                    <Button
+                      key={s.id}
+                      variant={isActive ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setStatusFilter(s.id)}
+                      className="h-9 px-3 text-xs font-semibold"
+                    >
+                      {s.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </CRMToolbar>
 
             {/* Main content */}
             <div className="flex-1 min-h-0 flex flex-col">

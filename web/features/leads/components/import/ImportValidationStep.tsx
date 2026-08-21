@@ -87,12 +87,12 @@ export function ImportValidationStep({
         {validationResults.invalid.length > 0 && (
           <div className="flex-1 overflow-auto rounded-xl border border-destructive/20 bg-card mb-6 shadow-sm">
             <table className="w-full text-sm text-left">
-              <thead className="bg-destructive/5 sticky top-0 border-b border-destructive/10 backdrop-blur-md">
+              <thead className="bg-card sticky top-0 z-10 border-b border-destructive/20 shadow-xs">
                 <tr>
-                  <th className="px-6 py-3 font-bold text-destructive text-xs uppercase tracking-wider">
+                  <th className="px-6 py-3 font-bold text-destructive text-xs uppercase tracking-wider bg-card">
                     Error Reason
                   </th>
-                  <th className="px-6 py-3 font-bold text-foreground text-xs uppercase tracking-wider">
+                  <th className="px-6 py-3 font-bold text-foreground text-xs uppercase tracking-wider bg-card">
                     Row Data Snippet
                   </th>
                 </tr>

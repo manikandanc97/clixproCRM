@@ -241,35 +241,33 @@ const ContactsPage = () => {
             </CRMMetricsGrid>
           </div>
 
-          <div className="flex-1 flex flex-col gap-4">
-            <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-              <CRMToolbar
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                placeholder="Search contacts by name, email, company, or phone..."
-              >
-                <div className="flex items-center gap-2">
-                  {[
-                    { label: "All", value: "all" },
-                    { label: "Leads", value: "lead" },
-                    { label: "Customers", value: "customer" },
-                    { label: "Inactive", value: "inactive" },
-                  ].map((statusObj) => (
-                    <Button
-                      key={statusObj.value}
-                      variant={statusFilter === statusObj.value ? "secondary" : "ghost"}
-                      size="sm"
-                      onClick={() => setStatusFilter(statusObj.value)}
-                      className="h-8 px-3 text-xs font-semibold"
-                    >
-                      {statusObj.label}
-                    </Button>
-                  ))}
-                </div>
-              </CRMToolbar>
-            </div>
+          <div className="flex-1 flex flex-col gap-4 min-h-0">
+            <CRMToolbar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              placeholder="Search contacts by name, email, company, or phone..."
+            >
+              <div className="flex items-center gap-2">
+                {[
+                  { label: "All", value: "all" },
+                  { label: "Leads", value: "lead" },
+                  { label: "Customers", value: "customer" },
+                  { label: "Inactive", value: "inactive" },
+                ].map((statusObj) => (
+                  <Button
+                    key={statusObj.value}
+                    variant={statusFilter === statusObj.value ? "secondary" : "ghost"}
+                    size="sm"
+                    onClick={() => setStatusFilter(statusObj.value)}
+                    className="h-8 px-3 text-xs font-semibold"
+                  >
+                    {statusObj.label}
+                  </Button>
+                ))}
+              </div>
+            </CRMToolbar>
 
             <div className="flex-1 min-h-0 flex flex-col">
               <AnimatePresence mode="wait">

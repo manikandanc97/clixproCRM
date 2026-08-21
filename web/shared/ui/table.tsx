@@ -8,13 +8,15 @@ function Table({ className, wrapperClassName, ...props }: React.ComponentProps<"
   return (
     <div
       data-slot="table-container"
-      className={cn("relative w-full overflow-auto rounded-xl border border-border bg-card shadow-card", wrapperClassName)}
+      className={cn("crm-table-wrap", wrapperClassName)}
     >
-      <table
-        data-slot="table"
-        className={cn("w-full text-sm caption-bottom", className)}
-        {...props}
-      />
+      <div className="overflow-auto flex-1 min-h-0">
+        <table
+          data-slot="table"
+          className={cn("w-full text-sm caption-bottom border-collapse", className)}
+          {...props}
+        />
+      </div>
     </div>
   );
 }
@@ -23,7 +25,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-border/50 [&_tr]:border-b", className)}
+      className={cn("sticky top-0 z-20 bg-card shadow-xs [&_tr]:border-border/50 [&_tr]:border-b", className)}
       {...props}
     />
   );
@@ -70,7 +72,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-12 whitespace-nowrap px-6 text-left align-middle text-xs font-bold uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "h-12 whitespace-nowrap px-6 text-left align-middle text-xs font-bold uppercase tracking-wider text-muted-foreground bg-card [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}

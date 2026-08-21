@@ -27,7 +27,7 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    const maxRetries = 3;
+    const maxRetries = 5;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await this.$connect();
@@ -40,7 +40,7 @@ export class PrismaService
         if (attempt === maxRetries) {
           throw err;
         }
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
       }
     }
   }
@@ -61,7 +61,7 @@ export class PrismaService
     options: TenantContextOptions,
     fn: (tx: Prisma.TransactionClient) => Promise<T>,
   ): Promise<T> {
-    const { tenantId, isSuperAdmin = false, userId, timeout = 10000 } = options;
+    const { tenantId, isSuperAdmin = false, userId, timeout = 20000 } = options;
 
     return this.$transaction(
       async (tx) => {
@@ -77,7 +77,7 @@ export class PrismaService
 
         return fn(tx);
       },
-      { timeout },
+      { timeout, maxWait: 10000 },
     );
   }
 
@@ -86,11 +86,11 @@ export class PrismaService
    * resolved from AsyncLocalStorage.
    *
    * @param fn Callback receiving the tenant-isolated transaction client
-   * @param timeout Optional transaction timeout in ms (defaults to 10000)
+   * @param timeout Optional transaction timeout in ms (defaults to 20000)
    */
   async withCurrentTenantContext<T>(
     fn: (tx: Prisma.TransactionClient) => Promise<T>,
-    timeout = 10000,
+    timeout = 20000,
   ): Promise<T> {
     const ctx = this.tenantContext?.getContext();
     if (!ctx || (!ctx.tenantId && !ctx.isSuperAdmin)) {
@@ -103,6 +103,7 @@ export class PrismaService
       {
         tenantId: ctx.tenantId,
         isSuperAdmin: ctx.isSuperAdmin,
+        userId: ctx.userId,
         timeout,
       },
       fn,

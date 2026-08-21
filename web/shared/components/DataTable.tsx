@@ -29,6 +29,7 @@ interface DataTableProps<T> {
   emptyTitle?: string;
   emptyDescription?: string;
   emptyIcon?: LucideIcon;
+  hasPagination?: boolean;
 }
 
 export function DataTable<T>({
@@ -42,6 +43,7 @@ export function DataTable<T>({
   emptyTitle = "No data available",
   emptyDescription = "There are no records matching your criteria.",
   emptyIcon,
+  hasPagination = true,
 }: DataTableProps<T>) {
   const renderEmptyState = () => {
     if (React.isValidElement(emptyMessage)) {
@@ -61,8 +63,8 @@ export function DataTable<T>({
   };
 
   return (
-    <Table className={cn("min-w-full", className)} wrapperClassName={wrapperClassName}>
-      <TableHeader className="sticky top-0 z-10 bg-card shadow-sm">
+    <Table className={cn("min-w-full", className)} wrapperClassName={cn(!hasPagination && "crm-table-no-pagination", wrapperClassName)}>
+      <TableHeader className="sticky top-0 z-20 bg-card shadow-xs">
         <TableRow className="hover:bg-transparent border-b">
           {columns.map((column, index) => (
             <TableHead 

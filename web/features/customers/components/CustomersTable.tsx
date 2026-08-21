@@ -184,14 +184,14 @@ export const CustomersTable = ({ customers, onEdit, onDelete }: CustomersTablePr
   );
 
   return (
-    <div className="flex-auto flex flex-col min-h-0 relative">
-      <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-auto max-h-[calc(100vh-360px)]">
+    <div className="flex-auto flex flex-col min-h-0 relative gap-3.5 sm:gap-4">
+      <div className="flex flex-col min-h-0 flex-1">
         <DataTable 
           data={paginatedCustomers}
           columns={columns}
-          wrapperClassName="flex-auto overflow-auto relative"
           rowClassName="h-16 hover:bg-muted/30 transition-colors"
           onRowClick={() => {}}
+          hasPagination={sortedCustomers.length > 0}
         />
       </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Search, Filter, X } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
@@ -17,6 +18,7 @@ interface CRMToolbarProps {
   children?: React.ReactNode;
   placeholder?: string;
   className?: string;
+  sticky?: boolean;
 }
 
 export const CRMToolbar = ({
@@ -29,13 +31,32 @@ export const CRMToolbar = ({
   children,
   placeholder = "Search...",
   className,
+  sticky = true,
 }: CRMToolbarProps) => {
+  const toolbarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!toolbarRef.current) return;
+    const updateHeight = () => {
+      if (toolbarRef.current) {
+        const height = toolbarRef.current.offsetHeight;
+        document.documentElement.style.setProperty("--crm-toolbar-h", `${height}px`);
+      }
+    };
+    updateHeight();
+    const ro = new ResizeObserver(updateHeight);
+    ro.observe(toolbarRef.current);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <motion.div 
+      ref={toolbarRef}
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "crm-toolbar",
+        sticky && "sticky top-0 z-30 bg-card/95 backdrop-blur-md shadow-sm",
         className
       )}
     >

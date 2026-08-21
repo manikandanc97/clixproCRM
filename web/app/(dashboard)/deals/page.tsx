@@ -226,9 +226,8 @@ const DealsPage = () => {
             </CRMMetricsGrid>
           </div>
 
-          <div className="flex-1 flex flex-col gap-4">
-            <div className="shrink-0 mb-2 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-              <CRMToolbar 
+          <div className="flex-1 flex flex-col gap-4 min-h-0">
+            <CRMToolbar 
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 viewMode={viewMode}
@@ -300,7 +299,6 @@ const DealsPage = () => {
                   </div>
                 )}
               </CRMToolbar>
-            </div>
 
             <div className="flex-1 min-h-0 flex flex-col">
               <AnimatePresence mode="wait">

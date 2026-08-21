@@ -45,6 +45,7 @@ import {
 } from "@/shared/components/crm";
 import { StatusBadge } from "@/shared/components/StatusBadge";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { cn } from "@/shared/lib/utils";
 
 export default function SuperAdminUsersPage() {
   const [users, setUsers] = useState<PlatformUser[]>([]);
@@ -234,13 +235,13 @@ export default function SuperAdminUsersPage() {
         </CRMMetricsGrid>
       </div>
 
-      {/* 3. Standard CRM Toolbar & Filter Controls */}
+      {/* 3. Standard CRM Toolbar & Table Workspace */}
       <CRMToolbar
         searchQuery={search}
         setSearchQuery={setSearch}
         placeholder="Search users by name or email address..."
       >
-        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
           {/* Super Admin Only Toggle */}
           <button
             onClick={() => setSuperAdminOnly(!superAdminOnly)}
@@ -274,17 +275,17 @@ export default function SuperAdminUsersPage() {
       </CRMToolbar>
 
       {/* 4. Standard CRM Data Table */}
-      <div className="rounded-2xl bg-card border border-border shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className={cn("crm-table-wrap", (loading || filteredUsers.length === 0) && "crm-table-no-pagination")}>
+        <div className="overflow-auto flex-1 min-h-0">
           <table className="w-full text-left text-sm border-collapse">
-            <thead className="sticky top-0 z-10 bg-card shadow-xs">
+            <thead className="sticky top-0 z-20 bg-card shadow-xs">
               <tr className="border-b border-border bg-muted/20 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                <th className="h-12 px-6 py-4">User</th>
-                <th className="h-12 px-6 py-4">Platform Role</th>
-                <th className="h-12 px-6 py-4">Organizations & Role</th>
-                <th className="h-12 px-6 py-4">Account Status</th>
-                <th className="h-12 px-6 py-4">Created Date</th>
-                <th className="h-12 px-6 py-4 text-right">Actions</th>
+                <th className="h-12 px-6 py-4 bg-card">User</th>
+                <th className="h-12 px-6 py-4 bg-card">Platform Role</th>
+                <th className="h-12 px-6 py-4 bg-card">Organizations & Role</th>
+                <th className="h-12 px-6 py-4 bg-card">Account Status</th>
+                <th className="h-12 px-6 py-4 bg-card">Created Date</th>
+                <th className="h-12 px-6 py-4 text-right bg-card">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -350,7 +351,7 @@ export default function SuperAdminUsersPage() {
                     <td className="px-6 py-4">
                       {u.organizations && u.organizations.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
-                          {u.organizations.map((org) => (
+                          {u.organizations.map((org: any) => (
                             <div
                               key={org.tenantId}
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-muted/60 border border-border text-xs"
@@ -392,7 +393,7 @@ export default function SuperAdminUsersPage() {
                           size="sm"
                           className="h-8 px-3 text-xs rounded-lg hover:bg-muted font-semibold"
                         >
-                          View
+                          Details
                         </Button>
 
                         <DropdownMenu>
@@ -405,25 +406,19 @@ export default function SuperAdminUsersPage() {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="rounded-xl w-48 shadow-lg border-border">
+                          <DropdownMenuContent
+                            align="end"
+                            className="rounded-xl w-48 shadow-lg border-border"
+                          >
                             <DropdownMenuLabel className="text-xs">
-                              User Controls
+                              Manage Account
                             </DropdownMenuLabel>
                             <DropdownMenuItem
                               onClick={() => setSelectedUser(u)}
                               className="text-xs gap-2 cursor-pointer font-medium"
                             >
                               <FileText className="h-3.5 w-3.5 text-primary" />
-                              <span>View Profile</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleToggleSuperAdmin(u)}
-                              className="text-xs gap-2 cursor-pointer font-medium"
-                            >
-                              <Crown className="h-3.5 w-3.5 text-primary" />
-                              <span>
-                                {u.isSuperAdmin ? "Revoke Super Admin" : "Make Super Admin"}
-                              </span>
+                              <span>View User Profile</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -447,35 +442,35 @@ export default function SuperAdminUsersPage() {
                     </td>
                   </tr>
                 ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="p-4 border-0">
-                    <EmptyState
-                      icon={Users}
-                      title="No users found"
-                      description="No platform users match your search query or filter criteria."
-                      className="border-none bg-transparent shadow-none p-8 min-h-[220px]"
-                    />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="p-4 border-0">
+                      <EmptyState
+                        icon={Users}
+                        title="No users found"
+                        description="No platform users match your search query or filter criteria."
+                        className="border-none bg-transparent shadow-none p-8 min-h-[220px]"
+                      />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
 
-      {/* Pagination */}
-      {!loading && filteredUsers.length > 0 && (
-        <CRMPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredUsers.length}
-          rowsPerPage={rowsPerPage}
-          onPageChange={setCurrentPage}
-          onRowsPerPageChange={setRowsPerPage}
-          itemName="Platform Users"
-        />
-      )}
+        {/* 5. Pagination */}
+        {!loading && filteredUsers.length > 0 && (
+          <CRMPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredUsers.length}
+            rowsPerPage={rowsPerPage}
+            onPageChange={setCurrentPage}
+            onRowsPerPageChange={setRowsPerPage}
+            itemName="Platform Users"
+          />
+        )}
 
       {/* 5. User Details Modal */}
       {selectedUser && (

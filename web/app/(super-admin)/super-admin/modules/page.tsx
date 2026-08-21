@@ -58,6 +58,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Switch } from "@/shared/ui/switch";
 import { Badge } from "@/shared/ui/badge";
+import { cn } from "@/shared/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -613,16 +614,16 @@ export default function SuperAdminModulesPage() {
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[calc(100vh-250px)] min-h-[320px]">
             <table className="w-full text-left text-sm border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-20 bg-card shadow-xs">
                 <tr className="border-b border-border bg-muted/20 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  <th className="h-12 px-4 py-4 w-16 text-center">Order</th>
-                  <th className="h-12 px-4 py-4">Menu & Route</th>
-                  <th className="h-12 px-4 py-4">Group & Description</th>
-                  <th className="h-12 px-4 py-4 text-center">Access Level</th>
-                  <th className="h-12 px-4 py-4 text-center">Status</th>
-                  <th className="h-12 px-4 py-4 text-right">Quick Navigation</th>
+                  <th className="h-12 px-4 py-4 w-16 text-center bg-card">Order</th>
+                  <th className="h-12 px-4 py-4 bg-card">Menu & Route</th>
+                  <th className="h-12 px-4 py-4 bg-card">Group & Description</th>
+                  <th className="h-12 px-4 py-4 text-center bg-card">Access Level</th>
+                  <th className="h-12 px-4 py-4 text-center bg-card">Status</th>
+                  <th className="h-12 px-4 py-4 text-right bg-card">Quick Navigation</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
@@ -726,7 +727,7 @@ export default function SuperAdminModulesPage() {
           </CRMToolbar>
 
           {/* 4. Modules Data Table */}
-          <div className="rounded-2xl bg-card border border-border shadow-card overflow-hidden">
+          <div className={cn("crm-table-wrap", (loading || filteredModules.length === 0) && "crm-table-no-pagination")}>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-3" />
@@ -749,17 +750,17 @@ export default function SuperAdminModulesPage() {
             />
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto flex-1 min-h-0">
             <table className="w-full text-left text-sm border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-20 bg-card shadow-xs">
                 <tr className="border-b border-border bg-muted/20 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  <th className="h-12 px-3 py-4 w-16 text-center">Order</th>
-                  <th className="h-12 px-4 py-4">Module & Route</th>
-                  <th className="h-12 px-4 py-4">Category & Access</th>
-                  <th className="h-12 px-4 py-4 text-center">Type</th>
-                  <th className="h-12 px-4 py-4 text-center">Global Status</th>
-                  <th className="h-12 px-4 py-4 text-center">Sidebar Nav</th>
-                  <th className="h-12 px-4 py-4 text-right">Actions</th>
+                  <th className="h-12 px-3 py-4 w-16 text-center bg-card">Order</th>
+                  <th className="h-12 px-4 py-4 bg-card">Module & Route</th>
+                  <th className="h-12 px-4 py-4 bg-card">Category & Access</th>
+                  <th className="h-12 px-4 py-4 text-center bg-card">Type</th>
+                  <th className="h-12 px-4 py-4 text-center bg-card">Global Status</th>
+                  <th className="h-12 px-4 py-4 text-center bg-card">Sidebar Nav</th>
+                  <th className="h-12 px-4 py-4 text-right bg-card">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">

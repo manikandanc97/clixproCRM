@@ -87,13 +87,13 @@ const PerformanceTable = ({ performance }: PerformanceTableProps) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="flex-1 flex flex-col min-h-0"
+          className="flex-1 flex flex-col min-h-0 gap-3.5 sm:gap-4"
         >
           {viewMode === "list" || viewMode === "table" ? (
             <>
-              <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-auto max-h-[calc(100vh-360px)]">
-                <CRMDataTable containerClassName="border-0 shadow-none rounded-none flex-auto h-full overflow-auto" className="w-full">
-                  <CRMTableHeader className="sticky top-0 z-10 bg-card shadow-sm">
+              <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                <CRMDataTable containerClassName="border-0 shadow-none rounded-none w-full" className="w-full">
+                  <CRMTableHeader className="sticky top-0 z-20 bg-card shadow-xs">
                     <CRMTableRow>
                       <CRMTableHeaderCell 
                         className="cursor-pointer group select-none bg-card"

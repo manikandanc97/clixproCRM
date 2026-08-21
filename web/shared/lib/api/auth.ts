@@ -477,6 +477,7 @@ export const signInWithGoogle = async (
   return new Promise((resolve, reject) => {
     let resolved = false;
     let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
+    let closedCheckInterval: ReturnType<typeof setInterval> | null = null;
 
     let channel: BroadcastChannel | null = null;
     if (typeof BroadcastChannel !== "undefined") {
@@ -501,6 +502,10 @@ export const signInWithGoogle = async (
       if (timeoutTimer) {
         clearTimeout(timeoutTimer);
         timeoutTimer = null;
+      }
+      if (closedCheckInterval) {
+        clearInterval(closedCheckInterval);
+        closedCheckInterval = null;
       }
       activeOAuthPopup = null;
       activeOAuthCleanup = null;
@@ -564,6 +569,27 @@ export const signInWithGoogle = async (
 
     window.addEventListener("message", handleMessage);
     window.addEventListener("storage", handleStorage);
+
+    // Periodically check if the user manually closed the popup window without completing auth
+    closedCheckInterval = setInterval(() => {
+      try {
+        if (popup && popup.closed) {
+          if (closedCheckInterval) {
+            clearInterval(closedCheckInterval);
+            closedCheckInterval = null;
+          }
+          // Give a short grace period (1000ms) in case postMessage/storage event arrives at the exact same moment
+          setTimeout(() => {
+            if (!resolved) {
+              cleanup();
+              reject(new Error("Google sign-in was cancelled."));
+            }
+          }, 1000);
+        }
+      } catch {
+        // Ignore cross-origin access errors
+      }
+    }, 600);
 
     // Timeout fallback (5 minutes) if the popup is closed or abandoned without completing
     timeoutTimer = setTimeout(() => {

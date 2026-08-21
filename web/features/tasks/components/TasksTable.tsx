@@ -131,9 +131,9 @@ const TasksTable = ({ tasks, onTaskClick, onScheduleMeeting, onEditTask }: Tasks
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden h-auto max-h-[calc(100vh-360px)]">
-        <CRMDataTable containerClassName="border-0 shadow-none rounded-none flex-auto h-full overflow-auto" className="w-full">
-          <CRMTableHeader className="sticky top-0 z-10 bg-card shadow-sm">
+      <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <CRMDataTable containerClassName="border-0 shadow-none rounded-none w-full" className="w-full">
+          <CRMTableHeader className="sticky top-0 z-20 bg-card shadow-xs">
             <CRMTableRow className="h-14 border-b border-border/30 bg-muted/20">
               <CRMTableHeaderCell className="w-[52px] px-5">
                 <Checkbox 

@@ -270,15 +270,15 @@ export function ImportMappingStep({
                   return (
                     <div className="flex-1 overflow-y-auto">
                       <table className="w-full text-sm text-left">
-                        <thead className="bg-muted/30 sticky top-0 backdrop-blur-md z-10 border-b border-border">
+                        <thead className="bg-card sticky top-0 z-10 border-b border-border shadow-xs">
                           <tr>
-                            <th className="px-6 py-4 font-bold text-foreground w-1/3">
+                            <th className="px-6 py-4 font-bold text-foreground w-1/3 bg-card">
                               CRM Field
                             </th>
-                            <th className="px-6 py-4 font-bold text-foreground">
+                            <th className="px-6 py-4 font-bold text-foreground bg-card">
                               File Column
                             </th>
-                            <th className="px-6 py-4 font-bold text-foreground text-center w-16">
+                            <th className="px-6 py-4 font-bold text-foreground text-center w-16 bg-card">
                               Status
                             </th>
                           </tr>
