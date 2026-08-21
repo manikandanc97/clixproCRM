@@ -97,6 +97,14 @@ export default function SuperAdminOrganizationsPage() {
   useEffect(() => {
     loadOrganizations();
     setCurrentPage(1);
+
+    const handleAal2Verified = () => {
+      loadOrganizations();
+    };
+    window.addEventListener("clixpro:aal2-verified", handleAal2Verified);
+    return () => {
+      window.removeEventListener("clixpro:aal2-verified", handleAal2Verified);
+    };
   }, [planFilter]);
 
   useEffect(() => {

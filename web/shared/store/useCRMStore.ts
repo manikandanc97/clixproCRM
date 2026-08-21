@@ -34,10 +34,14 @@ interface CRMState {
   activeTimeframe: 'today' | 'week' | 'month' | 'year';
   leadViewMode: LeadViewMode;
   
-  // Preferences (Moved from Context for unified management)
+  // Preferences - Tenant CRM
   accentColor: string;
   fontFamily: string;
   currency: string;
+
+  // Preferences - Super Admin Platform
+  superAdminAccentColor: string;
+  superAdminFontFamily: string;
 
   // Actions
   setLeads: (leads: LeadType[]) => void;
@@ -58,6 +62,8 @@ interface CRMState {
   
   setAccentColor: (color: string) => void;
   setFontFamily: (font: string) => void;
+  setSuperAdminAccentColor: (color: string) => void;
+  setSuperAdminFontFamily: (font: string) => void;
   setCurrency: (currency: string) => void;
 
   addNotification: (notification: Notification) => void;
@@ -89,6 +95,8 @@ export const useCRMStore = create<CRMState>()(
       leadViewMode: getInitialLeadViewMode(),
       accentColor: 'emerald',
       fontFamily: 'sans',
+      superAdminAccentColor: 'emerald',
+      superAdminFontFamily: 'sans',
       currency: 'INR',
 
       setLeads: (leads) => set({ leads }),
@@ -123,6 +131,8 @@ export const useCRMStore = create<CRMState>()(
       
       setAccentColor: (accentColor) => set({ accentColor }),
       setFontFamily: (fontFamily) => set({ fontFamily }),
+      setSuperAdminAccentColor: (superAdminAccentColor) => set({ superAdminAccentColor }),
+      setSuperAdminFontFamily: (superAdminFontFamily) => set({ superAdminFontFamily }),
       setCurrency: (currency) => set({ currency }),
 
       addNotification: (n) => set((state) => ({ notifications: [n, ...state.notifications] })),
@@ -141,23 +151,20 @@ export const useCRMStore = create<CRMState>()(
     }),
     {
       name: 'crm-storage',
-      version: 3,
+      version: 4,
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Partial<CRMState> | undefined;
         
-        // Clean up entities from older versions to prevent stale data
-        if (version < 3) {
-          return {
-            sidebarCollapsed: state?.sidebarCollapsed ?? false,
-            activeTimeframe: state?.activeTimeframe ?? 'month',
-            leadViewMode: state?.leadViewMode ?? 'cards',
-            accentColor: state?.accentColor ?? 'emerald',
-            fontFamily: state?.fontFamily ?? 'sans',
-            currency: state?.currency ?? 'INR',
-          };
-        }
-        
-        return state as Partial<CRMState>;
+        return {
+          sidebarCollapsed: state?.sidebarCollapsed ?? false,
+          activeTimeframe: state?.activeTimeframe ?? 'month',
+          leadViewMode: state?.leadViewMode ?? 'cards',
+          accentColor: state?.accentColor ?? 'emerald',
+          fontFamily: state?.fontFamily ?? 'sans',
+          superAdminAccentColor: state?.superAdminAccentColor ?? 'emerald',
+          superAdminFontFamily: state?.superAdminFontFamily ?? 'sans',
+          currency: state?.currency ?? 'INR',
+        };
       },
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
@@ -165,6 +172,8 @@ export const useCRMStore = create<CRMState>()(
         leadViewMode: state.leadViewMode,
         accentColor: state.accentColor,
         fontFamily: state.fontFamily,
+        superAdminAccentColor: state.superAdminAccentColor,
+        superAdminFontFamily: state.superAdminFontFamily,
         currency: state.currency,
       }),
     }

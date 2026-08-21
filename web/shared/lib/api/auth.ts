@@ -350,6 +350,7 @@ export const openGoogleAuthPopup = (): Window | null => {
   }
 };
 
+let activeOAuthCleanup: (() => void) | null = null;
 let activeOAuthPopup: Window | null = null;
 
 /**
@@ -365,14 +366,24 @@ export const signInWithGoogle = async (
     return { success: false };
   }
 
-  // Prevent duplicate popup windows if one is already open and active
-  if (activeOAuthPopup && !activeOAuthPopup.closed) {
+  // Clean up any previously pending OAuth listeners/channels before starting a new flow
+  if (activeOAuthCleanup) {
     try {
-      activeOAuthPopup.focus();
-      return { success: false };
+      activeOAuthCleanup();
     } catch {
-      // Continue to open fresh popup
+      // Ignore previous cleanup errors
     }
+    activeOAuthCleanup = null;
+  }
+
+  // If a popup from a previous click is still referenced, try to close it cleanly
+  if (activeOAuthPopup) {
+    try {
+      activeOAuthPopup.close();
+    } catch {
+      // Ignore close errors
+    }
+    activeOAuthPopup = null;
   }
 
   const supabase = createClient();
@@ -383,7 +394,7 @@ export const signInWithGoogle = async (
     preCreatedPopup !== undefined ? preCreatedPopup : openGoogleAuthPopup();
 
   // If popup is blocked by browser, fall back to standard full-page redirect flow
-  if (!popup || popup.closed || typeof popup.closed === "undefined") {
+  if (!popup) {
     activeOAuthPopup = null;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -440,8 +451,10 @@ export const signInWithGoogle = async (
 
     oauthUrl = data.url;
   } catch (err) {
-    if (popup && !popup.closed) {
-      popup.close();
+    try {
+      popup?.close();
+    } catch {
+      // Ignore popup close error
     }
     activeOAuthPopup = null;
     throw err;
@@ -451,8 +464,10 @@ export const signInWithGoogle = async (
   try {
     popup.location.href = oauthUrl;
   } catch {
-    if (popup && !popup.closed) {
-      popup.close();
+    try {
+      popup?.close();
+    } catch {
+      // Ignore popup close error
     }
     activeOAuthPopup = null;
     window.location.href = oauthUrl;
@@ -461,6 +476,7 @@ export const signInWithGoogle = async (
 
   return new Promise((resolve, reject) => {
     let resolved = false;
+    let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
 
     let channel: BroadcastChannel | null = null;
     if (typeof BroadcastChannel !== "undefined") {
@@ -480,10 +496,17 @@ export const signInWithGoogle = async (
         } catch {
           // Ignore cleanup error
         }
+        channel = null;
       }
-      clearInterval(timer);
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
       activeOAuthPopup = null;
+      activeOAuthCleanup = null;
     };
+
+    activeOAuthCleanup = cleanup;
 
     const processPayload = (payload: { type?: string; target?: string; error?: string }) => {
       if (!payload || resolved) return;
@@ -496,9 +519,7 @@ export const signInWithGoogle = async (
           localStorage.removeItem("clixprocrm_google_auth_event");
         }
         try {
-          if (popup && !popup.closed) {
-            popup.close();
-          }
+          popup?.close();
         } catch {
           // Ignore popup close error
         }
@@ -510,9 +531,7 @@ export const signInWithGoogle = async (
           localStorage.removeItem("clixprocrm_google_auth_event");
         }
         try {
-          if (popup && !popup.closed) {
-            popup.close();
-          }
+          popup?.close();
         } catch {
           // Ignore popup close error
         }
@@ -546,32 +565,13 @@ export const signInWithGoogle = async (
     window.addEventListener("message", handleMessage);
     window.addEventListener("storage", handleStorage);
 
-    // Watcher in case user closes popup window manually before completion
-    let pollCount = 0;
-    const timer = setInterval(() => {
-      pollCount++;
-      // Give initial grace period (3s) while navigating cross-origin to Google
-      if (pollCount < 2) return;
-
-      let isClosed = false;
-      try {
-        if (popup && typeof popup.closed !== "undefined") {
-          isClosed = popup.closed === true;
-        }
-      } catch {
-        // Cross-Origin-Opener-Policy policy can restrict accessing popup.closed while on Google's origin
-        isClosed = false;
+    // Timeout fallback (5 minutes) if the popup is closed or abandoned without completing
+    timeoutTimer = setTimeout(() => {
+      if (!resolved) {
+        cleanup();
+        reject(new Error("Google sign-in timed out. Please try again."));
       }
-      if (isClosed) {
-        clearInterval(timer);
-        setTimeout(() => {
-          if (!resolved) {
-            cleanup();
-            reject(new Error("Google sign-in was cancelled."));
-          }
-        }, 300);
-      }
-    }, 1500);
+    }, 5 * 60 * 1000);
   });
 };
 

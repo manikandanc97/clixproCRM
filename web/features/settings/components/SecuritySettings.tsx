@@ -1010,10 +1010,28 @@ const SecuritySettings = () => {
             <div className="space-y-4 pt-1">
               <div className="p-4 bg-muted/40 rounded-xl border border-border/60 flex flex-col items-center justify-center gap-3 text-center">
                 {enrollData?.qrCode ? (
-                  <div
-                    className="p-3 bg-white rounded-lg shadow-sm"
-                    dangerouslySetInnerHTML={{ __html: enrollData.qrCode }}
-                  />
+                  <div className="p-3 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                    {enrollData.qrCode.startsWith("data:") ||
+                    enrollData.qrCode.startsWith("http://") ||
+                    enrollData.qrCode.startsWith("https://") ? (
+                      <img
+                        src={enrollData.qrCode}
+                        alt="2FA QR Code"
+                        className="w-44 h-44 object-contain"
+                      />
+                    ) : enrollData.qrCode.trim().startsWith("<svg") ? (
+                      <div
+                        className="w-44 h-44 [&>svg]:w-full [&>svg]:h-full"
+                        dangerouslySetInnerHTML={{ __html: enrollData.qrCode }}
+                      />
+                    ) : (
+                      <img
+                        src={`data:image/svg+xml;utf-8,${encodeURIComponent(enrollData.qrCode)}`}
+                        alt="2FA QR Code"
+                        className="w-44 h-44 object-contain"
+                      />
+                    )}
+                  </div>
                 ) : (
                   <div className="w-48 h-48 bg-muted rounded-lg flex items-center justify-center">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />

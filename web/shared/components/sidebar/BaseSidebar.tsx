@@ -73,7 +73,7 @@ export function BaseSidebarContent({
         itemActiveText: "text-sidebar-primary",
         itemActiveBg: "bg-sidebar-primary/10 dark:bg-sidebar-primary/20",
         itemActiveCollapsedBg: "bg-sidebar-primary/15 dark:bg-sidebar-primary/20 border-sidebar-primary/20",
-        activePill: "bg-sidebar-primary shadow-[0_0_8px_rgba(var(--sidebar-primary),0.6)]",
+        activePill: "bg-sidebar-primary shadow-sm shadow-sidebar-primary/50",
       };
 
   const isItemActive = (href: string) => {

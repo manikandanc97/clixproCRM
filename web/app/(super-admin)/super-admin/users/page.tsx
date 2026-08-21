@@ -77,6 +77,14 @@ export default function SuperAdminUsersPage() {
   useEffect(() => {
     loadUsers();
     setCurrentPage(1);
+
+    const handleAal2Verified = () => {
+      loadUsers();
+    };
+    window.addEventListener("clixpro:aal2-verified", handleAal2Verified);
+    return () => {
+      window.removeEventListener("clixpro:aal2-verified", handleAal2Verified);
+    };
   }, [statusFilter, superAdminOnly]);
 
   useEffect(() => {

@@ -57,11 +57,19 @@ export function ClixProIcon({
   pixelSize?: number;
 }) {
   const storeAccent = useCRMStore((state) => state.accentColor);
+  const superAdminAccent = useCRMStore((state) => state.superAdminAccentColor);
   const pathname = usePathname();
   const isAuthPage = pathname
     ? AUTH_ROUTES.some((route) => pathname.startsWith(route))
     : false;
-  const activeAccent = isAuthPage ? "emerald" : storeAccent || "emerald";
+  const isSuperAdmin = pathname ? pathname.startsWith("/super-admin") : false;
+
+  const activeAccent = isAuthPage 
+    ? "emerald" 
+    : isSuperAdmin 
+    ? (superAdminAccent || "emerald") 
+    : (storeAccent || "emerald");
+
   const targetSize = pixelSize || sizeConfig[size]?.px || 30;
   const logoSrc = THEME_LOGO_MAP[activeAccent] || "/brand/clixpro-logo.png";
 

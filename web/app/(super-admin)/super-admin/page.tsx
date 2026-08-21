@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   Building2,
   Users,
   ShieldCheck,
+  ShieldAlert,
   Ban,
   TrendingUp,
   ArrowUpRight,
@@ -16,6 +17,9 @@ import {
   Filter,
   Target,
   Layers,
+  Lock,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import {
   fetchPlatformOverview,
@@ -38,27 +42,67 @@ export default function SuperAdminDashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState<PlatformOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [aal2Required, setAal2Required] = useState(false);
   const [timeRange, setTimeRange] = useState<"Today" | "Week" | "Month" | "Year">("Month");
 
-  const loadData = async () => {
+  const loadData = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
+      setError(null);
       const overview = await fetchPlatformOverview();
       setData(overview);
+      setAal2Required(false);
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to load platform overview data."
-      );
+      const errData = err?.response?.data;
+      const isAal =
+        err?.response?.status === 403 &&
+        (errData?.code === "AAL2_REQUIRED" ||
+          String(errData?.message || "").includes("AAL2") ||
+          String(errData?.message || "").includes("MFA verification required"));
+
+      if (isAal) {
+        setAal2Required(true);
+        setError(
+          errData?.message ||
+            "MFA verification required: AAL2 session assurance required for Super Admin platform access"
+        );
+      } else {
+        setAal2Required(false);
+        setError(
+          errData?.message ||
+            err?.message ||
+            "Failed to load platform overview data."
+        );
+        toast.error(
+          errData?.message ||
+            err?.message ||
+            "Failed to load platform overview data."
+        );
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+
+    // Auto-reload data upon MFA elevation seamlessly in-place
+    const handleAal2Verified = () => {
+      setAal2Required(false);
+      loadData(true);
+    };
+
+    window.addEventListener("clixpro:aal2-verified", handleAal2Verified);
+    return () => {
+      window.removeEventListener("clixpro:aal2-verified", handleAal2Verified);
+    };
+  }, [loadData]);
+
+  const triggerMfaModal = () => {
+    window.dispatchEvent(new CustomEvent("clixpro:aal2-required"));
+  };
 
   const metrics = data?.metrics || {
     totalOrganizations: 0,
@@ -73,6 +117,61 @@ export default function SuperAdminDashboardPage() {
 
   return (
     <CRMPageContainer>
+      {/* AAL2 Security Elevation Alert Banner */}
+      {aal2Required && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-amber-900 dark:text-amber-200 shadow-lg relative overflow-hidden"
+        >
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 shrink-0">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
+                  <span>MFA Verification Required (AAL2 Assurance)</span>
+                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                    Security Policy
+                  </span>
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1 max-w-2xl leading-relaxed">
+                  Super Admin platform telemetry and tenant databases are protected by strict Level 2 Multi-Factor Authentication assurance. Complete 2FA verification to unlock live platform data.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={triggerMfaModal}
+              className="rounded-xl px-5 h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-md text-xs sm:text-sm shrink-0 gap-2"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Verify MFA & Unlock</span>
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* General Non-AAL Error Banner */}
+      {error && !aal2Required && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-destructive flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <span className="text-xs font-semibold">{error}</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => loadData()}
+            className="h-8 text-xs font-bold gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Retry</span>
+          </Button>
+        </div>
+      )}
+
       {/* 1. Sleek Welcome Hero Banner */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -117,7 +216,15 @@ export default function SuperAdminDashboardPage() {
                 Welcome back, <span className="capitalize font-extrabold transition-colors duration-300" style={{ color: "var(--primary)" }}>{user?.displayName || user?.name || "Platform Admin"}</span>
               </h1>
               <div className="text-slate-400 text-xs sm:text-sm max-w-2xl leading-relaxed">
-                Your platform is running with <span className="font-semibold transition-colors duration-300" style={{ color: "var(--primary)" }}>{metrics.activeOrganizations} active</span> tenant organizations and <span className="font-semibold transition-colors duration-300" style={{ color: "var(--primary)" }}>{metrics.activeUsers}</span> global users. All multi-tenant services are operating smoothly.
+                {aal2Required ? (
+                  <span className="text-amber-300 font-semibold">
+                    AAL2 verification required to load platform metrics and tenant data.
+                  </span>
+                ) : (
+                  <>
+                    Your platform is running with <span className="font-semibold transition-colors duration-300" style={{ color: "var(--primary)" }}>{metrics.activeOrganizations} active</span> tenant organizations and <span className="font-semibold transition-colors duration-300" style={{ color: "var(--primary)" }}>{metrics.activeUsers}</span> global users. All multi-tenant services are operating smoothly.
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -171,6 +278,17 @@ export default function SuperAdminDashboardPage() {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2.5">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => loadData()}
+            disabled={loading}
+            className="rounded-xl text-xs gap-1.5 h-9"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
+
           <Link href="/super-admin/organizations">
             <Button
               size="sm"
@@ -189,8 +307,8 @@ export default function SuperAdminDashboardPage() {
         <Link href="/super-admin/organizations" className="block group">
           <CRMMetricCard
             title="Total Organizations"
-            value={metrics.totalOrganizations.toString()}
-            change={`${metrics.activeOrganizations} Active`}
+            value={aal2Required ? "—" : metrics.totalOrganizations.toString()}
+            change={aal2Required ? "AAL2 Required" : `${metrics.activeOrganizations} Active`}
             trend="up"
             icon={Building2}
             color="emerald"
@@ -204,8 +322,8 @@ export default function SuperAdminDashboardPage() {
         <Link href="/super-admin/users" className="block group">
           <CRMMetricCard
             title="Platform Users"
-            value={metrics.totalUsers.toString()}
-            change={`${metrics.activeUsers} Active`}
+            value={aal2Required ? "—" : metrics.totalUsers.toString()}
+            change={aal2Required ? "AAL2 Required" : `${metrics.activeUsers} Active`}
             trend="neutral"
             icon={Users}
             color="indigo"
@@ -219,8 +337,8 @@ export default function SuperAdminDashboardPage() {
         <Link href="/super-admin/analytics" className="block group">
           <CRMMetricCard
             title="CRM Activity"
-            value={(metrics.totalLeads + metrics.totalDeals + metrics.totalCustomers).toString()}
-            change={`${metrics.totalLeads} Leads • ${metrics.totalDeals} Deals`}
+            value={aal2Required ? "—" : (metrics.totalLeads + metrics.totalDeals + metrics.totalCustomers).toString()}
+            change={aal2Required ? "AAL2 Required" : `${metrics.totalLeads} Leads • ${metrics.totalDeals} Deals`}
             trend="up"
             icon={Target}
             color="cyan"
@@ -234,8 +352,8 @@ export default function SuperAdminDashboardPage() {
         <Link href="/super-admin/settings" className="block group">
           <CRMMetricCard
             title="System Health"
-            value="99.9%"
-            change="All Systems Normal"
+            value={aal2Required ? "—" : "99.9%"}
+            change={aal2Required ? "AAL2 Required" : "All Systems Normal"}
             trend="up"
             icon={TrendingUp}
             color="orange"
@@ -354,6 +472,25 @@ export default function SuperAdminDashboardPage() {
                       </td>
                     </tr>
                   ))
+                ) : aal2Required ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="py-10 text-center text-xs text-muted-foreground"
+                    >
+                      <Lock className="h-8 w-8 mx-auto mb-2 text-amber-500/60" />
+                      <p className="font-semibold text-foreground">Platform Access Locked</p>
+                      <p className="text-muted-foreground mt-0.5">AAL2 Multi-Factor Authentication is required to view tenant workspaces.</p>
+                      <Button
+                        size="sm"
+                        onClick={triggerMfaModal}
+                        className="mt-3 h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Verify MFA</span>
+                      </Button>
+                    </td>
+                  </tr>
                 ) : (
                   <tr>
                     <td
@@ -401,7 +538,7 @@ export default function SuperAdminDashboardPage() {
                   Active Tenants
                 </p>
                 <p className="text-2xl font-black text-white mt-0.5">
-                  {metrics.activeOrganizations}
+                  {aal2Required ? "—" : metrics.activeOrganizations}
                 </p>
               </div>
               <div>
@@ -409,7 +546,7 @@ export default function SuperAdminDashboardPage() {
                   Platform Users
                 </p>
                 <p className="text-2xl font-black text-white mt-0.5">
-                  {metrics.activeUsers}
+                  {aal2Required ? "—" : metrics.activeUsers}
                 </p>
               </div>
             </div>
@@ -417,10 +554,13 @@ export default function SuperAdminDashboardPage() {
             <div className="space-y-1.5 pt-1">
               <div className="flex justify-between text-[11px] font-semibold text-emerald-100">
                 <span>Tenant Activity Target</span>
-                <span>100%</span>
+                <span>{aal2Required ? "AAL2 Locked" : "100%"}</span>
               </div>
               <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden">
-                <div className="h-full bg-white rounded-full transition-all duration-500 w-full" />
+                <div
+                  className="h-full bg-white rounded-full transition-all duration-500"
+                  style={{ width: aal2Required ? "0%" : "100%" }}
+                />
               </div>
             </div>
           </motion.div>
@@ -453,6 +593,12 @@ export default function SuperAdminDashboardPage() {
                     <div className="h-2.5 w-20 bg-muted/60 rounded" />
                   </div>
                 ))
+              ) : aal2Required ? (
+                <div className="text-center py-6 text-xs text-muted-foreground space-y-1">
+                  <Lock className="w-5 h-5 mx-auto text-amber-500/60 mb-1" />
+                  <p className="font-semibold text-foreground">Activity Locked</p>
+                  <p className="text-[11px]">Verify AAL2 MFA to view audit logs</p>
+                </div>
               ) : data?.recentAuditLogs && data.recentAuditLogs.length > 0 ? (
                 data.recentAuditLogs.slice(0, 4).map((log) => (
                   <div

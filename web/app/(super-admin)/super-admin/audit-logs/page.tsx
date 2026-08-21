@@ -116,6 +116,14 @@ export default function SuperAdminAuditLogsPage() {
   useEffect(() => {
     loadLogs();
     setCurrentPage(1);
+
+    const handleAal2Verified = () => {
+      loadLogs();
+    };
+    window.addEventListener("clixpro:aal2-verified", handleAal2Verified);
+    return () => {
+      window.removeEventListener("clixpro:aal2-verified", handleAal2Verified);
+    };
   }, [moduleFilter]);
 
   useEffect(() => {

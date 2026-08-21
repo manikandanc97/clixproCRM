@@ -11,10 +11,10 @@ type SuperAdminRouteProps = {
 
 export default function SuperAdminRoute({ children }: SuperAdminRouteProps) {
   const router = useRouter();
-  const { isAuthenticated, isInitializing, user, loading } = useAuth();
+  const { isAuthenticated, isInitializing, user } = useAuth();
 
   useEffect(() => {
-    if (isInitializing || loading) return;
+    if (isInitializing) return;
 
     if (!isAuthenticated) {
       router.replace("/login");
@@ -30,9 +30,9 @@ export default function SuperAdminRoute({ children }: SuperAdminRouteProps) {
       // Non-super-admin user attempting to access /super-admin
       router.replace("/dashboard");
     }
-  }, [isAuthenticated, isInitializing, loading, router, user]);
+  }, [isAuthenticated, isInitializing, router, user]);
 
-  if (isInitializing || loading || (isAuthenticated && !user)) {
+  if (isInitializing || (isAuthenticated && !user) || !isAuthenticated) {
     return <AuthLoadingScreen />;
   }
 
@@ -41,9 +41,10 @@ export default function SuperAdminRoute({ children }: SuperAdminRouteProps) {
     user?.role?.toUpperCase() === "SUPER ADMIN" ||
     (user as any)?.isSuperAdmin === true;
 
-  if (!isAuthenticated || !isSuperAdmin) {
+  if (!isSuperAdmin) {
     return <AuthLoadingScreen />;
   }
 
   return <>{children}</>;
 }
+

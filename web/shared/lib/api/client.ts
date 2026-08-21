@@ -12,11 +12,11 @@ export function getApiBaseUrl(): string {
       window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1';
     if (isLocalhost) {
-      return 'http://127.0.0.1:4000/api';
+      return 'http://localhost:4000/api';
     }
   }
 
-  return 'http://127.0.0.1:4000/api';
+  return 'http://localhost:4000/api';
 }
 
 export const API_URL = getApiBaseUrl();
@@ -65,32 +65,51 @@ client.interceptors.request.use(
 client.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (typeof window !== "undefined" && error?.response?.status === 401) {
-      const msg = String(error.response?.data?.message || "");
-      const isSessionExpiry =
-        msg.includes("expired") ||
-        msg.includes("revoked") ||
-        msg.includes("inactivity") ||
-        msg.includes("duration reached");
+    if (typeof window !== "undefined") {
+      if (error?.response?.status === 403) {
+        const errorData = error.response?.data;
+        const isAal2Required =
+          errorData?.code === "AAL2_REQUIRED" ||
+          String(errorData?.message || "").includes("AAL2") ||
+          String(errorData?.message || "").includes("MFA verification required");
 
-      const pathname = window.location.pathname;
-      const isAuthPage =
-        pathname === "/login" ||
-        pathname === "/register" ||
-        pathname === "/forgot-password" ||
-        pathname === "/reset-password";
+        if (isAal2Required) {
+          window.dispatchEvent(
+            new CustomEvent("clixpro:aal2-required", {
+              detail: {
+                message: errorData?.message || "MFA verification required (AAL2)",
+                route: window.location.pathname,
+              },
+            })
+          );
+        }
+      } else if (error?.response?.status === 401) {
+        const msg = String(error.response?.data?.message || "");
+        const isSessionExpiry =
+          msg.includes("expired") ||
+          msg.includes("revoked") ||
+          msg.includes("inactivity") ||
+          msg.includes("duration reached");
 
-      if (isSessionExpiry && !isAuthPage) {
-        try {
-          const supabase = createClient();
-          await supabase.auth.signOut();
-        } catch {}
-        if (!sessionStorage.getItem("clixpro_session_redirected")) {
-          sessionStorage.setItem("clixpro_session_redirected", "true");
-          setTimeout(() => {
-            sessionStorage.removeItem("clixpro_session_redirected");
-          }, 3000);
-          window.location.href = `/login?reason=session_expired`;
+        const pathname = window.location.pathname;
+        const isAuthPage =
+          pathname === "/login" ||
+          pathname === "/register" ||
+          pathname === "/forgot-password" ||
+          pathname === "/reset-password";
+
+        if (isSessionExpiry && !isAuthPage) {
+          try {
+            const supabase = createClient();
+            await supabase.auth.signOut();
+          } catch {}
+          if (!sessionStorage.getItem("clixpro_session_redirected")) {
+            sessionStorage.setItem("clixpro_session_redirected", "true");
+            setTimeout(() => {
+              sessionStorage.removeItem("clixpro_session_redirected");
+            }, 3000);
+            window.location.href = `/login?reason=session_expired`;
+          }
         }
       }
     }

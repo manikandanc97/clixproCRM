@@ -13,6 +13,7 @@ type SettingsContextType = {
   setAccentColor: (color: AccentColor) => void;
   fontFamily: FontFamily;
   setFontFamily: (font: FontFamily) => void;
+  dashboardScope: "tenant" | "super-admin" | "auth";
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -72,12 +73,42 @@ const AUTH_ROUTES = [
 ];
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const { accentColor, setAccentColor, fontFamily, setFontFamily } = useCRMStore();
+  const { 
+    accentColor: tenantAccentColor, 
+    setAccentColor: setTenantAccentColor, 
+    superAdminAccentColor,
+    setSuperAdminAccentColor,
+    fontFamily: tenantFontFamily, 
+    setFontFamily: setTenantFontFamily,
+    superAdminFontFamily,
+    setSuperAdminFontFamily,
+  } = useCRMStore();
   const pathname = usePathname();
 
   const isAuthPage = pathname
     ? AUTH_ROUTES.some((route) => pathname.startsWith(route))
     : false;
+
+  const isSuperAdminPath = pathname ? pathname.startsWith("/super-admin") : false;
+
+  // Determine active accent and font based on dashboard scope
+  const activeAccent = isAuthPage
+    ? "emerald"
+    : isSuperAdminPath
+    ? (superAdminAccentColor || "emerald")
+    : (tenantAccentColor || "emerald");
+
+  const activeFont = isAuthPage
+    ? "sans"
+    : isSuperAdminPath
+    ? (superAdminFontFamily || "sans")
+    : (tenantFontFamily || "sans");
+
+  const dashboardScope: "tenant" | "super-admin" | "auth" = isSuperAdminPath
+    ? "super-admin"
+    : isAuthPage
+    ? "auth"
+    : "tenant";
 
   // Update body classes and data attributes
   useEffect(() => {
@@ -90,12 +121,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     if (isAuthPage) {
       activeHex = "#10b981";
       root.setAttribute("data-accent", "emerald");
-    } else if (accentColor && accentColor.startsWith("#")) {
-      activeHex = accentColor;
+    } else if (activeAccent && activeAccent.startsWith("#")) {
+      activeHex = activeAccent;
       root.setAttribute("data-accent", "custom");
-    } else if (PRESET_ACCENTS[accentColor]) {
-      activeHex = PRESET_ACCENTS[accentColor].primary;
-      root.setAttribute("data-accent", accentColor);
+    } else if (PRESET_ACCENTS[activeAccent]) {
+      activeHex = PRESET_ACCENTS[activeAccent].primary;
+      root.setAttribute("data-accent", activeAccent);
     } else {
       root.setAttribute("data-accent", "emerald");
     }
@@ -113,7 +144,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty("--color-accent", palette.accentBg);
     
     // Handle font family & Google Fonts dynamic loading
-    const targetFont = fontFamily || "inter";
+    const targetFont = activeFont || "inter";
     const loadedDisplayName = ensureGoogleFontLoaded(targetFont);
     
     const slug = targetFont.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -125,14 +156,31 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       root.style.setProperty("--font-display", fontFamilyStyle);
       document.body.style.fontFamily = fontFamilyStyle;
     }
-  }, [accentColor, fontFamily, isAuthPage]);
+  }, [activeAccent, activeFont, isAuthPage, isSuperAdminPath]);
+
+  const handleSetAccentColor = (color: AccentColor) => {
+    if (isSuperAdminPath) {
+      setSuperAdminAccentColor(color);
+    } else {
+      setTenantAccentColor(color);
+    }
+  };
+
+  const handleSetFontFamily = (font: FontFamily) => {
+    if (isSuperAdminPath) {
+      setSuperAdminFontFamily(font);
+    } else {
+      setTenantFontFamily(font);
+    }
+  };
 
   return (
     <SettingsContext.Provider value={{ 
-      accentColor: accentColor as AccentColor, 
-      setAccentColor: (color: AccentColor) => setAccentColor(color), 
-      fontFamily: fontFamily as FontFamily, 
-      setFontFamily: (font: FontFamily) => setFontFamily(font) 
+      accentColor: activeAccent as AccentColor, 
+      setAccentColor: handleSetAccentColor, 
+      fontFamily: activeFont as FontFamily, 
+      setFontFamily: handleSetFontFamily,
+      dashboardScope,
     }}>
       {children}
     </SettingsContext.Provider>

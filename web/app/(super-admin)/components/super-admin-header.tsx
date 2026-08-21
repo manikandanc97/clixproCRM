@@ -50,7 +50,7 @@ export function SuperAdminHeader() {
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl px-3.5 sm:px-4 h-[38px] text-xs md:text-sm shadow-sm gap-1.5 transition-all cursor-pointer"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl px-3.5 sm:px-4 h-[38px] text-xs md:text-sm shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 gap-1.5 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4 shrink-0" strokeWidth={2.2} />
                 <span className="hidden sm:inline font-semibold">Create New</span>

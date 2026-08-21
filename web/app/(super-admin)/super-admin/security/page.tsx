@@ -88,6 +88,14 @@ export default function SecurityCenterPage() {
 
   useEffect(() => {
     loadData();
+
+    const handleAal2Verified = () => {
+      loadData();
+    };
+    window.addEventListener("clixpro:aal2-verified", handleAal2Verified);
+    return () => {
+      window.removeEventListener("clixpro:aal2-verified", handleAal2Verified);
+    };
   }, []);
 
   const handleResolveIncident = async () => {
